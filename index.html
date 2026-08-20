@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b1220" />
+<title>Football Life — Career Simulator</title>
+<meta name="description" content="A football career + life simulator. Pick a club, live the career, make the big decisions: shoot or pass, penalty shootouts, contracts, fame and everything off the pitch." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ===================== START SCREEN ===================== -->
+<div id="screen-start" class="screen active">
+  <div class="start-wrap">
+    <div class="start-badge">⚽</div>
+    <h1 class="start-title">FOOTBALL <span>LIFE</span></h1>
+    <p class="start-sub">Career simulator &amp; life sim. One player. One career. Every decision yours.</p>
+    <div class="start-actions">
+      <button class="btn btn-primary btn-lg" id="btn-new">New Career</button>
+      <button class="btn btn-ghost btn-lg" id="btn-continue">Continue Career</button>
+      <button class="btn btn-ghost" id="btn-how">How to Play</button>
+    </div>
+    <div class="start-feats">
+      <span>🎯 Penalty shootouts</span><span>🤔 Shoot or pass</span><span>💍 Life &amp; family</span>
+      <span>💰 Contracts &amp; sponsors</span><span>🏆 Trophies</span><span>🌍 International football</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CREATE SCREEN ===================== -->
+<div id="screen-create" class="screen">
+  <div class="create-wrap">
+    <div class="steps" id="create-steps"></div>
+    <div id="create-body"></div>
+    <div class="create-nav">
+      <button class="btn btn-ghost" id="create-back">Back</button>
+      <button class="btn btn-primary" id="create-next">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MAIN GAME ===================== -->
+<div id="screen-game" class="screen">
+  <header class="hud" id="hud"></header>
+  <main class="content" id="content"></main>
+  <nav class="tabbar" id="tabbar"></nav>
+</div>
+
+<!-- ===================== MATCH SCREEN ===================== -->
+<div id="screen-match" class="screen">
+  <div class="match-shell">
+    <div class="scoreboard" id="scoreboard"></div>
+    <div class="match-feed" id="match-feed"></div>
+    <div class="match-action" id="match-action"></div>
+  </div>
+</div>
+
+<!-- ===================== MODAL ===================== -->
+<div class="modal-back" id="modal-back">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- ===================== TOASTS ===================== -->
+<div class="toasts" id="toasts"></div>
+
+<script src="js/data.js"></script>
+<script src="js/util.js"></script>
+<script src="js/state.js"></script>
+<script src="js/scenarios.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/life.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
