@@ -540,6 +540,7 @@
         State.addReputation(p, repGain);
         Press.matchHeadline(g, m);
         Press.afterMatch(g, m);
+        Press.monthly(g, m);
         // injury from fatigue
         p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
         p.peakValue = Math.max(p.peakValue || 0, State.marketValue(p));
@@ -883,6 +884,11 @@
       p.peakValue = Math.max(p.peakValue || 0, results.value);
       p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
 
+      // judge the season's final month, then tally the monthly awards
+      Press.judgeMonth(g, g.potmAcc);
+      g.potmAcc = null;
+      if (p.season.potm) results.notes.push(p.season.potm + 'x Player of the Month this season');
+
       results.trophies.forEach(t => {
         p.career.trophies.push({ name: t, year: g.world.year + 1, club: club.name });
         State.news(`${p.lastName} lifts the ${t} with ${club.name}`, 'good');
@@ -1017,6 +1023,8 @@
   /* ==========================================================================
      PRESS — the back pages react to what you actually did
      ========================================================================== */
+  const MONTHS = ['August', 'September', 'October', 'November', 'December', 'January',
+                  'February', 'March', 'April', 'May', 'June', 'July'];
   const Press = {
     matchHeadline(g, m) {
       const p = g.player, club = State.club(p.club);
@@ -1118,6 +1126,92 @@
         State.news(`${club.name} ultras unveil a ${p.lastName} tifo for the weekend`, 'info', null, 'fans'));
       if (!items.length) return;
       U.pick(items)();
+    },
+
+    /* Player of the Month — league form judged in four-fixture blocks,
+       August through July. Accumulates in settle(), judged when the calendar
+       turns (and once more at season end for the final block). */
+    monthly(g, m) {
+      if (m.comp !== 'league') return;
+      const p = g.player;
+      const idx = Math.floor(g.fixtureIndex / 4);
+      if (!g.potmAcc || g.potmAcc.idx !== idx) {
+        Press.judgeMonth(g, g.potmAcc);
+        g.potmAcc = { idx, apps: 0, goals: 0, assists: 0, ratingSum: 0 };
+      }
+      const a = g.potmAcc;
+      a.apps++; a.goals += m.stats.goals; a.assists += m.stats.assists; a.ratingSum += m.stats.rating;
+    },
+
+    judgeMonth(g, acc) {
+      if (!acc || acc.apps < 2) return;
+      const p = g.player;
+      const month = MONTHS[acc.idx];
+      if (!month) return;
+      const avg = acc.ratingSum / acc.apps, inv = acc.goals + acc.assists;
+      const group = p.pos === 'GK' ? 'GK' : D.POSITIONS[p.pos].group;
+      const won = (group === 'ATT' && avg >= 7.3 && (acc.goals >= 3 || inv >= 4))
+        || (group === 'MID' && avg >= 7.4 && inv >= 3)
+        || ((group === 'DEF' || group === 'GK') && avg >= 7.6);
+      if (!won) return;
+      p.season.potm = (p.season.potm || 0) + 1;
+      p.achievements.push({ name: 'Player of the Month — ' + month, year: g.world.year + 1 });
+      State.news(`PLAYER OF THE MONTH: ${p.lastName} takes the ${month} award`, 'good', null, 'medal');
+      State.addReputation(p, 2);
+      p.morale = U.clamp(p.morale + 6, 0, 100);
+    },
+
+    /* The rest of the football world ticking over whether you watch it or
+       not. Runs once a week. Star transfers are remembered in g.worldMoves
+       so later items keep naming the club he actually moved to. */
+    world(g) {
+      if (!U.chance(0.22)) return;
+      const club = State.club(g.player.club);
+      const starClubs = Object.keys(D.REAL_STARS || {});
+      if (!starClubs.length) return;
+      g.worldMoves = g.worldMoves || {};
+      const pickStar = () => {
+        for (let t = 0; t < 12; t++) {
+          const cn = U.pick(starClubs);
+          if (cn === club.name) continue;
+          const s = U.pick(D.REAL_STARS[cn]);
+          return { name: s[0], pos: s[2], ovr: s[3], club: g.worldMoves[s[0]] || cn };
+        }
+        return null;
+      };
+      const pickClub = () => {
+        const cs = Object.values(g.world.clubs).filter(c => c.id !== club.id);
+        return cs.length ? U.pick(cs) : null;
+      };
+      const items = [
+        () => { const s = pickStar(); return s && { t: `${s.name} hits a hat-trick as ${s.club} run riot`, ic: 'ball' }; },
+        () => { const s = pickStar(); return s && s.pos !== 'GK' && { t: `Four goals in one game — ${s.name} puts on a clinic for ${s.club}`, ic: 'ball' }; },
+        () => { const s = pickStar(); return s && s.pos === 'GK' && { t: `${s.name} saves two penalties in one match — ${s.club} still can't believe it`, ic: 'keeper' }; },
+        () => {
+          const s = pickStar();
+          if (!s || s.ovr < 84 || g.worldMoves[s.name]) return null;
+          const dest = U.pick(starClubs.filter(c => c !== s.club && c !== club.name));
+          if (!dest) return null;
+          g.worldMoves[s.name] = dest;
+          return { t: `RECORD MOVE: ${s.name} leaves ${s.club} for ${dest} in a ${U.cash(U.int(70, 180) * 1000000)} deal`, ic: 'transfer' };
+        },
+        () => { const s = pickStar(); return s && { t: `Blow for ${s.club}: ${s.name} faces two months out injured`, ic: 'injury' }; },
+        () => { const s = pickStar(); return s && s.ovr >= 85 && { t: `${s.name} stalls on a new ${s.club} deal — Europe's elite are circling`, ic: 'contract' }; },
+        () => { const c = pickClub(); return c && { t: `${c.name} sack their manager after a run of five without a win`, ic: 'manager' }; },
+        () => {
+          const c = pickClub(); if (!c) return null;
+          const who = global.Names.person(c.country);
+          return { t: `${c.name}'s ${U.int(16, 19)}-year-old ${who.name} scores on his debut — a star is born`, ic: 'academy' };
+        },
+        () => { const c = pickClub(); return c && { t: `Record crowd at ${c.name} as the title race catches fire`, ic: 'fans' }; }
+      ];
+      const r = U.pick(items)();
+      if (!r) return;
+      g.worldNewsLog = g.worldNewsLog || [];
+      if (g.worldNewsLog.indexOf(r.t) >= 0) return;
+      g.worldNewsLog.push(r.t);
+      if (g.worldNewsLog.length > 15) g.worldNewsLog.shift();
+      State.news(r.t, 'info', null, r.ic);
     }
   };
 

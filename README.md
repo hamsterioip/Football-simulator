@@ -162,6 +162,9 @@ number and a team-mate swaps with you.
 - A squad-mate competing for your shirt; manager trust that decides whether you start
 - Injuries, suspensions, fitness, form and morale
 - **Press headlines** that react to what you did — hat-tricks, red cards, transfers, titles
+- **Player of the Month awards** judged on your league form, month by month
+- A living football world in the news feed — rival stars score hat-tricks, record transfers
+  happen and are remembered, managers get sacked and wonderkids break through
 - End-of-season awards: Golden Boot, Team of the Season, Young Player, World Player of the Year
 - A summer transfer window with real offers: fee, wages, contract length and a pitch
 - **25 traits** earned on the pitch, including a set of style traits that sharpen one

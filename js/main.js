@@ -637,6 +637,7 @@
       const ev = Career.rollEvent(g);
       if (ev) Game.showEvent(ev);
       else Engine.Press.buzz(g);
+      Engine.Press.world(g);
     },
 
     /* An off-field moment, presented like an on-pitch one: a card with the
