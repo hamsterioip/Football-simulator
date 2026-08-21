@@ -92,23 +92,22 @@ fighting a better player for the shirt.
 ### Play the moments, not the match
 Matches simulate around you and stop for the decisions you would actually be judged on:
 
-| Moment | Your call |
+**46 different moments**, each with two to six real options:
+
+| | |
 |---|---|
-| **One-on-one** | Blast it · round the keeper · dink it · square it |
-| **Edge of the box** | Shoot · through ball · take a touch and beat your man · recycle |
-| **Penalty** | Six placements, including the Panenka |
-| **Penalty shootout** | You take your kicks. As a keeper, you pick your dive |
-| **Free kick** | Curl it · drill it under the wall · whip it in · let someone else take it |
-| **Corner** | Near post · back post · short · go for the Olimpico |
-| **Three-on-two** | Drive at them · slip in the winger · slow it down |
-| **Isolated 1v1** | Nutmeg · stepover · knock and run · keep it simple |
-| **Last man back** | Slide tackle · jockey · cynical foul · shoulder him off |
-| **Goalkeeper** | Spread yourself · rush out · stand tall · claim or punch the cross |
-| **Contact in the box** | Go down… or stay up and finish it honestly |
-| **Referee flashpoint** | Get in his face · sarcastic applause · say nothing |
-| **He's on a hat-trick** | Take it yourself or roll it to him |
-| **You feel a twinge** | Play through the pain or signal to the bench |
-| **You scored** | Pick your celebration — shirt off costs a yellow |
+| **Attacking** | One-on-one · edge of the box · header from a cross · volley at the back post · back to goal · tight angle on the byline · one-two on the edge · overhead kick · the keeper is stranded · rebound in the six-yard box · long range · the ninety-first minute |
+| **On the ball** | Isolated 1v1 · three-on-two break · switching play · pressing trigger · fifty-fifty in the middle |
+| **Set pieces** | Penalty (six placements, including the Panenka) · free kick · corner · take it quickly · **shootouts you take yourself** |
+| **Defending** | Last man back · aerial duel · playing out of your own box · offside trap · man-marking their best player · blocking the shot · the recovery run · protecting a lead |
+| **Goalkeeping** | One-v-one · crosses · distribution · facing a penalty · sweeping behind the line · shots from distance · setting the wall · a back pass under pressure |
+| **Everything else** | Contact in the box · referee flashpoint · he's on a hat-trick · playing through a twinge · being substituted · a team-mate down · a hostile away end · your celebration |
+
+Moments never repeat inside a match, and the game remembers the last sixteen you were shown
+across matches and heavily down-weights them, so the rotation keeps turning over instead of
+cycling through the same handful. The most common moment in a full career simulation accounts
+for around a tenth of what you see, and the frequent ones have several different set-ups so
+they do not read the same way twice.
 
 Three, five or eight interactive moments per match, your choice. Everything else is simulated
 and narrated live, and you can sim the rest at any time.

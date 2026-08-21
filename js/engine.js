@@ -213,7 +213,7 @@
       // special moments
       if (m.role !== 'out') {
         if (U.chance(0.14)) moments.push({ minute: U.int(entry + 3, 90), side: 'us', involved: true, special: 'penalty' });
-        if (U.chance(0.35)) moments.push({ minute: U.int(entry + 3, 90), side: 'us', involved: true, special: 'set' });
+        if (U.chance(0.2)) moments.push({ minute: U.int(entry + 3, 90), side: 'us', involved: true, special: 'set' });
         if (U.chance(0.22)) moments.push({ minute: U.int(entry + 5, 88), side: 'none', involved: true, special: 'social' });
       }
       moments.sort((a, b) => a.minute - b.minute);
@@ -225,6 +225,17 @@
       if (p.pos === 'GK') return false;
       const rival = Squad.ensure(g).filter(s => s.pos !== 'GK').sort((a, b) => b.ovr - a.ovr)[0];
       return p.attrs.shooting >= 62 || p.ovr >= (rival ? rival.ovr : 70) - 1 || State.hasTrait(p, 'ice');
+    },
+
+    /* Choose the next moment, remembering what has come up recently so the
+       same handful of scenarios stop repeating match after match. */
+    pickScenario(g, m, ctx, kinds) {
+      g.recentScenarios = g.recentScenarios || [];
+      const scn = Scenarios.pick(ctx, { kinds, exclude: m.usedScenarios, recent: g.recentScenarios });
+      if (!scn) return null;
+      g.recentScenarios.unshift(scn.id);
+      if (g.recentScenarios.length > 16) g.recentScenarios.length = 16;
+      return scn;
     },
 
     ctxFor(g, m, extra) {
@@ -281,14 +292,15 @@
             if (Match.isPenaltyTaker(g)) scn = Scenarios.build('penalty', ctx);
             else { m.penaltyPending = true; return Match.commentary(m, 'PENALTY to ' + m.myName + '!', 'good'); }
           } else if (mom.special === 'set') {
-            scn = Scenarios.build(U.chance(0.5) ? 'free_kick' : 'corner', ctx);
+            scn = Match.pickScenario(g, m, ctx, ['set']);
           } else if (mom.special === 'social') {
-            scn = Scenarios.random(Object.assign({}, ctx), m.usedScenarios);
+            scn = Match.pickScenario(g, m, ctx, ['social', 'discipline', 'life']);
           } else if (mom.side === 'them') {
-            scn = Scenarios.build(g.player.pos === 'GK' ? (U.chance(0.65) ? 'gk_save' : 'gk_cross')
-                                                        : (U.chance(0.6) ? 'last_ditch' : 'aerial'), ctx);
+            scn = Match.pickScenario(g, m, ctx, g.player.pos === 'GK' ? ['gk'] : ['defend']);
           } else {
-            scn = Scenarios.random(ctx, m.usedScenarios);
+            scn = Match.pickScenario(g, m, ctx, g.player.pos === 'GK'
+              ? ['gk', 'social', 'discipline', 'life']
+              : ['shot', 'run', 'defend', 'social', 'discipline', 'life']);
           }
           if (!scn) continue;
           m.usedScenarios.push(scn.id);
@@ -360,7 +372,8 @@
       if (fx.penalty) { m.penaltyPending = true; }
       if (fx.rating) m.stats.rating += fx.rating;
       if (fx.fitness) p.fitness = U.clamp(p.fitness + fx.fitness * (State.hasTrait(p, 'engine') ? 0.7 : 1), 0, 100);
-      if (fx.fame) State.addReputation(p, fx.fame * (State.hasTrait(p, 'idol') ? 1.5 : 1));
+      const repGained = fx.rep || fx.fame;
+      if (repGained) State.addReputation(p, repGained * (State.hasTrait(p, 'idol') ? 1.5 : 1));
       if (fx.morale) p.morale = U.clamp(p.morale + fx.morale, 0, 100);
       if (fx.trust) p.managerTrust = U.clamp(p.managerTrust + fx.trust, 0, 100);
       if (fx.teamBoost) m.teamBoost += fx.teamBoost;
