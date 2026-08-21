@@ -122,7 +122,7 @@ Matches simulate around you and stop for the decisions you would actually be jud
 |---|---|
 | **Attacking** | One-on-one · edge of the box · header from a cross · volley at the back post · back to goal · tight angle on the byline · one-two on the edge · overhead kick · the keeper is stranded · rebound in the six-yard box · long range · the backheel · the flick-on · the ninety-first minute |
 | **On the ball** | Isolated 1v1 · three-on-two break · switching play · pressing trigger · fifty-fifty in the middle · the nutmeg · the overlapping run |
-| **Set pieces** | Penalty (six placements, including the Panenka) · free kick · corner · take it quickly · the quick throw · **shootouts you take yourself** |
+| **Set pieces** | **Penalties aimed at a drawn goal** (six corners, including the Panenka) · free kick · corner · take it quickly · the quick throw · **shootouts you take yourself** |
 | **Defending** | Last man back · aerial duel · playing out of your own box · offside trap · man-marking their best player · blocking the shot · the recovery run · protecting a lead · the goal-line clearance |
 | **Goalkeeping** | One-v-one · crosses · distribution · facing a penalty · sweeping behind the line · shots from distance · setting the wall · a back pass under pressure |
 | **Everything else** | Contact in the box · referee flashpoint · he's on a hat-trick · playing through a twinge · being substituted · a team-mate down · a hostile away end · your celebration |
@@ -132,6 +132,17 @@ across matches and heavily down-weights them, so the rotation keeps turning over
 cycling through the same handful. The most common moment in a full career simulation accounts
 for around a tenth of what you see, and the frequent ones have several different set-ups so
 they do not read the same way twice.
+
+### Penalties are watched, not read
+Penalties and shootouts use a drawn goalmouth rather than a list of buttons. You tap the
+corner you want and the kick plays out: the ball arcs towards it, the keeper commits — the
+right way if he saves it, the wrong way if he does not — the net ripples on a goal, a save is
+punched back out, and a Panenka floats in slowly enough to be embarrassing. Facing one as a
+goalkeeper works the same way from the other end: pick your dive, then watch whether you read
+him.
+
+It is inline SVG animated with the Web Animations API — no images, no libraries — and it
+respects `prefers-reduced-motion` by cutting straight to the outcome.
 
 ### Skipping ahead
 A career does not have to be played match by match. **Skip Ahead** offers a month, three
