@@ -1,0 +1,51 @@
+# Publishes the game to GitHub Pages.
+#
+# The job is skipped while the repository is private, because GitHub Pages for
+# private repositories needs a paid plan. Make the repository public and the
+# next push (or a manual run from the Actions tab) puts the game online at
+# https://<owner>.github.io/<repo>/ — no repository settings to visit, since
+# configure-pages enables Pages through the API on the first run.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [claude/football-simulator-game-autd54]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild the single-file version so it cannot drift
+        run: |
+          node build.js
+          git diff --exit-code play.html dist/artifact.html \
+            || echo "::warning::play.html was stale in git; deploying a freshly built copy"
+
+      - name: Enable and configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

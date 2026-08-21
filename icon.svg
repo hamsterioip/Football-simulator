@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f2e4d"/>
+      <stop offset="1" stop-color="#0c3b26"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#22e07a" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#22e07a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <!-- pitch arc -->
+  <circle cx="256" cy="256" r="176" fill="none" stroke="#ffffff" stroke-opacity=".10" stroke-width="10"/>
+  <!-- ball -->
+  <circle cx="256" cy="248" r="118" fill="#f6f9ff"/>
+  <g fill="#0c1424">
+    <polygon points="256,168 300,200 283,252 229,252 212,200"/>
+    <path d="M256 130 c-26 0-50 7-70 19 l26 19 44-32 44 32 26-19 c-20-12-44-19-70-19z"/>
+    <path d="M138 248 c0-26 8-50 21-70 l17 51-27 40-11-21z"/>
+    <path d="M374 248 c0-26-8-50-21-70 l-17 51 27 40 11-21z"/>
+    <path d="M196 356 c-22-13-40-33-50-57 l43 4 25 41-18 12z"/>
+    <path d="M316 356 c22-13 40-33 50-57 l-43 4-25 41 18 12z"/>
+    <path d="M256 366 c-19 0-37-3-53-10 l17-16 72 0 17 16 c-16 7-34 10-53 10z"/>
+  </g>
+</svg>

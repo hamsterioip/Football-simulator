@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#080d16" />
+<title>Football Life — Career Simulator</title>
+<meta name="description" content="A football career simulator: rob eight legends for your attributes, pick a club, and play the moments that matter — shoot or pass, penalties, shootouts, transfers and trophies." />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+<!-- add-to-home-screen: run fullscreen like an app -->
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Football Life" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ===================== START SCREEN ===================== -->
+<div id="screen-start" class="screen active">
+  <div class="start-wrap">
+    <div class="start-badge"><svg viewBox="0 0 24 24"><use href="#i-ball"/></svg></div>
+    <h1 class="start-title">FOOTBALL <span>LIFE</span></h1>
+    <p class="start-sub">Rob eight legends. Build one career. Play every moment that matters.</p>
+    <div class="start-actions">
+      <button class="btn btn-primary btn-lg" id="btn-new">New Career</button>
+      <button class="btn btn-ghost btn-lg" id="btn-continue">Continue Career</button>
+      <button class="btn btn-ghost" id="btn-how">How to Play</button>
+    </div>
+    <div class="start-feats">
+      <span><svg class="ic"><use href="#i-legend"/></svg> The draft</span>
+      <span><svg class="ic"><use href="#i-penalty"/></svg> Penalty shootouts</span>
+      <span><svg class="ic"><use href="#i-ball"/></svg> Shoot or pass</span>
+      <span><svg class="ic"><use href="#i-transfer"/></svg> Transfers</span>
+      <span><svg class="ic"><use href="#i-trophy"/></svg> Trophies</span>
+      <span><svg class="ic"><use href="#i-nation"/></svg> International football</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CREATE SCREEN ===================== -->
+<div id="screen-create" class="screen">
+  <div class="create-wrap">
+    <div class="steps" id="create-steps"></div>
+    <div id="create-body"></div>
+    <div class="create-nav">
+      <button class="btn btn-ghost" id="create-back">Back</button>
+      <button class="btn btn-primary" id="create-next">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MAIN GAME ===================== -->
+<div id="screen-game" class="screen">
+  <header class="hud" id="hud"></header>
+  <main class="content" id="content"></main>
+  <nav class="tabbar" id="tabbar"></nav>
+</div>
+
+<!-- ===================== MATCH SCREEN ===================== -->
+<div id="screen-match" class="screen">
+  <div class="match-shell">
+    <div class="scoreboard" id="scoreboard"></div>
+    <div class="match-feed" id="match-feed"></div>
+    <div class="match-action" id="match-action"></div>
+  </div>
+</div>
+
+<!-- ===================== MODAL ===================== -->
+<div class="modal-back" id="modal-back">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- ===================== TOASTS ===================== -->
+<div class="toasts" id="toasts"></div>
+
+<script src="js/icons.js"></script>
+<script src="js/data.js"></script>
+<script src="js/badges.js"></script>
+<script src="js/crest.js"></script>
+<script src="js/util.js"></script>
+<script src="js/state.js"></script>
+<script src="js/scenarios.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/career.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

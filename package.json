@@ -1,0 +1,15 @@
+{
+  "name": "football-life",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A football career simulator played through the moments that matter.",
+  "scripts": {
+    "icons": "node tools/build-icons.js",
+    "build": "node build.js",
+    "all": "npm run icons && npm run build"
+  },
+  "devDependencies": {
+    "@iconify-json/circle-flags": "^1.2.0",
+    "@iconify-json/mdi": "^1.2.0"
+  }
+}
