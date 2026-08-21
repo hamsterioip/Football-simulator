@@ -133,6 +133,19 @@ cycling through the same handful. The most common moment in a full career simula
 for around a tenth of what you see, and the frequent ones have several different set-ups so
 they do not read the same way twice.
 
+### Skipping ahead
+A career does not have to be played match by match. **Skip Ahead** offers a month, three
+months, the rest of the season, or a full year that carries on through the summer into the
+next one. Matches are simulated, and in between you train — recovering when your fitness is
+low, rehabbing when injured, otherwise working on whichever attribute has the most room left
+below its ceiling.
+
+It works like holding down "continue" in a management game: it stops the moment something
+wants you, whether that is a serious injury, a suspension, an off-field moment or the end of
+the season, and then hands you a card showing what happened while you were away — record,
+goals, average rating, how your overall moved, and the back pages you missed. You can resume
+from where it stopped or call it off.
+
 Three, five or eight interactive moments per match, your choice. Everything else is simulated
 and narrated live, and you can sim the rest at any time.
 

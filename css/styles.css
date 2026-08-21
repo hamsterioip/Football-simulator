@@ -424,6 +424,10 @@ table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6p
   color:var(--green);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:600;margin:4px 4px 0 0}
 .rob-chip .ic{width:13px;height:13px}
 
+/* ---------- skipping ahead ---------- */
+.skip-line{display:flex;align-items:flex-start;gap:9px;font-size:14px;color:var(--txt);line-height:1.45}
+.skip-line .ic{color:var(--green);margin-top:2px}
+
 /* ---------- off-field moments ---------- */
 .ev-card{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:12px}
 .ev-top{display:flex;align-items:center;gap:9px;margin-bottom:8px}

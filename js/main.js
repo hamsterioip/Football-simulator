@@ -258,8 +258,10 @@
       switch (act) {
         case 'playMatch': return Game.playMatch(true);
         case 'quickMatch': return Game.playMatch(false);
-        case 'skipMenu': return Game.skipMenu();
-        case 'skip': return Game.skip(arg === 'season' ? 999 : parseInt(arg, 10));
+        case 'skip': case 'skipMenu': return Game.skipMenu();
+        case 'resumeSkip': return Game.runSkip();
+        case 'cancelSkip': State.game.skip = null; State.save(); UI.render();
+          return UI.toast('Skip cancelled.', '');
         case 'openWeek': return Game.weekMenu();
         case 'doActivity': return Game.runActivity(arg);
         case 'trainMenu': return Game.trainMenu();
@@ -390,6 +392,177 @@
       UI.render();
     },
 
+    /* ==================== SKIPPING AHEAD ====================
+       Sim forward several weeks at once, the way a manager holds down
+       "continue". It stops early the moment something wants your attention:
+       a bad injury, a moment off the pitch, the end of the season. */
+    SKIPS: [
+      { id: 'month', label: 'One month', weeks: 4, hint: 'About four matches' },
+      { id: 'quarter', label: 'Three months', weeks: 13, hint: 'A third of a season' },
+      { id: 'season', label: 'Rest of the season', weeks: 999, hint: 'Straight to the end-of-season review' },
+      { id: 'year', label: 'A full year', weeks: 46, hint: 'Through the summer and into next season' }
+    ],
+
+    skipMenu() {
+      const g = State.game;
+      UI.modal({
+        title: 'Skip ahead',
+        html: `<p class="muted">${Math.max(0, g.fixtures.length - g.fixtureIndex)} fixture(s) left this season.
+          Matches are simulated and you train in between. It stops early if anything needs you.</p>
+          <div class="list">${Game.SKIPS.map(sk =>
+            `<div class="item click" data-sk="${sk.id}"><div class="ic">${ico('sim')}</div>
+              <div class="tx"><b>${U.esc(sk.label)}</b><span>${U.esc(sk.hint)}</span></div></div>`).join('')}</div>`,
+        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-sk]').forEach(el => el.onclick = () => {
+            UI.closeModal();
+            Game.startSkip(el.dataset.sk);
+          });
+        }
+      });
+    },
+
+    startSkip(id) {
+      const g = State.game;
+      const sk = Game.SKIPS.find(x => x.id === id) || Game.SKIPS[0];
+      g.skip = {
+        id: sk.id, label: sk.label, remaining: sk.weeks,
+        digest: { played: 0, w: 0, d: 0, l: 0, goals: 0, assists: 0, motm: 0,
+                  ratingSum: 0, cards: 0, startOvr: g.player.ovr, seasons: 0,
+                  results: [], notes: [] }
+      };
+      Game.runSkip();
+    },
+
+    // choose the week's session for you: recover if you need to, otherwise train
+    autoWeek(g) {
+      const p = g.player;
+      if (g.weekActionsLeft <= 0) return;
+      let res;
+      if (p.injuries.length) res = Career.doActivity(g, 'rehab');
+      else if (p.fitness < 58) res = Career.doActivity(g, 'rest');
+      else {
+        // train whichever key attribute has the most room left below its ceiling
+        const w = D.POSITIONS[p.pos].w;
+        const drills = D.TRAINING
+          .filter(t => (w[t.attr] || 0) > 0.05 || t.attr === 'weakFoot')
+          .filter(t => t.attr !== 'gk' || p.pos === 'GK')
+          .filter(t => t.attr !== 'shooting' || p.pos !== 'GK')
+          .map(t => ({ t, room: Engine.Progress.cap(p, t.attr) - p.attrs[t.attr] }))
+          .filter(x => x.room > 0)
+          .sort((a, b) => b.room - a.room);
+        res = drills.length ? Career.doActivity(g, 'train', drills[0].t.id)
+                            : Career.doActivity(g, 'rest');
+      }
+      g.weekActionsLeft--;
+      return res;
+    },
+
+    runSkip() {
+      const g = State.game, sk = g.skip;
+      if (!sk) return;
+      const dg = sk.digest;
+      let stop = null, guard = 0;
+
+      while (sk.remaining > 0 && guard++ < 200) {
+        const f = Engine.Season.nextPlayable(g);
+        if (!f) { stop = 'The season is over.'; break; }
+
+        const injuriesBefore = g.player.injuryCount || 0;
+        const suspensionBefore = g.player.suspension;
+        Game.autoWeek(g);
+        Engine.Season.prepareFixture(g, f);
+        const m = Engine.Match.create(g, f);
+        Engine.Match.simRest(g, m);
+        if (m.needsShootout) Game.autoShootout(m);
+        if (!m.result) Engine.Match.settle(g, m);
+
+        dg.played++;
+        dg.results.push(m.result);
+        if (m.result === 'W') dg.w++; else if (m.result === 'D') dg.d++; else dg.l++;
+        if (m.role === 'start' || m.role === 'bench') {
+          dg.goals += m.stats.goals; dg.assists += m.stats.assists;
+          dg.ratingSum += m.stats.rating; dg.rated = (dg.rated || 0) + 1;
+          if (m.motm) dg.motm++;
+          if (m.stats.card) dg.cards++;
+        }
+
+        g.fixtureIndex++;
+        g.weekActionsLeft = 1;
+        sk.remaining--;
+        Game.checkTraits();
+        // the rest of the world keeps playing and the press keeps writing
+        if (Engine.Press.buzz) Engine.Press.buzz(g);
+        if (Engine.Press.world) Engine.Press.world(g);
+
+        // stop for things that are new, not for a state you are already in —
+        // otherwise one long injury halts the skip on every single match
+        if ((g.player.injuryCount || 0) > injuriesBefore) {
+          const bad = g.player.injuries[g.player.injuries.length - 1];
+          if (bad && bad.matches >= 3) { stop = `You picked up a serious injury: ${bad.name}.`; break; }
+        }
+        if (g.player.suspension > 0 && suspensionBefore === 0) { stop = 'You have been suspended.'; break; }
+
+        const ev = U.chance(0.3) ? Career.rollEvent(g) : null;
+        if (ev) { g.pendingEvent = ev; stop = 'Something needs your attention.'; break; }
+      }
+
+      if (sk.remaining <= 0) stop = stop || `${sk.label} done.`;
+      State.save();
+      UI.show('game');
+      UI.tab = 'home';
+      UI.render();
+      Game.skipSummary(stop);
+    },
+
+    skipSummary(stop) {
+      const g = State.game, sk = g.skip, dg = sk ? sk.digest : null;
+      if (!dg) return;
+      const p = g.player;
+      const avg = dg.rated ? U.round(dg.ratingSum / dg.rated, 2) : '—';
+      const ovrDelta = p.ovr - dg.startOvr;
+      const seasonOver = !Engine.Season.nextPlayable(g);
+      const done = sk.remaining <= 0 || seasonOver;
+
+      const html = `
+        <div class="skip-line">${ico('calendar')} <span>${U.esc(stop || '')}</span></div>
+        <div class="stat-grid" style="margin-top:12px">
+          <div class="stat"><b>${dg.played}</b><span>Matches</span></div>
+          <div class="stat"><b>${dg.w}-${dg.d}-${dg.l}</b><span>W-D-L</span></div>
+          <div class="stat"><b>${dg.goals}</b><span>Goals</span></div>
+          <div class="stat"><b>${dg.assists}</b><span>Assists</span></div>
+          <div class="stat"><b>${avg}</b><span>Avg rating</span></div>
+          <div class="stat"><b>${ovrDelta >= 0 ? '+' : ''}${ovrDelta}</b><span>Overall</span></div>
+        </div>
+        ${dg.results.length ? `<div class="form-guide" style="margin-top:12px;flex-wrap:wrap">${
+          dg.results.slice(-14).map(r => `<span class="fg ${r === 'W' ? 'w' : r === 'D' ? 'd' : 'l'}">${r}</span>`).join('')
+        }</div>` : ''}
+        ${(g.headlines || []).length ? `<div class="section-title">While you were away</div>` +
+          (g.headlines || []).slice(0, 4).map(h => `<div class="headline ${h.k}">
+            <div class="hl-src">${U.esc(h.src || '')}</div><div class="hl-t">${U.esc(h.t)}</div></div>`).join('') : ''}`;
+
+      const actions = [];
+      if (!done && sk.remaining > 0) {
+        actions.push({ label: `Keep skipping (${sk.remaining} to go)`, onClick: () => Game.runSkip() });
+      }
+      actions.push({ label: done ? 'Continue' : 'Stop here', cls: done ? 'btn-primary' : 'btn-ghost',
+        onClick: () => { if (done) g.skip = null; Game.afterSkip(); } });
+
+      UI.modal({ title: 'Skipped ' + dg.played + ' week' + (dg.played === 1 ? '' : 's'), html, actions });
+    },
+
+    // whatever interrupted the skip gets dealt with now
+    afterSkip() {
+      const g = State.game;
+      if (g.pendingEvent) {
+        const ev = g.pendingEvent;
+        g.pendingEvent = null;
+        Game.showEvent(ev);   // the home screen behind it offers to resume the skip
+        return;
+      }
+      UI.render();
+    },
+
     /* ==================== MATCH ==================== */
     playMatch(interactive) {
       const g = State.game;
@@ -461,51 +634,6 @@
       UI.renderScoreboard(m);
       m.log.slice(-6).forEach(l => UI.pushEvent(l.text, l.tone, l.minute));
       Game.matchSummary(m);
-    },
-
-    /* ---------- time skip ---------- */
-    skipMenu() {
-      const g = State.game;
-      const left = g.fixtures.length - g.fixtureIndex;
-      UI.modal({
-        title: 'Skip ahead',
-        text: `${left} fixture(s) left this season. Skipped matches are quick-simmed —
-               the season, the press and the world carry on without you.
-               Anything important still stops the skip.`,
-        actions: [
-          { label: 'Skip 5 matches', onClick: () => Game.skip(5) },
-          { label: 'Skip 10 matches', cls: 'btn-ghost', onClick: () => Game.skip(10) },
-          { label: 'Skip to end of season', cls: 'btn-ghost', onClick: () => Game.skip(999) }
-        ]
-      });
-    },
-
-    skip(n) {
-      const g = State.game;
-      let played = 0, ev = null;
-      for (let i = 0; i < n; i++) {
-        const f = Engine.Season.nextPlayable(g);
-        if (!f) break;
-        Engine.Season.prepareFixture(g, f);
-        const m = Engine.Match.create(g, f);
-        Engine.Match.simRest(g, m);
-        if (m.needsShootout) Game.autoShootout(m);
-        Engine.Match.settle(g, m);
-        g.fixtureIndex++;
-        g.weekActionsLeft = 1;
-        played++;
-        Game.checkTraits();
-        ev = global.Career.rollEvent(g);
-        if (ev) break;
-        Engine.Press.buzz(g);
-        Engine.Press.world(g);
-      }
-      State.save();
-      UI.show('game');
-      UI.tab = 'home';
-      UI.render();
-      if (played) UI.toast(`Skipped ${played} match${played > 1 ? 'es' : ''}.`, 'good');
-      if (ev) Game.showEvent(ev);
     },
 
     /* ---------- penalty shootout ---------- */
@@ -1060,6 +1188,19 @@
       UI.show('game');
       UI.tab = 'home';
       UI.render();
+      // a "full year" skip carries on through the summer into the new season
+      if (g.skip && g.skip.remaining > 0) {
+        g.skip.digest.seasons++;
+        UI.modal({
+          title: `Season ${g.world.year}/${(g.world.year + 1) % 100}`,
+          text: `A new season begins and you are still skipping ahead — ${g.skip.remaining} week(s) left.`,
+          actions: [
+            { label: 'Keep skipping', onClick: () => Game.runSkip() },
+            { label: 'Stop here', cls: 'btn-ghost', onClick: () => { g.skip = null; UI.render(); } }
+          ]
+        });
+        return;
+      }
       UI.modal({
         title: `Season ${g.world.year}/${(g.world.year + 1) % 100}`,
         text: `${p.age} years old · ${State.club(p.club).name} · Overall ${p.ovr}\n\n${g.contQualified ? 'You are in continental competition this season.' : 'League and cup football this season.'}\n\nPre-season is done. Let's go again.`,

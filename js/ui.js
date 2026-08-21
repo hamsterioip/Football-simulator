@@ -397,8 +397,14 @@
         html += `<div class="row" style="margin-bottom:12px">
           <button class="btn btn-primary grow" data-act="playMatch">${ico('play')} Play Match</button>
           <button class="btn btn-ghost" data-act="quickMatch">${ico('sim')} Quick Sim</button>
-          <button class="btn btn-ghost" data-act="skipMenu">${ico('sim')} Skip</button>
+          <button class="btn btn-ghost" data-act="skipMenu">${ico('clock')} Skip</button>
         </div>`;
+        if (g.skip && g.skip.remaining > 0) {
+          html += `<div class="row" style="margin-bottom:12px">
+            <button class="btn btn-gold grow" data-act="resumeSkip">${ico('sim')} Resume skip — ${g.skip.remaining} week${g.skip.remaining === 1 ? '' : 's'} left</button>
+            <button class="btn btn-ghost" data-act="cancelSkip">${ico('no')}</button>
+          </div>`;
+        }
 
         if (g.weekActionsLeft > 0) {
           html += `<div class="card gold-edge">
