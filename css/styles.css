@@ -341,6 +341,14 @@ table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6p
 .hud-club{display:flex;align-items:center;gap:5px}
 .club-line{display:flex;align-items:center;gap:9px}
 
+/* ---------- squad list ---------- */
+.sq-no{width:26px;height:26px;flex:0 0 auto;border-radius:8px;display:grid;place-items:center;
+  background:rgba(255,255,255,.07);font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted)}
+.you-row{border-color:var(--green);background:rgba(34,224,122,.08)}
+.you-row .sq-no{background:rgba(34,224,122,.2);color:var(--green)}
+.danger-man{border-color:rgba(255,90,106,.4)}
+.danger-man .ic{color:var(--red)}
+
 /* ---------- form guide ---------- */
 .form-guide{display:flex;gap:4px;margin-top:7px}
 .fg{width:19px;height:19px;border-radius:6px;display:grid;place-items:center;
@@ -393,6 +401,17 @@ table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6p
 .rob-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(34,224,122,.12);
   color:var(--green);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:600;margin:4px 4px 0 0}
 .rob-chip .ic{width:13px;height:13px}
+
+/* ---------- off-field moments ---------- */
+.ev-card{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:12px}
+.ev-top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.ev-icon{width:24px;height:24px;color:var(--green)}
+.ev-cat{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);font-weight:800}
+.ev-text{margin:0;font-size:14px;line-height:1.5;color:var(--txt);white-space:normal}
+.ev-outcome{font-size:14.5px;line-height:1.55;white-space:pre-line}
+.ev-outcome.good{color:var(--green)}
+.ev-outcome.bad{color:var(--red)}
+.modal .choices{margin-top:2px}
 
 /* ---------- boss mode ---------- */
 .secret-head{border-color:var(--gold);background:linear-gradient(135deg,rgba(255,201,77,.08),transparent)}

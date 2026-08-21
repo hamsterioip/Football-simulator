@@ -120,12 +120,36 @@ they do not read the same way twice.
 Three, five or eight interactive moments per match, your choice. Everything else is simulated
 and narrated live, and you can sim the rest at any time.
 
+### Squads that read like squads
+Every generated player's name matches where he is from, and a club's squad is mostly local
+with a handful of imports along realistic routes — a Serie A side of Italians with a Dutchman
+and a Serb, a Brazilian club with a couple of Argentines. 760 names across 28 nations, squad
+numbers handed out by position, flags on the team sheet, and a named danger man in the
+opposition before every kick-off.
+
+Real players are not in the game: names and likenesses are licensed rights. What makes a
+squad list convincing is consistency, not famous names.
+
 ### The week in between
 One session before each match, and all of it football: a specific training drill, rest,
 video analysis, a word with the manager, press duty, or an afternoon with the academy.
-Then the game happens to you — a dressing-room row, a sixteen-year-old arriving in your
-position, the armband, a transfer rumour, a loan offer, the manager sacked, derby week,
-a rival taking aim at you in the press.
+Then the game happens to you. **32 off-field moments**, presented like the ones on the pitch —
+a situation, and choices with real consequences:
+
+| | |
+|---|---|
+| **Dressing room** | A row with the manager · who takes the penalties · a debut to look after · a training-ground flashpoint |
+| **Transfer** | Deadline day at 11pm · a loan offer · your agent has news · early contract talks |
+| **Manager** | A change of shape · video review with the whole squad watching · the manager is sacked · a new role |
+| **Media** | A rumour in the press · something private has leaked · a rival takes aim · a documentary crew |
+| **International** | Left out of the squad · two countries want you |
+| **Training ground** | Set-piece practice · the mid-season camp |
+| **Club** | Derby week · the supporters' forum · the club is in trouble · the number is free · a testimonial |
+| **Awards, fitness, discipline** | You are nominated · the scan results are in · charged by the federation |
+
+Some of them stick: claim the penalties and you take them for the rest of your career, win
+the set-piece duel in training and dead balls come to you more often, take the free shirt
+number and a team-mate swaps with you.
 
 ### Build a career
 - Full league season with a live table and top-scorer race

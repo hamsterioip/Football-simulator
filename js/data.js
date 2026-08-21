@@ -225,15 +225,88 @@
     { name: 'Ghana',       rating: 75 }
   ];
 
-  // --- Name pools ----------------------------------------------------------
-  const FIRST_NAMES = ['Leo','Marco','Diego','Kai','Luca','Mateo','Enzo','Rafael','Yusuf','Jamal','Noah','Elias',
-    'Tomas','Andre','Bruno','Cristian','Dani','Emre','Felix','Gabriel','Hugo','Ibrahim','Jonas','Karim','Lucas',
-    'Mo','Nico','Omar','Pablo','Quinn','Ryan','Santi','Theo','Umar','Victor','Wilson','Xavi','Yannick','Zane',
-    'Ayo','Bilal','Cody','Dylan','Ezra','Finn','George','Harvey','Isaac','Jude','Kofi','Levi','Milos','Nathan'];
-  const LAST_NAMES = ['Silva','Rossi','Fernandez','Okafor','Novak','Bakker','Costa','Muller','Dubois','Haaland',
-    'Nakamura','Kovac','Ademola','Bianchi','Cruz','Delgado','Eriksen','Ferreira','Gomez','Hansen','Iversen',
-    'Jansen','Keita','Lindqvist','Moreno','Nunes','Oliveira','Petrov','Quintero','Ramos','Sorensen','Traore',
-    'Ulloa','Vargas','Wagner','Yilmaz','Zanetti','Ashworth','Blackwood','Carrington','Duarte','Esposito'];
+  /* --- Names ---------------------------------------------------------------
+     Real footballers' names and likenesses are licensed rights, so the game
+     invents its own players. What makes a squad read as real is not famous
+     names but *consistent* ones: a Spanish club full of Spanish names with a
+     handful of imports, rather than a random mix of everything.
+  --------------------------------------------------------------------------- */
+  const NAMES = {
+    England:     { first: ['Harry','Jack','Callum','Reece','Mason','Ollie','Tyler','Josh','Kieran','Declan','Aaron','Lewis','Charlie','Nathan','Jude','Bukayo','Marcus','Phil','Conor','Ben'],
+                   last:  ['Bellamy','Hartley','Whitmore','Ashdown','Corbett','Radcliffe','Prescott','Ainsley','Blackwood','Carrington','Hollis','Merrick','Tunstall','Waverley','Kingsley','Rowntree','Sandford','Ellery','Marlowe','Barnett'] },
+    Spain:       { first: ['Sergio','Álvaro','Iker','Pablo','Marcos','Javi','Unai','Rubén','Nacho','Aitor','Gonzalo','Diego','Adrián','Íñigo','Bruno','Mikel','Rodri','Dani','Hugo','Pau'],
+                   last:  ['Herrera','Cabrera','Solano','Requena','Bautista','Otero','Mendieta','Valverde','Salguero','Iriarte','Barrantes','Zubeldia','Camacho','Ferrán','Bilbao','Arriaga','Pinilla','Quintana','Sarabia','Casillas'] },
+    Italy:       { first: ['Matteo','Lorenzo','Andrea','Riccardo','Federico','Alessio','Davide','Giacomo','Simone','Nicolò','Tommaso','Gianluca','Stefano','Marco','Luca','Emanuele','Fabio','Cristian','Michele','Samuele'],
+                   last:  ['Marchetti','Bellini','Lombardi','Zaccaria','Pellegrini','Vitali','Fiorentino','Barbieri','Caruso','Mancuso','Rizzoli','Tavecchio','Orsini','Sartori','Grimaldi','Bonaventura','Salvatore','Perrone','Manzoni','Falcone'] },
+    Germany:     { first: ['Leon','Jonas','Nico','Maximilian','Felix','Luca','Tim','Julian','Florian','Marvin','Kevin','Niklas','Jannik','Moritz','Elias','Robin','Lennart','Fabian','Tobias','Sven'],
+                   last:  ['Weissmann','Brandt','Köhler','Steinbach','Hofmann','Reinhardt','Vollmer','Dietrich','Kranz','Lindner','Schuster','Hartwig','Beckmann','Ostermann','Gerlach','Wendland','Rothe','Bauer','Kesler','Neumeier'] },
+    France:      { first: ['Lucas','Théo','Enzo','Hugo','Nathan','Mathis','Yanis','Rayan','Killian','Noah','Clément','Maxime','Antoine','Bilal','Ousmane','Amine','Baptiste','Gabin','Rémi','Sofiane'],
+                   last:  ['Lemaire','Duval','Roussel','Marchand','Bonnet','Delcourt','Fontaine','Guerin','Marceau','Vasseur','Perrin','Cissé','Traoré','Dembakh','Lavigne','Chevalier','Barreau','Nkolo','Rimbaud','Sagnol'] },
+    Netherlands: { first: ['Daan','Sem','Luuk','Bram','Thijs','Jurriën','Ryan','Mees','Stijn','Kees','Joris','Ties','Sven','Milan','Xavi','Youri','Cody','Wout','Jorrit','Ruben'],
+                   last:  ['van Dijken','de Wit','Bakhuis','Vermeer','Hoogland','van Rijn','Kuipers','Dekker','Veenstra','Molenaar','Brouwer','ten Cate','Sluiter','van Bergen','Hendriks','Roelofs','Blankers','de Groot','Verhoeven','Stekelenburg'] },
+    Portugal:    { first: ['João','Rúben','Diogo','Gonçalo','Tiago','Rafael','André','Bernardo','Nuno','Vitinha','Fábio','Ricardo','Bruno','Pedro','Miguel','Hélder','Duarte','Tomás','Rodrigo','Ivo'],
+                   last:  ['Fonseca','Pereira','Moutinho','Cardoso','Teixeira','Sequeira','Barbosa','Antunes','Guedes','Rebelo','Faria','Nogueira','Machado','Lourenço','Pinheiro','Trincão','Semedo','Bragança','Vinagre','Palhinha'] },
+    Argentina:   { first: ['Santiago','Franco','Lautaro','Nicolás','Julián','Emiliano','Facundo','Agustín','Tomás','Matías','Lucas','Gonzalo','Ezequiel','Valentín','Alan','Thiago','Ramiro','Joaquín','Bruno','Cristian'],
+                   last:  ['Ferreyra','Domínguez','Balbuena','Ocampos','Zabaleta','Palacios','Cardozo','Almirón','Barrios','Quiroga','Villalba','Sosa','Andrada','Benedetto','Retegui','Colidio','Buonanotte','Garnacho','Paredes','Otamendi'] },
+    Brazil:      { first: ['Gabriel','Lucas','Matheus','Rodrygo','Vinícius','Bruno','Éder','Wesley','Kaio','Marquinhos','Danilo','Igor','Vitor','Thiago','Douglas','Everton','Pedro','Endrick','Raphael','Caio'],
+                   last:  ['Ribeiro','Nascimento','Andrade','Cavalcanti','Bittencourt','Moraes','Siqueira','Vasconcelos','Guimarães','Teles','Correia','Aparecido','Rezende','Bastos','Furtado','Macedo','Prado','Barcellos','Amorim','Queiroz'] },
+    USA:         { first: ['Tyler','Brandon','Christian','Weston','Gio','Cade','Jackson','Ethan','Cole','Owen','Malik','Diego','Ryan','Trevor','Kobe','Paxten','Auston','Bryce','Devin','Julian'],
+                   last:  ['Hutchinson','Delgado','Whitaker','Sandoval','Bradley','Ferguson','Nakamura','Okonkwo','Vasquez','Sheffield','Aaronson','Reyna','Turner','Zimmerman','Musah','Cardoso','Wolff','Pomykal','Sargent','Ledezma'] },
+    Belgium:     { first: ['Arthur','Lois','Charles','Romeo','Senne','Maarten','Wout','Zeno','Amadou','Jérémy'],
+                   last:  ['Vermeulen','Dendoncker','Verstraete','Lukebakio','Openda','Bakayoko','De Ketelaere','Vranckx','Theate','Castagne'] },
+    Croatia:     { first: ['Luka','Marko','Ivan','Josip','Mateo','Ante','Duje','Petar','Nikola','Borna'],
+                   last:  ['Modrić','Kovačević','Perišić','Vlašić','Sučić','Baturina','Šutalo','Erlić','Juranović','Pašalić'] },
+    Serbia:      { first: ['Nikola','Dušan','Aleksa','Filip','Miloš','Strahinja','Lazar','Veljko','Uroš','Petar'],
+                   last:  ['Jovanović','Milinković','Pavlović','Kostić','Mitrović','Vlahović','Ilić','Gudelj','Stanković','Radonjić'] },
+    Poland:      { first: ['Jakub','Piotr','Kacper','Bartosz','Michał','Sebastian','Nicola','Damian','Krzysztof','Mateusz'],
+                   last:  ['Kowalczyk','Zieliński','Bednarek','Szymański','Frankowski','Kiwior','Zalewski','Cash','Skorupski','Buksa'] },
+    Turkey:      { first: ['Emre','Kerem','Arda','Yusuf','Mert','Baris','Kaan','Orkun','Ferdi','Cengiz'],
+                   last:  ['Yılmaz','Aktürkoğlu','Demiral','Kabak','Ayhan','Kökçü','Çalhanoğlu','Bardakçı','Müldür','Akgün'] },
+    Nigeria:     { first: ['Chidi','Emeka','Kelechi','Ademola','Samuel','Victor','Joe','Alex','Tunde','Ola'],
+                   last:  ['Okafor','Adeyemi','Balogun','Nwankwo','Chukwueze','Osimhen','Aribo','Ndidi','Iheanacho','Bassey'] },
+    Senegal:     { first: ['Ismaïla','Cheikh','Pape','Moussa','Idrissa','Nicolas','Abdou','Iliman','Boulaye','Habib'],
+                   last:  ['Diallo','Ndiaye','Sarr','Gueye','Mendy','Cissé','Diatta','Jakobs','Ciss','Faye'] },
+    Ghana:       { first: ['Kwame','Kofi','Mohammed','Jordan','Elisha','Fatawu','Ernest','Baba','Alidu','Osman'],
+                   last:  ['Mensah','Boateng','Owusu','Partey','Ayew','Kudus','Nuamah','Salisu','Bukari','Semenyo'] },
+    Morocco:     { first: ['Youssef','Achraf','Sofyan','Hakim','Bilal','Amine','Nayef','Azzedine','Ilias','Anass'],
+                   last:  ['El Amrani','Benhaddou','Ouahabi','Chibani','Mazraoui','Zaroury','Amrabat','Aguerd','Saïss','Boufal'] },
+    Japan:       { first: ['Kaoru','Takefusa','Daichi','Ritsu','Ao','Wataru','Hidemasa','Junya','Reo','Koki'],
+                   last:  ['Tanaka','Nakamura','Sugawara','Hashioka','Morita','Kubota','Ito','Endo','Kamada','Machida'] },
+    Norway:      { first: ['Erling','Martin','Sander','Kristian','Ola','Fredrik','Jens','Antonio','Morten','Oscar'],
+                   last:  ['Berge','Nordtveit','Solbakken','Hovland','Ryerson','Aursnes','Strand','Bobb','Thorsby','Sørloth'] },
+    Sweden:      { first: ['Alexander','Viktor','Emil','Dejan','Anthony','Gustav','Hugo','Jesper','Isaac','Linus'],
+                   last:  ['Lindqvist','Bergström','Forsberg','Kulusevski','Elanga','Svensson','Larsson','Karlström','Ekdal','Holm'] },
+    Uruguay:     { first: ['Federico','Manuel','Facundo','Darwin','Nicolás','Rodrigo','Maximiliano','Agustín','Brian','Sebastián'],
+                   last:  ['Valverde','Ugarte','Pellistri','Núñez','De la Cruz','Bentancur','Araújo','Cáceres','Rodríguez','Olivera'] },
+    Colombia:    { first: ['Luis','Jhon','Rafael','Yerry','Daniel','Jorge','Kevin','Johan','Richard','Nelson'],
+                   last:  ['Córdoba','Arias','Lerma','Sinisterra','Muñoz','Borré','Uribe','Mosquera','Ospina','Carrascal'] },
+    Mexico:      { first: ['Santiago','Hirving','Edson','César','Orbelín','Luis','Jorge','Israel','Roberto','Julián'],
+                   last:  ['Giménez','Álvarez','Montes','Sánchez','Pineda','Vásquez','Antuna','Reyes','Alvarado','Araujo'] },
+    Ireland:     { first: ['Evan','Josh','Nathan','Séamus','Finn','Adam','Chiedozie','Dara','Killian','Mikey'],
+                   last:  ["O'Brien","Ferguson","Collins","Doherty","Ogbene","Cullen","Molumby","Idah","Coleman","Egan"] },
+    Scotland:    { first: ['Callum','Scott','Kieran','Lewis','Ryan','Billy','Andy','Aaron','Grant','Ben'],
+                   last:  ['McTominay','Robertson','Gilmour','Ferguson','Christie','Armstrong','McGregor','Hickey','Hanley','Doig'] },
+    Denmark:     { first: ['Rasmus','Mikkel','Christian','Jonas','Andreas','Victor','Pierre','Joakim','Anders','Mads'],
+                   last:  ['Højlund','Damsgaard','Kristensen','Skov','Wind','Nelsson','Dolberg','Bruun','Vestergaard','Poulsen'] }
+  };
+
+  // where a club's players tend to come from: mostly local, some imports
+  const IMPORT_POOLS = {
+    England: ['Ireland','Scotland','France','Netherlands','Brazil','Nigeria','Denmark','Belgium'],
+    Spain:   ['Argentina','Brazil','Portugal','Morocco','Uruguay','France'],
+    Italy:   ['Argentina','Brazil','Serbia','France','Netherlands','Poland'],
+    Germany: ['Turkey','Poland','Netherlands','Denmark','Japan','Nigeria','France'],
+    France:  ['Senegal','Morocco','Ghana','Nigeria','Belgium','Brazil'],
+    Netherlands: ['Belgium','Ghana','Nigeria','Denmark','Japan','Morocco'],
+    Portugal: ['Brazil','Spain','Ghana','Senegal','Uruguay','Nigeria'],
+    Argentina: ['Uruguay','Colombia','Brazil','Mexico'],
+    Brazil:  ['Argentina','Uruguay','Colombia','Portugal'],
+    USA:     ['Mexico','Colombia','England','Japan','Ghana','Brazil']
+  };
+
+  // fallback pools used when nothing else applies
+  const FIRST_NAMES = NAMES.England.first.concat(NAMES.Brazil.first, NAMES.Spain.first);
+  const LAST_NAMES = NAMES.England.last.concat(NAMES.Brazil.last, NAMES.Spain.last);
 
   // --- Traits (earned on the pitch, never bought) --------------------------
   const TRAITS = {
@@ -365,7 +438,7 @@
 
   global.DATA = {
     POSITIONS, ATTR_KEYS, ATTR_LABEL, DRAFT_ATTRS, DRAFT_ATTRS_GK,
-    LEAGUES, CONTINENTAL, NATIONS, CLUB_KIT, FIRST_NAMES, LAST_NAMES,
+    LEAGUES, CONTINENTAL, NATIONS, CLUB_KIT, NAMES, IMPORT_POOLS, FIRST_NAMES, LAST_NAMES,
     TRAITS, TRAINING, LEGENDS, LEGENDS_GK, CONFIG
   };
 })(window);

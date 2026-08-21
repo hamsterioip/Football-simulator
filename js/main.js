@@ -206,7 +206,7 @@
           break;
         }
         case 'devAge': p.age = U.clamp(p.age + parseInt(arg, 10), 15, 45); break;
-        case 'devShirt': p.shirt = U.clamp(p.shirt + parseInt(arg, 10), 1, 99); break;
+        case 'devShirt': Career.claimShirt(g, U.clamp(p.shirt + parseInt(arg, 10), 1, 99)); break;
         case 'devPos': p.pos = arg; break;
         case 'devHeal':
           p.injuries = []; p.suspension = 0; p.fitness = 100;
@@ -635,19 +635,40 @@
       State.save();
 
       const ev = Career.rollEvent(g);
-      if (ev) {
-        UI.modal({
-          title: (ev.icon ? ico(ev.icon) + ' ' : '') + ev.title, text: ev.text,
-          actions: ev.options.map(o => ({
-            label: o.label, cls: 'btn-ghost',
-            onClick: () => {
-              const res = o.run(g);
-              UI.modal({ title: '', text: res.text, actions: [{ label: 'Continue' }] });
-              State.save(); UI.render();
-            }
-          }))
-        });
-      }
+      if (ev) Game.showEvent(ev);
+    },
+
+    /* An off-field moment, presented like an on-pitch one: a card with the
+       situation and a set of tagged choices. */
+    showEvent(ev) {
+      const g = State.game;
+      UI.modal({
+        title: ev.title,
+        html: `<div class="ev-card">
+            <div class="ev-top">${ico(ev.icon || 'club', 'ev-icon')}
+              <span class="ev-cat">${U.esc(ev.cat || 'Club')}</span></div>
+            <p class="ev-text">${U.esc(ev.text)}</p>
+          </div>
+          <div class="choices${ev.options.length >= 5 ? ' cols' : ''}">
+            ${ev.options.map((o, i) => `<button class="choice" data-ev="${i}">
+              <div class="cb"><b>${U.esc(o.label)}</b><span>${U.esc(o.hint || '')}</span></div>
+              ${o.tag ? `<span class="tag">${U.esc(o.tag)}</span>` : ''}</button>`).join('')}
+          </div>`,
+        actions: [],
+        onRender(m) {
+          m.querySelectorAll('[data-ev]').forEach(btn => btn.onclick = () => {
+            const opt = ev.options[+btn.dataset.ev];
+            const res = opt.run(g);
+            UI.closeModal();
+            UI.modal({
+              title: opt.label,
+              html: `<p class="ev-outcome ${res.tone || ''}">${U.esc(res.text)}</p>`,
+              actions: [{ label: 'Continue' }]
+            });
+            State.save(); UI.render();
+          });
+        }
+      });
     },
 
     checkTraits() {

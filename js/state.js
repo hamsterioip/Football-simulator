@@ -192,6 +192,33 @@
     wipe() { try { localStorage.removeItem(D.CONFIG.SAVE_KEY); } catch (e) {} State.game = null; }
   };
 
+  /* ==================== player names ====================
+     A club's squad is mostly local with a scattering of imports, and every
+     player's name matches the country he is from. That consistency is what
+     makes a squad list read as real. */
+  const Names = {
+    pick(country) {
+      const pool = D.NAMES[country] || D.NAMES.England;
+      return U.pick(pool.first) + ' ' + U.pick(pool.last);
+    },
+    // choose where a player at this club is from
+    nationFor(clubCountry) {
+      const imports = D.IMPORT_POOLS[clubCountry] || [];
+      const r = Math.random();
+      if (r < 0.62 && D.NAMES[clubCountry]) return clubCountry;
+      if (r < 0.9 && imports.length) return U.pick(imports);
+      const all = Object.keys(D.NAMES);
+      return U.pick(all);
+    },
+    // a full player identity for a squad member or a rival
+    person(clubCountry) {
+      const nation = Names.nationFor(clubCountry);
+      return { name: Names.pick(nation), nation };
+    }
+  };
+
+  global.Names = Names;
+
   /* ==================== contracts & wages ==================== */
   const Contracts = {
     wageFor(p, club, rookie) {
@@ -206,9 +233,11 @@
     offerFor(p, club, rookie) {
       const wage = Contracts.wageFor(p, club, rookie);
       const years = rookie ? U.int(2, 3) : U.int(2, 5);
+      // a clause always has to be worth more than the contract itself
+      const floor = Math.max(wage * 52 * 3, 1000000);
       return {
         wage, years,
-        release: Math.round(State.marketValue(p) * U.rnd(1.6, 3.2) / 100000) * 100000
+        release: Math.max(floor, Math.round(State.marketValue(p) * U.rnd(1.6, 3.2) / 100000) * 100000)
       };
     },
     joinClub(p, club, offer) {

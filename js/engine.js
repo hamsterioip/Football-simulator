@@ -18,12 +18,14 @@
       return shape.map((pos, i) => {
         const starter = i < 11;
         const ovr = Math.round(U.clamp(R + (starter ? U.gauss(1, 3.5) : U.gauss(-7, 4)), 40, 96));
+        const who = global.Names.person(club.country);
         return {
           id: U.id(),
-          name: U.pick(D.FIRST_NAMES) + ' ' + U.pick(D.LAST_NAMES),
+          name: who.name, nation: who.nation,
           pos, ovr, age: U.int(18, 34),
+          shirt: 0,
           goals: 0, assists: 0, apps: 0,
-          rel: 50 // relationship with you 0-100
+          rel: 50 // how well he gets on with you, 0-100
         };
       });
     },
@@ -31,6 +33,15 @@
       if (!g.squad || g.squadClub !== g.player.club) {
         g.squad = Squad.generate(State.club(g.player.club));
         g.squadClub = g.player.club;
+        // hand out squad numbers, keeping yours free
+        const taken = { }; taken[g.player.shirt] = true;
+        const wish = { GK: [1, 13, 25], RB: [2, 22], CB: [4, 5, 6, 15], LB: [3, 33],
+                       CDM: [8, 16], CM: [7, 14, 18], CAM: [10, 20], RW: [11, 17], LW: [19, 21], ST: [9, 12, 23] };
+        g.squad.forEach(sq => {
+          const prefs = (wish[sq.pos] || []).concat([24, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36]);
+          const free = prefs.find(n => !taken[n]) || U.int(37, 60);
+          taken[free] = true; sq.shirt = free;
+        });
         // captain = oldest high rated
         const cap = g.squad.slice().sort((a, b) => (b.ovr + b.age) - (a.ovr + a.age))[0];
         cap.captain = true;
@@ -213,7 +224,7 @@
       // special moments
       if (m.role !== 'out') {
         if (U.chance(0.14)) moments.push({ minute: U.int(entry + 3, 90), side: 'us', involved: true, special: 'penalty' });
-        if (U.chance(0.2)) moments.push({ minute: U.int(entry + 3, 90), side: 'us', involved: true, special: 'set' });
+        if (U.chance(p.setPieceDuty ? 0.34 : 0.2)) moments.push({ minute: U.int(entry + 3, 90), side: 'us', involved: true, special: 'set' });
         if (U.chance(0.22)) moments.push({ minute: U.int(entry + 5, 88), side: 'none', involved: true, special: 'social' });
       }
       moments.sort((a, b) => a.minute - b.minute);
@@ -223,6 +234,7 @@
     isPenaltyTaker(g) {
       const p = g.player;
       if (p.pos === 'GK') return false;
+      if (p.penaltyDuty) return true;          // you claimed them in the dressing room
       const rival = Squad.ensure(g).filter(s => s.pos !== 'GK').sort((a, b) => b.ovr - a.ovr)[0];
       return p.attrs.shooting >= 62 || p.ovr >= (rival ? rival.ovr : 70) - 1 || State.hasTrait(p, 'ice');
     },
@@ -592,7 +604,11 @@
       g.tables[league.id] = {};
       league.clubs.forEach(id => { g.tables[league.id][id] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }; });
       g.topScorers = {};
-      league.clubs.forEach(id => { if (id !== club.id) g.topScorers[id] = { name: U.pick(D.FIRST_NAMES) + ' ' + U.pick(D.LAST_NAMES), club: id, goals: 0 }; });
+      league.clubs.forEach(id => {
+        if (id === club.id) return;
+        const who = global.Names.person(State.club(id).country);
+        g.topScorers[id] = { name: who.name, nation: who.nation, club: id, goals: 0 };
+      });
 
       const single = Season.roundRobin(league.clubs);
       const rounds = single.concat(single.map(r => r.map(pair => [pair[1], pair[0]])));
@@ -660,7 +676,7 @@
 
     prepareFixture(g, f) {
       const p = g.player, club = State.club(p.club);
-      if (f.oppId) return f;
+      if (f.oppId) { Season.ensureStar(g, f); return f; }
       if (f.comp === 'cup') {
         const pool = State.clubsOf(club.league).filter(c => c.id !== club.id);
         const weaker = pool.filter(c => c.rating < club.rating + 4);
@@ -675,7 +691,18 @@
         const strong = others.filter(c => c.rating >= club.rating - 8);
         f.oppId = (f.contKo != null && strong.length ? U.pick(strong) : U.pick(others)).id;
       }
+      Season.ensureStar(g, f);
       return f;
+    },
+
+    // the opposition player you are warned about before kick-off
+    ensureStar(g, f) {
+      if (f.star || !f.oppId) return;
+      const opp = State.club(f.oppId);
+      const who = global.Names.person(opp.country);
+      f.star = { name: who.name, nation: who.nation,
+                 pos: U.pick(['ST', 'LW', 'RW', 'CAM', 'CM', 'CB']),
+                 ovr: Math.round(U.clamp(opp.rating + U.rnd(2, 7), 45, 97)) };
     },
 
     recordResult(g, m) {

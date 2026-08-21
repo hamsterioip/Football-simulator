@@ -131,6 +131,17 @@
         text: 'Eleven clichés in ninety seconds. Nobody can criticise you for it, which is the point.' };
     },
 
+    /* Take a squad number. If a team-mate is wearing it, they swap with you —
+       which is exactly how it works at a real club. */
+    claimShirt(g, number) {
+      const p = g.player, old = p.shirt;
+      const squad = Engine.Squad.ensure(g);
+      const holder = squad.find(sq => sq.shirt === number);
+      if (holder) holder.shirt = old;
+      p.shirt = number;
+      return holder ? holder.name : null;
+    },
+
     bumpTeammates(g, amount) {
       const sq = Engine.Squad.ensure(g);
       U.pickN(sq, 5).forEach(s => s.rel = clamp((s.rel || 50) + amount));
@@ -138,142 +149,401 @@
 
     /* ================= things that happen at a football club ================= */
     EVENTS: [
-      { id: 'manager_row', w: 1, icon: 'manager', title: 'Dressing room row',
+      { id: 'deadline_day', w: 1, icon: 'transfer', cat: 'Transfer', title: 'Deadline day, 11pm',
+        text: 'A bid has landed with two hours of the window left. Your phone has not stopped. The club will not stand in your way if you want it.',
+        options: [
+          { label: 'Get in the car', hint: 'Medical at midnight. No looking back.', tag: 'Bold',
+            run(g) { const p = P(); p.deadlineMove = true; p.managerTrust = clamp(p.managerTrust - 5); State.addReputation(p, 3);
+              State.news(`${p.lastName} on the move as the window slams shut`, 'info');
+              return { tone: 'neutral', text: 'You drive through the night for a medical you are too wired to sleep before. Whether it was right, you find out in August.' }; } },
+          { label: 'Let it pass', hint: 'You are settled. Stay settled.', tag: 'Loyal',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 12); p.morale = clamp(p.morale + 6);
+              return { tone: 'good', text: 'You turn the phone off at ten. The manager finds out and tells the dressing room exactly what you did.' }; } },
+          { label: 'Use it to get a better deal here', hint: 'Leverage, politely applied.', tag: 'Streetwise',
+            run(g) { const p = P();
+              if (U.chance(0.55)) { p.contract.wage = Math.round(p.contract.wage * 1.4); p.contract.years++;
+                return { tone: 'good', text: `The club improve your terms to ${U.cash(p.contract.wage)} a week to keep you. Everyone saves face.` }; }
+              p.managerTrust = clamp(p.managerTrust - 12);
+              return { tone: 'bad', text: 'They call your bluff and tell you the door is there. Now you look like the one who wanted out.' }; } }
+        ]},
+      { id: 'penalty_duty', w: 0.9, icon: 'penalty', cat: 'Dressing room', title: 'Who takes the penalties?',
+        text: 'The regular taker missed on Saturday. The manager asks the room who wants them, and nobody speaks first.',
+        options: [
+          { label: 'Take them', hint: 'Own the pressure. Own the misses too.', tag: 'Nerve',
+            run(g) { const p = P(); p.penaltyDuty = true; State.addReputation(p, 1.5);
+              return { tone: 'good', text: 'You put your hand up. From now on the ball is yours, and so is every headline that follows.' }; } },
+          { label: 'Back the regular taker', hint: 'He needs one to go in.', tag: 'Team-mate',
+            run(g) { Career.bumpTeammates(g, 8); const p = P(); p.morale = clamp(p.morale + 4);
+              return { tone: 'good', text: 'You tell the room he is still the best striker of a ball at the club. He scores the next three.' }; } },
+          { label: 'Say nothing', hint: 'Not your problem.', tag: 'Quiet',
+            run(g) { return { tone: 'neutral', text: 'Someone else takes them. You keep your average intact and your name out of it.' }; } }
+        ]},
+      { id: 'setpiece_duty', w: 0.8, icon: 'corner', cat: 'Training ground', title: 'Set-piece practice',
+        text: 'Forty minutes of free kicks at the end of training, and the coach is watching who keeps hitting the target.',
+        options: [
+          { label: 'Stay behind and claim them', hint: 'Hundreds of repetitions.', tag: 'Work Rate',
+            run(g) { const p = P(); p.setPieceDuty = true; Engine.Progress.addXp(p, 'shooting', 4);
+              p.fitness = clamp(p.fitness - 6);
+              return { tone: 'good', text: 'You stay out until the floodlights go off. The dead balls are yours now.' }; } },
+          { label: 'Work on your delivery instead', hint: 'Crossing and corners. The boring gold.', tag: 'Passing',
+            run(g) { const p = P(); Engine.Progress.addXp(p, 'passing', 4.5); p.fitness = clamp(p.fitness - 5);
+              return { tone: 'good', text: 'A hundred crosses onto the same cone. Nobody applauds this work, and it wins matches.' }; } },
+          { label: 'Get in the ice bath', hint: 'Recover properly.', tag: 'Smart',
+            run(g) { const p = P(); p.fitness = clamp(p.fitness + 14);
+              return { tone: 'neutral', text: 'You look after the legs. There are three games next week.' }; } }
+        ]},
+      { id: 'shirt_number', w: 0.7, icon: 'shirt', cat: 'Club', title: 'The number is free',
+        text: 'The club legend has gone and his shirt is available. The kit man asks, carefully, whether you want it.',
+        options: [
+          { label: 'Take the number', hint: 'The expectation comes with it.', tag: 'Bold',
+            run(g) { const p = P(); const old = p.shirt;
+              const wanted = U.pick([7, 9, 10, 11].filter(n => n !== old)) || 10;
+              const swappedWith = Career.claimShirt(g, wanted);
+              State.addReputation(p, 2);
+              State.news(`${p.lastName} takes the number ${p.shirt} shirt`, 'info');
+              return { tone: 'neutral', text: `You swap ${old} for ${p.shirt}${swappedWith ? `, and ${swappedWith} takes yours` : ''}. `
+                + 'Every supporter now expects you to be him. Plenty will say you are not.' }; } },
+          { label: 'Leave it be', hint: 'Some shirts should be left alone.', tag: 'Class',
+            run(g) { const p = P(); Career.bumpTeammates(g, 4); p.morale = clamp(p.morale + 3);
+              return { tone: 'good', text: 'You keep your own number. The old pros in the dressing room nod at that.' }; } }
+        ]},
+      { id: 'video_review', w: 0.9, icon: 'video', cat: 'Manager', title: 'Video review, whole squad watching',
+        text: 'The analyst pauses on your positioning for the third goal. Twenty-four players are looking at the screen. Then at you.',
+        options: [
+          { label: 'Own it in front of everyone', hint: 'Say it was you. Move on.', tag: 'Character',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 10); Career.bumpTeammates(g, 5);
+              return { tone: 'good', text: '"That is on me, it will not happen again." The room relaxes. So does the manager.' }; } },
+          { label: 'Point out who left you exposed', hint: 'True, and badly timed.', tag: 'Blunt',
+            run(g) { const p = P(); Career.bumpTeammates(g, -9); p.managerTrust = clamp(p.managerTrust - 4);
+              return { tone: 'bad', text: 'You are right, and it does not matter. Two of them do not speak to you for a fortnight.' }; } },
+          { label: 'Ask to see it again', hint: 'Actually learn from it.', tag: 'Professional',
+            run(g) { const p = P(); Engine.Progress.addXp(p, 'defending', 4);
+              p.managerTrust = clamp(p.managerTrust + 6);
+              return { tone: 'good', text: 'You watch it four more times alone that evening. It genuinely does not happen again.' }; } }
+        ]},
+      { id: 'national_snub', w: 0.8, icon: 'nation', cat: 'International', title: 'Left out of the squad',
+        text: 'The squad is announced on television and your name is not on it. Your phone starts buzzing before the presenter has finished.',
+        options: [
+          { label: 'Call the manager and ask why', hint: 'A straight answer, good or bad.', tag: 'Direct',
+            run(g) { const p = P();
+              if (U.chance(0.55)) { p.intl.called = true;
+                return { tone: 'good', text: 'He tells you exactly what he needs to see. You give him it, and you are in the next squad.' }; }
+              return { tone: 'bad', text: '"You are not in my plans." At least you know where you stand.' }; } },
+          { label: 'Say nothing and score goals', hint: 'Make it impossible to leave you out.', tag: 'Answer',
+            run(g) { const p = P(); p.form = clamp(p.form + 12); p.morale = clamp(p.morale - 4);
+              return { tone: 'good', text: 'No comment, no complaint, just a run of form that makes the argument for you.' }; } },
+          { label: 'Question the selection publicly', hint: 'Popular with fans. Not with him.', tag: 'Risky',
+            run(g) { const p = P(); State.addReputation(p, 2.5);
+              State.news(`"I deserve to be there" — ${p.lastName} hits out at national selection`, 'bad');
+              return { tone: 'bad', text: 'It leads the news for a day. Getting picked just became considerably harder.' }; } }
+        ]},
+      { id: 'dual_nation', w: 0.35, icon: 'nation', cat: 'International', title: 'Two countries want you',
+        text: 'You qualify for another nation and their federation have made contact. They can promise you tournaments. Yours cannot promise anything.',
+        options: [
+          { label: 'Switch allegiance', hint: 'Play at major tournaments.', tag: 'Career',
+            run(g) { const p = P();
+              const pickN = U.pick(D.NATIONS.filter(n => n.name !== p.nation));
+              p.nation = pickN.name; p.intl.called = false; p.intl.caps = 0; p.intl.goals = 0;
+              State.news(`${p.lastName} switches international allegiance to ${pickN.name}`, 'info');
+              return { tone: 'neutral', text: `You file the paperwork and pull on a ${pickN.name} shirt. Some people back home will never forgive it. You will play at a World Cup.` }; } },
+          { label: 'Stay where you are from', hint: 'It was never really a question.', tag: 'Heart',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 8); State.addReputation(p, 1);
+              return { tone: 'good', text: 'You thank them politely and put the phone down. You were only ever going to play for one country.' }; } }
+        ]},
+      { id: 'leak', w: 0.7, icon: 'news', cat: 'Media', title: 'Something private has leaked',
+        text: 'Word for word, what was said in the dressing room on Saturday is in a newspaper this morning. Somebody in that room talked.',
+        options: [
+          { label: 'Call a players-only meeting', hint: 'Sort it internally.', tag: 'Leadership',
+            run(g) { const p = P(); Career.bumpTeammates(g, 7); p.managerTrust = clamp(p.managerTrust + 6);
+              return { tone: 'good', text: 'No staff, no phones, thirty minutes. Nothing leaks again all season.' }; } },
+          { label: 'Let the club investigate', hint: 'Not your job.', tag: 'Quiet',
+            run(g) { return { tone: 'neutral', text: 'The club promise an investigation. Nothing is ever announced, and everyone quietly suspects the same person.' }; } },
+          { label: 'Name who you think it was', hint: 'If you are wrong, this gets ugly.', tag: 'Risky',
+            run(g) { const p = P();
+              if (U.chance(0.4)) { Career.bumpTeammates(g, 4);
+                return { tone: 'good', text: 'You are right. He is gone in January, and the room respects that you said it out loud.' }; }
+              Career.bumpTeammates(g, -12); p.managerTrust = clamp(p.managerTrust - 8);
+              return { tone: 'bad', text: 'You are wrong, and you have just accused an innocent team-mate in front of everyone.' }; } }
+        ]},
+      { id: 'award_night', w: 0.7, icon: 'medal', cat: 'Awards', title: 'You are nominated',
+        text: 'The ceremony is on Thursday, four hundred miles away, and there is a match on Sunday.',
+        options: [
+          { label: 'Go, and enjoy it', hint: 'These nights do not come often.', tag: 'Occasion',
+            run(g) { const p = P(); State.addReputation(p, 3); p.fitness = clamp(p.fitness - 8); p.morale = clamp(p.morale + 8);
+              return { tone: 'good', text: 'A long night in a suit, a great many photographs, and a trophy you will keep forever. Your legs will complain on Sunday.' }; } },
+          { label: 'Send a video message and train', hint: 'The match is what matters.', tag: 'Professional',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 8); p.form = clamp(p.form + 5);
+              return { tone: 'good', text: 'Thirty seconds recorded at the training ground, then a double session. The manager notices everything.' }; } }
+        ]},
+      { id: 'scan_results', w: 0.8, icon: 'hospital', cat: 'Fitness', title: 'The scan results are in',
+        text: 'There is damage. Not season-ending, but it will not fix itself. Six weeks now, the surgeon says, or manage it and hope.',
+        options: [
+          { label: 'Have the operation now', hint: 'Six weeks out. Properly fixed.', tag: 'Long View',
+            run(g) { const p = P(); Engine.Injuries.give(g, true);
+              p.injuries.forEach(i => i.matches = Math.max(i.matches, 5));
+              p.morale = clamp(p.morale - 8);
+              return { tone: 'bad', text: 'You go under the knife on Monday. Six weeks of rehab, and then no more thinking about it.' }; } },
+          { label: 'Manage it and keep playing', hint: 'Injections and physio. Risky.', tag: 'Gamble',
+            run(g) { const p = P();
+              if (U.chance(0.45)) { Engine.Injuries.give(g, true);
+                return { tone: 'bad', text: 'It lasts five weeks before it goes completely, and now it is worse than it was.' }; }
+              p.managerTrust = clamp(p.managerTrust + 8); p.fitness = clamp(p.fitness - 10);
+              return { tone: 'good', text: 'Painkillers, strapping and a lot of gritted teeth. You get through the season on it.' }; } }
+        ]},
+      { id: 'fan_forum', w: 0.7, icon: 'fans', cat: 'Club', title: 'Supporters\' forum',
+        text: 'Three hundred season-ticket holders in a function room, and the first question is why the team has been so poor away from home.',
+        options: [
+          { label: 'Answer honestly', hint: 'They can handle the truth.', tag: 'Honest',
+            run(g) { const p = P(); State.addReputation(p, 2); p.morale = clamp(p.morale + 5);
+              return { tone: 'good', text: 'You tell them exactly what is going wrong and what is being done about it. They applaud a straight answer for once.' }; } },
+          { label: 'Defend the manager', hint: 'Close ranks.', tag: 'Loyal',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 10);
+              return { tone: 'good', text: 'You back him publicly and completely. It gets back to him within the hour.' }; } },
+          { label: 'Promise a trophy', hint: 'Say the thing they want to hear.', tag: 'Risky',
+            run(g) { const p = P(); State.addReputation(p, 3); p.promisedTrophy = true;
+              State.news(`"We will win something this year" — ${p.lastName} makes a promise`, 'info');
+              return { tone: 'neutral', text: 'The room erupts. It is also now a stick to beat you with every week until May.' }; } }
+        ]},
+      { id: 'formation_switch', w: 0.8, icon: 'tactics', cat: 'Manager', title: 'A change of shape',
+        text: 'The manager wants to change the system. In the new one, you are asked to do a completely different job.',
+        options: [
+          { label: 'Learn the new role properly', hint: 'Extra meetings, extra video.', tag: 'Professional',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 10);
+              const attr = U.pick(['passing', 'defending', 'physical', 'dribbling']);
+              Engine.Progress.addXp(p, attr, 5.5);
+              return { tone: 'good', text: `A month of feeling lost, then it clicks. Your ${D.ATTR_LABEL[attr].toLowerCase()} is better for it.` }; } },
+          { label: 'Tell him it does not suit you', hint: 'Honest, and unwelcome.', tag: 'Blunt',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 12); p.morale = clamp(p.morale + 3);
+              return { tone: 'bad', text: 'He listens, thanks you, and picks somebody else for it. And for a few other things after that.' }; } },
+          { label: 'Play it his way and stay quiet', hint: 'Do the job, say nothing.', tag: 'Quiet',
+            run(g) { const p = P(); p.form = clamp(p.form - 5); p.managerTrust = clamp(p.managerTrust + 4);
+              return { tone: 'neutral', text: 'You do what you are told. The performances dip while you work it out, but nobody can question the attitude.' }; } }
+        ]},
+      { id: 'club_crisis', w: 0.6, icon: 'alert', cat: 'Club', title: 'The club is in trouble',
+        text: 'Wages are late, the training ground is falling apart, and the owner has stopped returning calls. The senior players are asked to speak.',
+        options: [
+          { label: 'Speak for the squad', hint: 'Put your name to it.', tag: 'Leadership',
+            run(g) { const p = P(); Career.bumpTeammates(g, 10); State.addReputation(p, 2.5);
+              State.news(`${p.lastName} speaks for the squad amid boardroom chaos`, 'info');
+              return { tone: 'good', text: 'You stand in front of the cameras and say what everyone is thinking. The dressing room will remember it long after the owner has gone.' }; } },
+          { label: 'Keep your head down and play', hint: 'Football is the only bit you control.', tag: 'Focus',
+            run(g) { const p = P(); p.form = clamp(p.form + 6);
+              return { tone: 'neutral', text: 'You let others fight it and put your performances where your opinions might have gone.' }; } },
+          { label: 'Ask your agent to find an exit', hint: 'Self-preservation.', tag: 'Pragmatic',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 8); p.agitated = true;
+              return { tone: 'neutral', text: 'Quiet calls are made. If it all falls apart, you will not be going down with it.' }; } }
+        ]},
+      { id: 'young_debut', w: 0.7, icon: 'academy', cat: 'Dressing room', title: 'A debut to look after',
+        text: 'A seventeen-year-old is starting on Saturday. He has not said a word all week and he looks terrified.',
+        options: [
+          { label: 'Take him under your wing', hint: 'Sit with him. Talk him through it.', tag: 'Senior Pro',
+            run(g) { const p = P(); Career.bumpTeammates(g, 8); p.managerTrust = clamp(p.managerTrust + 6);
+              p.morale = clamp(p.morale + 5);
+              return { tone: 'good', text: 'You sit next to him on the coach and talk about nothing at all until he laughs. He has a brilliant debut.' }; } },
+          { label: 'Give him the ball early and often', hint: 'Confidence through involvement.', tag: 'Football',
+            run(g) { Career.bumpTeammates(g, 5);
+              return { tone: 'good', text: 'Three easy passes in the first five minutes and you can see his shoulders drop. Simple, and it works.' }; } },
+          { label: 'Let him find out for himself', hint: 'Nobody helped you.', tag: 'Cold',
+            run(g) { Career.bumpTeammates(g, -5);
+              return { tone: 'bad', text: 'He has a nightmare and is hooked at half-time. One of the older lads asks where you were.' }; } }
+        ]},
+      { id: 'agent_meeting', w: 0.9, icon: 'agent', cat: 'Transfer', title: 'Your agent has news',
+        text: 'He wants to meet in person, which he only ever does when there is something worth saying out loud.',
+        options: [
+          { label: 'Ask him to test the market', hint: 'See what is actually out there.', tag: 'Ambition',
+            run(g) { const p = P(); p.marketTested = true; State.addReputation(p, 1.5);
+              return { tone: 'neutral', text: 'He starts making calls. Three clubs come back interested and one of them is serious. Something will happen this summer.' }; } },
+          { label: 'Get me a new deal here', hint: 'You are happy. Reward it.', tag: 'Settled',
+            run(g) { const p = P();
+              if (U.chance(0.6)) { p.contract.wage = Math.round(p.contract.wage * 1.25);
+                p.contract.years = Math.max(p.contract.years, 3);
+                return { tone: 'good', text: `Signed inside a fortnight: ${U.cash(p.contract.wage)} a week and three more years.` }; }
+              return { tone: 'neutral', text: 'The club say they will look at it in the summer. Which means no, for now.' }; } },
+          { label: 'Change agent', hint: 'You have outgrown him.', tag: 'Cold',
+            run(g) { const p = P(); p.agentLevel = 3;
+              return { tone: 'neutral', text: 'An awkward hour and a large severance payment. Your new representation opens doors the old one could not find.' }; } }
+        ]},
+      { id: 'referee_charge', w: 0.5, icon: 'whistle', cat: 'Discipline', title: 'Charged by the federation',
+        text: 'Your words to the referee on Saturday were picked up by a microphone. There is a charge, and a hearing on Thursday.',
+        options: [
+          { label: 'Accept the charge', hint: 'Take the ban and move on.', tag: 'Accept',
+            run(g) { const p = P(); p.suspension = Math.max(p.suspension, 1);
+              return { tone: 'bad', text: 'One match, a fine, and it is over. Sometimes the quickest way out is straight through.' }; } },
+          { label: 'Contest it', hint: 'You were not talking to him.', tag: 'Fight',
+            run(g) { const p = P();
+              if (U.chance(0.45)) return { tone: 'good', text: 'The charge is dismissed. Your lawyer was very good and very expensive.' };
+              p.suspension = Math.max(p.suspension, 2);
+              return { tone: 'bad', text: 'Contesting it and losing gets you an extra match. That is how it works.' }; } },
+          { label: 'Apologise publicly first', hint: 'Get ahead of it.', tag: 'Smart',
+            run(g) { const p = P(); State.addReputation(p, 0.5);
+              if (U.chance(0.6)) return { tone: 'good', text: 'A full apology before the hearing, and the panel decide a warning is enough.' };
+              p.suspension = Math.max(p.suspension, 1);
+              return { tone: 'neutral', text: 'You apologise anyway and still get the one-match ban. At least it reads well.' }; } }
+        ]},
+      { id: 'testimonial', w: 0.4, icon: 'trophy', cat: 'Club', title: 'They want to give you a testimonial',
+        text: 'Ten years at the club. They are talking about a full house on a Sunday in May, with your name on the ticket.',
+        options: [
+          { label: 'Accept, and give the money away', hint: 'To the academy and the local hospital.', tag: 'Class',
+            run(g) { const p = P(); State.addReputation(p, 4); p.morale = clamp(p.morale + 12);
+              State.news(`${p.lastName} donates testimonial proceeds to the academy`, 'good');
+              return { tone: 'good', text: 'A full house, an unbelievable reception, and not a penny of it kept. That is the day they name a stand after you.' }; } },
+          { label: 'Accept it gratefully', hint: 'You earned this.', tag: 'Occasion',
+            run(g) { const p = P(); State.addReputation(p, 2.5); p.morale = clamp(p.morale + 10);
+              return { tone: 'good', text: 'You walk out with your family to a standing ovation that lasts four minutes. You do not trust yourself to speak.' }; } },
+          { label: 'Turn it down', hint: 'Not while you are still playing.', tag: 'Focus',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 5);
+              return { tone: 'neutral', text: '"When I am finished." The club say the offer stands whenever you want it.' }; } }
+        ]},
+      { id: 'winter_camp', w: 0.6, icon: 'train', cat: 'Training ground', title: 'Mid-season training camp',
+        text: 'Five days of warm weather, double sessions, and a manager who has clearly decided this squad needs running.',
+        options: [
+          { label: 'Lead every run', hint: 'Set the standard.', tag: 'Work Rate',
+            run(g) { const p = P(); Engine.Progress.addXp(p, 'physical', 6); p.fitness = clamp(p.fitness - 4);
+              p.managerTrust = clamp(p.managerTrust + 8); Career.bumpTeammates(g, 4);
+              return { tone: 'good', text: 'First in every single run for five days. The younger lads start following you around.' }; } },
+          { label: 'Work on your weak foot', hint: 'Nobody is watching. Perfect.', tag: 'Detail',
+            run(g) { const p = P(); Engine.Progress.addXp(p, 'weakFoot', 6.5); p.fitness = clamp(p.fitness - 5);
+              return { tone: 'good', text: 'Two hours a day on your wrong side while everyone else is at the pool. It shows up in April.' }; } },
+          { label: 'Coast through it', hint: 'Save yourself for the games.', tag: 'Cynical',
+            run(g) { const p = P(); p.fitness = clamp(p.fitness + 10); p.managerTrust = clamp(p.managerTrust - 6);
+              return { tone: 'neutral', text: 'You do enough and not a yard more. The staff have a word about your standards.' }; } }
+        ]},
+      { id: 'manager_row', w: 1, icon: 'manager', cat: 'Manager', title: 'Dressing room row',
         text: 'The manager singles you out in front of the whole squad at half-time. It is brutal, and not entirely fair.',
         options: [
-          { label: 'Bite back', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 18); p.morale = clamp(p.morale + 6);
+          { label: 'Bite back', hint: 'Say exactly what you think.', tag: 'Hot Head', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 18); p.morale = clamp(p.morale + 6);
             Career.bumpTeammates(g, 3);
             return { tone: 'bad', text: 'You tell him exactly what you think. The lads are stunned. You will be on the bench next week.' }; } },
-          { label: 'Answer him on the pitch', run(g) { const p = P(); p.form = clamp(p.form + 10); p.managerTrust = clamp(p.managerTrust + 6);
+          { label: 'Answer him on the pitch', hint: 'No words. Just a performance.', tag: 'Character', run(g) { const p = P(); p.form = clamp(p.form + 10); p.managerTrust = clamp(p.managerTrust + 6);
             return { tone: 'good', text: 'You say nothing and produce your best forty-five minutes of the season.' }; } },
-          { label: 'Knock on his door on Monday', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 12);
+          { label: 'Knock on his door on Monday', hint: 'Sort it privately, no audience.', tag: 'Mature', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 12);
             return { tone: 'good', text: 'A quiet conversation with no audience. He admits he went too far, and something shifts between you.' }; } }
         ]},
-      { id: 'wonderkid', w: 1, icon: 'academy', title: 'A sixteen-year-old arrives',
+      { id: 'wonderkid', w: 1, icon: 'academy', cat: 'Dressing room', title: 'A sixteen-year-old arrives',
         text: 'The academy prodigy is training with the first team, in your position, and he is frighteningly good.',
         options: [
-          { label: 'Take him under your wing', run(g) { const p = P(); Career.bumpTeammates(g, 6); p.managerTrust = clamp(p.managerTrust + 8);
+          { label: 'Take him under your wing', hint: 'Mentor the kid all season.', tag: 'Senior Pro', run(g) { const p = P(); Career.bumpTeammates(g, 6); p.managerTrust = clamp(p.managerTrust + 8);
             return { tone: 'good', text: 'You mentor him all season. The staff notice. So does he — he will never forget it.' }; } },
-          { label: 'Freeze him out', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 10); Career.bumpTeammates(g, -5);
+          { label: 'Freeze him out', hint: 'Protect your shirt at any cost.', tag: 'Cold', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 10); Career.bumpTeammates(g, -5);
             return { tone: 'bad', text: 'You barely pass to him. It is noticed, and none of it reflects well on you.' }; } },
-          { label: 'Raise your own level', run(g) { const p = P(); p.form = clamp(p.form + 10);
+          { label: 'Raise your own level', hint: 'Use him as fuel.', tag: 'Competitor', run(g) { const p = P(); p.form = clamp(p.form + 10);
             const w = D.POSITIONS[p.pos].w;
             const attr = U.weighted(D.ATTR_KEYS.filter(k => (w[k] || 0) > 0.15).map(k => [k, 1]));
             Engine.Progress.addXp(p, attr, 5);
             return { tone: 'good', text: 'Competition is fuel. You train like a man possessed for a month.' }; } }
         ]},
-      { id: 'armband', w: 0.7, icon: 'crown', title: 'The armband',
+      { id: 'armband', w: 0.7, icon: 'crown', cat: 'Dressing room', title: 'The armband',
         text: 'The captain is out for three months. The manager asks if you want it.',
         options: [
-          { label: 'Take the armband', run(g) { const p = P(); p.captain = true; p.managerTrust = clamp(p.managerTrust + 10);
+          { label: 'Take the armband', hint: 'Lead them out on Saturday.', tag: 'Leadership', run(g) { const p = P(); p.captain = true; p.managerTrust = clamp(p.managerTrust + 10);
             State.addReputation(p, 3); State.addTrait(p, 'leader');
             State.news(`${p.lastName} handed the armband`, 'good');
             return { tone: 'good', text: 'You lead them out on Saturday. It feels heavier and better than you expected.' }; } },
-          { label: 'Suggest someone older', run(g) { const p = P(); Career.bumpTeammates(g, 8); p.managerTrust = clamp(p.managerTrust + 3);
+          { label: 'Suggest someone older', hint: 'Point them at the veteran.', tag: 'Class', run(g) { const p = P(); Career.bumpTeammates(g, 8); p.managerTrust = clamp(p.managerTrust + 3);
             return { tone: 'good', text: 'You point him towards the veteran centre-half. The dressing room respects the call enormously.' }; } }
         ]},
-      { id: 'rumour', w: 1, icon: 'news', title: 'A rumour in the press',
+      { id: 'rumour', w: 1, icon: 'news', cat: 'Media', title: 'A rumour in the press',
         text: 'A story appears linking you with a move. Your club say nothing. The fans want to know where you stand.',
         options: [
-          { label: 'Commit to the club publicly', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 12); p.morale = clamp(p.morale + 4);
+          { label: 'Commit to the club publicly', hint: 'Kiss the badge. Mean it.', tag: 'Loyal', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 12); p.morale = clamp(p.morale + 4);
             State.news(`"I am going nowhere" — ${p.lastName} commits his future`, 'good');
             return { tone: 'good', text: 'You kiss the badge in front of the cameras. The terraces are yours.' }; } },
-          { label: 'Say nothing at all', run(g) { const p = P(); State.addReputation(p, 1);
+          { label: 'Say nothing at all', hint: 'Let it run and let your price rise.', tag: 'Quiet', run(g) { const p = P(); State.addReputation(p, 1);
             return { tone: 'neutral', text: 'You let it run. The speculation builds all month, and so does your price.' }; } },
-          { label: 'Push for the move', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 20); State.addReputation(p, 2.5);
+          { label: 'Push for the move', hint: 'Force their hand through your agent.', tag: 'Ruthless', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 20); State.addReputation(p, 2.5);
             p.agitated = true;
             State.news(`${p.lastName} wants out: club dig in`, 'bad');
             return { tone: 'bad', text: 'Your agent briefs a journalist. The manager finds out within the hour — but the bigger clubs are circling now.' }; } }
         ]},
-      { id: 'loan_offer', w: 0.9, icon: 'transfer', title: 'A loan on the table',
+      { id: 'loan_offer', w: 0.9, icon: 'transfer', cat: 'Transfer', title: 'A loan on the table',
         text: 'You are barely playing. A club abroad want you for the rest of the season, every week, guaranteed.',
         options: [
-          { label: 'Take the loan', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 20); p.form = clamp(p.form + 8); p.morale = clamp(p.morale + 8);
+          { label: 'Take the loan', hint: 'Play every week somewhere else.', tag: 'Game Time', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 20); p.form = clamp(p.form + 8); p.morale = clamp(p.morale + 8);
             return { tone: 'good', text: 'A change of scenery and a shirt every Saturday. Your parent club will be watching closely.' }; } },
-          { label: 'Stay and fight for the shirt', run(g) { const p = P(); p.morale = clamp(p.morale + 5);
+          { label: 'Stay and fight for the shirt', hint: 'Take his place off him.', tag: 'Stubborn', run(g) { const p = P(); p.morale = clamp(p.morale + 5);
             return { tone: 'neutral', text: 'You tell the manager you are staying, and that you intend to take that shirt off his first choice.' }; } }
         ]},
-      { id: 'new_manager', w: 0.9, icon: 'manager', title: 'The manager is sacked',
+      { id: 'new_manager', w: 0.9, icon: 'manager', cat: 'Manager', title: 'The manager is sacked',
         text: 'Three defeats and he is gone. The new man arrives on Monday with his own ideas and his own favourites.',
         options: [
-          { label: 'Impress him from day one', run(g) { const p = P(); p.managerTrust = U.clamp(45 + U.rnd(0, 30), 0, 100); p.fitness = clamp(p.fitness - 8);
+          { label: 'Impress him from day one', hint: 'First in, last out, for a fortnight.', tag: 'Work Rate', run(g) { const p = P(); p.managerTrust = U.clamp(45 + U.rnd(0, 30), 0, 100); p.fitness = clamp(p.fitness - 8);
             return { tone: 'neutral', text: 'You are first to every session for a fortnight. He notices — though he already had a shortlist.' }; } },
-          { label: 'Keep your head down', run(g) { const p = P(); p.managerTrust = U.clamp(35 + U.rnd(0, 30), 0, 100);
+          { label: 'Keep your head down', hint: 'Be judged on Saturdays.', tag: 'Quiet', run(g) { const p = P(); p.managerTrust = U.clamp(35 + U.rnd(0, 30), 0, 100);
             return { tone: 'neutral', text: 'You do your job quietly and wait to be judged on Saturdays.' }; } }
         ]},
-      { id: 'derby', w: 0.9, icon: 'fans', title: 'Derby week',
+      { id: 'derby', w: 0.9, icon: 'fans', cat: 'Club', title: 'Derby week',
         text: 'The whole city has stopped talking about anything else. The supporters are outside the training ground every morning.',
         options: [
-          { label: 'Promise them a win', run(g) { const p = P(); p.derbyPromise = true; p.form = clamp(p.form + 6); State.addReputation(p, 1.5);
+          { label: 'Promise them a win', hint: 'Say it out loud to the supporters.', tag: 'Bold', run(g) { const p = P(); p.derbyPromise = true; p.form = clamp(p.form + 6); State.addReputation(p, 1.5);
             State.news(`${p.lastName} to the fans: "We will not lose this one"`, 'info');
             return { tone: 'neutral', text: 'You wind the window down and tell them straight. Now you have to go and do it.' }; } },
-          { label: 'Keep the focus internal', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 6);
+          { label: 'Keep the focus internal', hint: 'No noise, no promises.', tag: 'Professional', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 6);
             return { tone: 'good', text: 'No noise, no promises. The manager appreciates a professional.' }; } }
         ]},
-      { id: 'fans_award', w: 0.8, icon: 'medal', title: "Fans' Player of the Month",
+      { id: 'fans_award', w: 0.8, icon: 'medal', cat: 'Awards', title: "Fans' Player of the Month",
         text: 'The supporters have voted for you. There is a presentation on the pitch before the next home game.',
         options: [
-          { label: 'Give the trophy to a supporter', run(g) { const p = P(); State.addReputation(p, 2.5); p.morale = clamp(p.morale + 6);
+          { label: 'Give the trophy to a supporter', hint: 'Front row, right there and then.', tag: 'Fans', run(g) { const p = P(); State.addReputation(p, 2.5); p.morale = clamp(p.morale + 6);
             return { tone: 'good', text: 'You hand it to a season-ticket holder in the front row. Instant club folklore.' }; } },
-          { label: 'Dedicate it to the squad', run(g) { const p = P(); Career.bumpTeammates(g, 7); p.morale = clamp(p.morale + 4);
+          { label: 'Dedicate it to the squad', hint: 'Eleven of us won this.', tag: 'Team-mate', run(g) { const p = P(); Career.bumpTeammates(g, 7); p.morale = clamp(p.morale + 4);
             return { tone: 'good', text: '"Eleven of us won this." The dressing room hears exactly what it needed to hear.' }; } }
         ]},
-      { id: 'rival', w: 0.8, icon: 'alert', title: 'A rival takes aim at you',
+      { id: 'rival', w: 0.8, icon: 'alert', cat: 'Media', title: 'A rival takes aim at you',
         text: 'An opponent says you are "all highlights and no substance". It is everywhere by lunchtime.',
         options: [
-          { label: 'Answer him in the press', run(g) { const p = P(); State.addReputation(p, 2.5);
+          { label: 'Answer him in the press', hint: 'Give them the back page they want.', tag: 'Fire', run(g) { const p = P(); State.addReputation(p, 2.5);
             State.news(`${p.lastName} hits back: "He can watch the tape"`, 'info');
             return { tone: 'neutral', text: 'Your reply runs on every back page. The fixture in April is now the only one anyone talks about.' }; } },
-          { label: 'Pin it above your locker', run(g) { const p = P(); p.form = clamp(p.form + 8); p.grudge = true;
+          { label: 'Pin it above your locker', hint: 'Circle the date in April.', tag: 'Grudge', run(g) { const p = P(); p.form = clamp(p.form + 8); p.grudge = true;
             return { tone: 'good', text: 'Not a word in public. You just circle the date and train like it is personal, because it is.' }; } }
         ]},
-      { id: 'bust_up', w: 0.7, icon: 'card', title: 'Training ground flashpoint',
+      { id: 'bust_up', w: 0.7, icon: 'card', cat: 'Dressing room', title: 'Training ground flashpoint',
         text: 'A team-mate goes over the top in a small-sided game and squares up to you. The club cameras are rolling.',
         options: [
-          { label: 'Square up', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 8); Career.bumpTeammates(g, -8);
+          { label: 'Square up', hint: 'Chest to chest, cameras rolling.', tag: 'Hot Head', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 8); Career.bumpTeammates(g, -8);
             return { tone: 'bad', text: 'It takes four people to separate you, and the footage leaks within the hour.' }; } },
-          { label: 'Pull him up and laugh it off', run(g) { const p = P(); Career.bumpTeammates(g, 6); p.morale = clamp(p.morale + 3);
+          { label: 'Pull him up and laugh it off', hint: 'Defuse it in one second.', tag: 'Dressing Room', run(g) { const p = P(); Career.bumpTeammates(g, 6); p.morale = clamp(p.morale + 3);
             return { tone: 'good', text: 'You help him up and ruffle his hair. The dressing room loves you for it.' }; } },
-          { label: 'Win the next fifty-fifty', run(g) { const p = P();
+          { label: 'Win the next fifty-fifty', hint: 'Firm, fair, and a message.', tag: 'Message', run(g) { const p = P();
             return U.chance(0.3) ? { tone: 'bad', text: 'You catch him, and he is out for three weeks. The manager is furious.' }
                                  : { tone: 'neutral', text: 'Firm, fair, and nothing more is said about it. Message received.' }; } }
         ]},
-      { id: 'fatigue', w: 0.8, icon: 'fitness', title: 'Three games a week',
+      { id: 'fatigue', w: 0.8, icon: 'fitness', cat: 'Fitness', title: 'Three games a week',
         text: 'Travel, recovery, travel again. Your legs have not felt fresh since August.',
         options: [
-          { label: 'Ask to be rested', run(g) { const p = P(); p.fitness = clamp(p.fitness + 22); p.managerTrust = clamp(p.managerTrust - 6);
+          { label: 'Ask to be rested', hint: 'Admit the legs have gone.', tag: 'Honest', run(g) { const p = P(); p.fitness = clamp(p.fitness + 22); p.managerTrust = clamp(p.managerTrust - 6);
             return { tone: 'neutral', text: 'He is not thrilled, but you come back a different player.' }; } },
-          { label: 'Play through it', run(g) { const p = P(); p.fitness = clamp(p.fitness - 10); p.managerTrust = clamp(p.managerTrust + 6);
+          { label: 'Play through it', hint: 'Start every game regardless.', tag: 'Guts', run(g) { const p = P(); p.fitness = clamp(p.fitness - 10); p.managerTrust = clamp(p.managerTrust + 6);
             return { tone: 'bad', text: 'You start every game. The manager calls you indispensable; your hamstrings disagree.' }; } },
-          { label: 'Change your recovery routine', run(g) { const p = P(); p.fitness = clamp(p.fitness + 10);
+          { label: 'Change your recovery routine', hint: 'Sleep, diet, ice, no phone.', tag: 'Detail', run(g) { const p = P(); p.fitness = clamp(p.fitness + 10);
             Engine.Progress.addXp(p, 'physical', 2);
             return { tone: 'good', text: 'Sleep, diet, cold plunges, no phone after nine. Boring, and it works.' }; } }
         ]},
-      { id: 'position_switch', w: 0.6, icon: 'tactics', title: 'A new role',
+      { id: 'position_switch', w: 0.6, icon: 'tactics', cat: 'Manager', title: 'A new role',
         text: 'The manager wants to try you somewhere different this season. It might suit you. It might waste you.',
         options: [
-          { label: 'Embrace it', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 10);
+          { label: 'Embrace it', hint: 'Learn a whole new job.', tag: 'Adaptable', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 10);
             const attr = U.pick(['passing', 'defending', 'physical']);
             Engine.Progress.addXp(p, attr, 6);
             return { tone: 'good', text: 'A month of feeling lost, then something clicks. Your game is wider than it was.' }; } },
-          { label: 'Insist on your position', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 8); p.morale = clamp(p.morale + 4);
+          { label: 'Insist on your position', hint: 'Tell him where you play.', tag: 'Stubborn', run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 8); p.morale = clamp(p.morale + 4);
             return { tone: 'neutral', text: 'You tell him where you play. He shrugs — but he does not ask again.' }; } }
         ]},
-      { id: 'contract_talks', w: 0.7, icon: 'contract', title: 'Early contract talks',
+      { id: 'contract_talks', w: 0.7, icon: 'contract', cat: 'Transfer', title: 'Early contract talks',
         text: 'The club want to open talks a year ahead of schedule. Your agent thinks waiting would be worth more.',
         options: [
-          { label: 'Sign now, stay settled', run(g) { const p = P(); p.contract.years++; p.managerTrust = clamp(p.managerTrust + 10); p.morale = clamp(p.morale + 6);
+          { label: 'Sign now, stay settled', hint: 'Done inside a week.', tag: 'Security', run(g) { const p = P(); p.contract.years++; p.managerTrust = clamp(p.managerTrust + 10); p.morale = clamp(p.morale + 6);
             State.news(`${p.lastName} signs a new deal`, 'good');
             return { tone: 'good', text: 'Done inside a week. One less thing to think about all season.' }; } },
-          { label: 'Wait and see how the season goes', run(g) { const p = P(); p.morale = clamp(p.morale - 2);
+          { label: 'Wait and see how the season goes', hint: 'Bet on yourself.', tag: 'Gamble', run(g) { const p = P(); p.morale = clamp(p.morale - 2);
             return { tone: 'neutral', text: 'You let it run. Play well and the numbers get better; get injured and they vanish.' }; } }
         ]},
-      { id: 'documentary', w: 0.5, icon: 'video', title: 'The cameras move in',
+      { id: 'documentary', w: 0.5, icon: 'video', cat: 'Media', title: 'The cameras move in',
         text: 'A documentary crew will follow the club all season. They want you as one of the main characters.',
         options: [
-          { label: 'Let them in', run(g) { const p = P(); State.addReputation(p, 4);
+          { label: 'Let them in', hint: 'Be one of the main characters.', tag: 'Exposure', run(g) { const p = P(); State.addReputation(p, 4);
             return { tone: 'good', text: 'Your face carries the trailer. By Christmas, people who do not watch football know your name.' }; } },
-          { label: 'Stay out of it', run(g) { const p = P(); p.morale = clamp(p.morale + 3); p.managerTrust = clamp(p.managerTrust + 3);
+          { label: 'Stay out of it', hint: 'Keep the season for yourself.', tag: 'Private', run(g) { const p = P(); p.morale = clamp(p.morale + 3); p.managerTrust = clamp(p.managerTrust + 3);
             return { tone: 'neutral', text: 'You keep the season for yourself. No regrets.' }; } }
         ]}
     ],
@@ -286,11 +556,20 @@
         if (e.id === 'armband' && p.captain) return false;
         if (e.id === 'contract_talks' && (!p.contract || p.contract.years > 2)) return false;
         if (e.id === 'wonderkid' && p.age < 21) return false;
+        if (e.id === 'penalty_duty' && p.penaltyDuty) return false;
+        if (e.id === 'setpiece_duty' && p.setPieceDuty) return false;
+        if (e.id === 'testimonial' && (p.career.apps < 250 || p.age < 29)) return false;
+        if (e.id === 'dual_nation' && (p.intl.caps > 0 || p.age > 26)) return false;
+        if (e.id === 'national_snub' && !p.intl.called) return false;
+        if (e.id === 'scan_results' && p.injuries.length) return false;
+        if (e.id === 'deadline_day' && p.age < 19) return false;
+        if (e.id === 'young_debut' && p.age < 24) return false;
         return true;
       });
       if (!pool.length) return null;
       const ev = U.weighted(pool.map(e => [e, e.w || 1]));
-      return { id: ev.id, title: ev.title, text: ev.text, icon: ev.icon, options: ev.options };
+      return { id: ev.id, title: ev.title, text: ev.text, icon: ev.icon,
+               cat: ev.cat || 'Club', options: ev.options };
     },
 
     /* ================= between seasons ================= */
@@ -310,6 +589,7 @@
       if (p.peakValue && val >= p.peakValue) notes.push('That is the highest you have ever been valued.');
       p.captain = p.captain && U.chance(0.8);
       p.agitated = false; p.grudge = false; p.derbyPromise = false;
+      p.promisedTrophy = false; p.deadlineMove = false; p.marketTested = false;
       return notes;
     },
 

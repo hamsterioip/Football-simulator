@@ -79,8 +79,8 @@
     startWizard() {
       UI.wizard = {
         step: 0,
-        firstName: U.pick(D.FIRST_NAMES),
-        lastName: U.pick(D.LAST_NAMES),
+        firstName: U.pick(D.NAMES.England.first),
+        lastName: U.pick(D.NAMES.England.last),
         nation: 'England',
         foot: 'Right',
         shirt: U.pick([7, 9, 10, 11, 8, 14, 21, 23, 1]),
@@ -131,7 +131,13 @@
           </div>`;
         body.querySelector('#w-first').oninput = e => w.firstName = e.target.value;
         body.querySelector('#w-last').oninput = e => w.lastName = e.target.value;
-        body.querySelector('#w-nat').onchange = e => w.nation = e.target.value;
+        body.querySelector('#w-nat').onchange = e => {
+          w.nation = e.target.value;
+          // suggest a name that fits where you are from
+          const pool = D.NAMES[w.nation];
+          if (pool) { w.firstName = U.pick(pool.first); w.lastName = U.pick(pool.last); }
+          UI.renderWizard();
+        };
         body.querySelector('#w-shirt').oninput = e => w.shirt = U.clamp(parseInt(e.target.value, 10) || 10, 1, 99);
         UI.optGroup(body, 'foot', v => { w.foot = v; UI.renderWizard(); });
 
@@ -341,6 +347,15 @@
             ${opp.rating ? '· opposition rated ' + opp.rating : ''}</div>
           ${UI.formGuide(me)}
         </div>`;
+        if (f.star) {
+          html += `<div class="card tight danger-man">
+            <div class="item tight-item" style="border:none;background:none;padding:0">
+              <div class="ic">${ico('alert')}</div>
+              <div class="tx"><b>Danger man: ${flag(f.star.nation, 'sm')} ${esc(f.star.name)}</b>
+                <span>${f.star.pos} · the one they will look for</span></div>
+              <div class="pill ${f.star.ovr > p.ovr ? 'red' : ''}">${f.star.ovr}</div>
+            </div></div>`;
+        }
 
         const blocked = p.suspension > 0 ? `Suspended for ${p.suspension} more match(es).`
           : p.injuries.length ? `${p.injuries[0].name} — ${p.injuries[0].matches} match(es) left.` : null;
@@ -463,14 +478,20 @@
 
       const scorers = Engine.Awards.leagueTopScorers(g).slice(0, 6);
       html += `<div class="card"><h3>Top scorers</h3><table class="tbl">` +
-        scorers.map((sc, i) => `<tr class="${sc.you ? 'me' : ''}"><td>${i + 1}</td><td>${esc(sc.name)}</td>
+        scorers.map((sc, i) => `<tr class="${sc.you ? 'me' : ''}"><td>${i + 1}</td>
+          <td>${sc.nation ? flag(sc.nation, 'sm') + ' ' : ''}${esc(sc.name)}</td>
           <td class="dim">${esc(sc.club)}</td><td class="num"><b>${sc.goals}</b></td></tr>`).join('') + `</table></div>`;
 
-      html += `<div class="card"><h3>Squad</h3><div class="list">` +
-        squad.slice(0, 16).map(sq => `<div class="item tight-item">
-          <div class="ic">${ico(sq.pos === p.pos ? 'shirt' : 'player')}</div>
-          <div class="tx"><b>${esc(sq.name)}${sq.captain ? ' (C)' : ''}${sq.pos === p.pos ? ' — your position' : ''}</b>
-          <span>${sq.pos} · ${sq.age}y · ${sq.goals}g ${sq.assists}a · gets on with you ${Math.round(sq.rel)}%</span></div>
+      html += `<div class="card"><h3>Squad</h3><div class="list">
+          <div class="item tight-item you-row">
+            <div class="sq-no">${p.shirt}</div>
+            <div class="tx"><b>${flag(p.nation, 'sm')} ${esc(p.firstName)} ${esc(p.lastName)}${p.captain ? ' (C)' : ''}</b>
+            <span>${p.pos} · ${p.age}y · ${p.season.goals}g ${p.season.assists}a · you</span></div>
+            <div class="pill green">${p.ovr}</div></div>` +
+        squad.slice(0, 18).map(sq => `<div class="item tight-item">
+          <div class="sq-no">${sq.shirt || '—'}</div>
+          <div class="tx"><b>${flag(sq.nation, 'sm')} ${esc(sq.name)}${sq.captain ? ' (C)' : ''}</b>
+          <span>${sq.pos}${sq.pos === p.pos ? ' · your position' : ''} · ${sq.age}y · ${sq.goals}g ${sq.assists}a · gets on with you ${Math.round(sq.rel)}%</span></div>
           <div class="pill ${sq.ovr > p.ovr ? 'red' : 'green'}">${sq.ovr}</div></div>`).join('') + `</div></div>`;
       return html;
     },
