@@ -588,7 +588,7 @@
       $('match-action').innerHTML = `<div class="scn">
         <div class="scn-h"><div class="art">${scn.art || '⚽'}</div><b>${esc(scn.title)}</b></div>
         <div class="scn-sub">${esc(scn.sub || '')}</div>
-        <div class="choices">${scn.options.map((o, i) => `<button class="choice" data-ci="${i}">
+        <div class="choices${scn.options.length >= 5 ? ' cols' : ''}">${scn.options.map((o, i) => `<button class="choice" data-ci="${i}">
           <div class="cb"><b>${esc(o.label)}</b><span>${esc(o.hint || '')}</span></div>
           ${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}</button>`).join('')}</div></div>`;
       $('match-action').querySelectorAll('[data-ci]').forEach(b => {

@@ -17,6 +17,31 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 Your career autosaves to `localStorage` after every match, so you can close the tab and
 pick it up later with **Continue Career**.
 
+## 📱 On your phone
+
+It is built mobile-first — designed at phone width and tested with touch input from
+360×640 up to tablet size.
+
+- Every screen is one thumb-friendly column; no pinching, no horizontal scrolling
+- Tap targets are at least ~58px tall, and the bottom tab bar sits above the home indicator
+  (safe-area insets are respected)
+- Match choices always fit on screen: on short phones the layout tightens automatically and
+  five- or six-option moments (penalty placement, celebrations) switch to a two-up grid
+- Sized to the *visible* viewport (`dvh`), so a mobile URL bar never covers the controls
+- No double-tap zoom delay, and pull-to-refresh won't yank the page mid-match
+
+**Getting it onto a phone:**
+
+1. **GitHub Pages (easiest).** In this repo: *Settings → Pages → Source: Deploy from a
+   branch*, pick this branch and `/ (root)`. A minute later it is live at
+   `https://<user>.github.io/Football-simulator/` — open that on your phone.
+2. **Same Wi-Fi.** Run `python3 -m http.server 8000` on your computer and visit
+   `http://<your-computer-ip>:8000` on your phone.
+
+Then use **Add to Home Screen** (Share menu on iOS, browser menu on Android). It installs
+with its own icon and launches fullscreen with no browser chrome — a web app manifest and
+the iOS meta tags are included.
+
 ---
 
 ## What you actually do
@@ -90,16 +115,18 @@ burnout, a wonderkid arriving in your position, a relative asking for money.
 ## Project layout
 
 ```
-index.html          markup shell
-css/styles.css      dark, mobile-first stylesheet
-js/data.js          leagues, clubs, nations, positions, traits, assets, sponsors
-js/util.js          RNG, maths, formatting
-js/state.js         world + player creation, contracts, save/load
-js/scenarios.js     the interactive match moments
-js/engine.js        squads, match sim, calendar, progression, transfers, awards
-js/life.js          activities, relationships, money, random life events, legacy
-js/ui.js            screens, rendering, modals, creation wizard
-js/main.js          game flow: match loop, weeks, seasons, retirement
+index.html               markup shell
+manifest.webmanifest     add-to-home-screen / installable web app
+icon.svg, *.png          app icons (SVG source + rendered PNG sizes)
+css/styles.css           dark, mobile-first stylesheet
+js/data.js               leagues, clubs, nations, positions, traits, assets, sponsors
+js/util.js               RNG, maths, formatting
+js/state.js              world + player creation, contracts, save/load
+js/scenarios.js          the interactive match moments
+js/engine.js             squads, match sim, calendar, progression, transfers, awards
+js/life.js               activities, relationships, money, random life events, legacy
+js/ui.js                 screens, rendering, modals, creation wizard
+js/main.js               game flow: match loop, weeks, seasons, retirement
 ```
 
 Plain ES5-compatible JavaScript with no framework and no bundler — every file attaches one

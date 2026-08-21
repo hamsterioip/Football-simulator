@@ -35,9 +35,10 @@ body{
   overflow:hidden;
 }
 button,input,select,textarea{font:inherit;color:inherit}
+button,.choice,.item.click,.opt,.club,.tabbar button{touch-action:manipulation;user-select:none;-webkit-user-select:none}
 
 /* ---------- screens ---------- */
-.screen{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden}
+.screen{position:fixed;inset:0;height:100vh;height:100dvh;display:none;flex-direction:column;overflow:hidden}
 .screen.active{display:flex}
 
 /* ---------- generic ---------- */
@@ -135,7 +136,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .bar-f{height:100%;border-radius:4px;transition:width .4s ease}
 
 /* ---------- content + tabs ---------- */
-.content{flex:1;overflow-y:auto;padding:14px 14px 90px;-webkit-overflow-scrolling:touch}
+.content{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 90px;-webkit-overflow-scrolling:touch}
 .tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;background:rgba(9,14,24,.96);
   border-top:1px solid var(--line);backdrop-filter:blur(12px);padding-bottom:var(--safe-b);z-index:20}
 .tabbar button{flex:1;background:none;border:none;padding:9px 2px 11px;color:var(--dim);cursor:pointer;
@@ -211,7 +212,7 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 .sb-min{text-align:center;font-size:12px;color:var(--muted);margin-top:5px}
 .sb-you{display:flex;gap:6px;justify-content:center;margin-top:9px;flex-wrap:wrap}
 
-.match-feed{flex:1;overflow-y:auto;padding:14px}
+.match-feed{flex:1;min-height:64px;overflow-y:auto;overscroll-behavior:contain;padding:14px}
 .ev{display:flex;gap:10px;margin-bottom:11px;animation:slidein .25s ease}
 @keyframes slidein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .ev .m{flex:0 0 34px;font-size:11px;color:var(--dim);font-weight:700;padding-top:2px;font-variant-numeric:tabular-nums}
@@ -221,7 +222,8 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 .ev.you .t{border-color:rgba(255,201,77,.5);background:rgba(255,201,77,.08)}
 
 .match-action{flex:0 0 auto;border-top:1px solid var(--line);background:rgba(9,14,24,.97);
-  padding:12px 14px calc(14px + var(--safe-b));backdrop-filter:blur(12px)}
+  padding:12px 14px calc(14px + var(--safe-b));backdrop-filter:blur(12px);
+  max-height:62vh;max-height:62dvh;overflow-y:auto;overscroll-behavior:contain}
 .scn{animation:pop .25s ease}
 @keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 .scn-h{display:flex;gap:10px;align-items:center;margin-bottom:4px}
@@ -240,10 +242,12 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 
 /* ---------- modal ---------- */
 .modal-back{position:fixed;inset:0;background:rgba(4,8,14,.78);backdrop-filter:blur(6px);
-  display:none;align-items:center;justify-content:center;padding:18px;z-index:100}
+  display:none;align-items:center;justify-content:center;z-index:100;
+  padding:18px 18px calc(18px + var(--safe-b))}
 .modal-back.on{display:flex}
 .modal{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:20px;box-shadow:var(--shadow);
+  width:100%;max-width:520px;max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;
+  padding:20px;box-shadow:var(--shadow);
   animation:pop .2s ease}
 .modal h2{margin:0 0 6px;font-size:20px}
 .modal p{margin:0 0 14px;color:var(--muted);white-space:pre-line}
@@ -270,6 +274,31 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 progress{width:100%}
 .divider{height:1px;background:var(--line);margin:14px 0}
 .scroll-x{overflow-x:auto}
+/* short screens (most phones in portrait): tighten the match UI so even a
+   six-option penalty fits on one screen without scrolling */
+@media (max-height:720px){
+  .scoreboard{padding:10px 14px 9px}
+  .sb-score{font-size:27px}
+  .sb-main{margin-top:6px;gap:10px}
+  .sb-you{margin-top:6px;gap:5px}
+  .sb-min{margin-top:3px;font-size:11px}
+  .match-action{padding:9px 12px calc(10px + var(--safe-b))}
+  .scn-h{margin-bottom:2px}
+  .scn-h .art{font-size:22px}
+  .scn-h b{font-size:15px}
+  .scn-sub{font-size:12px;margin-bottom:8px;line-height:1.35}
+  .choices{gap:5px}
+  /* five or six options (penalty placement, celebrations) go two-up so the
+     whole set is visible at once instead of hiding below the fold */
+  .choices.cols{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .choices.cols .choice{flex-direction:column;align-items:stretch;gap:1px}
+  .choices.cols .tag{display:none}
+  .choices.cols .choice span{font-size:10px;line-height:1.3}
+  .choice{padding:8px 11px}
+  .choice b{font-size:13px}
+  .choice span{font-size:10.5px}
+  .ev .t{padding:7px 11px;font-size:13px}
+}
 @media(min-width:760px){
   .content{padding:20px 20px 100px;max-width:820px;margin:0 auto;width:100%}
   .hud{max-width:820px;margin:0 auto;width:100%;border-radius:0 0 var(--radius) var(--radius)}

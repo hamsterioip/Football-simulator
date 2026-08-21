@@ -1,0 +1,16 @@
+{
+  "name": "Football Life — Career Simulator",
+  "short_name": "Football Life",
+  "description": "A football career and life simulator. Choose your club, play the big moments, live the whole career.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080d16",
+  "theme_color": "#080d16",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
