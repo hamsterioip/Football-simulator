@@ -8,6 +8,7 @@
   const esc = U.esc;
   const ico = (name, cls, label) => global.Icons.svg(name, cls, label);
   const flag = (country, cls) => global.Icons.flag(country, cls);
+  const crest = (clubName, cls) => global.Crest.svg(clubName, cls);
 
   const UI = {
     tab: 'home',
@@ -262,9 +263,10 @@
           <div class="hud-avatar"><span class="shirt-no">${p.shirt}</span></div>
           <div class="hud-id">
             <div class="hud-name">${esc(p.firstName)} ${esc(p.lastName)}</div>
-            <div class="hud-meta">${flag(p.nation, 'sm')} ${p.pos} · ${p.age}y · ${esc(club.name)}</div>
+            <div class="hud-meta">${flag(p.nation, 'sm')} ${p.pos} · ${p.age}y</div>
           </div>
-          <div class="hud-ovr"><b>${p.ovr}</b><span>OVR</span></div>
+          <div class="hud-club">${crest(club.name, 'crest-md')}</div>
+          <div class="hud-ovr" id="hud-ovr"><b>${p.ovr}</b><span>OVR</span></div>
         </div>
         <div class="hud-bars">
           ${UI.bar('Fit', p.fitness, 'linear-gradient(90deg,#12b45f,#22e07a)')}
@@ -272,6 +274,8 @@
           ${UI.bar('Mood', p.morale, 'linear-gradient(90deg,#b483ff,#d9b6ff)')}
           ${UI.bar('Rep', p.reputation, 'linear-gradient(90deg,#f5b224,#ffd977)')}
         </div>`;
+      const badge = $('hud-ovr');
+      if (badge) badge.onclick = () => global.Game.secretTap();
     },
 
     TABS: [
@@ -283,9 +287,14 @@
     ],
 
     renderTabs() {
-      $('tabbar').innerHTML = UI.TABS.map(t =>
+      $('tabbar').innerHTML = UI.tabsFor().map(t =>
         `<button class="${UI.tab === t.id ? 'on' : ''}" data-tab="${t.id}">${ico(t.icon)}${t.label}</button>`).join('');
       $('tabbar').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { UI.tab = b.dataset.tab; UI.render(); });
+    },
+
+    tabsFor() {
+      const g = State.game;
+      return (g && g.secret) ? UI.TABS.concat([{ id: 'secret', icon: 'settings', label: 'Boss' }]) : UI.TABS;
     },
 
     render() {
@@ -296,6 +305,7 @@
       c.innerHTML = UI['tab_' + UI.tab] ? UI['tab_' + UI.tab]() : '';
       c.scrollTop = 0;
       UI.bindActions(c);
+      if (UI.tab === 'secret') UI.renderDevClubs();
     },
 
     bindActions(root) {
@@ -318,15 +328,18 @@
         Engine.Season.prepareFixture(g, f);
         const opp = f.oppId ? State.club(f.oppId) : { name: f.oppName || 'TBC' };
         const me = State.club(p.club);
-        html += `<div class="fixture">
+        const homeName = f.home ? me.name : opp.name, awayName = f.home ? opp.name : me.name;
+        html += `<div class="fixture" style="--home:${global.Crest.accent(homeName)};--away:${global.Crest.accent(awayName)}">
           <div class="comp">${esc(f.label)}</div>
           <div class="teams">
-            <div class="team">${f.home ? esc(me.name) : esc(opp.name)}</div>
+            <div class="team">${crest(homeName, 'crest-lg')}${esc(homeName)}</div>
             <div class="vs">V</div>
-            <div class="team">${f.home ? esc(opp.name) : esc(me.name)}</div>
+            <div class="team">${crest(awayName, 'crest-lg')}${esc(awayName)}</div>
           </div>
           <div class="venue">${ico(f.home ? 'home' : 'away')} ${f.home ? 'Home' : 'Away'}
-            · Match ${g.fixtureIndex + 1} of ${g.fixtures.length}</div>
+            · Match ${g.fixtureIndex + 1} of ${g.fixtures.length}
+            ${opp.rating ? '· opposition rated ' + opp.rating : ''}</div>
+          ${UI.formGuide(me)}
         </div>`;
 
         const blocked = p.suspension > 0 ? `Suspended for ${p.suspension} more match(es).`
@@ -360,6 +373,18 @@
           <div class="stat"><b>${State.seasonRating(p) || '—'}</b><span>Avg Rating</span></div>
         </div></div>`;
 
+      const next = f ? UI.upcoming(g, 4) : [];
+      if (next.length) {
+        html += `<div class="card"><h3>Coming up</h3><div class="list">` + next.map(nf => {
+          const o = nf.oppId ? State.club(nf.oppId) : null;
+          return `<div class="item tight-item">
+            <div class="ic">${o ? crest(o.name, 'crest-sm') : ico('calendar')}</div>
+            <div class="tx"><b>${o ? esc(o.name) : 'To be confirmed'}</b>
+              <span>${esc(nf.label)} · ${nf.home ? 'home' : 'away'}</span></div>
+            ${o ? `<div class="pill">${o.rating}</div>` : ''}</div>`;
+        }).join('') + `</div></div>`;
+      }
+
       const comps = [];
       if (g.cup) comps.push([g.cup.won ? 'trophy' : g.cup.alive ? 'ok' : 'no', g.cup.name]);
       if (g.cont) comps.push([g.cont.won ? 'trophy' : g.cont.alive ? 'ok' : 'no',
@@ -374,6 +399,26 @@
       return html;
     },
 
+    // last five results as W/D/L pills
+    formGuide(club) {
+      const f = (club.form || []).slice(-5);
+      if (!f.length) return '';
+      return `<div class="form-guide">${f.map(r =>
+        `<span class="fg ${r === 'W' ? 'w' : r === 'D' ? 'd' : 'l'}">${r}</span>`).join('')}</div>`;
+    },
+
+    // the next few fixtures after this one
+    upcoming(g, n) {
+      const out = [];
+      for (let i = g.fixtureIndex + 1; i < g.fixtures.length && out.length < n; i++) {
+        const f = g.fixtures[i];
+        if (f.comp === 'cup' && (!g.cup || !g.cup.alive)) continue;
+        if (f.comp === 'cont' && (!g.cont || (!g.cont.alive && f.contKo != null))) continue;
+        out.push(f);
+      }
+      return out;
+    },
+
     /* ---------------- CLUB ---------------- */
     tab_club() {
       const g = State.game, p = g.player, club = State.club(p.club);
@@ -384,7 +429,12 @@
       const startChance = Engine.Match.startingChance(g);
 
       let html = `<div class="card">
-        <h3>${flag(club.country, 'sm')} ${esc(club.name)}</h3>
+        <div class="club-line" style="margin-bottom:12px">
+          ${crest(club.name, 'crest-xl')}
+          <div class="grow"><b style="font-size:18px">${esc(club.name)}</b>
+            <div class="dim">${flag(club.country, 'sm')} ${esc(State.league(club.league).name)}</div>
+            ${UI.formGuide(club)}</div>
+        </div>
         <div class="stat-grid">
           <div class="stat"><b>${club.rating}</b><span>Squad</span></div>
           <div class="stat"><b>${club.prestige}</b><span>Prestige</span></div>
@@ -404,7 +454,8 @@
         table.map((r, i) => {
           const cls = i < 4 ? 'ucl' : i >= table.length - 2 ? 'rel' : '';
           return `<tr class="${r.id === club.id ? 'me' : ''}">
-            <td><span class="pos-chip ${cls}">${i + 1}</span></td><td>${esc(r.club.name)}</td>
+            <td><span class="pos-chip ${cls}">${i + 1}</span></td>
+            <td>${crest(r.club.name, 'crest-sm')}${esc(r.club.name)}</td>
             <td class="num">${r.p}</td><td class="num">${r.w}</td><td class="num">${r.d}</td>
             <td class="num">${r.l}</td><td class="num">${r.gf - r.ga > 0 ? '+' : ''}${r.gf - r.ga}</td>
             <td class="num"><b>${r.pts}</b></td></tr>`;
@@ -416,10 +467,10 @@
           <td class="dim">${esc(sc.club)}</td><td class="num"><b>${sc.goals}</b></td></tr>`).join('') + `</table></div>`;
 
       html += `<div class="card"><h3>Squad</h3><div class="list">` +
-        squad.slice(0, 14).map(sq => `<div class="item">
+        squad.slice(0, 16).map(sq => `<div class="item tight-item">
           <div class="ic">${ico(sq.pos === p.pos ? 'shirt' : 'player')}</div>
-          <div class="tx"><b>${esc(sq.name)}${sq.captain ? ' (C)' : ''}</b>
-          <span>${sq.pos} · ${sq.age}y · ${sq.goals} goals this season</span></div>
+          <div class="tx"><b>${esc(sq.name)}${sq.captain ? ' (C)' : ''}${sq.pos === p.pos ? ' — your position' : ''}</b>
+          <span>${sq.pos} · ${sq.age}y · ${sq.goals}g ${sq.assists}a · gets on with you ${Math.round(sq.rel)}%</span></div>
           <div class="pill ${sq.ovr > p.ovr ? 'red' : 'green'}">${sq.ovr}</div></div>`).join('') + `</div></div>`;
       return html;
     },
@@ -562,6 +613,118 @@
       return html;
     },
 
+    /* ---------------- BOSS MODE (secret) ---------------- */
+    tab_secret() {
+      const g = State.game, p = g.player;
+      const keys = D.ATTR_KEYS.filter(k => k !== 'gk' || p.pos === 'GK')
+                              .filter(k => k !== 'shooting' || p.pos !== 'GK');
+      let html = `<div class="card secret-head">
+        <h3 class="gold">${ico('settings')} Boss Mode</h3>
+        <p class="dim" style="margin:0">Unlocked with the code. Everything here is a cheat —
+          change what you like, it saves like any other career.</p></div>`;
+
+      // ---- overall ----
+      html += `<div class="card"><h3>Overall</h3>
+        <div class="row" style="align-items:center;gap:10px;margin-bottom:10px">
+          <div class="prev-ovr"><b>${p.ovr}</b><span>NOW</span></div>
+          <div class="prev-ovr pot"><b>${State.potentialOverall(p)}</b><span>CEILING</span></div>
+          <div class="grow dim">Setting an overall scales every attribute to match it, ceilings included.</div>
+        </div>
+        <div class="row wrap">
+          ${[60, 70, 80, 85, 90, 95, 99].map(v =>
+            `<button class="btn btn-ghost sm" data-act="devOvr" data-arg="${v}">${v}</button>`).join('')}
+        </div></div>`;
+
+      // ---- attributes ----
+      html += `<div class="card"><h3>Attributes</h3>`;
+      keys.forEach(k => {
+        const cap = Engine.Progress.cap(p, k);
+        html += `<div class="dev-attr">
+          <div class="dev-attr-h">${ico(k)} <b>${D.ATTR_LABEL[k]}</b>
+            <span class="grow"></span><em>${p.attrs[k]}<span class="dim"> / ${cap}</span></em></div>
+          <div class="row">
+            <button class="btn btn-ghost sm" data-act="devAttr" data-arg="${k}:-10">−10</button>
+            <button class="btn btn-ghost sm" data-act="devAttr" data-arg="${k}:-1">−1</button>
+            <button class="btn btn-ghost sm grow" data-act="devAttr" data-arg="${k}:+1">+1</button>
+            <button class="btn btn-ghost sm" data-act="devAttr" data-arg="${k}:+10">+10</button>
+            <button class="btn btn-gold sm" data-act="devAttr" data-arg="${k}:99">99</button>
+          </div></div>`;
+      });
+      html += `<div class="row wrap" style="margin-top:10px">
+        <button class="btn btn-ghost" data-act="devMaxCeilings">Raise every ceiling to 99</button>
+        <button class="btn btn-ghost" data-act="devFillCaps">Fill attributes to their ceiling</button>
+      </div></div>`;
+
+      // ---- traits ----
+      html += `<div class="card"><h3>Traits — tap to toggle</h3><div class="dev-traits">` +
+        Object.keys(D.TRAITS).map(id => {
+          const t = D.TRAITS[id], on = State.hasTrait(p, id);
+          return `<button class="dev-trait ${on ? 'on' : ''} ${t.bad ? 'bad' : ''}" data-act="devTrait" data-arg="${id}">
+            ${ico(t.icon)}<b>${esc(t.name)}</b><span>${esc(t.desc)}</span></button>`;
+        }).join('') + `</div></div>`;
+
+      // ---- condition ----
+      html += `<div class="card"><h3>Condition</h3>
+        ${[['fitness', 'Fitness'], ['form', 'Form'], ['morale', 'Morale'],
+           ['reputation', 'Reputation'], ['managerTrust', 'Manager trust']].map(([k, label]) =>
+          `<div class="dev-attr"><div class="dev-attr-h"><b>${label}</b><span class="grow"></span>
+            <em>${Math.round(p[k])}</em></div>
+            <div class="row">
+              <button class="btn btn-ghost sm" data-act="devStat" data-arg="${k}:0">0</button>
+              <button class="btn btn-ghost sm grow" data-act="devStat" data-arg="${k}:50">50</button>
+              <button class="btn btn-gold sm" data-act="devStat" data-arg="${k}:100">100</button>
+            </div></div>`).join('')}
+      </div>`;
+
+      // ---- career ----
+      html += `<div class="card"><h3>Career</h3>
+        <div class="dev-attr"><div class="dev-attr-h"><b>Age</b><span class="grow"></span><em>${p.age}</em></div>
+          <div class="row">
+            <button class="btn btn-ghost sm grow" data-act="devAge" data-arg="-1">−1 year</button>
+            <button class="btn btn-ghost sm grow" data-act="devAge" data-arg="1">+1 year</button>
+          </div></div>
+        <div class="dev-attr"><div class="dev-attr-h"><b>Squad number</b><span class="grow"></span><em>${p.shirt}</em></div>
+          <div class="row">
+            <button class="btn btn-ghost sm grow" data-act="devShirt" data-arg="-1">−1</button>
+            <button class="btn btn-ghost sm grow" data-act="devShirt" data-arg="1">+1</button>
+          </div></div>
+        <div class="dev-attr"><div class="dev-attr-h"><b>Position</b><span class="grow"></span><em>${p.pos}</em></div>
+          <div class="opt-grid" style="grid-template-columns:repeat(5,1fr);margin-top:6px">
+            ${Object.keys(D.POSITIONS).map(k =>
+              `<div class="opt ${p.pos === k ? 'sel' : ''}" data-act="devPos" data-arg="${k}">${k}</div>`).join('')}
+          </div></div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-ghost" data-act="devHeal">Heal everything</button>
+          <button class="btn btn-ghost" data-act="devCallUp">Force a call-up</button>
+          <button class="btn btn-ghost" data-act="devTrophy">Add a title</button>
+          <button class="btn btn-ghost" data-act="devContract">Top contract</button>
+        </div></div>`;
+
+      // ---- move club ----
+      html += `<div class="card"><h3>Sign for anyone</h3>
+        <div class="field"><label>League</label>
+          <select class="input" id="dev-league">${g.world.leagues.map(l =>
+            `<option value="${l.id}" ${l.id === State.club(p.club).league ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></div>
+        <div class="club-list" id="dev-clubs"></div></div>`;
+
+      html += `<div class="card"><button class="btn btn-danger btn-block" data-act="devLock">Lock Boss Mode again</button></div>`;
+      return html;
+    },
+
+    renderDevClubs() {
+      const g = State.game, sel = $('dev-league');
+      if (!sel) return;
+      const league = State.league(sel.value);
+      const list = $('dev-clubs');
+      list.innerHTML = league.clubs.map(id => {
+        const c = State.club(id);
+        return `<div class="club ${c.id === g.player.club ? 'sel' : ''}" data-act="devClub" data-arg="${id}">
+          <b>${esc(c.name)}</b><span>Rated ${c.rating}</span></div>`;
+      }).join('');
+      UI.bindActions(list);
+      sel.onchange = () => UI.renderDevClubs();
+    },
+
     /* ==========================================================================
        MATCH RENDERING
        ========================================================================== */
@@ -585,9 +748,9 @@
       $('scoreboard').innerHTML = `
         <div class="sb-comp">${esc(m.compLabel || 'Match')}</div>
         <div class="sb-main">
-          <div class="sb-team">${esc(homeName)}</div>
+          <div class="sb-team">${global.Crest.svg(homeName, 'crest-md')}${esc(homeName)}</div>
           <div class="sb-score">${homeScore} – ${awayScore}</div>
-          <div class="sb-team">${esc(awayName)}</div>
+          <div class="sb-team">${global.Crest.svg(awayName, 'crest-md')}${esc(awayName)}</div>
         </div>
         <div class="sb-min">${m.finished ? 'Full time' : m.minute + "'"}</div>
         <div class="sb-you">${chips.join('')}</div>`;

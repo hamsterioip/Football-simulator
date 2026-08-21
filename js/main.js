@@ -25,6 +25,13 @@
       $('btn-continue').disabled = !State.hasSave();
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') UI.closeModal();
+        // typing the code anywhere also works, for anyone on a keyboard
+        if (!State.game || State.game.secret) return;
+        if (document.getElementById('code-in')) return;
+        if (e.key && e.key.length === 1) {
+          Game._typed = ((Game._typed || '') + e.key.toLowerCase()).slice(-8);
+          if (Game._typed.indexOf('gkgo') >= 0) { Game._typed = ''; Game.codePrompt(); }
+        }
       });
     },
 
@@ -104,9 +111,150 @@
       });
     },
 
+    /* ==================== the code ====================
+       Five taps on the overall badge asks for a code. The right one unlocks
+       Boss Mode, which then lives in the save like anything else. */
+    secretTap() {
+      const g = State.game;
+      if (!g) return;
+      if (g.secret) { UI.tab = 'secret'; UI.render(); return; }
+      const now = Date.now();
+      if (!Game._taps || now - Game._lastTap > 1500) Game._taps = 0;
+      Game._lastTap = now;
+      Game._taps++;
+      if (Game._taps >= 5) { Game._taps = 0; Game.codePrompt(); }
+      else if (Game._taps >= 3) UI.toast('…', '');
+    },
+
+    codePrompt() {
+      UI.modal({
+        title: 'Enter code',
+        html: `<p class="muted">If you know it, you know it.</p>
+          <input class="input" id="code-in" autocomplete="off" autocapitalize="off"
+            spellcheck="false" placeholder="• • • •" maxlength="16"
+            style="text-align:center;letter-spacing:4px;font-weight:700">`,
+        actions: [
+          { label: 'Enter', keepOpen: true, onClick: () => Game.trySecret() },
+          { label: 'Cancel', cls: 'btn-ghost' }
+        ],
+        onRender(m) {
+          const input = m.querySelector('#code-in');
+          if (!input) return;
+          setTimeout(() => input.focus(), 60);
+          input.onkeydown = e => { if (e.key === 'Enter') Game.trySecret(); };
+        }
+      });
+    },
+
+    trySecret() {
+      const el = document.getElementById('code-in');
+      const value = (el ? el.value : '').trim().toLowerCase();
+      if (value !== 'gkgo') {
+        if (el) { el.value = ''; el.placeholder = 'nope'; }
+        UI.toast('Wrong code.', 'bad');
+        return;
+      }
+      UI.closeModal();
+      State.game.secret = true;
+      State.save();
+      UI.tab = 'secret';
+      UI.render();
+      UI.modal({
+        title: 'Boss Mode unlocked',
+        text: 'A new tab has appeared. Attributes, ceilings, traits, condition, your club — all of it is yours to change.\n\nIt stays unlocked in this save.',
+        actions: [{ label: 'Let me at it' }]
+      });
+    },
+
+    /* ==================== Boss Mode actions ==================== */
+    devAction(act, arg) {
+      const g = State.game, p = g.player;
+      const clampAttr = v => U.clamp(Math.round(v), 1, 99);
+      switch (act) {
+        case 'devAttr': {
+          const [key, delta] = arg.split(':');
+          if (delta === '99') { p.caps[key] = 99; p.attrs[key] = 99; }
+          else p.attrs[key] = clampAttr((p.attrs[key] || 0) + parseInt(delta, 10));
+          if (p.attrs[key] > (p.caps[key] || 0)) p.caps[key] = p.attrs[key];   // ceilings follow
+          break;
+        }
+        case 'devOvr': {
+          // scale every attribute until the positional overall lands on the target
+          const target = parseInt(arg, 10);
+          let guard = 0;
+          while (State.overall(p) !== target && guard++ < 260) {
+            const dir = State.overall(p) < target ? 1 : -1;
+            const w = D.POSITIONS[p.pos].w;
+            const keys = D.ATTR_KEYS.filter(k => (w[k] || 0) > 0.01)
+              .filter(k => dir > 0 ? p.attrs[k] < 99 : p.attrs[k] > 1);
+            if (!keys.length) break;
+            keys.forEach(k => { p.attrs[k] = clampAttr(p.attrs[k] + dir); });
+          }
+          D.ATTR_KEYS.forEach(k => { if (p.attrs[k] > (p.caps[k] || 0)) p.caps[k] = p.attrs[k]; });
+          break;
+        }
+        case 'devMaxCeilings': D.ATTR_KEYS.forEach(k => p.caps[k] = 99); break;
+        case 'devFillCaps': D.ATTR_KEYS.forEach(k => p.attrs[k] = clampAttr(p.caps[k] || p.attrs[k])); break;
+        case 'devTrait': {
+          if (State.hasTrait(p, arg)) p.traits = p.traits.filter(t => t !== arg);
+          else p.traits.push(arg);
+          break;
+        }
+        case 'devStat': {
+          const [key, val] = arg.split(':');
+          p[key] = U.clamp(parseInt(val, 10), 0, 100);
+          break;
+        }
+        case 'devAge': p.age = U.clamp(p.age + parseInt(arg, 10), 15, 45); break;
+        case 'devShirt': p.shirt = U.clamp(p.shirt + parseInt(arg, 10), 1, 99); break;
+        case 'devPos': p.pos = arg; break;
+        case 'devHeal':
+          p.injuries = []; p.suspension = 0; p.fitness = 100;
+          UI.toast('Fit and available.', 'good');
+          break;
+        case 'devCallUp':
+          p.intl.called = true; p.intl.retired = false;
+          UI.toast('You are in the squad.', 'good');
+          break;
+        case 'devTrophy':
+          p.career.trophies.push({ name: State.league(State.club(p.club).league).name + ' Title',
+                                   year: g.world.year + 1, club: State.club(p.club).name });
+          UI.toast('Title added.', 'gold');
+          break;
+        case 'devContract':
+          p.contract.wage = Math.max(p.contract.wage, 500000);
+          p.contract.years = 5;
+          p.contract.release = Math.round(State.marketValue(p) * 4);
+          UI.toast('Contract improved.', 'gold');
+          break;
+        case 'devClub': {
+          const club = State.club(arg);
+          if (!club) break;
+          global.Contracts.joinClub(p, club, global.Contracts.offerFor(p, club, false));
+          g.squad = null; g.squadClub = null;
+          Engine.Squad.ensure(g);
+          Engine.Season.build(g);
+          State.log(`Boss Mode: signed for ${club.name}.`, 'info');
+          UI.toast('Signed for ' + club.name, 'good');
+          break;
+        }
+        case 'devLock':
+          g.secret = false;
+          UI.tab = 'player';
+          UI.toast('Boss Mode locked.', '');
+          break;
+      }
+      p.ovr = State.overall(p);
+      p.potential = State.potentialOverall(p);
+      p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
+      State.save();
+      UI.render();
+    },
+
     /* ==================== action dispatcher ==================== */
     action(act, arg) {
       const g = State.game;
+      if (act.indexOf('dev') === 0) return Game.devAction(act, arg);
       switch (act) {
         case 'playMatch': return Game.playMatch(true);
         case 'quickMatch': return Game.playMatch(false);
@@ -290,8 +438,8 @@
     choose(scn, index) {
       const g = State.game, m = Game.match;
       const opt = scn.options[index];
-      const fx = opt.run();
-      const out = Engine.Match.applyEffects(g, m, fx);
+      const fx = Scenarios.resolve(scn, index);
+      const out = Engine.Match.applyEffects(g, m, fx, Scenarios.styleOf(scn, opt));
       UI.pushEvent(`${opt.label} → ${fx.text}`, fx.tone, m.minute, true);
       UI.renderScoreboard(m);
       out.forEach(o => {
@@ -351,7 +499,7 @@
             shootoutSub: `Shootout ${s.us}–${s.them}. Kick ${s.usKicks + 1}. Eighty thousand people are watching you.`
           }));
           UI.renderScenario(kick, i => {
-            const fx = kick.options[i].run();
+            const fx = Scenarios.resolve(kick, i);
             s.usKicks++;
             if (fx.goal) { s.us++; g.player.penScored = (g.player.penScored || 0) + 1; }
             UI.pushEvent(`${kick.options[i].label} → ${fx.text}`, fx.tone, null, true);
@@ -523,6 +671,19 @@
       unlock('workhorse', p.career.apps >= 40 && p.managerTrust >= 72);
       unlock('lucky', p.career.trophies.length >= 3 && U.chance(0.5));
       unlock('twofooted', p.attrs.weakFoot >= 85);
+      // style traits: earned by being genuinely good at that part of the game
+      unlock('finesse',   p.attrs.shooting >= 78 && p.attrs.flair >= 70);
+      unlock('power',     p.attrs.shooting >= 78 && p.attrs.physical >= 78);
+      unlock('poacher',   p.career.goals >= 40 && D.POSITIONS[p.pos].attack >= 0.4);
+      unlock('aerial',    p.attrs.physical >= 80 && p.career.apps >= 40);
+      unlock('visionary', p.attrs.passing >= 84 && p.career.assists >= 20);
+      unlock('burst',     p.attrs.pace >= 88);
+      unlock('pressres',  p.attrs.dribbling >= 80 && p.attrs.passing >= 76);
+      unlock('longrange', p.attrs.shooting >= 82 && p.career.goals >= 25);
+      unlock('shotstop',  p.pos === 'GK' && p.attrs.gk >= 82);
+      unlock('sweeperk',  p.pos === 'GK' && p.attrs.passing >= 76 && p.attrs.pace >= 70);
+      unlock('theatrical', (p.divesWon || 0) >= 3);
+      unlock('ironman',   p.career.apps >= 120 && (p.injuryCount || 0) <= 1);
       unlock('glass', (p.injuryCount || 0) >= 4);
       unlock('hothead', p.career.red >= 3 || p.career.yellow >= 22);
     },
@@ -738,11 +899,11 @@
         + (expiring ? ' <b class="bad">(EXPIRED)</b>' : ` (${p.contract.years} year${p.contract.years === 1 ? '' : 's'} left)`) + `</p>`;
       html += `<div class="list">`;
       if (wantsToRenew) {
-        html += `<div class="item click" data-r="1"><div class="ic">${ico('agent')}</div><div class="tx">
+        html += `<div class="item click" data-r="1"><div class="ic">${global.Crest.svg(club.name, 'crest-md')}</div><div class="tx">
           <b>Stay at ${U.esc(club.name)}</b><span>${expiring ? 'New deal: ' : 'Improved terms: '}${U.cash(renewal.wage)}/wk for ${renewal.years} years · signing bonus ${U.cash(renewal.signingBonus)}</span></div></div>`;
       }
       offers.forEach((o, i) => {
-        html += `<div class="item click" data-o="${i}"><div class="ic">${ico('club')}</div><div class="tx">
+        html += `<div class="item click" data-o="${i}"><div class="ic">${global.Crest.svg(o.clubName, 'crest-md')}</div><div class="tx">
           <b>${U.esc(o.clubName)} — ${U.cash(o.fee)}</b>
           <span>Rating ${o.rating} · ${U.cash(o.wage)}/wk for ${o.years} years · bonus ${U.cash(o.signingBonus)}<br>${U.esc(o.pitch)}</span></div></div>`;
       });

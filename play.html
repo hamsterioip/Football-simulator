@@ -343,6 +343,31 @@ progress{width:100%}
 .hud-avatar .shirt-no{font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
 .hud-meta{display:flex;align-items:center;gap:5px}
 
+/* ---------- club crests ---------- */
+.crest{width:1.6em;height:1.6em;flex:0 0 auto;vertical-align:-.35em;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+.crest-sm{width:20px;height:20px}
+.crest-md{width:30px;height:30px}
+.crest-lg{width:46px;height:46px}
+.crest-xl{width:62px;height:62px}
+table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6px}
+.fixture .team .crest{display:block;margin:0 auto 6px}
+.sb-team .crest{display:block;margin:0 auto 4px}
+.hud-club{display:flex;align-items:center;gap:5px}
+.club-line{display:flex;align-items:center;gap:9px}
+
+/* ---------- form guide ---------- */
+.form-guide{display:flex;gap:4px;margin-top:7px}
+.fg{width:19px;height:19px;border-radius:6px;display:grid;place-items:center;
+  font-size:10px;font-weight:800;background:rgba(255,255,255,.09);color:var(--muted)}
+.fg.w{background:rgba(34,224,122,.22);color:var(--green)}
+.fg.d{background:rgba(255,255,255,.12);color:var(--muted)}
+.fg.l{background:rgba(255,90,106,.2);color:var(--red)}
+.fixture .form-guide{justify-content:center;margin-top:10px}
+.fixture{border-top:3px solid var(--home)}
+.fixture .teams{align-items:flex-start}
+.fixture .team{font-size:13.5px;line-height:1.25}
+
 /* ---------- creation wizard ---------- */
 .wz-h{margin:0 0 4px;font-size:22px;letter-spacing:-.3px}
 .wz-p{color:var(--muted);margin:0 0 18px;font-size:14px}
@@ -383,6 +408,27 @@ progress{width:100%}
 .rob-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(34,224,122,.12);
   color:var(--green);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:600;margin:4px 4px 0 0}
 .rob-chip .ic{width:13px;height:13px}
+
+/* ---------- boss mode ---------- */
+.secret-head{border-color:var(--gold);background:linear-gradient(135deg,rgba(255,201,77,.08),transparent)}
+.btn.sm{padding:7px 10px;font-size:12.5px;border-radius:9px}
+.dev-attr{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.dev-attr:last-child{border-bottom:none}
+.dev-attr-h{display:flex;align-items:center;gap:7px;font-size:13px;margin-bottom:7px}
+.dev-attr-h em{font-style:normal;font-weight:800;font-variant-numeric:tabular-nums}
+.dev-attr-h .ic{color:var(--green)}
+.dev-traits{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dev-trait{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;
+  background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:9px 10px;
+  cursor:pointer;color:var(--txt);transition:.12s}
+.dev-trait .ic{color:var(--dim);width:18px;height:18px}
+.dev-trait b{font-size:12.5px;line-height:1.2}
+.dev-trait span{font-size:10px;color:var(--dim);line-height:1.3}
+.dev-trait.on{background:rgba(34,224,122,.13);border-color:var(--green)}
+.dev-trait.on .ic{color:var(--green)}
+.dev-trait.on.bad{background:rgba(255,90,106,.13);border-color:var(--red)}
+.dev-trait.on.bad .ic{color:var(--red)}
+#dev-clubs{max-height:38vh}
 
 /* ---------- press ---------- */
 .headline{border-left:3px solid var(--line);padding:8px 0 8px 12px;margin-bottom:10px}
@@ -627,6 +673,85 @@ progress{width:100%}
     ]}
   ];
 
+  /* --- Club identity ------------------------------------------------------
+     Real club badges are trademarked, so the game draws its own crest for every
+     club instead: each one's real colours and shirt pattern, rendered as a
+     shield with the club's initials. Distinct at a glance, nobody's artwork.
+     [primary, secondary, pattern]
+  --------------------------------------------------------------------------- */
+  const CLUB_KIT = {
+    // England
+    'Manchester City': ['#6CABDD', '#1C2C5B', 'plain'], 'Arsenal': ['#EF0107', '#FFFFFF', 'sleeve'],
+    'Liverpool': ['#C8102E', '#00B2A9', 'plain'], 'Chelsea': ['#034694', '#FFFFFF', 'plain'],
+    'Manchester United': ['#DA291C', '#FBE122', 'plain'], 'Tottenham': ['#FFFFFF', '#132257', 'plain'],
+    'Newcastle': ['#241F20', '#FFFFFF', 'stripes'], 'Aston Villa': ['#95BFE5', '#670E36', 'halves'],
+    'Brighton': ['#0057B8', '#FFFFFF', 'stripes'], 'West Ham': ['#7A263A', '#1BB1E7', 'plain'],
+    'Everton': ['#003399', '#FFFFFF', 'plain'], 'Nottingham Forest': ['#DD0000', '#FFFFFF', 'plain'],
+    // Spain
+    'Real Madrid': ['#FFFFFF', '#FEBE10', 'plain'], 'Barcelona': ['#A50044', '#004D98', 'stripes'],
+    'Atlético Madrid': ['#CB3524', '#FFFFFF', 'stripes'], 'Athletic Club': ['#EE2523', '#FFFFFF', 'stripes'],
+    'Real Sociedad': ['#0067B1', '#FFFFFF', 'stripes'], 'Villarreal': ['#FFE667', '#005187', 'plain'],
+    'Real Betis': ['#00954C', '#FFFFFF', 'stripes'], 'Sevilla': ['#FFFFFF', '#D80027', 'plain'],
+    'Valencia': ['#FFFFFF', '#F4A600', 'plain'], 'Girona': ['#D40000', '#FFFFFF', 'stripes'],
+    'Celta Vigo': ['#8AC3EE', '#FFFFFF', 'plain'], 'Osasuna': ['#D91A21', '#0A346F', 'plain'],
+    // Italy
+    'Inter': ['#0068A8', '#000000', 'stripes'], 'Juventus': ['#FFFFFF', '#000000', 'stripes'],
+    'AC Milan': ['#FB090B', '#000000', 'stripes'], 'Napoli': ['#12A0D7', '#FFFFFF', 'plain'],
+    'Atalanta': ['#1D71B8', '#000000', 'stripes'], 'Roma': ['#8E1F2F', '#F0BC42', 'plain'],
+    'Lazio': ['#87D8F7', '#FFFFFF', 'plain'], 'Fiorentina': ['#592C82', '#FFFFFF', 'plain'],
+    'Bologna': ['#1A2F48', '#D2122E', 'halves'], 'Torino': ['#8B1A1A', '#FFFFFF', 'plain'],
+    'Udinese': ['#000000', '#FFFFFF', 'stripes'], 'Genoa': ['#B4022A', '#00234B', 'halves'],
+    // Germany
+    'Bayern München': ['#DC052D', '#0066B2', 'plain'], 'Bayer Leverkusen': ['#E32221', '#000000', 'plain'],
+    'Borussia Dortmund': ['#FDE100', '#000000', 'plain'], 'RB Leipzig': ['#FFFFFF', '#DD0741', 'plain'],
+    'Eintracht Frankfurt': ['#000000', '#E1000F', 'plain'], 'Stuttgart': ['#FFFFFF', '#E32219', 'plain'],
+    'Wolfsburg': ['#65B32E', '#FFFFFF', 'plain'], 'Freiburg': ['#000000', '#E2001A', 'plain'],
+    'Hoffenheim': ['#1961B5', '#FFFFFF', 'plain'], 'Werder Bremen': ['#1D9053', '#FFFFFF', 'plain'],
+    'Mainz': ['#C3141E', '#FFFFFF', 'plain'], 'Augsburg': ['#BA3733', '#46714D', 'halves'],
+    // France
+    'Paris SG': ['#004170', '#DA291C', 'sash'], 'Monaco': ['#E63946', '#FFFFFF', 'halves'],
+    'Marseille': ['#FFFFFF', '#2FAEE0', 'plain'], 'Lille': ['#E01E13', '#FFFFFF', 'plain'],
+    'Lyon': ['#FFFFFF', '#1B4C9C', 'plain'], 'Nice': ['#E4032E', '#000000', 'halves'],
+    'Rennes': ['#E23838', '#000000', 'halves'], 'Lens': ['#FFC300', '#E4032E', 'stripes'],
+    'Strasbourg': ['#0066B3', '#FFFFFF', 'plain'], 'Nantes': ['#FFC72C', '#008D3F', 'plain'],
+    'Toulouse': ['#582C83', '#FFFFFF', 'plain'], 'Brest': ['#E4032E', '#FFFFFF', 'plain'],
+    // Netherlands
+    'Ajax': ['#FFFFFF', '#D2122E', 'sash'], 'PSV': ['#EE2E24', '#FFFFFF', 'plain'],
+    'Feyenoord': ['#FFFFFF', '#DA020E', 'halves'], 'AZ Alkmaar': ['#E4032E', '#FFFFFF', 'plain'],
+    'Twente': ['#E30613', '#FFFFFF', 'plain'], 'Utrecht': ['#E4032E', '#FFFFFF', 'plain'],
+    'Vitesse': ['#FFE500', '#000000', 'plain'], 'Heerenveen': ['#0066B3', '#FFFFFF', 'plain'],
+    'Groningen': ['#00A650', '#FFFFFF', 'plain'], 'Sparta Rotterdam': ['#FFFFFF', '#E4032E', 'sash'],
+    'NEC': ['#E4032E', '#008D3F', 'halves'], 'Go Ahead Eagles': ['#FFE500', '#E4032E', 'plain'],
+    // Portugal
+    'Benfica': ['#E30613', '#FFFFFF', 'plain'], 'Porto': ['#00428C', '#FFFFFF', 'stripes'],
+    'Sporting CP': ['#008057', '#FFFFFF', 'hoops'], 'Braga': ['#E4032E', '#FFFFFF', 'plain'],
+    'Vitória Guimarães': ['#FFFFFF', '#000000', 'plain'], 'Boavista': ['#000000', '#FFFFFF', 'quarters'],
+    'Famalicão': ['#005CA9', '#FFFFFF', 'plain'], 'Rio Ave': ['#008D3F', '#FFFFFF', 'plain'],
+    'Gil Vicente': ['#E4032E', '#000000', 'halves'], 'Casa Pia': ['#000000', '#FFFFFF', 'plain'],
+    'Arouca': ['#FFE500', '#000000', 'plain'], 'Estoril': ['#FFE500', '#005CA9', 'plain'],
+    // Argentina
+    'River Plate': ['#FFFFFF', '#E4032E', 'sash'], 'Boca Juniors': ['#0A3A82', '#FFD100', 'plain'],
+    'Racing Club': ['#6CACE4', '#FFFFFF', 'stripes'], 'Independiente': ['#E4032E', '#FFFFFF', 'plain'],
+    'San Lorenzo': ['#0A3A82', '#E4032E', 'stripes'], 'Estudiantes': ['#E4032E', '#FFFFFF', 'stripes'],
+    'Vélez Sarsfield': ['#FFFFFF', '#0A3A82', 'sash'], 'Talleres': ['#005CA9', '#FFFFFF', 'plain'],
+    'Lanús': ['#7B0F2B', '#FFFFFF', 'plain'], 'Rosario Central': ['#0A3A82', '#FFD100', 'stripes'],
+    'Newell’s': ['#E4032E', '#000000', 'halves'], 'Argentinos Juniors': ['#E4032E', '#FFFFFF', 'plain'],
+    // Brazil
+    'Flamengo': ['#E4032E', '#000000', 'hoops'], 'Palmeiras': ['#006437', '#FFFFFF', 'plain'],
+    'Botafogo': ['#000000', '#FFFFFF', 'stripes'], 'São Paulo': ['#FFFFFF', '#E4032E', 'hoops'],
+    'Fluminense': ['#7A1C38', '#008D3F', 'stripes'], 'Corinthians': ['#FFFFFF', '#000000', 'plain'],
+    'Atlético Mineiro': ['#000000', '#FFFFFF', 'stripes'], 'Grêmio': ['#0D80BF', '#000000', 'stripes'],
+    'Internacional': ['#E4032E', '#FFFFFF', 'plain'], 'Cruzeiro': ['#0A3A82', '#FFFFFF', 'plain'],
+    'Fortaleza': ['#005CA9', '#E4032E', 'hoops'], 'Bahia': ['#005CA9', '#E4032E', 'hoops'],
+    // USA
+    'Inter Miami': ['#F7B5CD', '#000000', 'plain'], 'LAFC': ['#000000', '#C39E6D', 'plain'],
+    'LA Galaxy': ['#FFFFFF', '#00245D', 'plain'], 'Seattle Sounders': ['#5D9732', '#005595', 'plain'],
+    'Atlanta United': ['#80000A', '#000000', 'stripes'], 'Columbus Crew': ['#FEDD00', '#000000', 'plain'],
+    'NY Red Bulls': ['#FFFFFF', '#E4032E', 'plain'], 'Philadelphia Union': ['#071B2C', '#B49759', 'plain'],
+    'Portland Timbers': ['#00482B', '#D69A00', 'plain'], 'Austin FC': ['#00B140', '#000000', 'plain'],
+    'Nashville SC': ['#ECE83A', '#1D1D1B', 'plain'], 'Chicago Fire': ['#141B4D', '#EF3E42', 'plain']
+  };
+
   const CONTINENTAL = {
     UCL: { name: 'Champions League', short: 'UCL', region: 'Europe' },
     LIB: { name: 'Copa Libertadores', short: 'Libertadores', region: 'South America' },
@@ -691,7 +816,21 @@ progress{width:100%}
     showman:   { name: 'Showman',           icon: 'flair',    desc: 'Flair choices come off far more often.' },
     workhorse: { name: 'Workhorse',         icon: 'train',    desc: 'Training gains +25%.' },
     twofooted: { name: 'Two-Footed',        icon: 'weakFoot', desc: 'Your weak foot stops being a weakness.' },
-    lucky:     { name: 'Born Lucky',        icon: 'star',     desc: 'Coin-flip moments tilt your way.' }
+    lucky:     { name: 'Born Lucky',        icon: 'star',     desc: 'Coin-flip moments tilt your way.' },
+
+    // --- style traits: each one sharpens a particular kind of moment ---
+    finesse:   { name: 'Finesse Expert',    icon: 'target',   desc: '+12% when you place or curl it rather than hit it.' },
+    power:     { name: 'Power Shooter',     icon: 'physical', desc: '+12% when you strike it with everything you have.' },
+    poacher:   { name: 'Six-Yard Poacher',  icon: 'rebound',  desc: '+15% on rebounds, tap-ins and scraps in the box.' },
+    aerial:    { name: 'Aerial Threat',     icon: 'header',   desc: '+13% on headers, attacking and defending.' },
+    visionary: { name: 'Visionary',         icon: 'passing',  desc: '+12% on through balls and killer passes.' },
+    burst:     { name: 'Explosive',         icon: 'pace',     desc: '+12% whenever a moment comes down to raw speed.' },
+    pressres:  { name: 'Press Resistant',   icon: 'block',    desc: '+15% when playing out of trouble under pressure.' },
+    longrange: { name: 'Long Range Threat', icon: 'shooting', desc: '+18% from distance. Worth a go from anywhere.' },
+    shotstop:  { name: 'Shot Stopper',      icon: 'gk',       desc: '+13% on saves. The last line, properly.' },
+    sweeperk:  { name: 'Sweeper Keeper',    icon: 'keeper',   desc: '+13% rushing out and playing with your feet.' },
+    theatrical:{ name: 'Theatrical',        icon: 'dive',     desc: 'Referees buy it more often than they should.' },
+    ironman:   { name: 'Iron Man',          icon: 'fitness',  desc: 'Injuries are far less likely to find you.' }
   };
 
   // --- Training drills ------------------------------------------------------
@@ -793,9 +932,111 @@ progress{width:100%}
 
   global.DATA = {
     POSITIONS, ATTR_KEYS, ATTR_LABEL, DRAFT_ATTRS, DRAFT_ATTRS_GK,
-    LEAGUES, CONTINENTAL, NATIONS, FIRST_NAMES, LAST_NAMES,
+    LEAGUES, CONTINENTAL, NATIONS, CLUB_KIT, FIRST_NAMES, LAST_NAMES,
     TRAITS, TRAINING, LEGENDS, LEGENDS_GK, CONFIG
   };
+})(window);
+
+</script>
+<script>
+/* js/crest.js */
+/* ==========================================================================
+   crest.js — every club gets its own badge, drawn rather than borrowed.
+
+   Real club badges are trademarked artwork, so instead each club is rendered
+   as a shield in its real colours and shirt pattern with its initials on it.
+   Pure inline SVG: no images, no requests, scales to any size.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  const SHIELD = 'M2 2 h28 v17 c0 7-8 11-14 13 C10 30 2 26 2 19 Z';
+
+  // A club with no kit on file still gets a stable identity from its name.
+  function fallbackKit(name) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
+    const hues = [4, 28, 48, 96, 140, 172, 200, 224, 264, 300, 330];
+    const hue = hues[h % hues.length];
+    return ['hsl(' + hue + ',62%,45%)', 'hsl(' + ((hue + 40) % 360) + ',55%,88%)', 'plain'];
+  }
+
+  // "Manchester United" -> MU, "Ajax" -> AJA, "Inter" -> INT
+  function initials(name) {
+    const words = String(name).replace(/[^A-Za-zÀ-ÿ ]/g, '').split(/\s+/).filter(Boolean);
+    const skip = { de: 1, do: 1, of: 1, the: 1, fc: 1, cf: 1, sc: 1, ac: 1 };
+    const useful = words.filter(w => !skip[w.toLowerCase()]);
+    if (useful.length >= 2) return (useful[0][0] + useful[1][0]).toUpperCase();
+    const w = useful[0] || words[0] || '?';
+    return w.slice(0, 3).toUpperCase();
+  }
+
+  function readable(hex) {
+    const c = String(hex).replace('#', '');
+    if (c.length < 6) return '#0b1220';
+    const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+    // relative luminance, good enough to pick black or white text
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#10192b' : '#ffffff';
+  }
+
+  function pattern(kind, a, bCol) {
+    switch (kind) {
+      case 'stripes':
+        return `<rect width="32" height="32" fill="${a}"/>`
+          + [6, 14, 22].map(x => `<rect x="${x}" y="0" width="4.5" height="32" fill="${bCol}"/>`).join('');
+      case 'hoops':
+        return `<rect width="32" height="32" fill="${a}"/>`
+          + [5, 13, 21].map(y => `<rect x="0" y="${y}" width="32" height="4.5" fill="${bCol}"/>`).join('');
+      case 'halves':
+        return `<rect width="16" height="32" fill="${a}"/><rect x="16" width="16" height="32" fill="${bCol}"/>`;
+      case 'quarters':
+        return `<rect width="32" height="32" fill="${a}"/>`
+          + `<rect x="16" width="16" height="16" fill="${bCol}"/><rect y="16" width="16" height="16" fill="${bCol}"/>`;
+      case 'sash':
+        return `<rect width="32" height="32" fill="${a}"/>`
+          + `<path d="M-4 26 L26 -4 L34 4 L4 34 Z" fill="${bCol}"/>`;
+      case 'sleeve':
+        return `<rect width="32" height="32" fill="${a}"/>`
+          + `<rect x="0" y="0" width="5" height="32" fill="${bCol}"/><rect x="27" y="0" width="5" height="32" fill="${bCol}"/>`;
+      default:
+        return `<rect width="32" height="32" fill="${a}"/>`;
+    }
+  }
+
+  let seq = 0;
+
+  const Crest = {
+    kitFor(clubName) {
+      const D = global.DATA;
+      return (D && D.CLUB_KIT && D.CLUB_KIT[clubName]) || fallbackKit(clubName || '?');
+    },
+
+    /* Markup for one club badge. `cls` sizes it via CSS (.crest-sm/-md/-lg). */
+    svg(clubName, cls) {
+      const kit = Crest.kitFor(clubName);
+      const [a, b, kind] = kit;
+      const uid = 'cr' + (++seq);
+      const text = initials(clubName);
+      // the outline behind the initials guarantees contrast on any pattern
+      const ink = readable(a);
+      const size = text.length > 2 ? 11 : 13;
+      return `<svg class="crest ${cls || ''}" viewBox="0 0 32 32" role="img" aria-label="${String(clubName).replace(/[<>&"]/g, '')} crest">
+        <defs><clipPath id="${uid}"><path d="${SHIELD}"/></clipPath></defs>
+        <g clip-path="url(#${uid})">${pattern(kind, a, b)}</g>
+        <path d="${SHIELD}" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="1.6"/>
+        <path d="${SHIELD}" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".7"/>
+        <text x="16" y="19" text-anchor="middle" font-size="${size}" font-weight="800"
+          font-family="Inter,Helvetica,Arial,sans-serif" fill="${ink}"
+          stroke="rgba(0,0,0,.35)" stroke-width=".4" paint-order="stroke">${text}</text>
+      </svg>`;
+    },
+
+    // the colour to tint a panel with for this club
+    accent(clubName) { return Crest.kitFor(clubName)[0]; },
+    accent2(clubName) { return Crest.kitFor(clubName)[1]; }
+  };
+
+  global.Crest = Crest;
 })(window);
 
 </script>
@@ -1107,6 +1348,68 @@ progress{width:100%}
   'use strict';
   const D = global.DATA, U = global.U, State = global.State;
 
+  /* ---------- style traits ----------
+     Each option is given a style (from the moment it belongs to and the kind of
+     choice it is), and a matching trait makes that style more likely to come
+     off. This keeps the bonus in one place instead of in fifty probabilities. */
+  const STYLE_TRAITS = {
+    finesse:   { style: 'finesse',  attrs: ['shooting', 'dribbling'], mult: .12 },
+    power:     { style: 'power',    attrs: ['shooting', 'physical'],  mult: .12 },
+    poacher:   { style: 'poacher',  attrs: ['shooting'],              mult: .15 },
+    aerial:    { style: 'aerial',   attrs: ['physical', 'shooting', 'defending'], mult: .13 },
+    visionary: { style: 'vision',   attrs: ['passing'],               mult: .12 },
+    burst:     { style: 'pace',     attrs: ['pace'],                  mult: .12 },
+    pressres:  { style: 'pressres', attrs: ['dribbling', 'passing'],  mult: .15 },
+    longrange: { style: 'longshot', attrs: ['shooting'],              mult: .18 },
+    shotstop:  { style: 'shotstop', attrs: ['gk'],                    mult: .13 },
+    sweeperk:  { style: 'sweeper',  attrs: ['gk', 'pace'],            mult: .13 }
+  };
+
+  // which style an option belongs to, from its moment and the choice it offers
+  const TAG_STYLE = {
+    // power
+    'Power': 'power', 'Physical': 'power', 'Shooting': 'power', 'Risk': 'power',
+    // finesse
+    'Placement': 'finesse', 'Technique': 'finesse', 'Composure': 'finesse', 'Nerve': 'finesse',
+    'Dribbling': 'finesse', 'Flair': 'finesse', 'Audacity': 'finesse', 'Icon': 'finesse',
+    // vision
+    'Passing': 'vision', 'Vision': 'vision', 'Smart': 'vision', 'Cunning': 'vision',
+    'Delivery': 'vision', 'Set Piece': 'vision', 'Team Player': 'vision',
+    // pace
+    'Pace': 'pace', 'Work Rate': 'pace',
+    // poaching
+    'Instinct': 'poacher',
+    // keeping
+    'Goalkeeping': 'shotstop', 'Handling': 'shotstop', 'Reflex': 'shotstop', 'Patience': 'shotstop',
+    'Bravery': 'sweeper', 'Commitment': 'sweeper',
+    // the dark arts
+    'Dark Arts': 'dive', 'Streetwise': 'dive'
+  };
+  const SCENARIO_STYLE = {
+    header: 'aerial', aerial: 'aerial', volley: 'aerial',
+    long_shot: 'longshot', keeper_rush: 'longshot',
+    rebound: 'poacher', tight_angle: 'poacher',
+    own_box: 'pressres', gk_backpass: 'pressres',
+    gk_sweeper: 'sweeper', gk_distribution: 'sweeper',
+    gk_save: 'shotstop', gk_longshot: 'shotstop', gk_wall: 'shotstop', gk_penalty: 'shotstop',
+    dive: 'dive'
+  };
+  function styleFor(scn, opt) {
+    return (opt && opt.style)
+      || SCENARIO_STYLE[scn && scn.id]
+      || TAG_STYLE[opt && opt.tag]
+      || null;
+  }
+  function styleMult(ctx, attr) {
+    if (!ctx.style) return 1;
+    let m = 1;
+    Object.keys(STYLE_TRAITS).forEach(id => {
+      const t = STYLE_TRAITS[id];
+      if (t.style === ctx.style && t.attrs.indexOf(attr) >= 0 && State.hasTrait(ctx.player, id)) m += t.mult;
+    });
+    return m;
+  }
+
   /* ---------- helpers ---------- */
   function eff(ctx, attr) {
     const p = ctx.player;
@@ -1119,7 +1422,7 @@ progress{width:100%}
     const formF = 0.88 + (p.form / 100) * 0.24;
     const fitF = 0.82 + (p.fitness / 100) * 0.22;
     const nerve = ctx.pressure ? (State.hasTrait(p, 'ice') ? 1.0 : 0.94) : 1.0;
-    return raw * formF * fitF * nerve;
+    return raw * formF * fitF * nerve * styleMult(ctx, attr);
   }
 
   // flair is what makes the outrageous option come off
@@ -1781,7 +2084,7 @@ progress{width:100%}
         options: [
           { label: 'Go down', hint: 'The referee decides your reputation.', tag: 'Dark Arts',
             run() {
-              const r = Math.random();
+              const r = Math.random() - (trait(ctx, 'theatrical') ? 0.18 : 0);
               if (r < 0.42) return E({ penalty: true, rating: 0.7, tone: GOOD, rep: .5,
                 text: 'The whistle blows — PENALTY! The defender cannot believe it.' });
               if (r < 0.72) return E({ card: 'yellow', rating: -0.8, rep: -1, tone: BAD,
@@ -2888,7 +3191,7 @@ progress{width:100%}
       const def = Scenarios.byId(id);
       if (!def) return null;
       const built = def.build(ctx);
-      built.id = id; built.kind = def.kind;
+      built.id = id; built.kind = def.kind; built.ctx = ctx;
       return built;
     },
 
@@ -2923,6 +3226,19 @@ progress{width:100%}
 
     // kept for older call sites
     random(ctx, excludeIds) { return Scenarios.pick(ctx, { exclude: excludeIds }); },
+
+    /* Run one option. Tags the shared context with the option's style first so
+       style traits (Finesse Expert, Power Shooter, …) apply automatically. */
+    resolve(scn, index) {
+      const opt = scn.options[index];
+      if (!opt) return null;
+      if (scn.ctx) scn.ctx.style = styleFor(scn, opt);
+      const fx = opt.run();
+      if (scn.ctx) scn.ctx.style = null;
+      return fx;
+    },
+
+    styleOf(scn, opt) { return styleFor(scn, opt); },
 
     // A penalty shootout kick (used by engine for cup ties)
     shootoutKick(ctx) {
@@ -3305,9 +3621,10 @@ progress{width:100%}
       return { type: 'commentary', entry, us: m.us, them: m.them, minute: m.minute };
     },
 
-    applyEffects(g, m, fx) {
+    applyEffects(g, m, fx, style) {
       const p = g.player;
       const out = [];
+      m.lastStyle = style || null;
       if (fx.goal) {
         m.us++; m.stats.goals++; m.stats.rating += 0;
         p.season.goals++; p.career.goals++;
@@ -3318,7 +3635,10 @@ progress{width:100%}
       if (fx.assist) { m.stats.assists++; p.season.assists++; p.career.assists++; }
       if (fx.concede) { m.them++; }
       if (fx.save) { m.stats.saves++; }
-      if (fx.penalty) { m.penaltyPending = true; }
+      if (fx.penalty) {
+        m.penaltyPending = true;
+        if (m.lastStyle === 'dive') p.divesWon = (p.divesWon || 0) + 1;
+      }
       if (fx.rating) m.stats.rating += fx.rating;
       if (fx.fitness) p.fitness = U.clamp(p.fitness + fx.fitness * (State.hasTrait(p, 'engine') ? 0.7 : 1), 0, 100);
       const repGained = fx.rep || fx.fame;
@@ -4261,6 +4581,7 @@ progress{width:100%}
   const esc = U.esc;
   const ico = (name, cls, label) => global.Icons.svg(name, cls, label);
   const flag = (country, cls) => global.Icons.flag(country, cls);
+  const crest = (clubName, cls) => global.Crest.svg(clubName, cls);
 
   const UI = {
     tab: 'home',
@@ -4515,9 +4836,10 @@ progress{width:100%}
           <div class="hud-avatar"><span class="shirt-no">${p.shirt}</span></div>
           <div class="hud-id">
             <div class="hud-name">${esc(p.firstName)} ${esc(p.lastName)}</div>
-            <div class="hud-meta">${flag(p.nation, 'sm')} ${p.pos} · ${p.age}y · ${esc(club.name)}</div>
+            <div class="hud-meta">${flag(p.nation, 'sm')} ${p.pos} · ${p.age}y</div>
           </div>
-          <div class="hud-ovr"><b>${p.ovr}</b><span>OVR</span></div>
+          <div class="hud-club">${crest(club.name, 'crest-md')}</div>
+          <div class="hud-ovr" id="hud-ovr"><b>${p.ovr}</b><span>OVR</span></div>
         </div>
         <div class="hud-bars">
           ${UI.bar('Fit', p.fitness, 'linear-gradient(90deg,#12b45f,#22e07a)')}
@@ -4525,6 +4847,8 @@ progress{width:100%}
           ${UI.bar('Mood', p.morale, 'linear-gradient(90deg,#b483ff,#d9b6ff)')}
           ${UI.bar('Rep', p.reputation, 'linear-gradient(90deg,#f5b224,#ffd977)')}
         </div>`;
+      const badge = $('hud-ovr');
+      if (badge) badge.onclick = () => global.Game.secretTap();
     },
 
     TABS: [
@@ -4536,9 +4860,14 @@ progress{width:100%}
     ],
 
     renderTabs() {
-      $('tabbar').innerHTML = UI.TABS.map(t =>
+      $('tabbar').innerHTML = UI.tabsFor().map(t =>
         `<button class="${UI.tab === t.id ? 'on' : ''}" data-tab="${t.id}">${ico(t.icon)}${t.label}</button>`).join('');
       $('tabbar').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { UI.tab = b.dataset.tab; UI.render(); });
+    },
+
+    tabsFor() {
+      const g = State.game;
+      return (g && g.secret) ? UI.TABS.concat([{ id: 'secret', icon: 'settings', label: 'Boss' }]) : UI.TABS;
     },
 
     render() {
@@ -4549,6 +4878,7 @@ progress{width:100%}
       c.innerHTML = UI['tab_' + UI.tab] ? UI['tab_' + UI.tab]() : '';
       c.scrollTop = 0;
       UI.bindActions(c);
+      if (UI.tab === 'secret') UI.renderDevClubs();
     },
 
     bindActions(root) {
@@ -4571,15 +4901,18 @@ progress{width:100%}
         Engine.Season.prepareFixture(g, f);
         const opp = f.oppId ? State.club(f.oppId) : { name: f.oppName || 'TBC' };
         const me = State.club(p.club);
-        html += `<div class="fixture">
+        const homeName = f.home ? me.name : opp.name, awayName = f.home ? opp.name : me.name;
+        html += `<div class="fixture" style="--home:${global.Crest.accent(homeName)};--away:${global.Crest.accent(awayName)}">
           <div class="comp">${esc(f.label)}</div>
           <div class="teams">
-            <div class="team">${f.home ? esc(me.name) : esc(opp.name)}</div>
+            <div class="team">${crest(homeName, 'crest-lg')}${esc(homeName)}</div>
             <div class="vs">V</div>
-            <div class="team">${f.home ? esc(opp.name) : esc(me.name)}</div>
+            <div class="team">${crest(awayName, 'crest-lg')}${esc(awayName)}</div>
           </div>
           <div class="venue">${ico(f.home ? 'home' : 'away')} ${f.home ? 'Home' : 'Away'}
-            · Match ${g.fixtureIndex + 1} of ${g.fixtures.length}</div>
+            · Match ${g.fixtureIndex + 1} of ${g.fixtures.length}
+            ${opp.rating ? '· opposition rated ' + opp.rating : ''}</div>
+          ${UI.formGuide(me)}
         </div>`;
 
         const blocked = p.suspension > 0 ? `Suspended for ${p.suspension} more match(es).`
@@ -4613,6 +4946,18 @@ progress{width:100%}
           <div class="stat"><b>${State.seasonRating(p) || '—'}</b><span>Avg Rating</span></div>
         </div></div>`;
 
+      const next = f ? UI.upcoming(g, 4) : [];
+      if (next.length) {
+        html += `<div class="card"><h3>Coming up</h3><div class="list">` + next.map(nf => {
+          const o = nf.oppId ? State.club(nf.oppId) : null;
+          return `<div class="item tight-item">
+            <div class="ic">${o ? crest(o.name, 'crest-sm') : ico('calendar')}</div>
+            <div class="tx"><b>${o ? esc(o.name) : 'To be confirmed'}</b>
+              <span>${esc(nf.label)} · ${nf.home ? 'home' : 'away'}</span></div>
+            ${o ? `<div class="pill">${o.rating}</div>` : ''}</div>`;
+        }).join('') + `</div></div>`;
+      }
+
       const comps = [];
       if (g.cup) comps.push([g.cup.won ? 'trophy' : g.cup.alive ? 'ok' : 'no', g.cup.name]);
       if (g.cont) comps.push([g.cont.won ? 'trophy' : g.cont.alive ? 'ok' : 'no',
@@ -4627,6 +4972,26 @@ progress{width:100%}
       return html;
     },
 
+    // last five results as W/D/L pills
+    formGuide(club) {
+      const f = (club.form || []).slice(-5);
+      if (!f.length) return '';
+      return `<div class="form-guide">${f.map(r =>
+        `<span class="fg ${r === 'W' ? 'w' : r === 'D' ? 'd' : 'l'}">${r}</span>`).join('')}</div>`;
+    },
+
+    // the next few fixtures after this one
+    upcoming(g, n) {
+      const out = [];
+      for (let i = g.fixtureIndex + 1; i < g.fixtures.length && out.length < n; i++) {
+        const f = g.fixtures[i];
+        if (f.comp === 'cup' && (!g.cup || !g.cup.alive)) continue;
+        if (f.comp === 'cont' && (!g.cont || (!g.cont.alive && f.contKo != null))) continue;
+        out.push(f);
+      }
+      return out;
+    },
+
     /* ---------------- CLUB ---------------- */
     tab_club() {
       const g = State.game, p = g.player, club = State.club(p.club);
@@ -4637,7 +5002,12 @@ progress{width:100%}
       const startChance = Engine.Match.startingChance(g);
 
       let html = `<div class="card">
-        <h3>${flag(club.country, 'sm')} ${esc(club.name)}</h3>
+        <div class="club-line" style="margin-bottom:12px">
+          ${crest(club.name, 'crest-xl')}
+          <div class="grow"><b style="font-size:18px">${esc(club.name)}</b>
+            <div class="dim">${flag(club.country, 'sm')} ${esc(State.league(club.league).name)}</div>
+            ${UI.formGuide(club)}</div>
+        </div>
         <div class="stat-grid">
           <div class="stat"><b>${club.rating}</b><span>Squad</span></div>
           <div class="stat"><b>${club.prestige}</b><span>Prestige</span></div>
@@ -4657,7 +5027,8 @@ progress{width:100%}
         table.map((r, i) => {
           const cls = i < 4 ? 'ucl' : i >= table.length - 2 ? 'rel' : '';
           return `<tr class="${r.id === club.id ? 'me' : ''}">
-            <td><span class="pos-chip ${cls}">${i + 1}</span></td><td>${esc(r.club.name)}</td>
+            <td><span class="pos-chip ${cls}">${i + 1}</span></td>
+            <td>${crest(r.club.name, 'crest-sm')}${esc(r.club.name)}</td>
             <td class="num">${r.p}</td><td class="num">${r.w}</td><td class="num">${r.d}</td>
             <td class="num">${r.l}</td><td class="num">${r.gf - r.ga > 0 ? '+' : ''}${r.gf - r.ga}</td>
             <td class="num"><b>${r.pts}</b></td></tr>`;
@@ -4669,10 +5040,10 @@ progress{width:100%}
           <td class="dim">${esc(sc.club)}</td><td class="num"><b>${sc.goals}</b></td></tr>`).join('') + `</table></div>`;
 
       html += `<div class="card"><h3>Squad</h3><div class="list">` +
-        squad.slice(0, 14).map(sq => `<div class="item">
+        squad.slice(0, 16).map(sq => `<div class="item tight-item">
           <div class="ic">${ico(sq.pos === p.pos ? 'shirt' : 'player')}</div>
-          <div class="tx"><b>${esc(sq.name)}${sq.captain ? ' (C)' : ''}</b>
-          <span>${sq.pos} · ${sq.age}y · ${sq.goals} goals this season</span></div>
+          <div class="tx"><b>${esc(sq.name)}${sq.captain ? ' (C)' : ''}${sq.pos === p.pos ? ' — your position' : ''}</b>
+          <span>${sq.pos} · ${sq.age}y · ${sq.goals}g ${sq.assists}a · gets on with you ${Math.round(sq.rel)}%</span></div>
           <div class="pill ${sq.ovr > p.ovr ? 'red' : 'green'}">${sq.ovr}</div></div>`).join('') + `</div></div>`;
       return html;
     },
@@ -4815,6 +5186,118 @@ progress{width:100%}
       return html;
     },
 
+    /* ---------------- BOSS MODE (secret) ---------------- */
+    tab_secret() {
+      const g = State.game, p = g.player;
+      const keys = D.ATTR_KEYS.filter(k => k !== 'gk' || p.pos === 'GK')
+                              .filter(k => k !== 'shooting' || p.pos !== 'GK');
+      let html = `<div class="card secret-head">
+        <h3 class="gold">${ico('settings')} Boss Mode</h3>
+        <p class="dim" style="margin:0">Unlocked with the code. Everything here is a cheat —
+          change what you like, it saves like any other career.</p></div>`;
+
+      // ---- overall ----
+      html += `<div class="card"><h3>Overall</h3>
+        <div class="row" style="align-items:center;gap:10px;margin-bottom:10px">
+          <div class="prev-ovr"><b>${p.ovr}</b><span>NOW</span></div>
+          <div class="prev-ovr pot"><b>${State.potentialOverall(p)}</b><span>CEILING</span></div>
+          <div class="grow dim">Setting an overall scales every attribute to match it, ceilings included.</div>
+        </div>
+        <div class="row wrap">
+          ${[60, 70, 80, 85, 90, 95, 99].map(v =>
+            `<button class="btn btn-ghost sm" data-act="devOvr" data-arg="${v}">${v}</button>`).join('')}
+        </div></div>`;
+
+      // ---- attributes ----
+      html += `<div class="card"><h3>Attributes</h3>`;
+      keys.forEach(k => {
+        const cap = Engine.Progress.cap(p, k);
+        html += `<div class="dev-attr">
+          <div class="dev-attr-h">${ico(k)} <b>${D.ATTR_LABEL[k]}</b>
+            <span class="grow"></span><em>${p.attrs[k]}<span class="dim"> / ${cap}</span></em></div>
+          <div class="row">
+            <button class="btn btn-ghost sm" data-act="devAttr" data-arg="${k}:-10">−10</button>
+            <button class="btn btn-ghost sm" data-act="devAttr" data-arg="${k}:-1">−1</button>
+            <button class="btn btn-ghost sm grow" data-act="devAttr" data-arg="${k}:+1">+1</button>
+            <button class="btn btn-ghost sm" data-act="devAttr" data-arg="${k}:+10">+10</button>
+            <button class="btn btn-gold sm" data-act="devAttr" data-arg="${k}:99">99</button>
+          </div></div>`;
+      });
+      html += `<div class="row wrap" style="margin-top:10px">
+        <button class="btn btn-ghost" data-act="devMaxCeilings">Raise every ceiling to 99</button>
+        <button class="btn btn-ghost" data-act="devFillCaps">Fill attributes to their ceiling</button>
+      </div></div>`;
+
+      // ---- traits ----
+      html += `<div class="card"><h3>Traits — tap to toggle</h3><div class="dev-traits">` +
+        Object.keys(D.TRAITS).map(id => {
+          const t = D.TRAITS[id], on = State.hasTrait(p, id);
+          return `<button class="dev-trait ${on ? 'on' : ''} ${t.bad ? 'bad' : ''}" data-act="devTrait" data-arg="${id}">
+            ${ico(t.icon)}<b>${esc(t.name)}</b><span>${esc(t.desc)}</span></button>`;
+        }).join('') + `</div></div>`;
+
+      // ---- condition ----
+      html += `<div class="card"><h3>Condition</h3>
+        ${[['fitness', 'Fitness'], ['form', 'Form'], ['morale', 'Morale'],
+           ['reputation', 'Reputation'], ['managerTrust', 'Manager trust']].map(([k, label]) =>
+          `<div class="dev-attr"><div class="dev-attr-h"><b>${label}</b><span class="grow"></span>
+            <em>${Math.round(p[k])}</em></div>
+            <div class="row">
+              <button class="btn btn-ghost sm" data-act="devStat" data-arg="${k}:0">0</button>
+              <button class="btn btn-ghost sm grow" data-act="devStat" data-arg="${k}:50">50</button>
+              <button class="btn btn-gold sm" data-act="devStat" data-arg="${k}:100">100</button>
+            </div></div>`).join('')}
+      </div>`;
+
+      // ---- career ----
+      html += `<div class="card"><h3>Career</h3>
+        <div class="dev-attr"><div class="dev-attr-h"><b>Age</b><span class="grow"></span><em>${p.age}</em></div>
+          <div class="row">
+            <button class="btn btn-ghost sm grow" data-act="devAge" data-arg="-1">−1 year</button>
+            <button class="btn btn-ghost sm grow" data-act="devAge" data-arg="1">+1 year</button>
+          </div></div>
+        <div class="dev-attr"><div class="dev-attr-h"><b>Squad number</b><span class="grow"></span><em>${p.shirt}</em></div>
+          <div class="row">
+            <button class="btn btn-ghost sm grow" data-act="devShirt" data-arg="-1">−1</button>
+            <button class="btn btn-ghost sm grow" data-act="devShirt" data-arg="1">+1</button>
+          </div></div>
+        <div class="dev-attr"><div class="dev-attr-h"><b>Position</b><span class="grow"></span><em>${p.pos}</em></div>
+          <div class="opt-grid" style="grid-template-columns:repeat(5,1fr);margin-top:6px">
+            ${Object.keys(D.POSITIONS).map(k =>
+              `<div class="opt ${p.pos === k ? 'sel' : ''}" data-act="devPos" data-arg="${k}">${k}</div>`).join('')}
+          </div></div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-ghost" data-act="devHeal">Heal everything</button>
+          <button class="btn btn-ghost" data-act="devCallUp">Force a call-up</button>
+          <button class="btn btn-ghost" data-act="devTrophy">Add a title</button>
+          <button class="btn btn-ghost" data-act="devContract">Top contract</button>
+        </div></div>`;
+
+      // ---- move club ----
+      html += `<div class="card"><h3>Sign for anyone</h3>
+        <div class="field"><label>League</label>
+          <select class="input" id="dev-league">${g.world.leagues.map(l =>
+            `<option value="${l.id}" ${l.id === State.club(p.club).league ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></div>
+        <div class="club-list" id="dev-clubs"></div></div>`;
+
+      html += `<div class="card"><button class="btn btn-danger btn-block" data-act="devLock">Lock Boss Mode again</button></div>`;
+      return html;
+    },
+
+    renderDevClubs() {
+      const g = State.game, sel = $('dev-league');
+      if (!sel) return;
+      const league = State.league(sel.value);
+      const list = $('dev-clubs');
+      list.innerHTML = league.clubs.map(id => {
+        const c = State.club(id);
+        return `<div class="club ${c.id === g.player.club ? 'sel' : ''}" data-act="devClub" data-arg="${id}">
+          <b>${esc(c.name)}</b><span>Rated ${c.rating}</span></div>`;
+      }).join('');
+      UI.bindActions(list);
+      sel.onchange = () => UI.renderDevClubs();
+    },
+
     /* ==========================================================================
        MATCH RENDERING
        ========================================================================== */
@@ -4838,9 +5321,9 @@ progress{width:100%}
       $('scoreboard').innerHTML = `
         <div class="sb-comp">${esc(m.compLabel || 'Match')}</div>
         <div class="sb-main">
-          <div class="sb-team">${esc(homeName)}</div>
+          <div class="sb-team">${global.Crest.svg(homeName, 'crest-md')}${esc(homeName)}</div>
           <div class="sb-score">${homeScore} – ${awayScore}</div>
-          <div class="sb-team">${esc(awayName)}</div>
+          <div class="sb-team">${global.Crest.svg(awayName, 'crest-md')}${esc(awayName)}</div>
         </div>
         <div class="sb-min">${m.finished ? 'Full time' : m.minute + "'"}</div>
         <div class="sb-you">${chips.join('')}</div>`;
@@ -4909,6 +5392,13 @@ progress{width:100%}
       $('btn-continue').disabled = !State.hasSave();
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') UI.closeModal();
+        // typing the code anywhere also works, for anyone on a keyboard
+        if (!State.game || State.game.secret) return;
+        if (document.getElementById('code-in')) return;
+        if (e.key && e.key.length === 1) {
+          Game._typed = ((Game._typed || '') + e.key.toLowerCase()).slice(-8);
+          if (Game._typed.indexOf('gkgo') >= 0) { Game._typed = ''; Game.codePrompt(); }
+        }
       });
     },
 
@@ -4988,9 +5478,150 @@ progress{width:100%}
       });
     },
 
+    /* ==================== the code ====================
+       Five taps on the overall badge asks for a code. The right one unlocks
+       Boss Mode, which then lives in the save like anything else. */
+    secretTap() {
+      const g = State.game;
+      if (!g) return;
+      if (g.secret) { UI.tab = 'secret'; UI.render(); return; }
+      const now = Date.now();
+      if (!Game._taps || now - Game._lastTap > 1500) Game._taps = 0;
+      Game._lastTap = now;
+      Game._taps++;
+      if (Game._taps >= 5) { Game._taps = 0; Game.codePrompt(); }
+      else if (Game._taps >= 3) UI.toast('…', '');
+    },
+
+    codePrompt() {
+      UI.modal({
+        title: 'Enter code',
+        html: `<p class="muted">If you know it, you know it.</p>
+          <input class="input" id="code-in" autocomplete="off" autocapitalize="off"
+            spellcheck="false" placeholder="• • • •" maxlength="16"
+            style="text-align:center;letter-spacing:4px;font-weight:700">`,
+        actions: [
+          { label: 'Enter', keepOpen: true, onClick: () => Game.trySecret() },
+          { label: 'Cancel', cls: 'btn-ghost' }
+        ],
+        onRender(m) {
+          const input = m.querySelector('#code-in');
+          if (!input) return;
+          setTimeout(() => input.focus(), 60);
+          input.onkeydown = e => { if (e.key === 'Enter') Game.trySecret(); };
+        }
+      });
+    },
+
+    trySecret() {
+      const el = document.getElementById('code-in');
+      const value = (el ? el.value : '').trim().toLowerCase();
+      if (value !== 'gkgo') {
+        if (el) { el.value = ''; el.placeholder = 'nope'; }
+        UI.toast('Wrong code.', 'bad');
+        return;
+      }
+      UI.closeModal();
+      State.game.secret = true;
+      State.save();
+      UI.tab = 'secret';
+      UI.render();
+      UI.modal({
+        title: 'Boss Mode unlocked',
+        text: 'A new tab has appeared. Attributes, ceilings, traits, condition, your club — all of it is yours to change.\n\nIt stays unlocked in this save.',
+        actions: [{ label: 'Let me at it' }]
+      });
+    },
+
+    /* ==================== Boss Mode actions ==================== */
+    devAction(act, arg) {
+      const g = State.game, p = g.player;
+      const clampAttr = v => U.clamp(Math.round(v), 1, 99);
+      switch (act) {
+        case 'devAttr': {
+          const [key, delta] = arg.split(':');
+          if (delta === '99') { p.caps[key] = 99; p.attrs[key] = 99; }
+          else p.attrs[key] = clampAttr((p.attrs[key] || 0) + parseInt(delta, 10));
+          if (p.attrs[key] > (p.caps[key] || 0)) p.caps[key] = p.attrs[key];   // ceilings follow
+          break;
+        }
+        case 'devOvr': {
+          // scale every attribute until the positional overall lands on the target
+          const target = parseInt(arg, 10);
+          let guard = 0;
+          while (State.overall(p) !== target && guard++ < 260) {
+            const dir = State.overall(p) < target ? 1 : -1;
+            const w = D.POSITIONS[p.pos].w;
+            const keys = D.ATTR_KEYS.filter(k => (w[k] || 0) > 0.01)
+              .filter(k => dir > 0 ? p.attrs[k] < 99 : p.attrs[k] > 1);
+            if (!keys.length) break;
+            keys.forEach(k => { p.attrs[k] = clampAttr(p.attrs[k] + dir); });
+          }
+          D.ATTR_KEYS.forEach(k => { if (p.attrs[k] > (p.caps[k] || 0)) p.caps[k] = p.attrs[k]; });
+          break;
+        }
+        case 'devMaxCeilings': D.ATTR_KEYS.forEach(k => p.caps[k] = 99); break;
+        case 'devFillCaps': D.ATTR_KEYS.forEach(k => p.attrs[k] = clampAttr(p.caps[k] || p.attrs[k])); break;
+        case 'devTrait': {
+          if (State.hasTrait(p, arg)) p.traits = p.traits.filter(t => t !== arg);
+          else p.traits.push(arg);
+          break;
+        }
+        case 'devStat': {
+          const [key, val] = arg.split(':');
+          p[key] = U.clamp(parseInt(val, 10), 0, 100);
+          break;
+        }
+        case 'devAge': p.age = U.clamp(p.age + parseInt(arg, 10), 15, 45); break;
+        case 'devShirt': p.shirt = U.clamp(p.shirt + parseInt(arg, 10), 1, 99); break;
+        case 'devPos': p.pos = arg; break;
+        case 'devHeal':
+          p.injuries = []; p.suspension = 0; p.fitness = 100;
+          UI.toast('Fit and available.', 'good');
+          break;
+        case 'devCallUp':
+          p.intl.called = true; p.intl.retired = false;
+          UI.toast('You are in the squad.', 'good');
+          break;
+        case 'devTrophy':
+          p.career.trophies.push({ name: State.league(State.club(p.club).league).name + ' Title',
+                                   year: g.world.year + 1, club: State.club(p.club).name });
+          UI.toast('Title added.', 'gold');
+          break;
+        case 'devContract':
+          p.contract.wage = Math.max(p.contract.wage, 500000);
+          p.contract.years = 5;
+          p.contract.release = Math.round(State.marketValue(p) * 4);
+          UI.toast('Contract improved.', 'gold');
+          break;
+        case 'devClub': {
+          const club = State.club(arg);
+          if (!club) break;
+          global.Contracts.joinClub(p, club, global.Contracts.offerFor(p, club, false));
+          g.squad = null; g.squadClub = null;
+          Engine.Squad.ensure(g);
+          Engine.Season.build(g);
+          State.log(`Boss Mode: signed for ${club.name}.`, 'info');
+          UI.toast('Signed for ' + club.name, 'good');
+          break;
+        }
+        case 'devLock':
+          g.secret = false;
+          UI.tab = 'player';
+          UI.toast('Boss Mode locked.', '');
+          break;
+      }
+      p.ovr = State.overall(p);
+      p.potential = State.potentialOverall(p);
+      p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
+      State.save();
+      UI.render();
+    },
+
     /* ==================== action dispatcher ==================== */
     action(act, arg) {
       const g = State.game;
+      if (act.indexOf('dev') === 0) return Game.devAction(act, arg);
       switch (act) {
         case 'playMatch': return Game.playMatch(true);
         case 'quickMatch': return Game.playMatch(false);
@@ -5174,8 +5805,8 @@ progress{width:100%}
     choose(scn, index) {
       const g = State.game, m = Game.match;
       const opt = scn.options[index];
-      const fx = opt.run();
-      const out = Engine.Match.applyEffects(g, m, fx);
+      const fx = Scenarios.resolve(scn, index);
+      const out = Engine.Match.applyEffects(g, m, fx, Scenarios.styleOf(scn, opt));
       UI.pushEvent(`${opt.label} → ${fx.text}`, fx.tone, m.minute, true);
       UI.renderScoreboard(m);
       out.forEach(o => {
@@ -5235,7 +5866,7 @@ progress{width:100%}
             shootoutSub: `Shootout ${s.us}–${s.them}. Kick ${s.usKicks + 1}. Eighty thousand people are watching you.`
           }));
           UI.renderScenario(kick, i => {
-            const fx = kick.options[i].run();
+            const fx = Scenarios.resolve(kick, i);
             s.usKicks++;
             if (fx.goal) { s.us++; g.player.penScored = (g.player.penScored || 0) + 1; }
             UI.pushEvent(`${kick.options[i].label} → ${fx.text}`, fx.tone, null, true);
@@ -5407,6 +6038,19 @@ progress{width:100%}
       unlock('workhorse', p.career.apps >= 40 && p.managerTrust >= 72);
       unlock('lucky', p.career.trophies.length >= 3 && U.chance(0.5));
       unlock('twofooted', p.attrs.weakFoot >= 85);
+      // style traits: earned by being genuinely good at that part of the game
+      unlock('finesse',   p.attrs.shooting >= 78 && p.attrs.flair >= 70);
+      unlock('power',     p.attrs.shooting >= 78 && p.attrs.physical >= 78);
+      unlock('poacher',   p.career.goals >= 40 && D.POSITIONS[p.pos].attack >= 0.4);
+      unlock('aerial',    p.attrs.physical >= 80 && p.career.apps >= 40);
+      unlock('visionary', p.attrs.passing >= 84 && p.career.assists >= 20);
+      unlock('burst',     p.attrs.pace >= 88);
+      unlock('pressres',  p.attrs.dribbling >= 80 && p.attrs.passing >= 76);
+      unlock('longrange', p.attrs.shooting >= 82 && p.career.goals >= 25);
+      unlock('shotstop',  p.pos === 'GK' && p.attrs.gk >= 82);
+      unlock('sweeperk',  p.pos === 'GK' && p.attrs.passing >= 76 && p.attrs.pace >= 70);
+      unlock('theatrical', (p.divesWon || 0) >= 3);
+      unlock('ironman',   p.career.apps >= 120 && (p.injuryCount || 0) <= 1);
       unlock('glass', (p.injuryCount || 0) >= 4);
       unlock('hothead', p.career.red >= 3 || p.career.yellow >= 22);
     },
@@ -5622,11 +6266,11 @@ progress{width:100%}
         + (expiring ? ' <b class="bad">(EXPIRED)</b>' : ` (${p.contract.years} year${p.contract.years === 1 ? '' : 's'} left)`) + `</p>`;
       html += `<div class="list">`;
       if (wantsToRenew) {
-        html += `<div class="item click" data-r="1"><div class="ic">${ico('agent')}</div><div class="tx">
+        html += `<div class="item click" data-r="1"><div class="ic">${global.Crest.svg(club.name, 'crest-md')}</div><div class="tx">
           <b>Stay at ${U.esc(club.name)}</b><span>${expiring ? 'New deal: ' : 'Improved terms: '}${U.cash(renewal.wage)}/wk for ${renewal.years} years · signing bonus ${U.cash(renewal.signingBonus)}</span></div></div>`;
       }
       offers.forEach((o, i) => {
-        html += `<div class="item click" data-o="${i}"><div class="ic">${ico('club')}</div><div class="tx">
+        html += `<div class="item click" data-o="${i}"><div class="ic">${global.Crest.svg(o.clubName, 'crest-md')}</div><div class="tx">
           <b>${U.esc(o.clubName)} — ${U.cash(o.fee)}</b>
           <span>Rating ${o.rating} · ${U.cash(o.wage)}/wk for ${o.years} years · bonus ${U.cash(o.signingBonus)}<br>${U.esc(o.pitch)}</span></div></div>`;
       });

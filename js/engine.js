@@ -356,9 +356,10 @@
       return { type: 'commentary', entry, us: m.us, them: m.them, minute: m.minute };
     },
 
-    applyEffects(g, m, fx) {
+    applyEffects(g, m, fx, style) {
       const p = g.player;
       const out = [];
+      m.lastStyle = style || null;
       if (fx.goal) {
         m.us++; m.stats.goals++; m.stats.rating += 0;
         p.season.goals++; p.career.goals++;
@@ -369,7 +370,10 @@
       if (fx.assist) { m.stats.assists++; p.season.assists++; p.career.assists++; }
       if (fx.concede) { m.them++; }
       if (fx.save) { m.stats.saves++; }
-      if (fx.penalty) { m.penaltyPending = true; }
+      if (fx.penalty) {
+        m.penaltyPending = true;
+        if (m.lastStyle === 'dive') p.divesWon = (p.divesWon || 0) + 1;
+      }
       if (fx.rating) m.stats.rating += fx.rating;
       if (fx.fitness) p.fitness = U.clamp(p.fitness + fx.fitness * (State.hasTrait(p, 'engine') ? 0.7 : 1), 0, 100);
       const repGained = fx.rep || fx.fame;

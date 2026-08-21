@@ -7,6 +7,68 @@
   'use strict';
   const D = global.DATA, U = global.U, State = global.State;
 
+  /* ---------- style traits ----------
+     Each option is given a style (from the moment it belongs to and the kind of
+     choice it is), and a matching trait makes that style more likely to come
+     off. This keeps the bonus in one place instead of in fifty probabilities. */
+  const STYLE_TRAITS = {
+    finesse:   { style: 'finesse',  attrs: ['shooting', 'dribbling'], mult: .12 },
+    power:     { style: 'power',    attrs: ['shooting', 'physical'],  mult: .12 },
+    poacher:   { style: 'poacher',  attrs: ['shooting'],              mult: .15 },
+    aerial:    { style: 'aerial',   attrs: ['physical', 'shooting', 'defending'], mult: .13 },
+    visionary: { style: 'vision',   attrs: ['passing'],               mult: .12 },
+    burst:     { style: 'pace',     attrs: ['pace'],                  mult: .12 },
+    pressres:  { style: 'pressres', attrs: ['dribbling', 'passing'],  mult: .15 },
+    longrange: { style: 'longshot', attrs: ['shooting'],              mult: .18 },
+    shotstop:  { style: 'shotstop', attrs: ['gk'],                    mult: .13 },
+    sweeperk:  { style: 'sweeper',  attrs: ['gk', 'pace'],            mult: .13 }
+  };
+
+  // which style an option belongs to, from its moment and the choice it offers
+  const TAG_STYLE = {
+    // power
+    'Power': 'power', 'Physical': 'power', 'Shooting': 'power', 'Risk': 'power',
+    // finesse
+    'Placement': 'finesse', 'Technique': 'finesse', 'Composure': 'finesse', 'Nerve': 'finesse',
+    'Dribbling': 'finesse', 'Flair': 'finesse', 'Audacity': 'finesse', 'Icon': 'finesse',
+    // vision
+    'Passing': 'vision', 'Vision': 'vision', 'Smart': 'vision', 'Cunning': 'vision',
+    'Delivery': 'vision', 'Set Piece': 'vision', 'Team Player': 'vision',
+    // pace
+    'Pace': 'pace', 'Work Rate': 'pace',
+    // poaching
+    'Instinct': 'poacher',
+    // keeping
+    'Goalkeeping': 'shotstop', 'Handling': 'shotstop', 'Reflex': 'shotstop', 'Patience': 'shotstop',
+    'Bravery': 'sweeper', 'Commitment': 'sweeper',
+    // the dark arts
+    'Dark Arts': 'dive', 'Streetwise': 'dive'
+  };
+  const SCENARIO_STYLE = {
+    header: 'aerial', aerial: 'aerial', volley: 'aerial',
+    long_shot: 'longshot', keeper_rush: 'longshot',
+    rebound: 'poacher', tight_angle: 'poacher',
+    own_box: 'pressres', gk_backpass: 'pressres',
+    gk_sweeper: 'sweeper', gk_distribution: 'sweeper',
+    gk_save: 'shotstop', gk_longshot: 'shotstop', gk_wall: 'shotstop', gk_penalty: 'shotstop',
+    dive: 'dive'
+  };
+  function styleFor(scn, opt) {
+    return (opt && opt.style)
+      || SCENARIO_STYLE[scn && scn.id]
+      || TAG_STYLE[opt && opt.tag]
+      || null;
+  }
+  function styleMult(ctx, attr) {
+    if (!ctx.style) return 1;
+    let m = 1;
+    Object.keys(STYLE_TRAITS).forEach(id => {
+      const t = STYLE_TRAITS[id];
+      if (t.style === ctx.style && t.attrs.indexOf(attr) >= 0 && State.hasTrait(ctx.player, id)) m += t.mult;
+    });
+    return m;
+  }
+
   /* ---------- helpers ---------- */
   function eff(ctx, attr) {
     const p = ctx.player;
@@ -19,7 +81,7 @@
     const formF = 0.88 + (p.form / 100) * 0.24;
     const fitF = 0.82 + (p.fitness / 100) * 0.22;
     const nerve = ctx.pressure ? (State.hasTrait(p, 'ice') ? 1.0 : 0.94) : 1.0;
-    return raw * formF * fitF * nerve;
+    return raw * formF * fitF * nerve * styleMult(ctx, attr);
   }
 
   // flair is what makes the outrageous option come off
@@ -681,7 +743,7 @@
         options: [
           { label: 'Go down', hint: 'The referee decides your reputation.', tag: 'Dark Arts',
             run() {
-              const r = Math.random();
+              const r = Math.random() - (trait(ctx, 'theatrical') ? 0.18 : 0);
               if (r < 0.42) return E({ penalty: true, rating: 0.7, tone: GOOD, rep: .5,
                 text: 'The whistle blows — PENALTY! The defender cannot believe it.' });
               if (r < 0.72) return E({ card: 'yellow', rating: -0.8, rep: -1, tone: BAD,
@@ -1788,7 +1850,7 @@
       const def = Scenarios.byId(id);
       if (!def) return null;
       const built = def.build(ctx);
-      built.id = id; built.kind = def.kind;
+      built.id = id; built.kind = def.kind; built.ctx = ctx;
       return built;
     },
 
@@ -1823,6 +1885,19 @@
 
     // kept for older call sites
     random(ctx, excludeIds) { return Scenarios.pick(ctx, { exclude: excludeIds }); },
+
+    /* Run one option. Tags the shared context with the option's style first so
+       style traits (Finesse Expert, Power Shooter, …) apply automatically. */
+    resolve(scn, index) {
+      const opt = scn.options[index];
+      if (!opt) return null;
+      if (scn.ctx) scn.ctx.style = styleFor(scn, opt);
+      const fx = opt.run();
+      if (scn.ctx) scn.ctx.style = null;
+      return fx;
+    },
+
+    styleOf(scn, opt) { return styleFor(scn, opt); },
 
     // A penalty shootout kick (used by engine for cup ties)
     shootoutKick(ctx) {
