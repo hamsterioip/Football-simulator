@@ -62,10 +62,9 @@
       const v = p.attrs[attr] || 30;
       return Math.round(6 + Math.pow(Math.max(v - 40, 0), 1.45) * 0.5);
     },
+    // the ceiling you stole from a legend during the draft
     cap(p, attr) {
-      const w = D.POSITIONS[p.pos].w[attr] || 0;
-      const soft = p.potential + (w > 0.2 ? 4 : -6);
-      return U.clamp(Math.round(soft), 40, 99);
+      return U.clamp(Math.round((p.caps && p.caps[attr] != null) ? p.caps[attr] : 60), 20, 99);
     },
     addXp(p, attr, amount) {
       if (!p.xp) p.xp = {};
@@ -99,19 +98,24 @@
       const p = g.player;
       const notes = [];
       const minutesF = U.clamp(p.season.apps / 26, 0.25, 1.25);
-      const gap = Math.max(0, p.potential - p.ovr);
+      const gap = Math.max(0, State.potentialOverall(p) - p.ovr);
       const rating = State.seasonRating(p);
       const perfF = U.clamp((rating - 6.3) * 0.55 + 1, 0.6, 1.7);
       let points = gap * 1.05 * Progress.ageCurve(p.age) * minutesF * perfF;
       points += U.rnd(-0.5, 2.2);
       points = Math.max(0, points);
       const w = D.POSITIONS[p.pos].w;
-      const keys = D.ATTR_KEYS.filter(k => (w[k] || 0) > 0.03);
-      let gained = 0;
+      const grown = {};
       for (let i = 0; i < Math.round(points); i++) {
-        const attr = U.weighted(keys.map(k => [k, (w[k] || 0.02) * 10]));
-        if (p.attrs[attr] < Progress.cap(p, attr)) { p.attrs[attr]++; gained++; notes.push('+1 ' + D.ATTR_LABEL[attr]); }
+        // only attributes with headroom left of the drafted ceiling can improve
+        const room = D.ATTR_KEYS.filter(k => p.attrs[k] < Progress.cap(p, k) && (w[k] || 0) > 0.01);
+        if (!room.length) break;
+        const attr = U.weighted(room.map(k => [k, (w[k] || 0.02) * 10 + 0.5]));
+        p.attrs[attr]++;
+        grown[attr] = (grown[attr] || 0) + 1;
       }
+      Object.keys(grown).forEach(k => notes.push('+' + grown[k] + ' ' + D.ATTR_LABEL[k]));
+      const gained = Object.keys(grown).length;
       // physical decline
       if (p.age >= 30) {
         const dec = Math.round((p.age - 29) * U.rnd(0.5, 1.4));
@@ -120,6 +124,7 @@
           if (p.attrs[attr] > 25) { p.attrs[attr]--; notes.push('−1 ' + D.ATTR_LABEL[attr]); }
         }
         if (p.age >= 32 && U.chance(0.5) && p.attrs.passing < 95) { p.attrs.passing++; notes.push('+1 Passing (experience)'); }
+        if (p.age >= 32 && U.chance(0.4) && p.attrs.weakFoot < 95) { p.attrs.weakFoot++; notes.push('+1 Weak Foot (experience)'); }
       }
       const delta = Progress.refresh(p);
       return { notes, delta, gained };
@@ -161,8 +166,8 @@
       const oppStr = opp.rating + (isHome ? 0 : 2.5) + (fixture.comp === 'intl' ? 0 : 0);
 
       const m = {
-        fixture, oppName: opp.name, oppFlag: opp.flag || '', oppRating: opp.rating,
-        myName: myClub.name, myFlag: myClub.flag,
+        fixture, oppName: opp.name, oppCountry: opp.country || '', oppRating: opp.rating,
+        myName: myClub.name, myCountry: myClub.country,
         isHome, comp: fixture.comp, compLabel: fixture.label,
         role, minute: 0, us: 0, them: 0,
         myStr, oppStr,
@@ -227,6 +232,8 @@
       const oppQ = m.oppRating;
       return Object.assign({
         player: p, minute: m.minute, oppName: m.oppName,
+        // roughly a quarter of chances fall on the wrong foot
+        weakSide: !State.hasTrait(p, 'twofooted') && U.chance(0.26),
         keeper: oppQ - 2, defender: oppQ - 1, attackerRating: oppQ + 1,
         pressure: (m.comp === 'cup' || m.comp === 'cont' || m.comp === 'intl') && m.minute > 70,
         crowdHostile: !m.isHome,
@@ -306,7 +313,7 @@
           m.us++;
           const scorer = U.pick(squad.filter(s => ['ST', 'LW', 'RW', 'CAM', 'CM'].indexOf(s.pos) >= 0)) || squad[10];
           scorer.goals++;
-          return Match.commentary(m, `⚽ ${m.myName} score! ${scorer.name} finishes it off.`, 'good');
+          return Match.commentary(m, `GOAL — ${m.myName}! ${scorer.name} finishes it off.`, 'good');
         }
         if (U.chance(0.45)) return null;
         return Match.commentary(m, U.pick([
@@ -320,7 +327,7 @@
         m.them++;
         if (g.player.pos === 'GK' && m.role === 'start') m.stats.rating -= 0.28;
         else if (D.POSITIONS[g.player.pos].group === 'DEF' && m.role === 'start') m.stats.rating -= 0.14;
-        return Match.commentary(m, `⚽ ${m.oppName} score. ${m.myName} look shaky at the back.`, 'bad');
+        return Match.commentary(m, `GOAL — ${m.oppName}. ${m.myName} look shaky at the back.`, 'bad');
       }
       if (U.chance(0.5)) return null;
       return Match.commentary(m, U.pick([
@@ -353,14 +360,12 @@
       if (fx.penalty) { m.penaltyPending = true; }
       if (fx.rating) m.stats.rating += fx.rating;
       if (fx.fitness) p.fitness = U.clamp(p.fitness + fx.fitness * (State.hasTrait(p, 'engine') ? 0.7 : 1), 0, 100);
-      if (fx.fame) { State.addFame(p, fx.fame * (State.hasTrait(p, 'magnet') ? 1.5 : 1));
-                     State.addFollowers(p, Math.max(0, fx.fame) * 0.012, 0); }
+      if (fx.fame) State.addReputation(p, fx.fame * (State.hasTrait(p, 'idol') ? 1.5 : 1));
       if (fx.morale) p.morale = U.clamp(p.morale + fx.morale, 0, 100);
       if (fx.trust) p.managerTrust = U.clamp(p.managerTrust + fx.trust, 0, 100);
       if (fx.teamBoost) m.teamBoost += fx.teamBoost;
       if (fx.soloBoost) m.soloBoost = true;
       if (fx.crowd) { const c = State.club(p.club); c.morale = U.clamp(c.morale + fx.crowd * 0.2, 0, 100); }
-      if (fx.money) State.addMoney(p, fx.money);
       if (fx.xp) Object.keys(fx.xp).forEach(k => {
         const gains = Progress.addXp(p, k, fx.xp[k] * 1.4);
         gains.forEach(gk => out.push('attr:' + gk));
@@ -423,10 +428,10 @@
       const scoreP = U.clamp(0.16 + (p.attrs.shooting - 55) * 0.006 + D.POSITIONS[p.pos].attack * 0.25, 0.03, 0.6);
       if (U.chance(scoreP)) {
         m.us++; m.stats.goals++; p.season.goals++; p.career.goals++; m.stats.rating += 1.15;
-        m.log.push({ minute: m.minute, text: '⚽ You score!', tone: 'good' });
+        m.log.push({ minute: m.minute, text: 'GOAL — you score!', tone: 'good' });
       } else if (U.chance(0.22)) {
         m.us++; m.stats.assists++; p.season.assists++; p.career.assists++; m.stats.rating += 0.8;
-        m.log.push({ minute: m.minute, text: '🅰️ You set up the goal!', tone: 'good' });
+        m.log.push({ minute: m.minute, text: 'You set up the goal!', tone: 'good' });
       } else {
         m.stats.rating -= 0.1;
       }
@@ -451,8 +456,6 @@
     settle(g, m) {
       const p = g.player;
       const played = (m.role === 'start' || m.role === 'bench') && !m.dnp;
-      const weekWage = p.contract ? p.contract.wage : 0;
-      if (weekWage) { State.addMoney(p, weekWage); p.season.earned = (p.season.earned || 0) + weekWage; }
       let result = m.us > m.them ? 'W' : m.us === m.them ? 'D' : 'L';
       if (m.fixture.knockout && m.us === m.them && m.advanced != null) result = m.advanced ? 'W' : 'L';
       m.result = result;
@@ -480,16 +483,14 @@
         p.form = U.clamp(p.form * 0.72 + (m.stats.rating - 6.5) * 30 + 18, 5, 100);
         p.morale = U.clamp(p.morale + (result === 'W' ? 4 : result === 'L' ? -3 : 0) + (m.stats.goals * 3), 0, 100);
         p.managerTrust = U.clamp(p.managerTrust + (m.stats.rating - 6.6) * 1.5, 0, 100);
-        // wages + bonuses
-        const bonus = m.stats.goals * (p.contract ? p.contract.goalBonus : 0);
-        if (bonus) State.addMoney(p, bonus);
-        m.bonus = bonus;
-        // fame
-        const fameGain = (m.stats.goals * 0.6 + m.stats.assists * 0.3 + (m.motm ? 0.5 : 0))
-          * (State.hasTrait(p, 'magnet') ? 1.5 : 1) * (m.comp === 'intl' || m.comp === 'cont' ? 1.6 : 1);
-        State.addFame(p, fameGain);
-        State.addFollowers(p, fameGain * 0.02 + 0.0015, 300);
+        // reputation: earned strictly on the pitch
+        const repGain = (m.stats.goals * 0.6 + m.stats.assists * 0.3 + (m.motm ? 0.5 : 0))
+          * (State.hasTrait(p, 'idol') ? 1.5 : 1) * (m.comp === 'intl' || m.comp === 'cont' ? 1.6 : 1);
+        State.addReputation(p, repGain);
+        Press.matchHeadline(g, m);
         // injury from fatigue
+        p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
+        p.peakValue = Math.max(p.peakValue || 0, State.marketValue(p));
         if (!m.injuredDuring && U.chance(U.clamp(0.05 + (60 - p.fitness) * 0.0035 + (State.hasTrait(p, 'glass') ? 0.05 : 0), 0.02, 0.28))) {
           Injuries.give(g, false);
           m.postInjury = true;
@@ -528,9 +529,9 @@
       const inj = { name: t[0], matches: Math.max(1, Math.round(weeks * 0.9)), total: weeks };
       p.injuries.push(inj);
       p.lastInjury = inj;
+      p.injuryCount = (p.injuryCount || 0) + 1;
       p.morale = U.clamp(p.morale - Math.min(20, weeks), 0, 100);
-      p.health = U.clamp(p.health - weeks * 0.6, 20, 100);
-      State.log(`🩼 Injury: ${inj.name} — out for around ${weeks} week${weeks > 1 ? 's' : ''}.`, 'bad');
+      State.log(`Injury: ${inj.name} — out for around ${weeks} week${weeks > 1 ? 's' : ''}.`, 'bad');
       State.news(`${p.firstName} ${p.lastName} suffers ${inj.name.toLowerCase()} — ${weeks} weeks out`, 'bad');
       return inj;
     },
@@ -538,7 +539,7 @@
       const p = g.player;
       p.injuries.forEach(i => i.matches--);
       const healed = p.injuries.filter(i => i.matches <= 0);
-      healed.forEach(i => State.log(`✅ Recovered from ${i.name}.`, 'good'));
+      healed.forEach(i => State.log(`Recovered from ${i.name}.`, 'good'));
       p.injuries = p.injuries.filter(i => i.matches > 0);
     }
   };
@@ -754,7 +755,7 @@
       const p = g.player, club = State.club(p.club);
       const pos = Season.position(g);
       const table = Season.standings(g, club.league);
-      const results = { pos, trophies: [], awards: [], money: 0, notes: [] };
+      const results = { pos, trophies: [], awards: [], notes: [] };
       const rating = State.seasonRating(p);
 
       if (pos === 1) { results.trophies.push(club.league + ' Title'); }
@@ -769,23 +770,29 @@
       if (p.age <= 21 && rating >= 7.1 && p.season.apps >= 10) results.awards.push('Young Player of the Year');
       // Ballon d'Or style
       const bdScore = p.season.goals * 2.2 + p.season.assists * 1.5 + Math.max(0, rating - 6.4) * 42
-        + results.trophies.length * 16 + (g.cont && g.cont.won ? 25 : 0) + p.fame * 0.35
+        + results.trophies.length * 16 + (g.cont && g.cont.won ? 25 : 0) + p.reputation * 0.35
         + Math.max(0, p.ovr - 78) * 3;
-      if (bdScore > 175 && p.ovr >= 85 && U.chance(0.8)) results.awards.push('World Player of the Year 🏆');
+      if (bdScore > 175 && p.ovr >= 85 && U.chance(0.8)) results.awards.push('World Player of the Year');
       else if (bdScore > 135 && p.ovr >= 80) results.awards.push('World XI Nomination');
 
-      // money
-      const prize = Math.round((13 - pos) * 400000 + (g.cont ? 6000000 : 0) + (results.trophies.length * 2500000));
-      results.money = Math.max(0, prize);
-      State.addMoney(p, results.money);
+      results.value = State.marketValue(p);
+      p.peakValue = Math.max(p.peakValue || 0, results.value);
+      p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
 
-      results.wages = p.season.earned || 0;
+      results.trophies.forEach(t => {
+        p.career.trophies.push({ name: t, year: g.world.year + 1, club: club.name });
+        State.news(`${p.lastName} lifts the ${t} with ${club.name}`, 'good');
+      });
+      results.awards.forEach(a => {
+        p.achievements.push({ name: a, year: g.world.year + 1 });
+        State.news(`${p.lastName} named ${a}`, 'good');
+      });
+      Press.seasonHeadline(g, results);
 
-      results.trophies.forEach(t => p.career.trophies.push({ name: t, year: g.world.year + 1, club: club.name }));
-      results.awards.forEach(a => p.achievements.push({ name: a, year: g.world.year + 1 }));
-
-      // development
+      // development, then re-take the peaks so they include this summer's growth
       results.dev = Progress.seasonDevelopment(g);
+      p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
+      p.peakValue = Math.max(p.peakValue || 0, State.marketValue(p));
 
       // record season history
       p.career.seasons.push({
@@ -821,10 +828,10 @@
       const wasCalled = p.intl.called;
       p.intl.called = p.ovr >= bar || (p.ovr >= bar - 4 && State.seasonRating(p) >= 7.2);
       if (p.intl.called && !wasCalled) {
-        State.log(`🌍 You have been called up by ${nat.flag} ${p.nation} for the first time!`, 'good');
+        State.log(`You have been called up by ${p.nation} for the first time!`, 'good');
         State.news(`${p.lastName} earns a maiden ${p.nation} call-up`, 'good');
         results.notes.push('First international call-up!');
-        p.fame = U.clamp(p.fame + 5, 0, 100);
+        State.addReputation(p, 6);
       } else if (!p.intl.called && wasCalled) {
         State.log(`You have been dropped from the ${p.nation} squad.`, 'bad');
         results.notes.push('Dropped from the national squad.');
@@ -858,14 +865,14 @@
         const wantsYou = c.rating <= p.ovr + 7;
         return gapOk && wantsYou;
       });
-      const heat = U.clamp((rating - 6.4) * 2.2 + p.fame * 0.06 + (p.ovr - club.rating) * 0.5, 0, 10);
+      const heat = U.clamp((rating - 6.4) * 2.2 + p.reputation * 0.06 + (p.ovr - club.rating) * 0.5, 0, 10);
       const n = U.clamp(Math.round(heat / 2.2) + (U.chance(0.4) ? 1 : 0), 0, 5);
       const shortlist = U.pickN(interest.sort((a, b) => Math.abs(a.rating - p.ovr) - Math.abs(b.rating - p.ovr)).slice(0, 26), n);
       shortlist.forEach(c => {
         const fee = Math.round(value * U.rnd(0.8, 1.9) / 100000) * 100000;
         const offer = Contracts.offerFor(p, c, false);
         offers.push({
-          clubId: c.id, clubName: c.name, rating: c.rating, league: c.league, flag: c.flag,
+          clubId: c.id, clubName: c.name, rating: c.rating, league: c.league, country: c.country,
           fee, wage: offer.wage, years: offer.years, signingBonus: offer.signingBonus,
           release: offer.release, goalBonus: offer.goalBonus,
           pitch: Transfers.pitch(c, p)
@@ -891,13 +898,35 @@
       Contracts.joinClub(p, club, offer);
       g.squad = null; g.squadClub = null;
       Squad.ensure(g);
-      State.log(`✍️ Signed for ${club.name} for ${U.cash(offer.fee)} — ${U.cash(offer.wage)}/week.`, 'good');
-      State.news(`${club.name} sign ${p.firstName} ${p.lastName} from ${oldClub.name} for ${U.cash(offer.fee)}`, 'good');
-      p.fame = U.clamp(p.fame + U.clamp((club.rating - oldClub.rating) * 0.6, 0, 10) + 2, 0, 100);
-      // agent fee to you
-      State.addMoney(p, Math.round(offer.fee * 0.03));
+      State.log(`Signed for ${club.name} for ${U.cash(offer.fee)} — ${U.cash(offer.wage)}/week.`, 'good');
+      State.news(`DONE DEAL: ${club.name} sign ${p.firstName} ${p.lastName} from ${oldClub.name} for ${U.cash(offer.fee)}`, 'good');
+      State.addReputation(p, U.clamp((club.rating - oldClub.rating) * 0.6, 0, 10) + 2);
     }
   };
 
-  global.Engine = { Squad, Match, Season, Awards, Progress, Transfers, Injuries, Intl, FORMATION };
+  /* ==========================================================================
+     PRESS — the back pages react to what you actually did
+     ========================================================================== */
+  const Press = {
+    matchHeadline(g, m) {
+      const p = g.player, club = State.club(p.club);
+      const you = p.firstName + ' ' + p.lastName, last = p.lastName;
+      if (m.stats.goals >= 3) return State.news(`${last.toUpperCase()} HAT-TRICK! ${you} tears ${m.oppName} apart`, 'good');
+      if (m.stats.card === 'red') return State.news(`SEEING RED: ${you} sent off as ${club.name} go down to ten`, 'bad');
+      if (m.stats.goals >= 2) return State.news(`${you} bags a brace in the ${m.us}-${m.them}`, 'good');
+      if (m.motm) return State.news(`${you} runs the show against ${m.oppName}`, 'good');
+      if (m.stats.goals === 1 && m.result === 'W') return State.news(`${last} on target as ${club.name} beat ${m.oppName}`, 'good');
+      if (m.stats.rating <= 5.2 && m.result === 'L') return State.news(`Questions for ${last} after a wretched night at ${m.oppName}`, 'bad');
+      if (m.stats.saves >= 4) return State.news(`${last} stands on his head to keep ${club.name} in it`, 'good');
+      return null;
+    },
+    seasonHeadline(g, results) {
+      const p = g.player, club = State.club(p.club);
+      if (results.pos === 1) State.news(`CHAMPIONS: ${club.name} win the league`, 'good');
+      else if (results.pos >= 11) State.news(`Long summer ahead at ${club.name} after a ${U.ordinal(results.pos)}-place finish`, 'bad');
+      if (p.season.goals >= 20) State.news(`${p.season.goals} goals: the season that made ${p.lastName}`, 'good');
+    }
+  };
+
+  global.Engine = { Squad, Match, Season, Awards, Progress, Transfers, Injuries, Intl, Press, FORMATION };
 })(window);

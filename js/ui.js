@@ -3,9 +3,11 @@
    ========================================================================== */
 (function (global) {
   'use strict';
-  const D = global.DATA, U = global.U, State = global.State, Engine = global.Engine, Life = global.Life;
+  const D = global.DATA, U = global.U, State = global.State, Engine = global.Engine;
   const $ = id => document.getElementById(id);
   const esc = U.esc;
+  const ico = (name, cls, label) => global.Icons.svg(name, cls, label);
+  const flag = (country, cls) => global.Icons.flag(country, cls);
 
   const UI = {
     tab: 'home',
@@ -71,7 +73,7 @@
     },
 
     /* ==========================================================================
-       CREATION WIZARD
+       CREATION WIZARD — identity, position, the draft, then a club
        ========================================================================== */
     startWizard() {
       UI.wizard = {
@@ -80,87 +82,157 @@
         lastName: U.pick(D.LAST_NAMES),
         nation: 'England',
         foot: 'Right',
+        shirt: U.pick([7, 9, 10, 11, 8, 14, 21, 23, 1]),
         pos: 'ST',
-        talent: 'normal',
-        clubId: null
+        clubId: null,
+        draftPool: null, draftIndex: 0, caps: {}, robbed: []
       };
       UI.show('create');
       UI.renderWizard();
     },
 
-    talentPresets: {
-      hard:   { label: 'Academy Hopeful', quality: 0.30, money: 5000,  max: 70, desc: 'Raw. Unfancied. You will have to earn everything.' },
-      normal: { label: 'Highly Rated',    quality: 0.55, money: 25000, max: 80, desc: 'A proper prospect with a big future.' },
-      easy:   { label: 'Generational',    quality: 0.85, money: 90000, max: 92, desc: 'The best teenager in the world. Everyone wants you.' }
+    STEPS: ['Identity', 'Position', 'The Draft', 'Club'],
+
+    startDraft() {
+      const w = UI.wizard;
+      const gk = w.pos === 'GK';
+      const pool = gk ? D.LEGENDS_GK : D.LEGENDS;
+      w.draftPool = U.pickN(pool, Math.min(D.CONFIG.DRAFT_PICKS, pool.length));
+      w.draftAttrs = (gk ? D.DRAFT_ATTRS_GK : D.DRAFT_ATTRS).slice();
+      w.draftIndex = 0;
+      w.caps = {};
+      w.robbed = [];
     },
 
     renderWizard() {
       const w = UI.wizard;
-      $('create-steps').innerHTML = [0, 1, 2, 3].map(i => `<div class="${i <= w.step ? 'on' : ''}"></div>`).join('');
+      $('create-steps').innerHTML = UI.STEPS.map((_, i) =>
+        `<div class="${i <= w.step ? 'on' : ''}"></div>`).join('');
       const body = $('create-body');
+
       if (w.step === 0) {
         body.innerHTML = `
-          <h2 style="margin:0 0 4px">Who are you?</h2>
-          <p class="muted" style="margin:0 0 18px">Every career starts with a name on a team sheet.</p>
+          <h2 class="wz-h">Who are you?</h2>
+          <p class="wz-p">Every career starts with a name on a team sheet.</p>
           <div class="row"><div class="field grow"><label>First name</label>
             <input class="input" id="w-first" maxlength="14" value="${esc(w.firstName)}"></div>
             <div class="field grow"><label>Surname</label>
             <input class="input" id="w-last" maxlength="16" value="${esc(w.lastName)}"></div></div>
           <div class="field"><label>Nationality</label>
             <select class="input" id="w-nat">${D.NATIONS.map(n =>
-              `<option value="${esc(n.name)}" ${n.name === w.nation ? 'selected' : ''}>${n.flag} ${esc(n.name)}</option>`).join('')}</select></div>
-          <div class="field"><label>Strong foot</label>
-            <div class="opt-grid" data-group="foot">${['Left', 'Right', 'Both'].map(f =>
-              `<div class="opt ${w.foot === f ? 'sel' : ''}" data-val="${f}">${f}</div>`).join('')}</div></div>`;
+              `<option value="${esc(n.name)}" ${n.name === w.nation ? 'selected' : ''}>${esc(n.name)}</option>`).join('')}</select></div>
+          <div class="row">
+            <div class="field grow"><label>Strong foot</label>
+              <div class="opt-grid two" data-group="foot">${['Left', 'Right'].map(f =>
+                `<div class="opt ${w.foot === f ? 'sel' : ''}" data-val="${f}">${f}</div>`).join('')}</div></div>
+            <div class="field" style="width:120px"><label>Shirt number</label>
+              <input class="input" id="w-shirt" type="number" min="1" max="99" value="${w.shirt}"></div>
+          </div>`;
         body.querySelector('#w-first').oninput = e => w.firstName = e.target.value;
         body.querySelector('#w-last').oninput = e => w.lastName = e.target.value;
         body.querySelector('#w-nat').onchange = e => w.nation = e.target.value;
+        body.querySelector('#w-shirt').oninput = e => w.shirt = U.clamp(parseInt(e.target.value, 10) || 10, 1, 99);
         UI.optGroup(body, 'foot', v => { w.foot = v; UI.renderWizard(); });
+
       } else if (w.step === 1) {
         body.innerHTML = `
-          <h2 style="margin:0 0 4px">Pick your position</h2>
-          <p class="muted" style="margin:0 0 18px">This shapes the moments you will face on the pitch — and the ones you will be judged on.</p>
+          <h2 class="wz-h">Pick your position</h2>
+          <p class="wz-p">This decides the moments you will face — and what you will be judged on.</p>
           <div class="opt-grid" data-group="pos">${Object.keys(D.POSITIONS).map(k =>
             `<div class="opt ${w.pos === k ? 'sel' : ''}" data-val="${k}"><b>${k}</b><small>${D.POSITIONS[k].name}</small></div>`).join('')}</div>
           <div class="card" style="margin-top:16px">
             <h3>${D.POSITIONS[w.pos].name}</h3>
-            <p class="dim" style="margin:0">Key attributes: ${Object.keys(D.POSITIONS[w.pos].w)
-              .filter(k => D.POSITIONS[w.pos].w[k] >= 0.18).map(k => D.ATTR_LABEL[k]).join(', ')}</p>
+            <p class="dim" style="margin:0">Judged on: ${Object.keys(D.POSITIONS[w.pos].w)
+              .filter(k => D.POSITIONS[w.pos].w[k] >= 0.15).map(k => D.ATTR_LABEL[k]).join(', ')}</p>
           </div>`;
-        UI.optGroup(body, 'pos', v => { w.pos = v; UI.renderWizard(); });
+        UI.optGroup(body, 'pos', v => { w.pos = v; w.draftPool = null; UI.renderWizard(); });
+
       } else if (w.step === 2) {
+        if (!w.draftPool) UI.startDraft();
+        const legend = w.draftPool[w.draftIndex];
+        const done = w.draftIndex >= w.draftPool.length;
+        if (done || !legend) { w.step = 3; return UI.renderWizard(); }
+        const takenAttrs = w.robbed.map(r => r.attr);
         body.innerHTML = `
-          <h2 style="margin:0 0 4px">How good are you already?</h2>
-          <p class="muted" style="margin:0 0 18px">This is your difficulty setting. It decides who will sign a 17-year-old you.</p>
-          <div class="opt-grid" data-group="talent" style="grid-template-columns:1fr">
-            ${Object.keys(UI.talentPresets).map(k => { const t = UI.talentPresets[k];
-              return `<div class="opt ${w.talent === k ? 'sel' : ''}" data-val="${k}" style="text-align:left;padding:14px">
-                <b>${t.label}</b><small>${t.desc} · Starting bank ${U.cash(t.money)}</small></div>`; }).join('')}
-          </div>`;
-        UI.optGroup(body, 'talent', v => { w.talent = v; w.clubId = null; UI.renderWizard(); });
+          <h2 class="wz-h">Rob a legend</h2>
+          <p class="wz-p">Eight greats walk past you, one at a time. Take exactly one attribute from each —
+            what you take becomes your <b>ceiling</b> in it. You will start at about half, and spend a career climbing.</p>
+          <div class="legend-card">
+            <div class="legend-top">
+              ${flag(legend.nation, 'lg')}
+              <div class="legend-id">
+                <b>${esc(legend.name)}</b>
+                <span>${esc(legend.role)} · ${esc(legend.nation)} · ${esc(legend.era)}</span>
+              </div>
+              <div class="legend-count">${w.draftIndex + 1}<span>/${w.draftPool.length}</span></div>
+            </div>
+            <p class="legend-note">"${esc(legend.note)}"</p>
+            <div class="steal-grid">
+              ${w.draftAttrs.map(a => {
+                const taken = takenAttrs.indexOf(a) >= 0;
+                const v = legend.attrs[a] || 50;
+                const grade = v >= 90 ? 'elite' : v >= 78 ? 'good' : v >= 62 ? 'ok' : 'poor';
+                return `<button class="steal ${grade} ${taken ? 'taken' : ''}" ${taken ? 'disabled' : ''} data-steal="${a}">
+                  ${ico(a)}<b>${v}</b><span>${D.ATTR_LABEL[a]}</span>
+                  ${taken ? '<em>taken</em>' : ''}</button>`;
+              }).join('')}
+            </div>
+          </div>
+          ${w.robbed.length ? `<div class="robbed"><span class="dim">Stolen so far</span>
+            <div>${w.robbed.map(r => `<span class="rob-chip">${ico(r.attr)}${D.ATTR_LABEL[r.attr]} <b>${r.value}</b></span>`).join('')}</div>
+          </div>` : ''}`;
+        body.querySelectorAll('[data-steal]').forEach(btn => {
+          btn.onclick = () => {
+            const a = btn.dataset.steal;
+            w.caps[a] = legend.attrs[a];
+            w.robbed.push({ attr: a, value: legend.attrs[a], from: legend.name });
+            w.draftIndex++;
+            if (w.draftIndex >= w.draftPool.length) w.step = 3;
+            UI.renderWizard();
+          };
+        });
+
       } else {
-        const preset = UI.talentPresets[w.talent];
+        // preview the player the draft produced, then offer clubs that would take him
+        const preview = State.createPlayer({
+          firstName: w.firstName, lastName: w.lastName, nation: w.nation,
+          pos: w.pos, foot: w.foot, shirt: w.shirt, age: 17, caps: w.caps, draft: w.robbed
+        });
+        w.preview = preview;
+        const potential = State.potentialOverall(preview);
+        const maxRating = Math.round(U.clamp(46 + potential * 0.5, 62, 93));
         const world = State.buildWorld(D.CONFIG.SEASON_START_YEAR);
         UI.previewWorld = world;
         body.innerHTML = `
-          <h2 style="margin:0 0 4px">Choose your first club</h2>
-          <p class="muted" style="margin:0 0 14px">Clubs above your level will not take a chance on you yet. Start low and climb, or take the pressure now.</p>
+          <h2 class="wz-h">Sign your first contract</h2>
+          <div class="card tight preview-card">
+            <div class="row" style="align-items:center;gap:12px">
+              <div class="hud-avatar"><span class="shirt-no">${preview.shirt}</span></div>
+              <div class="grow"><b>${esc(preview.firstName)} ${esc(preview.lastName)}</b>
+                <div class="dim">${preview.pos} · 17 · ${esc(preview.nation)}</div></div>
+              <div class="prev-ovr"><b>${preview.ovr}</b><span>NOW</span></div>
+              <div class="prev-ovr pot"><b>${potential}</b><span>CEILING</span></div>
+            </div>
+          </div>
+          <p class="wz-p">Clubs above your level will not gamble on a teenager. Sign low and climb,
+            or take the biggest badge you can and fight for a shirt.</p>
           <div class="field"><label>League</label>
             <select class="input" id="w-league">${world.leagues.map(l =>
-              `<option value="${l.id}">${l.flag} ${esc(l.name)} — ${esc(l.country)}</option>`).join('')}</select></div>
+              `<option value="${l.id}">${esc(l.name)} — ${esc(l.country)}</option>`).join('')}</select></div>
           <div class="club-list" id="w-clubs"></div>`;
         const renderClubs = () => {
           const lid = body.querySelector('#w-league').value;
           const league = world.leagues.find(l => l.id === lid);
           $('w-clubs').innerHTML = league.clubs.map(id => {
             const c = world.clubs[id];
-            const locked = c.rating > preset.max;
+            const locked = c.rating > maxRating;
+            const tough = !locked && c.rating > preview.ovr + 26;
             return `<div class="club ${locked ? 'locked' : ''} ${w.clubId === id ? 'sel' : ''}" data-club="${id}" ${locked ? 'data-locked="1"' : ''}>
-              <b>${esc(c.name)}</b><span>${locked ? '🔒 Out of your league' : 'Squad rating ' + c.rating + ' · ' + '★'.repeat(c.prestige)}</span></div>`;
+              <b>${esc(c.name)}</b><span>${locked ? 'Out of your league' : 'Rated ' + c.rating + (tough ? ' · you will have to wait for a shirt' : '')}</span></div>`;
           }).join('');
           $('w-clubs').querySelectorAll('.club').forEach(el => {
             el.onclick = () => {
-              if (el.dataset.locked) { UI.toast('They will not sign you… yet.', 'bad'); return; }
+              if (el.dataset.locked) { UI.toast('They will not take a chance on you yet.', 'bad'); return; }
               w.clubId = el.dataset.club; renderClubs();
             };
           });
@@ -168,8 +240,10 @@
         body.querySelector('#w-league').onchange = renderClubs;
         renderClubs();
       }
+
       $('create-back').textContent = w.step === 0 ? 'Cancel' : 'Back';
       $('create-next').textContent = w.step === 3 ? 'Start Career' : 'Next';
+      $('create-next').classList.toggle('hidden', w.step === 2);
     },
 
     optGroup(root, group, cb) {
@@ -183,13 +257,12 @@
        ========================================================================== */
     renderHUD() {
       const g = State.game, p = g.player, club = State.club(p.club);
-      const init = (p.firstName[0] || '?') + (p.lastName[0] || '');
       $('hud').innerHTML = `
         <div class="hud-top">
-          <div class="hud-avatar">${esc(init.toUpperCase())}</div>
-          <div>
+          <div class="hud-avatar"><span class="shirt-no">${p.shirt}</span></div>
+          <div class="hud-id">
             <div class="hud-name">${esc(p.firstName)} ${esc(p.lastName)}</div>
-            <div class="hud-meta">${p.pos} · ${p.age}y · ${club.flag} ${esc(club.name)}</div>
+            <div class="hud-meta">${flag(p.nation, 'sm')} ${p.pos} · ${p.age}y · ${esc(club.name)}</div>
           </div>
           <div class="hud-ovr"><b>${p.ovr}</b><span>OVR</span></div>
         </div>
@@ -197,22 +270,21 @@
           ${UI.bar('Fit', p.fitness, 'linear-gradient(90deg,#12b45f,#22e07a)')}
           ${UI.bar('Form', p.form, 'linear-gradient(90deg,#3d8bff,#5aa8ff)')}
           ${UI.bar('Mood', p.morale, 'linear-gradient(90deg,#b483ff,#d9b6ff)')}
-          ${UI.bar('Fame', p.fame, 'linear-gradient(90deg,#f5b224,#ffd977)')}
+          ${UI.bar('Rep', p.reputation, 'linear-gradient(90deg,#f5b224,#ffd977)')}
         </div>`;
     },
 
     TABS: [
-      { id: 'home', icon: '🏠', label: 'Career' },
-      { id: 'club', icon: '🏟️', label: 'Club' },
-      { id: 'player', icon: '👤', label: 'Player' },
-      { id: 'life', icon: '💞', label: 'Life' },
-      { id: 'money', icon: '💰', label: 'Money' },
-      { id: 'legacy', icon: '🏆', label: 'Legacy' }
+      { id: 'home', icon: 'career', label: 'Career' },
+      { id: 'club', icon: 'club', label: 'Club' },
+      { id: 'player', icon: 'player', label: 'Player' },
+      { id: 'news', icon: 'news', label: 'Press' },
+      { id: 'legacy', icon: 'legacy', label: 'Legacy' }
     ],
 
     renderTabs() {
       $('tabbar').innerHTML = UI.TABS.map(t =>
-        `<button class="${UI.tab === t.id ? 'on' : ''}" data-tab="${t.id}"><i>${t.icon}</i>${t.label}</button>`).join('');
+        `<button class="${UI.tab === t.id ? 'on' : ''}" data-tab="${t.id}">${ico(t.icon)}${t.label}</button>`).join('');
       $('tabbar').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { UI.tab = b.dataset.tab; UI.render(); });
     },
 
@@ -232,7 +304,7 @@
       });
     },
 
-    /* ---------------- HOME ---------------- */
+    /* ---------------- CAREER (home) ---------------- */
     tab_home() {
       const g = State.game, p = g.player;
       const f = Engine.Season.nextPlayable(g);
@@ -240,11 +312,11 @@
 
       if (!f) {
         html += `<div class="card center"><h3>Season complete</h3>
-          <p class="muted">All fixtures played. Time to review the season.</p>
+          <p class="muted">Every fixture played. Time to look back at it.</p>
           <button class="btn btn-primary btn-block" data-act="endSeason">End of Season Review</button></div>`;
       } else {
         Engine.Season.prepareFixture(g, f);
-        const opp = f.oppId ? State.club(f.oppId) : { name: f.oppName || 'TBC', flag: '' };
+        const opp = f.oppId ? State.club(f.oppId) : { name: f.oppName || 'TBC' };
         const me = State.club(p.club);
         html += `<div class="fixture">
           <div class="comp">${esc(f.label)}</div>
@@ -253,28 +325,28 @@
             <div class="vs">V</div>
             <div class="team">${f.home ? esc(opp.name) : esc(me.name)}</div>
           </div>
-          <div class="venue">${f.home ? '🏠 Home' : '✈️ Away'} · Match ${g.fixtureIndex + 1} of ${g.fixtures.length}</div>
+          <div class="venue">${ico(f.home ? 'home' : 'away')} ${f.home ? 'Home' : 'Away'}
+            · Match ${g.fixtureIndex + 1} of ${g.fixtures.length}</div>
         </div>`;
 
-        const blocked = p.suspension > 0 ? `You are suspended for ${p.suspension} more match(es).`
-          : p.injuries.length ? `Injured: ${p.injuries[0].name} (${p.injuries[0].matches} match(es) left).` : null;
-        if (blocked) html += `<div class="card tight" style="border-color:var(--red)"><b class="bad">⚠️ ${esc(blocked)}</b>
+        const blocked = p.suspension > 0 ? `Suspended for ${p.suspension} more match(es).`
+          : p.injuries.length ? `${p.injuries[0].name} — ${p.injuries[0].matches} match(es) left.` : null;
+        if (blocked) html += `<div class="card tight warn">${ico('alert')} <b>${esc(blocked)}</b>
           <div class="dim">You will not feature, but the match still has to be played.</div></div>`;
 
         html += `<div class="row" style="margin-bottom:12px">
-          <button class="btn btn-primary grow" data-act="playMatch">▶ Play Match</button>
-          <button class="btn btn-ghost" data-act="quickMatch">⏩ Quick Sim</button>
+          <button class="btn btn-primary grow" data-act="playMatch">${ico('play')} Play Match</button>
+          <button class="btn btn-ghost" data-act="quickMatch">${ico('sim')} Quick Sim</button>
         </div>`;
 
         if (g.weekActionsLeft > 0) {
-          html += `<div class="card" style="border-color:var(--gold)">
-            <h3 style="color:var(--gold)">This week — 1 action left</h3>
-            <p class="dim" style="margin:0 0 10px">Train, rest, or live your life. Choose one before kick-off.</p>
-            <button class="btn btn-gold btn-block" data-act="openWeek">Choose Activity</button></div>`;
+          html += `<div class="card gold-edge">
+            <h3 class="gold">${ico('calendar')} The week before</h3>
+            <p class="dim" style="margin:0 0 10px">One session, one decision. Choose before kick-off.</p>
+            <button class="btn btn-gold btn-block" data-act="openWeek">Choose</button></div>`;
         }
       }
 
-      // season snapshot
       const club = State.club(p.club);
       const table = Engine.Season.standings(g, club.league);
       const anyPlayed = table.some(r => r.p > 0);
@@ -288,13 +360,13 @@
           <div class="stat"><b>${State.seasonRating(p) || '—'}</b><span>Avg Rating</span></div>
         </div></div>`;
 
-      // competitions
       const comps = [];
-      if (g.cup) comps.push(`${g.cup.won ? '🏆' : g.cup.alive ? '🟢' : '🔴'} ${esc(g.cup.name)}`);
-      if (g.cont) comps.push(`${g.cont.won ? '🏆' : g.cont.alive ? '🟢' : '🔴'} ${esc(g.cont.name)}${g.cont.stage === 'group' ? ' (' + g.cont.groupPts + ' pts)' : ''}`);
-      if (comps.length) html += `<div class="card tight"><h3>Competitions</h3>${comps.map(c => `<div>${c}</div>`).join('')}</div>`;
+      if (g.cup) comps.push([g.cup.won ? 'trophy' : g.cup.alive ? 'ok' : 'no', g.cup.name]);
+      if (g.cont) comps.push([g.cont.won ? 'trophy' : g.cont.alive ? 'ok' : 'no',
+        g.cont.name + (g.cont.stage === 'group' ? ' (' + g.cont.groupPts + ' pts)' : '')]);
+      if (comps.length) html += `<div class="card tight"><h3>Competitions</h3>` +
+        comps.map(c => `<div class="comp-row">${ico(c[0])} ${esc(c[1])}</div>`).join('') + `</div>`;
 
-      // news
       if (g.log.length) {
         html += `<div class="section-title">Latest</div><div class="card news">` +
           g.log.slice(0, 8).map(l => `<div class="n ${l.k}">${esc(l.t)}</div>`).join('') + `</div>`;
@@ -312,23 +384,25 @@
       const startChance = Engine.Match.startingChance(g);
 
       let html = `<div class="card">
-        <h3>${esc(club.name)}</h3>
+        <h3>${flag(club.country, 'sm')} ${esc(club.name)}</h3>
         <div class="stat-grid">
           <div class="stat"><b>${club.rating}</b><span>Squad</span></div>
-          <div class="stat"><b>${'★'.repeat(club.prestige)}</b><span>Prestige</span></div>
+          <div class="stat"><b>${club.prestige}</b><span>Prestige</span></div>
           <div class="stat"><b>${Math.round(p.managerTrust)}</b><span>Trust</span></div>
           <div class="stat"><b>${Math.round(startChance * 100)}%</b><span>Start XI</span></div>
         </div>
-        <div class="dim" style="margin-top:10px">Contract: ${U.cash(p.contract.wage)}/week · ${p.contract.years} year(s) left
-          · Release clause ${U.cash(p.contract.release)}</div>
-        ${rival ? `<div class="dim">Main competition for your shirt: <b>${esc(rival.name)}</b> (${rival.ovr} OVR)</div>` : ''}
+        <div class="kv">${ico('contract')} <span>${U.cash(p.contract.wage)}/week · ${p.contract.years} year(s) left
+          · release clause ${U.cash(p.contract.release)}</span></div>
+        <div class="kv">${ico('value')} <span>Market value <b>${U.cash(State.marketValue(p))}</b></span></div>
+        ${rival ? `<div class="kv">${ico('shirt')} <span>Competing for your shirt: <b>${esc(rival.name)}</b> (${rival.ovr})</span></div>` : ''}
+        ${p.captain ? `<div class="kv">${ico('crown')} <span>You wear the armband.</span></div>` : ''}
       </div>`;
 
       html += `<div class="card"><h3>${esc(league.name)}</h3><div class="scroll-x"><table class="tbl">
         <tr><th>#</th><th>Club</th><th class="num">P</th><th class="num">W</th><th class="num">D</th>
         <th class="num">L</th><th class="num">GD</th><th class="num">Pts</th></tr>` +
         table.map((r, i) => {
-          const cls = i === 0 ? 'ucl' : i < 4 ? 'ucl' : i >= table.length - 2 ? 'rel' : '';
+          const cls = i < 4 ? 'ucl' : i >= table.length - 2 ? 'rel' : '';
           return `<tr class="${r.id === club.id ? 'me' : ''}">
             <td><span class="pos-chip ${cls}">${i + 1}</span></td><td>${esc(r.club.name)}</td>
             <td class="num">${r.p}</td><td class="num">${r.w}</td><td class="num">${r.d}</td>
@@ -338,26 +412,37 @@
 
       const scorers = Engine.Awards.leagueTopScorers(g).slice(0, 6);
       html += `<div class="card"><h3>Top scorers</h3><table class="tbl">` +
-        scorers.map((s, i) => `<tr class="${s.you ? 'me' : ''}"><td>${i + 1}</td><td>${esc(s.name)}</td>
-          <td class="dim">${esc(s.club)}</td><td class="num"><b>${s.goals}</b></td></tr>`).join('') + `</table></div>`;
+        scorers.map((sc, i) => `<tr class="${sc.you ? 'me' : ''}"><td>${i + 1}</td><td>${esc(sc.name)}</td>
+          <td class="dim">${esc(sc.club)}</td><td class="num"><b>${sc.goals}</b></td></tr>`).join('') + `</table></div>`;
 
       html += `<div class="card"><h3>Squad</h3><div class="list">` +
-        squad.slice(0, 14).map(s => `<div class="item">
-          <div class="ic">${s.pos === p.pos ? '🔁' : '👤'}</div>
-          <div class="tx"><b>${esc(s.name)} ${s.captain ? '(C)' : ''}</b>
-          <span>${s.pos} · ${s.age}y · ${s.goals} goals this season · relationship ${Math.round(s.rel)}%</span></div>
-          <div class="pill ${s.ovr > p.ovr ? 'red' : 'green'}">${s.ovr}</div></div>`).join('') + `</div></div>`;
+        squad.slice(0, 14).map(sq => `<div class="item">
+          <div class="ic">${ico(sq.pos === p.pos ? 'shirt' : 'player')}</div>
+          <div class="tx"><b>${esc(sq.name)}${sq.captain ? ' (C)' : ''}</b>
+          <span>${sq.pos} · ${sq.age}y · ${sq.goals} goals this season</span></div>
+          <div class="pill ${sq.ovr > p.ovr ? 'red' : 'green'}">${sq.ovr}</div></div>`).join('') + `</div></div>`;
       return html;
     },
 
     /* ---------------- PLAYER ---------------- */
     tab_player() {
       const g = State.game, p = g.player;
+      const keys = D.ATTR_KEYS.filter(k => k !== 'gk' || p.pos === 'GK')
+                              .filter(k => k !== 'shooting' || p.pos !== 'GK');
       let html = `<div class="card">
         <h3>Attributes</h3>
-        ${D.ATTR_KEYS.filter(k => k !== 'gk' || p.pos === 'GK').map(k => UI.attrRow(p, k)).join('')}
-        <div class="dim">The white marker is your realistic ceiling in this attribute. Potential: ${p.potential}</div>
+        ${keys.map(k => UI.attrRow(p, k)).join('')}
+        <div class="dim">The marker on each bar is the ceiling you stole in the draft.
+          Overall ceiling: <b>${State.potentialOverall(p)}</b>.</div>
       </div>`;
+
+      if (p.draft && p.draft.length) {
+        html += `<div class="card"><h3>What you stole</h3><div class="list">` +
+          p.draft.map(r => `<div class="item tight-item"><div class="ic">${ico(r.attr)}</div>
+            <div class="tx"><b>${D.ATTR_LABEL[r.attr]} ${r.value}</b><span>from ${esc(r.from)}</span></div>
+            <div class="pill ${p.attrs[r.attr] >= r.value ? 'green' : ''}">${p.attrs[r.attr]}/${r.value}</div></div>`).join('') +
+          `</div></div>`;
+      }
 
       html += `<div class="card"><h3>This season</h3><div class="stat-grid">
         <div class="stat"><b>${p.season.apps}</b><span>Apps</span></div>
@@ -378,24 +463,22 @@
       </div></div>`;
 
       html += `<div class="card"><h3>Traits</h3>`;
-      if (p.traits.length) {
-        html += p.traits.map(t => { const tr = D.TRAITS[t];
-          return `<div class="trait ${tr.bad ? 'bad' : ''}"><div class="ic">${tr.icon}</div>
-            <div><b>${esc(tr.name)}</b><span>${esc(tr.desc)}</span></div></div>`; }).join('');
-      } else html += `<p class="dim" style="margin:0">No traits yet. Perform in big moments and they will come.</p>`;
+      html += p.traits.length
+        ? p.traits.map(t => { const tr = D.TRAITS[t];
+            return `<div class="trait ${tr.bad ? 'bad' : ''}"><div class="ic">${ico(tr.icon)}</div>
+              <div><b>${esc(tr.name)}</b><span>${esc(tr.desc)}</span></div></div>`; }).join('')
+        : `<p class="dim" style="margin:0">None yet. Deliver in the big moments and they will come.</p>`;
       html += `</div>`;
 
       if (p.injuries.length) {
-        html += `<div class="card" style="border-color:var(--red)"><h3 class="bad">Injuries</h3>` +
-          p.injuries.map(i => `<div class="item"><div class="ic">🩹</div><div class="tx"><b>${esc(i.name)}</b>
-            <span>${i.matches} match(es) remaining</span></div></div>`).join('') + `</div>`;
+        html += `<div class="card warn"><h3 class="bad">Injuries</h3>` +
+          p.injuries.map(i => `<div class="item"><div class="ic">${ico('injury')}</div>
+            <div class="tx"><b>${esc(i.name)}</b><span>${i.matches} match(es) remaining</span></div></div>`).join('') + `</div>`;
       }
 
       html += `<div class="card"><h3>Condition</h3>
-        ${UI.bar('Health', p.health, '#22e07a')}${UI.bar('Happiness', p.happiness, '#b483ff')}
-        ${UI.bar('Discipline', p.discipline, '#5aa8ff')}
-        <div class="dim" style="margin-top:8px">Market value <b>${U.cash(State.marketValue(p))}</b> ·
-          Followers <b>${U.money(p.followers)}</b></div></div>`;
+        ${UI.bar('Fitness', p.fitness, '#22e07a')}${UI.bar('Form', p.form, '#5aa8ff')}
+        ${UI.bar('Morale', p.morale, '#b483ff')}${UI.bar('Reputation', p.reputation, '#f5b224')}</div>`;
 
       if (p.age >= D.CONFIG.RETIRE_MIN_AGE) {
         html += `<button class="btn btn-danger btn-block" data-act="retire">Retire from football</button>`;
@@ -403,143 +486,78 @@
       return html;
     },
 
-    /* ---------------- LIFE ---------------- */
-    tab_life() {
+    /* ---------------- PRESS ---------------- */
+    tab_news() {
       const g = State.game, p = g.player;
-      const partner = Life.partner(g);
-      let html = `<div class="card"><h3>Relationship</h3>`;
-      if (partner) {
-        html += `<div class="item"><div class="ic">${partner.status === 'married' ? '💍' : partner.status === 'engaged' ? '💎' : '💘'}</div>
-          <div class="tx"><b>${esc(partner.name)}</b><span>${esc(partner.job)} · ${partner.status} · since ${partner.since}</span></div></div>
-          ${UI.bar('Relationship', partner.level, 'linear-gradient(90deg,#ff6b9d,#ffa8c5)')}
-          <div class="row wrap" style="margin-top:12px">
-            <button class="btn btn-ghost" data-act="rel" data-arg="date">🍷 Date night</button>
-            <button class="btn btn-ghost" data-act="rel" data-arg="gift">🎁 Buy a gift</button>
-            ${partner.status === 'dating' ? '<button class="btn btn-ghost" data-act="rel" data-arg="propose">💍 Propose</button>' : ''}
-            ${partner.status === 'engaged' ? '<button class="btn btn-gold" data-act="rel" data-arg="marry">💒 Get married</button>' : ''}
-            <button class="btn btn-ghost" data-act="rel" data-arg="child">👶 Start a family</button>
-            <button class="btn btn-danger" data-act="rel" data-arg="breakup">💔 End it</button>
-          </div>`;
-      } else {
-        html += `<p class="dim">You are single. Football is a lonely business.</p>
-          <button class="btn btn-primary btn-block" data-act="dating">📲 Open the dating app</button>`;
+      const heads = g.headlines || [];
+      let html = `<div class="card tight"><h3>${ico('news')} Back pages</h3>
+        <p class="dim" style="margin:0">What the press made of your career, season by season.</p></div>`;
+      if (!heads.length) {
+        html += `<div class="card center"><p class="dim" style="margin:0">Nobody has written about you yet.
+          Do something worth reporting.</p></div>`;
+        return html;
       }
-      html += `</div>`;
-
-      if ((p.children || []).length) {
-        html += `<div class="card"><h3>Family</h3><div class="list">` + p.children.map(c =>
-          `<div class="item"><div class="ic">🧒</div><div class="tx"><b>${esc(c.name)}</b>
-            <span>Born ${c.year} · age ${g.world.year - c.year}</span></div></div>`).join('') + `</div></div>`;
-      }
-
-      html += `<div class="card"><h3>Lifestyle</h3><div class="stat-grid">
-        <div class="stat"><b>${Math.round(p.fame)}</b><span>Fame</span></div>
-        <div class="stat"><b>${U.money(p.followers)}</b><span>Followers</span></div>
-        <div class="stat"><b>${Math.round(p.happiness)}</b><span>Happiness</span></div>
-        <div class="stat"><b>${p.languages || 1}</b><span>Languages</span></div>
-      </div></div>`;
-
-      html += `<div class="card"><h3>Do something</h3><div class="list">
-        <div class="item click" data-act="socialMenu"><div class="ic">📱</div><div class="tx"><b>Post on social media</b><span>Grow the brand — or start a fire</span></div></div>
-        <div class="item click" data-act="mediaMenu"><div class="ic">🎙️</div><div class="tx"><b>Give an interview</b><span>Humble, bold, or burn it all down</span></div></div>
-        <div class="item click" data-act="doActivity" data-arg="charity"><div class="ic">❤️</div><div class="tx"><b>Charity work</b><span>Costs money. Worth it.</span></div></div>
-        <div class="item click" data-act="doActivity" data-arg="casino"><div class="ic">🎰</div><div class="tx"><b>Casino night</b><span>High risk, higher regret</span></div></div>
-      </div><div class="dim" style="margin-top:8px">These use your week action if you have one left.</div></div>`;
-
-      if (p.achievements.length) {
-        html += `<div class="card"><h3>Achievements</h3>` +
-          p.achievements.map(a => `<span class="trophy">🏅 ${esc(a.name)} ${a.year}</span>`).join('') + `</div>`;
-      }
-      return html;
-    },
-
-    /* ---------------- MONEY ---------------- */
-    tab_money() {
-      const g = State.game, p = g.player;
-      const sponsorOffers = Life.sponsorOffers(g);
-      let html = `<div class="card center">
-        <span class="dim">BANK BALANCE</span>
-        <div class="big-num gold">${U.cash(p.money)}</div>
-        <div class="dim" style="margin-top:6px">${U.cash(p.contract.wage)}/week · ${U.cash(p.contract.wage * 52)}/year before tax</div>
-      </div>`;
-
-      if (p.sponsors.length) {
-        html += `<div class="card"><h3>Sponsorships</h3><div class="list">` + p.sponsors.map(s =>
-          `<div class="item"><div class="ic">${s.icon}</div><div class="tx"><b>${esc(s.name)}</b>
-            <span>${U.cash(s.annual)}/year · ${s.years} year(s) left</span></div></div>`).join('') + `</div></div>`;
-      }
-      if (sponsorOffers.length) {
-        html += `<div class="card" style="border-color:var(--gold)"><h3 class="gold">Offers on the table</h3><div class="list">` +
-          sponsorOffers.map(o => `<div class="item click" data-act="signSponsor" data-arg="${o.id}">
-            <div class="ic">${o.icon}</div><div class="tx"><b>${esc(o.name)}</b>
-            <span>${U.cash(o.annual)}/year for ${o.years} years — tap to sign</span></div></div>`).join('') + `</div></div>`;
-      }
-
-      html += `<div class="card"><h3>Buy something ridiculous</h3><div class="list">` +
-        D.ASSETS.map(a => { const owned = p.assets.some(x => x.id === a.id);
-          return `<div class="item ${owned ? '' : 'click'}" ${owned ? '' : `data-act="buyAsset" data-arg="${a.id}"`}>
-            <div class="ic">${a.icon}</div><div class="tx"><b>${esc(a.name)}</b><span>${U.cash(a.cost)}${owned ? ' · owned' : ''}</span></div>
-            ${owned ? '<span class="pill green">Owned</span>' : (p.money >= a.cost ? '<span class="pill gold">Buy</span>' : '<span class="pill red">Too rich</span>')}</div>`;
-        }).join('') + `</div></div>`;
-
-      html += `<div class="card"><h3>Investments</h3>`;
-      if (p.investments.length) {
-        html += `<div class="list" style="margin-bottom:10px">` + p.investments.map(i =>
-          `<div class="item"><div class="ic">${i.icon}</div><div class="tx"><b>${esc(i.name)}</b>
-            <span>${U.cash(i.amount)} invested · matures at end of season</span></div></div>`).join('') + `</div>`;
-      }
-      html += `<div class="list">` + D.INVESTMENTS.map(i =>
-        `<div class="item click" data-act="investMenu" data-arg="${i.id}"><div class="ic">${i.icon}</div>
-          <div class="tx"><b>${esc(i.name)}</b><span>Min ${U.cash(i.min)} · risk ${Math.round(i.risk * 100)}% · up to ${i.mult[1]}×</span></div></div>`
-      ).join('') + `</div></div>`;
-
-      html += `<div class="card"><h3>Your team of people</h3><div class="list">` +
-        Life.PERKS.map(pk => { const has = Life.hasPerk(g, pk.id);
-          return `<div class="item ${has ? '' : 'click'}" ${has ? '' : `data-act="buyPerk" data-arg="${pk.id}"`}>
-            <div class="ic">${pk.icon}</div><div class="tx"><b>${esc(pk.name)}</b><span>${esc(pk.desc)} · ${U.cash(pk.cost)}</span></div>
-            ${has ? '<span class="pill green">Hired</span>' : ''}</div>`; }).join('') + `</div>
-        <div class="dim" style="margin-top:8px">Staff cost 40% of their fee again in wages every season.</div></div>`;
-
-      if (p.assets.length) {
-        html += `<div class="card"><h3>Your things</h3>` + p.assets.map(a =>
-          `<span class="trophy">${a.icon} ${esc(a.name)}</span>`).join('') + `</div>`;
-      }
+      let season = null;
+      heads.forEach(h => {
+        if (h.season !== season) {
+          season = h.season;
+          html += `<div class="section-title">${season}/${(season + 1) % 100}</div>`;
+        }
+        html += `<div class="headline ${h.k}">
+          <div class="hl-src">${esc(h.src || 'The Back Page')}</div>
+          <div class="hl-t">${esc(h.t)}</div></div>`;
+      });
       return html;
     },
 
     /* ---------------- LEGACY ---------------- */
     tab_legacy() {
       const g = State.game, p = g.player;
-      const score = Life.legacyScore(g);
-      const rank = Life.legacyRank(score);
+      const Career = global.Career;
+      const score = Career.legacyScore(g);
+      const rank = Career.legacyRank(score);
       let html = `<div class="card center">
         <span class="dim">LEGACY SCORE</span>
         <div class="big-num">${score}</div>
-        <div class="gold" style="font-weight:800;letter-spacing:1px;margin-top:4px">${rank.title}</div>
+        <div class="gold rank-title">${rank.title}</div>
         <div class="dim" style="margin-top:6px">${esc(rank.desc)}</div>
       </div>`;
 
+      html += `<div class="card"><h3>Career at a glance</h3><div class="stat-grid">
+        <div class="stat"><b>${p.career.apps}</b><span>Apps</span></div>
+        <div class="stat"><b>${p.career.goals}</b><span>Goals</span></div>
+        <div class="stat"><b>${p.career.assists}</b><span>Assists</span></div>
+        <div class="stat"><b>${p.peakOvr || p.ovr}</b><span>Peak OVR</span></div>
+        <div class="stat"><b>${U.cash(p.peakValue || State.marketValue(p))}</b><span>Peak Value</span></div>
+        <div class="stat"><b>${p.career.clubs.length}</b><span>Clubs</span></div>
+      </div></div>`;
+
       html += `<div class="card"><h3>Trophy cabinet</h3>`;
       html += p.career.trophies.length
-        ? p.career.trophies.map(t => `<span class="trophy">🏆 ${esc(UI.trophyLabel(t))}</span>`).join('')
+        ? p.career.trophies.map(t => `<span class="trophy">${ico('trophy')} ${esc(UI.trophyLabel(t))}</span>`).join('')
         : `<p class="dim" style="margin:0">Empty. For now.</p>`;
       html += `</div>`;
 
+      if (p.achievements.length) {
+        html += `<div class="card"><h3>Individual honours</h3>` +
+          p.achievements.map(a => `<span class="trophy">${ico('medal')} ${esc(a.name)} ${a.year}</span>`).join('') + `</div>`;
+      }
+
       html += `<div class="card"><h3>Season by season</h3>`;
       if (p.career.seasons.length) {
-        html += p.career.seasons.slice().reverse().map(s => `<div class="season-row">
-          <div class="yr">${String(s.year).slice(2)}/${String(s.year + 1).slice(2)}</div>
-          <div class="grow"><b>${esc(s.club)}</b> <span class="dim">· ${U.ordinal(s.pos)} · OVR ${s.ovr}</span>
-            <div class="dim">${s.apps} apps · ${s.goals} goals · ${s.assists} assists · ${s.rating} avg
-              ${s.trophies.length ? ' · 🏆 ' + s.trophies.map(esc).join(', ') : ''}</div></div>
+        html += p.career.seasons.slice().reverse().map(sn => `<div class="season-row">
+          <div class="yr">${String(sn.year).slice(2)}/${String(sn.year + 1).slice(2)}</div>
+          <div class="grow"><b>${esc(sn.club)}</b> <span class="dim">· ${U.ordinal(sn.pos)} · OVR ${sn.ovr}</span>
+            <div class="dim">${sn.apps} apps · ${sn.goals} goals · ${sn.assists} assists · ${sn.rating} avg
+              ${sn.trophies.length ? ' · ' + sn.trophies.map(esc).join(', ') : ''}</div></div>
         </div>`).join('');
       } else html += `<p class="dim" style="margin:0">Your first season is still being written.</p>`;
       html += `</div>`;
 
       html += `<div class="card"><h3>Options</h3><div class="row wrap">
-        <button class="btn btn-ghost" data-act="save">💾 Save now</button>
-        <button class="btn btn-ghost" data-act="matchLength">⚙️ Match length</button>
-        <button class="btn btn-danger" data-act="quit">🚪 Quit to menu</button>
+        <button class="btn btn-ghost" data-act="save">${ico('disk')} Save now</button>
+        <button class="btn btn-ghost" data-act="matchLength">${ico('settings')} Match length</button>
+        <button class="btn btn-danger" data-act="quit">${ico('exit')} Quit to menu</button>
       </div></div>`;
       return html;
     },
@@ -558,10 +576,10 @@
       if (m.role === 'out') chips.push('<span class="pill red">Not in the squad</span>');
       if (m.role === 'injured') chips.push('<span class="pill red">Injured</span>');
       if (m.role === 'suspended') chips.push('<span class="pill red">Suspended</span>');
-      if (m.stats.goals) chips.push(`<span class="pill gold">⚽ ${m.stats.goals}</span>`);
-      if (m.stats.assists) chips.push(`<span class="pill gold">🅰️ ${m.stats.assists}</span>`);
-      if (m.stats.saves) chips.push(`<span class="pill blue">🧤 ${m.stats.saves}</span>`);
-      if (m.stats.card) chips.push(`<span class="pill red">${m.stats.card === 'red' ? '🟥' : '🟨'}</span>`);
+      if (m.stats.goals) chips.push(`<span class="pill gold">${ico('goal')} ${m.stats.goals}</span>`);
+      if (m.stats.assists) chips.push(`<span class="pill gold">${ico('assist')} ${m.stats.assists}</span>`);
+      if (m.stats.saves) chips.push(`<span class="pill blue">${ico('save')} ${m.stats.saves}</span>`);
+      if (m.stats.card) chips.push(`<span class="pill ${m.stats.card === 'red' ? 'red' : 'yellow'}">${ico('card')}</span>`);
       if (m.role === 'start' || m.role === 'bench') chips.push(`<span class="pill">Rating ${U.round(U.clamp(m.stats.rating, 3, 10), 1)}</span>`);
 
       $('scoreboard').innerHTML = `
@@ -586,7 +604,7 @@
 
     renderScenario(scn, onChoose) {
       $('match-action').innerHTML = `<div class="scn">
-        <div class="scn-h"><div class="art">${scn.art || '⚽'}</div><b>${esc(scn.title)}</b></div>
+        <div class="scn-h"><div class="art">${ico(scn.art || 'ball')}</div><b>${esc(scn.title)}</b></div>
         <div class="scn-sub">${esc(scn.sub || '')}</div>
         <div class="choices${scn.options.length >= 5 ? ' cols' : ''}">${scn.options.map((o, i) => `<button class="choice" data-ci="${i}">
           <div class="cb"><b>${esc(o.label)}</b><span>${esc(o.hint || '')}</span></div>

@@ -13,8 +13,8 @@ const ROOT = __dirname;
 const read = p => fs.readFileSync(path.join(ROOT, p), 'utf8');
 
 const CSS = ['css/styles.css'];
-const JS = ['js/data.js', 'js/util.js', 'js/state.js', 'js/scenarios.js',
-            'js/engine.js', 'js/life.js', 'js/ui.js', 'js/main.js'];
+const JS = ['js/icons.js', 'js/data.js', 'js/util.js', 'js/state.js', 'js/scenarios.js',
+            'js/engine.js', 'js/career.js', 'js/ui.js', 'js/main.js'];
 
 // An inline emoji favicon keeps the build dependency-free (no icon files needed).
 const FAVICON = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
@@ -38,8 +38,8 @@ const body = index.split(/<body[^>]*>/i)[1].split(/<\/body>/i)[0]
 // the page's name, not a description of it — this is what a browser tab,
 // a home-screen shortcut and any gallery listing shows
 const TITLE = 'Football Life';
-const DESC = 'A football career and life simulator: choose your club, play the big moments, '
-  + 'take the penalties, and live the whole career.';
+const DESC = 'A football career simulator: rob eight legends for your attributes, choose your club, '
+  + 'and play the moments that matter.';
 
 /* ---------- standalone ---------- */
 const standalone = `<!DOCTYPE html>

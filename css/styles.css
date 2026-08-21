@@ -81,18 +81,22 @@ button,.choice,.item.click,.opt,.club,.tabbar button{touch-action:manipulation;u
 
 /* ---------- start screen ---------- */
 .start-wrap{margin:auto;text-align:center;padding:24px;max-width:520px}
-.start-badge{font-size:76px;filter:drop-shadow(0 8px 24px rgba(34,224,122,.35));animation:bob 3s ease-in-out infinite}
+.start-badge{width:86px;height:86px;margin:0 auto;color:var(--green);
+  filter:drop-shadow(0 8px 24px rgba(34,224,122,.35));animation:bob 3s ease-in-out infinite}
+.start-badge svg{width:100%;height:100%;fill:currentColor}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .start-title{font-size:44px;margin:6px 0 4px;letter-spacing:2px;font-weight:900}
 .start-title span{color:var(--green)}
 .start-sub{color:var(--muted);margin:0 0 26px}
 .start-actions{display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto}
 .start-feats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:28px}
-.start-feats span{font-size:12px;color:var(--muted);background:rgba(255,255,255,.05);
-  border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+.start-feats span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);
+  background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+.start-feats .ic{color:var(--green)}
 
 /* ---------- create ---------- */
-.create-wrap{margin:auto;width:100%;max-width:720px;padding:20px;max-height:100%;overflow-y:auto}
+.create-wrap{margin:0 auto;width:100%;max-width:720px;padding:22px 20px 24px;
+  max-height:100%;overflow-y:auto;overscroll-behavior:contain}
 .steps{display:flex;gap:6px;margin-bottom:18px}
 .steps div{flex:1;height:4px;border-radius:4px;background:var(--line)}
 .steps div.on{background:var(--green)}
@@ -231,6 +235,12 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 .scn-h b{font-size:17px}
 .scn-sub{font-size:13px;color:var(--muted);margin-bottom:11px}
 .choices{display:flex;flex-direction:column;gap:7px}
+/* five or six options (penalty placement, celebrations) go two-up: the whole
+   set stays visible instead of the last ones hiding below the fold */
+.choices.cols{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.choices.cols .choice{flex-direction:column;align-items:stretch;gap:2px}
+.choices.cols .tag{align-self:flex-start;margin-top:2px}
+.choices.cols .choice span{font-size:11px;line-height:1.3}
 .choice{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;
   padding:11px 13px;cursor:pointer;transition:.12s;display:flex;align-items:center;gap:10px}
 .choice:hover{border-color:var(--green);background:var(--card2);transform:translateX(3px)}
@@ -288,17 +298,91 @@ progress{width:100%}
   .scn-h b{font-size:15px}
   .scn-sub{font-size:12px;margin-bottom:8px;line-height:1.35}
   .choices{gap:5px}
-  /* five or six options (penalty placement, celebrations) go two-up so the
-     whole set is visible at once instead of hiding below the fold */
-  .choices.cols{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-  .choices.cols .choice{flex-direction:column;align-items:stretch;gap:1px}
-  .choices.cols .tag{display:none}
-  .choices.cols .choice span{font-size:10px;line-height:1.3}
   .choice{padding:8px 11px}
   .choice b{font-size:13px}
   .choice span{font-size:10.5px}
   .ev .t{padding:7px 11px;font-size:13px}
 }
+
+/* ---------- icons ---------- */
+.ic{width:1.15em;height:1.15em;fill:currentColor;flex:0 0 auto;vertical-align:-.18em}
+.fl{width:1.25em;height:1.25em;border-radius:50%;flex:0 0 auto;vertical-align:-.22em}
+.fl.sm{width:1em;height:1em}
+.fl.lg{width:44px;height:44px}
+.btn .ic{width:1.05em;height:1.05em}
+.item .ic{width:22px;height:22px;color:var(--green)}
+.item.tight-item{padding:8px 11px}
+.tabbar button .ic{width:21px;height:21px}
+.trait .ic{width:20px;height:20px;color:var(--green)}
+.trait.bad .ic{color:var(--red)}
+.scn-h .art{width:30px;height:30px;color:var(--green)}
+.scn-h .art .ic{width:30px;height:30px}
+.pill .ic{width:1em;height:1em}
+.pill.yellow{background:rgba(255,201,77,.2);color:var(--gold)}
+.comp-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:14px}
+.kv{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.kv .ic{color:var(--green);margin-top:1px}
+.card.warn{border-color:var(--red)}
+.card.gold-edge{border-color:var(--gold)}
+.hud-id{min-width:0}
+.hud-avatar .shirt-no{font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
+.hud-meta{display:flex;align-items:center;gap:5px}
+
+/* ---------- creation wizard ---------- */
+.wz-h{margin:0 0 4px;font-size:22px;letter-spacing:-.3px}
+.wz-p{color:var(--muted);margin:0 0 18px;font-size:14px}
+.opt-grid.two{grid-template-columns:1fr 1fr}
+.preview-card{background:linear-gradient(135deg,#132a45,#0f2e2a)}
+.prev-ovr{text-align:center;background:rgba(255,255,255,.06);border-radius:10px;padding:5px 11px;flex:0 0 auto}
+.prev-ovr b{display:block;font-size:19px;line-height:1;color:var(--green)}
+.prev-ovr.pot b{color:var(--gold)}
+.prev-ovr span{font-size:8px;letter-spacing:1px;color:var(--muted)}
+
+/* ---------- the draft ---------- */
+.legend-card{background:linear-gradient(160deg,#152a44,#101c2f);border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.legend-top{display:flex;align-items:center;gap:12px}
+.legend-id{flex:1;min-width:0}
+.legend-id b{display:block;font-size:18px;letter-spacing:-.2px}
+.legend-id span{font-size:12px;color:var(--muted)}
+.legend-count{font-size:20px;font-weight:900;color:var(--green);font-variant-numeric:tabular-nums}
+.legend-count span{font-size:12px;color:var(--dim);font-weight:700}
+.legend-note{font-style:italic;color:var(--muted);font-size:13px;margin:12px 0 14px;line-height:1.45}
+.steal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.steal{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 4px;
+  cursor:pointer;transition:.12s;color:var(--txt)}
+.steal .ic{width:17px;height:17px;color:var(--muted)}
+.steal b{font-size:17px;line-height:1.1;font-variant-numeric:tabular-nums}
+.steal span{font-size:8.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--dim);text-align:center;line-height:1.2}
+.steal:hover:not(:disabled){border-color:var(--green);transform:translateY(-2px)}
+.steal.elite b{color:var(--gold)}
+.steal.elite{border-color:rgba(255,201,77,.45)}
+.steal.good b{color:var(--green)}
+.steal.ok b{color:var(--txt)}
+.steal.poor b{color:var(--dim)}
+.steal.taken{opacity:.28;cursor:not-allowed}
+.steal em{position:absolute;inset:auto 0 3px;font-size:7.5px;letter-spacing:.5px;
+  text-transform:uppercase;color:var(--red);font-style:normal}
+.robbed{margin-top:4px}
+.rob-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(34,224,122,.12);
+  color:var(--green);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:600;margin:4px 4px 0 0}
+.rob-chip .ic{width:13px;height:13px}
+
+/* ---------- press ---------- */
+.headline{border-left:3px solid var(--line);padding:8px 0 8px 12px;margin-bottom:10px}
+.headline.good{border-color:var(--green)}
+.headline.bad{border-color:var(--red)}
+.hl-src{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:700}
+.hl-t{font-size:14.5px;font-weight:700;line-height:1.35;margin-top:2px}
+.rank-title{font-weight:800;letter-spacing:1px;margin-top:4px}
+
+@media (max-height:720px){
+  .steal{padding:7px 3px}
+  .steal b{font-size:15px}
+  .legend-note{margin:9px 0 11px;font-size:12px}
+}
+
 @media(min-width:760px){
   .content{padding:20px 20px 100px;max-width:820px;margin:0 auto;width:100%}
   .hud{max-width:820px;margin:0 auto;width:100%;border-radius:0 0 var(--radius) var(--radius)}

@@ -5,7 +5,8 @@
 (function (global) {
   'use strict';
   const D = global.DATA, U = global.U, State = global.State, Engine = global.Engine,
-        Life = global.Life, UI = global.UI, Scenarios = global.Scenarios;
+        Career = global.Career, UI = global.UI, Scenarios = global.Scenarios;
+  const ico = (n, c) => global.Icons.svg(n, c);
   const $ = id => document.getElementById(id);
 
   const Game = {
@@ -14,6 +15,7 @@
 
     /* ==================== boot ==================== */
     init() {
+      global.Icons.inject();          // the SVG sprite every icon points at
       $('btn-new').onclick = () => UI.startWizard();
       $('btn-continue').onclick = () => Game.continueGame();
       $('btn-how').onclick = () => Game.howToPlay();
@@ -29,13 +31,13 @@
     howToPlay() {
       UI.modal({
         title: 'How to play',
-        html: `<p class="muted">You control <b>one player</b> from teenage prospect to retirement.</p>
+        html: `<p class="muted">One player. One career. From the draft to the day you stop.</p>
         <div class="list">
-          <div class="item"><div class="ic">⚽</div><div class="tx"><b>Play the moments</b><span>In each match you get the big decisions: shoot or square it, nutmeg or keep it simple, slide in or stay on your feet. Penalties and shootouts are yours to take.</span></div></div>
-          <div class="item"><div class="ic">📈</div><div class="tx"><b>Develop</b><span>Good decisions earn attribute XP. Train between games — but watch your fitness.</span></div></div>
-          <div class="item"><div class="ic">💞</div><div class="tx"><b>Live a life</b><span>Relationships, money, sponsors, scandals, nights out and everything they do to your form.</span></div></div>
-          <div class="item"><div class="ic">✍️</div><div class="tx"><b>Move clubs</b><span>Perform and bigger clubs come calling. Every summer you choose your next chapter.</span></div></div>
-          <div class="item"><div class="ic">🏆</div><div class="tx"><b>Build a legacy</b><span>Trophies, awards, caps, records — and how you are remembered when you hang the boots up.</span></div></div>
+          <div class="item"><div class="ic">${ico('legend')}</div><div class="tx"><b>Rob the legends</b><span>Eight greats file past you at the start. Take one attribute from each — what you take becomes your ceiling in it.</span></div></div>
+          <div class="item"><div class="ic">${ico('ball')}</div><div class="tx"><b>Play the moments</b><span>Matches stop for the decisions that matter: shoot or square it, nutmeg or keep it simple, slide in or stay on your feet. You take the penalties.</span></div></div>
+          <div class="item"><div class="ic">${ico('train')}</div><div class="tx"><b>Train towards your ceiling</b><span>Good decisions and hard sessions push each attribute up — but never past what you drafted.</span></div></div>
+          <div class="item"><div class="ic">${ico('transfer')}</div><div class="tx"><b>Move clubs</b><span>Perform and bigger badges come calling. Every summer you choose the next chapter.</span></div></div>
+          <div class="item"><div class="ic">${ico('legacy')}</div><div class="tx"><b>Leave a legacy</b><span>Titles, caps, peak rating, peak value — and how the game remembers you.</span></div></div>
         </div>`,
         actions: [{ label: 'Got it' }]
       });
@@ -55,6 +57,13 @@
     wizardBack() {
       const w = UI.wizard;
       if (!w || w.step === 0) { UI.show('start'); return; }
+      if (w.step === 2 && w.draftIndex > 0) {   // undo the last steal
+        const undo = w.robbed.pop();
+        if (undo) delete w.caps[undo.attr];
+        w.draftIndex--;
+        return UI.renderWizard();
+      }
+      if (w.step === 3) { w.step = 2; w.draftPool = null; return UI.renderWizard(); }
       w.step--; UI.renderWizard();
     },
     wizardNext() {
@@ -63,32 +72,34 @@
         w.firstName = (w.firstName || '').trim() || U.pick(D.FIRST_NAMES);
         w.lastName = (w.lastName || '').trim() || U.pick(D.LAST_NAMES);
       }
+      if (w.step === 2) return;            // the draft advances itself, pick by pick
       if (w.step < 3) { w.step++; UI.renderWizard(); return; }
       if (!w.clubId) { UI.toast('Pick a club to start at.', 'bad'); return; }
       Game.startCareer();
     },
 
     startCareer() {
-      const w = UI.wizard, preset = UI.talentPresets[w.talent];
+      const w = UI.wizard;
       const g = State.newGame({
         firstName: w.firstName, lastName: w.lastName, nation: w.nation,
-        pos: w.pos, foot: w.foot, age: 17, quality: preset.quality, difficulty: w.talent
+        pos: w.pos, foot: w.foot, shirt: w.shirt, age: 17,
+        caps: w.caps, draft: w.robbed
       }, w.clubId);
-      g.player.money = preset.money;
       g.settings.matchLength = 'normal';
       g.contQualified = false;
       Engine.Squad.ensure(g);
       Engine.Season.build(g);
       g.weekActionsLeft = 1;
       const club = State.club(g.player.club);
-      State.log(`✍️ You sign your first professional contract with ${club.name}.`, 'good');
+      State.log(`You sign your first professional contract with ${club.name}.`, 'good');
+      State.news(`${club.name} hand a first deal to 17-year-old ${g.player.firstName} ${g.player.lastName}`, 'good');
       State.save();
       UI.show('game');
       UI.tab = 'home';
       UI.render();
       UI.modal({
         title: 'Welcome to the first team',
-        text: `${g.player.firstName} ${g.player.lastName}, ${g.player.age}, ${D.POSITIONS[g.player.pos].name} for ${club.name}.\n\nOverall ${g.player.ovr} · Potential ${g.player.potential}\nWage ${U.cash(g.player.contract.wage)}/week for ${g.player.contract.years} years.\n\nThe manager says you will get your chance. The rest is up to you.`,
+        text: `${g.player.firstName} ${g.player.lastName}, ${g.player.age}, ${D.POSITIONS[g.player.pos].name} for ${club.name}.\n\nOverall ${g.player.ovr}, ceiling ${State.potentialOverall(g.player)}.\nSquad number ${g.player.shirt} · ${U.cash(g.player.contract.wage)}/week for ${g.player.contract.years} years.\n\nThe manager says you will get your chance. The rest is on you.`,
         actions: [{ label: "Let's go" }]
       });
     },
@@ -102,14 +113,7 @@
         case 'openWeek': return Game.weekMenu();
         case 'doActivity': return Game.runActivity(arg);
         case 'trainMenu': return Game.trainMenu();
-        case 'socialMenu': return Game.socialMenu();
         case 'mediaMenu': return Game.mediaMenu();
-        case 'dating': return Game.spendWeek(() => Life.datingApp(g));
-        case 'rel': return Game.spendWeek(() => Life.interactPartner(g, arg), arg === 'date' || arg === 'gift');
-        case 'signSponsor': return Game.simpleResult(Life.signSponsor(g, arg));
-        case 'buyAsset': return Game.simpleResult(Life.buyAsset(g, arg));
-        case 'buyPerk': return Game.simpleResult(Life.buyPerk(g, arg));
-        case 'investMenu': return Game.investMenu(arg);
         case 'endSeason': return Game.endSeason();
         case 'retire': return Game.confirmRetire();
         case 'save': State.save(); return UI.toast('Career saved.', 'good');
@@ -152,11 +156,11 @@
     weekMenu() {
       const g = State.game;
       if (g.weekActionsLeft <= 0) { UI.toast('No time left this week.', 'bad'); return; }
-      const acts = Life.activities(g);
+      const acts = Career.activities(g);
       UI.modal({
-        title: 'What do you do this week?',
+        title: 'The week before the match',
         html: `<div class="list">` + acts.map(a =>
-          `<div class="item click" data-a="${a.id}"><div class="ic">${a.icon}</div>
+          `<div class="item click" data-a="${a.id}"><div class="ic">${ico(a.icon)}</div>
             <div class="tx"><b>${U.esc(a.name)}</b><span>${U.esc(a.desc)}</span></div></div>`).join('') + `</div>`,
         actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
         onRender(m) {
@@ -171,48 +175,28 @@
     runActivity(id) {
       const g = State.game;
       if (id === 'train') return Game.trainMenu();
-      if (id === 'social') return Game.socialMenu();
       if (id === 'media') return Game.mediaMenu();
-      Game.spendWeek(() => Life.doActivity(g, id));
+      Game.spendWeek(() => Career.doActivity(g, id));
     },
 
     trainMenu() {
       const g = State.game, p = g.player;
-      const drills = D.TRAINING.filter(t => t.attr !== 'gk' || p.pos === 'GK');
+      const drills = D.TRAINING
+        .filter(t => t.attr !== 'gk' || p.pos === 'GK')
+        .filter(t => t.attr !== 'shooting' || p.pos !== 'GK');
       UI.modal({
         title: 'Pick a drill',
-        html: `<div class="list">` + drills.map(t =>
-          `<div class="item click" data-t="${t.id}"><div class="ic">${t.icon}</div>
-            <div class="tx"><b>${U.esc(t.name)}</b><span>${D.ATTR_LABEL[t.attr]} — currently ${p.attrs[t.attr]} · costs ${t.fatigue}% fitness</span></div></div>`).join('') + `</div>`,
+        html: `<div class="list">` + drills.map(t => {
+          const cap = Engine.Progress.cap(p, t.attr), at = p.attrs[t.attr], maxed = at >= cap;
+          return `<div class="item click" data-t="${t.id}"><div class="ic">${ico(t.icon)}</div>
+            <div class="tx"><b>${U.esc(t.name)}</b><span>${D.ATTR_LABEL[t.attr]} ${at} / ceiling ${cap}${maxed ? ' — maxed out' : ''} · −${t.fatigue}% fitness</span></div>
+            ${maxed ? '<span class="pill green">MAX</span>' : ''}</div>`;
+        }).join('') + `</div>`,
         actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
         onRender(m) {
           m.querySelectorAll('[data-t]').forEach(el => el.onclick = () => {
             UI.closeModal();
-            Game.spendWeek(() => Life.doActivity(g, 'train', el.dataset.t));
-          });
-        }
-      });
-    },
-
-    socialMenu() {
-      const g = State.game;
-      const kinds = [
-        ['training', '💪 Training grind post', 'Safe, on-brand, mild growth'],
-        ['fans', '❤️ Message to the fans', 'The supporters love it'],
-        ['lifestyle', '⌚ Flex your lifestyle', 'Big reach, some backlash risk'],
-        ['charity', '🙏 Charity post', 'Quiet respect'],
-        ['spicy', '👀 Cryptic post about "certain people"', 'Huge reach. Huge risk.']
-      ];
-      UI.modal({
-        title: 'What are you posting?',
-        html: `<div class="list">` + kinds.map(k =>
-          `<div class="item click" data-s="${k[0]}"><div class="ic">📱</div>
-            <div class="tx"><b>${U.esc(k[1])}</b><span>${U.esc(k[2])}</span></div></div>`).join('') + `</div>`,
-        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
-        onRender(m) {
-          m.querySelectorAll('[data-s]').forEach(el => el.onclick = () => {
-            UI.closeModal();
-            Game.spendWeek(() => Life.socialPost(g, el.dataset.s));
+            Game.spendWeek(() => Career.doActivity(g, 'train', el.dataset.t));
           });
         }
       });
@@ -221,44 +205,21 @@
     mediaMenu() {
       const g = State.game;
       const tones = [
-        ['humble', '🙏 "Credit to the team"', 'The manager will like it'],
-        ['bold', '🔥 "We should be winning the league"', 'Fame up, risk up'],
-        ['callout', '💣 Call out the club', 'Explosive. Consequences.'],
-        ['bland', '😐 Say nothing at all', 'Perfectly safe']
+        ['humble', '"Credit to the team"', 'Straight bat. The staff approve.'],
+        ['ambitious', '"We should be winning this league"', 'Reputation up, risk up.'],
+        ['teammates', 'Defend your team-mates', 'Take the heat for the dressing room.'],
+        ['bland', 'Say nothing at all', 'Perfectly safe, perfectly forgettable.']
       ];
       UI.modal({
         title: 'Press conference',
         html: `<div class="list">` + tones.map(k =>
-          `<div class="item click" data-m="${k[0]}"><div class="ic">🎙️</div>
+          `<div class="item click" data-m="${k[0]}"><div class="ic">${ico('press')}</div>
             <div class="tx"><b>${U.esc(k[1])}</b><span>${U.esc(k[2])}</span></div></div>`).join('') + `</div>`,
         actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
         onRender(m) {
           m.querySelectorAll('[data-m]').forEach(el => el.onclick = () => {
             UI.closeModal();
-            Game.spendWeek(() => Life.pressInterview(g, el.dataset.m));
-          });
-        }
-      });
-    },
-
-    investMenu(id) {
-      const g = State.game, p = g.player;
-      const inv = D.INVESTMENTS.find(i => i.id === id);
-      if (!inv) return;
-      const amounts = [inv.min, inv.min * 4, inv.min * 12, Math.round(p.money * 0.25)]
-        .filter(a => a >= inv.min && a <= p.money);
-      if (!amounts.length) { UI.toast(`You need at least ${U.cash(inv.min)}.`, 'bad'); return; }
-      UI.modal({
-        title: inv.icon + ' ' + inv.name,
-        text: `Risk: ${Math.round(inv.risk * 100)}% chance it goes badly. Returns pay out at the end of the season.`,
-        html: `<div class="list">` + amounts.map(a =>
-          `<div class="item click" data-v="${a}"><div class="ic">💵</div>
-            <div class="tx"><b>Invest ${U.cash(a)}</b><span>Potential return up to ${U.cash(a * inv.mult[1])}</span></div></div>`).join('') + `</div>`,
-        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
-        onRender(m) {
-          m.querySelectorAll('[data-v]').forEach(el => el.onclick = () => {
-            UI.closeModal();
-            Game.simpleResult(Life.invest(g, id, +el.dataset.v));
+            Game.spendWeek(() => Career.pressDuty(g, el.dataset.m));
           });
         }
       });
@@ -409,7 +370,7 @@
           const dive = {
             title: 'Their kick — pick your dive',
             sub: `Shootout ${s.us}–${s.them}. Read him. Be a hero.`,
-            art: '🧤',
+            art: 'save',
             options: [
               { label: 'Dive left', hint: 'Commit early.', tag: 'Guess' },
               { label: 'Dive right', hint: 'Commit early.', tag: 'Guess' },
@@ -475,7 +436,7 @@
       lines.push(`${m.isHome ? m.myName : m.oppName} ${m.isHome ? m.us : m.them} – ${m.isHome ? m.them : m.us} ${m.isHome ? m.oppName : m.myName}`);
       if (m.shootout) lines.push(`Shootout: ${m.shootout.us} – ${m.shootout.them}`);
       if (m.role === 'start' || m.role === 'bench') {
-        lines.push(`Your rating: ${U.round(m.stats.rating, 1)}${m.motm ? '  ⭐ MAN OF THE MATCH' : ''}`);
+        lines.push(`Your rating: ${U.round(m.stats.rating, 1)}${m.motm ? '  ·  MAN OF THE MATCH' : ''}`);
         const bits = [];
         if (m.stats.goals) bits.push(`${m.stats.goals} goal${m.stats.goals > 1 ? 's' : ''}`);
         if (m.stats.assists) bits.push(`${m.stats.assists} assist${m.stats.assists > 1 ? 's' : ''}`);
@@ -483,21 +444,20 @@
         if (m.stats.card) bits.push(m.stats.card === 'red' ? 'sent off' : 'booked');
         if (bits.length) lines.push(bits.join(' · '));
         lines.push(`${m.stats.minutes} minutes played · fitness now ${Math.round(p.fitness)}%`);
-        if (m.bonus) lines.push(`Goal bonus earned: ${U.cash(m.bonus)}`);
       } else {
         lines.push(m.role === 'out' ? 'You did not make the squad.' :
                    m.role === 'injured' ? 'You watched, injured.' : 'You watched, suspended.');
       }
-      if (m.postInjury) lines.push(`🩹 You picked up a knock: ${p.injuries.length ? p.injuries[p.injuries.length - 1].name : 'a strain'}.`);
+      if (m.postInjury) lines.push(`You picked up a knock: ${p.injuries.length ? p.injuries[p.injuries.length - 1].name : 'a strain'}.`);
 
       const finish = () => Game.afterMatch(m);
       if (quick) {
-        UI.modal({ title: m.result === 'W' ? '✅ Win' : m.result === 'D' ? '➖ Draw' : '❌ Defeat',
+        UI.modal({ title: m.result === 'W' ? 'Win' : m.result === 'D' ? 'Draw' : 'Defeat',
           text: lines.join('\n'), actions: [{ label: 'Continue', onClick: finish }] });
       } else {
         UI.renderScoreboard(m);
         UI.renderMatchButtons([{ label: 'Full time — continue', onClick: () => {
-          UI.modal({ title: m.result === 'W' ? '✅ Win' : m.result === 'D' ? '➖ Draw' : '❌ Defeat',
+          UI.modal({ title: m.result === 'W' ? 'Win' : m.result === 'D' ? 'Draw' : 'Defeat',
             text: lines.join('\n'), actions: [{ label: 'Continue', onClick: finish }] });
         } }]);
       }
@@ -526,10 +486,10 @@
       UI.render();
       State.save();
 
-      const ev = Life.rollEvent(g);
+      const ev = Career.rollEvent(g);
       if (ev) {
         UI.modal({
-          title: ev.title, text: ev.text,
+          title: (ev.icon ? ico(ev.icon) + ' ' : '') + ev.title, text: ev.text,
           actions: ev.options.map(o => ({
             label: o.label, cls: 'btn-ghost',
             onClick: () => {
@@ -555,14 +515,15 @@
       unlock('clinical', p.career.goals >= 30 && p.attrs.shooting >= 76);
       unlock('ice', (p.penScored || 0) >= 4);
       unlock('engine', p.career.apps >= 60 && p.attrs.physical >= 74);
-      unlock('magnet', p.fame >= 45);
+      unlock('idol', p.reputation >= 45);
       unlock('leader', p.age >= 25 && p.managerTrust >= 78 && p.career.apps >= 80);
       unlock('wizard', p.attrs.passing >= 80 && p.career.assists >= 25);
       unlock('tank', p.attrs.defending >= 80 && p.career.apps >= 50);
-      unlock('showman', p.fame >= 30 && p.attrs.dribbling >= 80);
-      unlock('workhorse', p.career.apps >= 40 && p.discipline >= 78);
+      unlock('showman', p.attrs.flair >= 82);
+      unlock('workhorse', p.career.apps >= 40 && p.managerTrust >= 72);
       unlock('lucky', p.career.trophies.length >= 3 && U.chance(0.5));
-      unlock('glass', p.injuries.length > 0 && (p.career.seasons.length >= 1) && p.health < 60);
+      unlock('twofooted', p.attrs.weakFoot >= 85);
+      unlock('glass', (p.injuryCount || 0) >= 4);
       unlock('hothead', p.career.red >= 3 || p.career.yellow >= 22);
     },
 
@@ -578,8 +539,8 @@
         rounds: ['Group Match 1', 'Group Match 2', 'Group Match 3', 'Round of 16', 'Quarter-final', 'Semi-final', 'Final']
       };
       UI.modal({
-        title: '🌍 ' + g.intlRun.name,
-        text: `${nat.flag} ${p.nation} have named their squad and you are in it.\n\nSeven games from immortality.`,
+        title: g.intlRun.name,
+        text: `${p.nation} have named their squad and you are in it.\n\nSeven games from immortality.`,
         actions: [{ label: 'Report for duty', onClick: () => Game.intlNext() }]
       });
     },
@@ -595,14 +556,14 @@
       const opp = U.pick(pool.length ? pool : opponents);
       const f = {
         comp: 'intl', label: run.name + ' · ' + run.rounds[run.stage],
-        oppId: null, oppName: opp.flag + ' ' + opp.name, oppRating: opp.rating,
+        oppId: null, oppName: opp.name, oppRating: opp.rating,
         home: false, knockout: run.stage >= 3, played: false
       };
       g.pendingIntlFixture = f;
 
       UI.modal({
         title: run.rounds[run.stage],
-        text: `${run.nat.flag} ${p.nation} v ${opp.flag} ${opp.name}`,
+        text: `${p.nation}  v  ${opp.name}`,
         actions: [
           { label: '▶ Play match', onClick: () => Game.playIntl(f, true) },
           { label: '⏩ Quick sim', cls: 'btn-ghost', onClick: () => Game.playIntl(f, false) }
@@ -674,10 +635,11 @@
       if (run) {
         if (run.won) {
           p.career.trophies.push({ name: run.name, year: g.world.year + 1, club: p.nation });
-          p.fame = U.clamp(p.fame + 14, 0, 100);
-          p.happiness = U.clamp(p.happiness + 25, 0, 100);
-          State.log(`🏆 YOU WON THE ${run.name.toUpperCase()}!`, 'good');
-          UI.modal({ title: '🏆 CHAMPIONS OF THE WORLD', text: `${run.nat.flag} ${p.nation} win the ${run.name}.\n\nYou will never buy a drink in your home town again.`,
+          State.addReputation(p, 16);
+          p.morale = U.clamp(p.morale + 20, 0, 100);
+          State.log(`YOU WON THE ${run.name.toUpperCase()}!`, 'good');
+          State.news(`${p.nation.toUpperCase()} ARE CHAMPIONS — ${p.lastName} lifts the ${run.name}`, 'good');
+          UI.modal({ title: 'CHAMPIONS OF THE WORLD', text: `${p.nation} win the ${run.name}.\n\nYou will never buy a drink in your home town again.`,
             actions: [{ label: 'Unbelievable', onClick: () => Game.finishIntl() }] });
           g.intlRun = null;
           return;
@@ -714,11 +676,11 @@
         <div class="stat"><b>${State.seasonRating(p) || '—'}</b><span>Rating</span></div>
       </div>`;
       if (results.trophies.length) html += `<div style="margin-top:12px">` +
-        results.trophies.map(t => `<span class="trophy">🏆 ${U.esc(t)}</span>`).join('') + `</div>`;
+        results.trophies.map(t => `<span class="trophy">${ico('trophy')} ${U.esc(t)}</span>`).join('') + `</div>`;
       if (results.awards.length) html += `<div style="margin-top:6px">` +
-        results.awards.map(a => `<span class="trophy">🏅 ${U.esc(a)}</span>`).join('') + `</div>`;
+        results.awards.map(a => `<span class="trophy">${ico('medal')} ${U.esc(a)}</span>`).join('') + `</div>`;
       html += `<div class="divider"></div><div class="dim">
-        Prize money & bonuses: ${U.cash(results.money)}<br>Wages received: ${U.cash(results.wages)}</div>`;
+        Market value ${U.cash(results.value)} · overall ${p.ovr}</div>`;
       if (results.dev.notes.length) {
         html += `<div class="divider"></div><b>Development</b><div class="dim">${results.dev.notes.join(' · ')}<br>
           Overall ${results.dev.delta >= 0 ? '+' : ''}${results.dev.delta} → <b class="good">${p.ovr}</b></div>`;
@@ -728,18 +690,19 @@
       UI.modal({
         title: `Season ${g.world.year}/${(g.world.year + 1) % 100} review`,
         html,
-        actions: [{ label: 'Off the pitch →', onClick: () => Game.seasonFinances() }]
+        actions: [{ label: 'Continue', onClick: () => Game.seasonMarket() }]
       });
     },
 
-    seasonFinances() {
+    seasonMarket() {
       const g = State.game, p = g.player;
-      const notes = Life.seasonUpkeep(g);
+      const notes = Career.seasonUpkeep(g);
       UI.modal({
-        title: '💰 The books',
-        html: `<div class="center card" style="margin-bottom:12px"><span class="dim">BALANCE</span>
-          <div class="big-num gold">${U.cash(p.money)}</div></div>` +
-          (notes.length ? `<div class="dim">${notes.map(U.esc).join('<br>')}</div>` : '<div class="dim">A quiet summer, financially.</div>'),
+        title: 'Where you stand',
+        html: `<div class="center card" style="margin-bottom:12px"><span class="dim">MARKET VALUE</span>
+          <div class="big-num gold">${U.cash(State.marketValue(p))}</div>
+          <div class="dim">Peak ${U.cash(p.peakValue || 0)} · best overall ${p.peakOvr || p.ovr}</div></div>` +
+          `<div class="dim">${notes.map(U.esc).join('<br>')}</div>`,
         actions: [{ label: 'Continue', onClick: () => Game.summerIntl() }]
       });
     },
@@ -754,7 +717,7 @@
       if (p.intl.called && !p.intl.retired) {
         const b = Engine.Intl.friendlyBurst(g);
         if (b) {
-          UI.modal({ title: '🌍 International duty',
+          UI.modal({ title: 'International duty',
             text: `${b.caps} caps this season for ${p.nation}${b.goals ? `, and ${b.goals} goal${b.goals > 1 ? 's' : ''}` : ''}. Career total: ${p.intl.caps} caps, ${p.intl.goals} goals.`,
             actions: [{ label: 'Continue', onClick: () => Game.transferWindow() }] });
           return;
@@ -775,15 +738,15 @@
         + (expiring ? ' <b class="bad">(EXPIRED)</b>' : ` (${p.contract.years} year${p.contract.years === 1 ? '' : 's'} left)`) + `</p>`;
       html += `<div class="list">`;
       if (wantsToRenew) {
-        html += `<div class="item click" data-r="1"><div class="ic">🤝</div><div class="tx">
+        html += `<div class="item click" data-r="1"><div class="ic">${ico('agent')}</div><div class="tx">
           <b>Stay at ${U.esc(club.name)}</b><span>${expiring ? 'New deal: ' : 'Improved terms: '}${U.cash(renewal.wage)}/wk for ${renewal.years} years · signing bonus ${U.cash(renewal.signingBonus)}</span></div></div>`;
       }
       offers.forEach((o, i) => {
-        html += `<div class="item click" data-o="${i}"><div class="ic">${o.flag || '🏟️'}</div><div class="tx">
+        html += `<div class="item click" data-o="${i}"><div class="ic">${ico('club')}</div><div class="tx">
           <b>${U.esc(o.clubName)} — ${U.cash(o.fee)}</b>
           <span>Rating ${o.rating} · ${U.cash(o.wage)}/wk for ${o.years} years · bonus ${U.cash(o.signingBonus)}<br>${U.esc(o.pitch)}</span></div></div>`;
       });
-      if (!offers.length) html += `<div class="item"><div class="ic">📭</div><div class="tx"><b>No offers</b>
+      if (!offers.length) html += `<div class="item"><div class="ic">${ico('no')}</div><div class="tx"><b>No offers</b>
         <span>Nobody is knocking this summer. Time to prove them wrong.</span></div></div>`;
       html += `</div>`;
 
@@ -791,12 +754,12 @@
       if (!expiring) actions.push({ label: 'Stay and see out my contract', cls: 'btn-ghost', onClick: () => Game.nextSeason() });
 
       UI.modal({
-        title: '✍️ Transfer window', html, actions,
+        title: 'Transfer window', html, actions,
         onRender(m) {
           m.querySelectorAll('[data-r]').forEach(el => el.onclick = () => {
             UI.closeModal();
             global.Contracts.joinClub(p, club, renewal);
-            State.log(`✍️ Signed a new contract at ${club.name}: ${U.cash(renewal.wage)}/week for ${renewal.years} years.`, 'good');
+            State.log(`Signed a new contract at ${club.name}: ${U.cash(renewal.wage)}/week for ${renewal.years} years.`, 'good');
             Game.nextSeason();
           });
           m.querySelectorAll('[data-o]').forEach(el => el.onclick = () => {
@@ -819,7 +782,7 @@
               const fallback = pool[pool.length - 1] || all[0];
               const el = document.createElement('div');
               el.className = 'item click';
-              el.innerHTML = `<div class="ic">🆓</div><div class="tx"><b>Free transfer to ${U.esc(fallback.name)}</b>
+              el.innerHTML = `<div class="ic">${ico('transfer')}</div><div class="tx"><b>Free transfer to ${U.esc(fallback.name)}</b>
                 <span>They will take you on a modest deal. A career is a career.</span></div>`;
               el.onclick = () => {
                 UI.closeModal();
@@ -889,12 +852,12 @@
     retire(forced) {
       const g = State.game, p = g.player;
       p.retired = true;
-      const score = Life.legacyScore(g);
-      const rank = Life.legacyRank(score);
+      const score = Career.legacyScore(g);
+      const rank = Career.legacyRank(score);
       p.legacy = score;
 
       UI.modal({
-        title: '🏁 The final whistle',
+        title: 'The final whistle',
         html: `<div class="center"><div class="big-num gold">${score}</div>
           <div class="gold" style="font-weight:800;letter-spacing:1px">${rank.title}</div>
           <div class="dim" style="margin:8px 0 14px">${U.esc(rank.desc)}</div></div>
@@ -902,15 +865,17 @@
             <div class="stat"><b>${p.career.apps}</b><span>Apps</span></div>
             <div class="stat"><b>${p.career.goals}</b><span>Goals</span></div>
             <div class="stat"><b>${p.career.assists}</b><span>Assists</span></div>
-            <div class="stat"><b>${p.career.trophies.length}</b><span>Trophies</span></div>
+            <div class="stat"><b>${p.career.trophies.length}</b><span>Titles</span></div>
             <div class="stat"><b>${p.intl.caps}</b><span>Caps</span></div>
+            <div class="stat"><b>${p.intl.goals}</b><span>Intl Goals</span></div>
+            <div class="stat"><b>${p.peakOvr || p.ovr}</b><span>Peak OVR</span></div>
+            <div class="stat"><b>${U.cash(p.peakValue || 0)}</b><span>Peak Value</span></div>
             <div class="stat"><b>${State.careerRating(p) || '—'}</b><span>Rating</span></div>
           </div>
           <div class="divider"></div>
-          <div class="dim">Peak overall ${Math.max(p.ovr, ...p.career.seasons.map(s => s.ovr), 0)} ·
-            Final balance ${U.cash(p.money)} · Fame ${Math.round(p.fame)}</div>
+          <div class="dim">Clubs: ${p.career.clubs.map(U.esc).join(' · ') || '—'}</div>
           ${p.career.trophies.length ? '<div style="margin-top:10px">' + p.career.trophies.map(t =>
-            `<span class="trophy">🏆 ${U.esc(UI.trophyLabel(t))}</span>`).join('') + '</div>' : ''}`,
+            `<span class="trophy">${ico('trophy')} ${U.esc(UI.trophyLabel(t))}</span>`).join('') + '</div>' : ''}`,
         actions: [{ label: 'What next?', onClick: () => Game.postCareer() }]
       });
     },
@@ -919,16 +884,16 @@
       const g = State.game;
       UI.modal({
         title: 'Life after football',
-        html: `<div class="list">` + Life.POST_CAREER.map(o =>
-          `<div class="item click" data-p="${o.id}"><div class="ic">${o.icon}</div>
+        html: `<div class="list">` + Career.POST_CAREER.map(o =>
+          `<div class="item click" data-p="${o.id}"><div class="ic">${ico(o.icon)}</div>
             <div class="tx"><b>${U.esc(o.name)}</b></div></div>`).join('') + `</div>`,
         actions: [],
         onRender(m) {
           m.querySelectorAll('[data-p]').forEach(el => el.onclick = () => {
-            const opt = Life.POST_CAREER.find(o => o.id === el.dataset.p);
+            const opt = Career.POST_CAREER.find(o => o.id === el.dataset.p);
             UI.closeModal();
             UI.modal({
-              title: opt.icon + ' ' + opt.name, text: opt.text,
+              title: opt.name, text: opt.text,
               actions: [{ label: 'Start a new career', onClick: () => { State.wipe(); UI.show('start');
                 document.getElementById('btn-continue').disabled = true; } }]
             });

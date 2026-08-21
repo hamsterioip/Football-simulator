@@ -10,11 +10,24 @@
   /* ---------- helpers ---------- */
   function eff(ctx, attr) {
     const p = ctx.player;
-    const raw = p.attrs[attr] || 20;
+    let raw = p.attrs[attr] || 20;
+    // the ball does not always sit up on your good side
+    if (ctx.weakSide && (attr === 'shooting' || attr === 'dribbling')) {
+      const wf = p.attrs.weakFoot || 40;
+      raw *= State.hasTrait(p, 'twofooted') ? 1 : (0.55 + (wf / 100) * 0.45);
+    }
     const formF = 0.88 + (p.form / 100) * 0.24;
     const fitF = 0.82 + (p.fitness / 100) * 0.22;
     const nerve = ctx.pressure ? (State.hasTrait(p, 'ice') ? 1.0 : 0.94) : 1.0;
     return raw * formF * fitF * nerve;
+  }
+
+  // flair is what makes the outrageous option come off
+  function flairBonus(ctx) {
+    return ((ctx.player.attrs.flair || 50) - 58) * 0.005;
+  }
+  function weakNote(ctx) {
+    return ctx.weakSide ? ' It has dropped onto your weaker foot.' : '';
   }
   function trait(ctx, id) { return State.hasTrait(ctx.player, id); }
   function luck(ctx, p) { return trait(ctx, 'lucky') ? Math.min(0.95, p + 0.05) : p; }
@@ -51,8 +64,8 @@
       const gk = ctx.keeper;
       return {
         title: 'One-on-one!',
-        sub: `You are clean through with only the keeper to beat. ${ctx.oppName}'s goalkeeper narrows the angle…`,
-        art: '🥅',
+        sub: `You are clean through with only the keeper to beat. ${ctx.oppName}'s goalkeeper narrows the angle.` + weakNote(ctx),
+        art: 'net',
         options: [
           { label: 'Blast it', hint: 'Power. Simple. Risky if he stands tall.', tag: 'Shooting',
             run() {
@@ -64,7 +77,7 @@
             } },
           { label: 'Round the keeper', hint: 'High risk, high reward showboat.', tag: 'Dribbling',
             run() {
-              let p = odds(eff(ctx, 'dribbling'), gk + 6, 0.017, 0.46);
+              let p = odds(eff(ctx, 'dribbling'), gk + 6, 0.017, 0.46) + flairBonus(ctx);
               if (trait(ctx, 'showman')) p += 0.08;
               p = luck(ctx, p);
               if (U.chance(p)) return E({ goal: true, rating: 1.9, fame: 1.2, crowd: 14, tone: GOOD,
@@ -104,8 +117,8 @@
     build(ctx) {
       return {
         title: 'Edge of the box',
-        sub: 'The ball drops to you 20 yards out. A defender is closing. Two team-mates make runs.',
-        art: '⚽',
+        sub: 'The ball drops to you 20 yards out. A defender is closing and two team-mates make runs.' + weakNote(ctx),
+        art: 'ball',
         options: [
           { label: 'Shoot first time', hint: 'Catch it sweet or slice it.', tag: 'Shooting',
             run() {
@@ -159,7 +172,7 @@
       return {
         title: 'Cross comes in',
         sub: 'It is whipped towards the six-yard box and you rise above your marker.',
-        art: '🙆',
+        art: 'header',
         options: [
           { label: 'Power header', hint: 'Neck muscles and aggression.', tag: 'Physical',
             run() {
@@ -177,7 +190,7 @@
             } },
           { label: 'Cheeky flick-on', hint: 'Glance it for a runner.', tag: 'Flair',
             run() {
-              let p = odds(eff(ctx, 'passing'), 48, 0.014, 0.45) + (trait(ctx, 'showman') ? .08 : 0);
+              let p = odds(eff(ctx, 'passing'), 48, 0.014, 0.45) + flairBonus(ctx) + (trait(ctx, 'showman') ? .08 : 0);
               if (U.chance(luck(ctx, p))) return E({ assist: true, teamGoal: true, rating: 1.3, fame: .6, tone: GOOD,
                 xp: { passing: .4 }, text: 'The faintest flick — and your team-mate nods in behind you. Assist!' });
               return E({ rating: -0.2, tone: NEU, text: 'The flick finds nobody. Cleared.' });
@@ -207,7 +220,7 @@
       mk('Straight down the middle', 'Nerve of steel required.', 0.74, 'Nerve'),
       mk('Bottom right', 'The classic. Keeper might guess.', 0.80, 'Placement'),
       mk('Top right', 'Postage stamp or the stands.', 0.72, 'Risk'),
-      mk('Panenka', 'Chip it. Legend or clown.', 0.58, 'Icon')
+      mk('Panenka', 'Chip it. Legend or clown.', 0.58 + flairBonus(ctx), 'Flair')
     ];
   }
 
@@ -218,7 +231,7 @@
       return {
         title: 'PENALTY',
         sub: `${ctx.minute}' — you place the ball on the spot. ${(ctx.crowdHostile ? 'The whole stadium is whistling.' : 'Your fans hold their breath.')}`,
-        art: '🎯',
+        art: 'penalty',
         options: penaltyOptions(ctx, (scored, label) => {
           if (scored) {
             const icon = label === 'Panenka';
@@ -244,7 +257,7 @@
       return {
         title: 'Free kick, 22 yards',
         sub: 'The wall lines up. The keeper shouts. It is your call — you are on set pieces today.',
-        art: '🌀',
+        art: 'wall',
         options: [
           { label: 'Curl it over the wall', hint: 'Whip and dip.', tag: 'Technique',
             run() {
@@ -287,7 +300,7 @@
       return {
         title: 'Corner kick',
         sub: 'You jog over to take it. The box is packed and the referee checks his watch.',
-        art: '🚩',
+        art: 'corner',
         options: [
           { label: 'Whip it near post', hint: 'Attack the first head.', tag: 'Delivery',
             run() {
@@ -313,7 +326,7 @@
           { label: 'Go for the Olimpico', hint: 'Straight in. Absurd. Iconic.', tag: 'Audacity',
             run() {
               let p = 0.07 + (eff(ctx, 'passing') - 60) * 0.003 + (trait(ctx, 'wizard') ? .05 : 0)
-                + (trait(ctx, 'showman') ? .03 : 0);
+                + flairBonus(ctx) + (trait(ctx, 'showman') ? .03 : 0);
               if (U.chance(luck(ctx, U.clamp(p, .02, .3)))) return E({ goal: true, rating: 2.5, fame: 5, crowd: 25,
                 tone: GOOD, xp: { passing: .6 }, text: 'STRAIGHT IN FROM THE CORNER! An Olimpico! Nobody can believe it.' });
               return E({ rating: -0.3, tone: NEU, text: 'It curls just past the far post. Ambitious.' });
@@ -331,7 +344,7 @@
       return {
         title: 'Three on two!',
         sub: 'You break from your own half with numbers. The defence is scrambling back.',
-        art: '🏃',
+        art: 'counter',
         options: [
           { label: 'Drive at them yourself', hint: 'Pace and power.', tag: 'Pace',
             run() {
@@ -370,11 +383,12 @@
       return {
         title: 'Isolated one-v-one',
         sub: `You take the ball wide with ${ctx.oppName}'s full-back right in front of you. The crowd rises.`,
-        art: '🕺',
+        art: 'duel',
         options: [
           { label: 'Nutmeg him', hint: 'Humiliation or embarrassment.', tag: 'Flair',
             run() {
-              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 10, 0.017, 0.44) + (trait(ctx, 'showman') ? .1 : 0);
+              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 10, 0.017, 0.44)
+                + flairBonus(ctx) * 1.4 + (trait(ctx, 'showman') ? .1 : 0);
               if (U.chance(luck(ctx, p))) return E({ rating: 1.0, fame: 2, crowd: 14, tone: GOOD, xp: { dribbling: .6 },
                 assist: U.chance(.4), teamGoal: U.chance(.4),
                 text: 'MEGS! Straight through his legs and the stadium howls. The cross that follows is dangerous too.' });
@@ -414,7 +428,7 @@
       return {
         title: 'Last man back',
         sub: 'Their striker is through and you are the only thing between him and the goal.',
-        art: '🛡️',
+        art: 'block',
         options: [
           { label: 'Slide tackle', hint: 'All or nothing.', tag: 'Defending',
             run() {
@@ -461,7 +475,7 @@
       return {
         title: 'Corner against you',
         sub: 'The ball is swung into your box and their giant centre-half attacks it.',
-        art: '🧱',
+        art: 'wall',
         options: [
           { label: 'Attack the ball', hint: 'Get there first.', tag: 'Physical',
             run() {
@@ -497,7 +511,7 @@
       return {
         title: 'Their striker is through',
         sub: 'One-v-one. Everything slows down. What do you do?',
-        art: '🧤',
+        art: 'save',
         options: [
           { label: 'Spread yourself big', hint: 'Star-jump. Block the angle.', tag: 'Goalkeeping',
             run() {
@@ -535,7 +549,7 @@
       return {
         title: 'Ball into the mixer',
         sub: 'A dangerous cross hangs over a crowded six-yard box.',
-        art: '🙌',
+        art: 'keeper',
         options: [
           { label: 'Come and claim it', hint: 'Command your area.', tag: 'Goalkeeping',
             run() {
@@ -569,7 +583,7 @@
       return {
         title: 'You feel something go',
         sub: 'A twinge in the hamstring after a sprint. The physio is looking over. There are 25 minutes left.',
-        art: '🩹',
+        art: 'injury',
         options: [
           { label: 'Play through it', hint: 'Heroic. Or stupid.', tag: 'Guts',
             run() {
@@ -597,7 +611,7 @@
       return {
         title: 'The referee has given a shocker',
         sub: 'A clear foul on you, waved away. The bench is up in arms and you are already fuming.',
-        art: '🟨',
+        art: 'card',
         options: [
           { label: 'Get in his face', hint: 'Say what you think.', tag: 'Hot Head',
             run() {
@@ -627,7 +641,7 @@
       return {
         title: 'Contact in the box',
         sub: 'The defender catches you — maybe. You are still on your feet, but the angle is terrible.',
-        art: '🎭',
+        art: 'dive',
         options: [
           { label: 'Go down', hint: 'The referee decides your reputation.', tag: 'Dark Arts',
             run() {
@@ -658,7 +672,7 @@
       return {
         title: 'He is on a hat-trick',
         sub: 'You are in on goal — but your strike partner is completely free, and he has two already.',
-        art: '🤝',
+        art: 'agent',
         options: [
           { label: 'Take it yourself', hint: 'Goals are your currency.', tag: 'Selfish',
             run() {
@@ -684,7 +698,7 @@
       return {
         title: 'The keeper spills it!',
         sub: 'The ball is loose six yards out with defenders throwing themselves at it.',
-        art: '💥',
+        art: 'rebound',
         options: [
           { label: 'Poke it in first time', hint: 'React fastest.', tag: 'Instinct',
             run() {
@@ -712,8 +726,8 @@
     build(ctx) {
       return {
         title: 'Space 30 yards out',
-        sub: 'They have dropped off you and the keeper is a couple of steps off his line.',
-        art: '🚀',
+        sub: 'They have dropped off you and the keeper is a couple of steps off his line.' + weakNote(ctx),
+        art: 'shooting',
         options: [
           { label: 'Rip it', hint: 'Worldie or wasted possession.', tag: 'Power',
             run() {
@@ -724,7 +738,7 @@
             } },
           { label: 'Chip the keeper from range', hint: 'He is off his line…', tag: 'Audacity',
             run() {
-              const p = luck(ctx, 0.14 + (eff(ctx, 'shooting') - 60) * 0.004 + (trait(ctx, 'showman') ? .05 : 0));
+              const p = luck(ctx, 0.14 + (eff(ctx, 'shooting') - 60) * 0.004 + flairBonus(ctx) + (trait(ctx, 'showman') ? .05 : 0));
               if (U.chance(U.clamp(p, .03, .4))) return E({ goal: true, rating: 2.6, fame: 5, crowd: 26, tone: GOOD,
                 xp: { shooting: .7 }, text: 'From the halfway line — over the keeper and in! You will never pay for a drink in this city again.' });
               return E({ rating: -0.2, tone: NEU, text: 'He backpedals and catches it. Worth a try.' });
@@ -744,7 +758,7 @@
       return {
         title: 'Heads are dropping',
         sub: 'You are behind, the crowd is turning, and the team looks beaten with 20 minutes left.',
-        art: '📣',
+        art: 'fans',
         options: [
           { label: 'Rally the team', hint: 'Grab them by the collar.', tag: 'Leadership',
             run() {
@@ -772,9 +786,9 @@
       return {
         title: 'You scored! How do you celebrate?',
         sub: 'The stadium is bouncing and every camera in the ground is on you.',
-        art: '🎉',
+        art: 'celebrate',
         options: [
-          { label: 'Signature celebration', hint: 'Build the brand.', tag: 'Fame',
+          { label: 'Signature celebration', hint: 'One the cameras will learn.', tag: 'Trademark',
             run() { return E({ fame: 2, morale: 3, tone: GOOD, text: 'The pose. The cameras. The merchandise team is already on it.' }); } },
           { label: 'Run to the fans', hint: 'They love you for it.', tag: 'Fans',
             run() {
@@ -824,7 +838,7 @@
         id: 'shootout', kind: 'set',
         title: 'Penalty shootout',
         sub: ctx.shootoutSub || 'Your turn. The whole season comes down to this.',
-        art: '🥶',
+        art: 'penalty',
         options: penaltyOptions(ctx, scored => E({
           goal: scored, tone: scored ? GOOD : BAD,
           text: scored ? 'Buried it. You do not even look at the keeper.' : 'Saved! You sink to your knees.'

@@ -1,8 +1,9 @@
-# ⚽ Football Life — Career & Life Simulator
+# ⚽ Football Life — Career Simulator
 
-A browser football **career simulator** crossed with a **life sim**. You create one player,
-choose the club that takes a chance on you, and live the whole career: the big moments on
-the pitch, and everything that happens off it.
+A browser football **career simulator** in the mould of Copero's *simulador de carrera*.
+Rob eight legends for your attributes, sign for a club that will take a teenager, and play
+the moments that actually decide a career — from your first professional contract to the day
+you stop.
 
 No build step, no dependencies, no server. Open `index.html` and play.
 
@@ -64,19 +65,32 @@ node build.js
 ## What you actually do
 
 ### Create a player
-Name, nationality, strong foot, one of ten positions (GK through ST), and a difficulty
-setting — *Academy Hopeful*, *Highly Rated* or *Generational* — which decides how good
-17-year-old you already is, and therefore **which clubs will sign you**. Anything above
-your level is locked. Start in the Eredivisie and climb, or take the pressure at a giant
-straight away.
+Name, nationality, strong foot, squad number, and one of ten positions.
 
-120 clubs across 10 leagues: England, Spain, Italy, Germany, France, Netherlands,
-Portugal, Argentina, Brazil and MLS.
+### Rob eight legends
+Eight greats file past you one at a time — El Relámpago, The Wall, O Mágico, Two-Foot Tomás —
+and from each you steal **exactly one attribute**. Take a number and it is gone from the board;
+the next legend cannot give it to you again.
+
+What you steal becomes your **ceiling** in that attribute. You start at roughly half of it and
+spend a whole career climbing towards it, so the draft is the single most important decision
+you make. Take a legend's 97 pace and you will be lightning one day. Leave defending until
+last and you will be permanently uncomfortable in your own half.
+
+Keepers rob a different set of legends, where goalkeeping replaces shooting.
+
+The eight attributes are Copero's: **pace, shooting, passing, dribbling, defending, physical,
+flair and weak foot**. Flair decides whether the outrageous option comes off. Weak foot matters
+because roughly a quarter of chances fall on the wrong side.
+
+### Pick a club
+120 clubs across 10 leagues — England, Spain, Italy, Germany, France, Netherlands, Portugal,
+Argentina, Brazil and MLS. Clubs above your level will not gamble on a teenager, and the better
+your ceiling, the bigger the badges that will. Sign at a giant and you will spend a season
+fighting a better player for the shirt.
 
 ### Play the moments, not the match
-Matches are simulated around you, and when you are involved the game stops and asks you
-what you do. Every choice is a real risk/reward decision resolved against your attributes,
-form, fitness and the opponent's quality:
+Matches simulate around you and stop for the decisions you would actually be judged on:
 
 | Moment | Your call |
 |---|---|
@@ -96,36 +110,34 @@ form, fitness and the opponent's quality:
 | **You feel a twinge** | Play through the pain or signal to the bench |
 | **You scored** | Pick your celebration — shirt off costs a yellow |
 
-Each match gives you 3, 5 or 8 interactive moments (your choice in Options). Everything
-else is simulated and narrated live, and you can sim the rest at any time.
+Three, five or eight interactive moments per match, your choice. Everything else is simulated
+and narrated live, and you can sim the rest at any time.
 
-### Live the life
-One activity per week: extra training on a specific drill, rest, video analysis, a night
-out, family time, charity work, a press conference, casino night, language classes,
-gaming with the lads, or a meeting with your agent. Then the world happens to you —
-tabloid stories, dressing-room rows, advert shoots, doping tests, a super-agent's call,
-burnout, a wonderkid arriving in your position, a relative asking for money.
-
-- **Relationships** — dating app, dates and gifts, proposing, marriage, children, breakups
-  and (expensive) divorces
-- **Money** — weekly wages, goal bonuses, prize money, sponsorship deals, tax bills,
-  supercars, penthouses, private jets, a private island, investments that mature each season
-- **Staff** — personal chef, private physio, mental coach, PR agency, skills coach, analyst
-- **Fame & followers** — grow the brand, with diminishing returns and a spotlight that
-  moves on if you stop performing
+### The week in between
+One session before each match, and all of it football: a specific training drill, rest,
+video analysis, a word with the manager, press duty, or an afternoon with the academy.
+Then the game happens to you — a dressing-room row, a sixteen-year-old arriving in your
+position, the armband, a transfer rumour, a loan offer, the manager sacked, derby week,
+a rival taking aim at you in the press.
 
 ### Build a career
-- Full league season (22 matches) with a live table and top-scorer race
+- Full league season with a live table and top-scorer race
 - Domestic cup and continental competition (Champions League, Libertadores, CONCACAF)
-- Knockout ties that finish level go to a **penalty shootout you actually take**
+- Knockout ties level after 90 go to a **penalty shootout you actually take**
 - International call-ups, World Cups and continental championships every other summer
-- Competition for your shirt: a squad-mate in your position you have to keep out
-- Injuries, suspensions, fitness, form, morale and the manager's trust
+- A squad-mate competing for your shirt; manager trust that decides whether you start
+- Injuries, suspensions, fitness, form and morale
+- **Press headlines** that react to what you did — hat-tricks, red cards, transfers, titles
 - End-of-season awards: Golden Boot, Team of the Season, Young Player, World Player of the Year
-- Transfer window every summer — real offers with fees, wages, signing bonuses and a pitch
-- Unlockable traits (Clinical Finisher, Ice in the Veins, Set Piece Wizard, Showman…)
+- A summer transfer window with real offers: fee, wages, contract length and a pitch
+- Traits earned on the pitch (Clinical Finisher, Ice in the Veins, Set Piece Wizard, Showman)
   and two you would rather avoid (Glass Ankles, Hot Head)
-- Retirement, a **legacy score** from Journeyman to Immortal, and life after football
+- Retirement with the full Copero career card — appearances, goals, clubs played for,
+  collective and individual titles, international record, **peak overall** and **peak market
+  value** — a legacy score from Journeyman to Immortal, and a life after football
+
+There is no money to spend, no nightclubs, no relationships. Market value exists because it is
+how football measures you, not because there is a wallet to fill.
 
 ---
 
@@ -135,23 +147,42 @@ burnout, a wonderkid arriving in your position, a relative asking for money.
 index.html               markup shell
 play.html                generated: the whole game as one self-contained file
 build.js                 inlines css + js into play.html and dist/artifact.html
+tools/build-icons.js     generates js/icons.js from two open-source icon packs
 .github/workflows/       GitHub Pages deployment
 manifest.webmanifest     add-to-home-screen / installable web app
 icon.svg, *.png          app icons (SVG source + rendered PNG sizes)
 css/styles.css           dark, mobile-first stylesheet
-js/data.js               leagues, clubs, nations, positions, traits, assets, sponsors
+js/icons.js              generated SVG sprite — every icon in the game
+js/data.js               leagues, clubs, nations, positions, traits, legends
 js/util.js               RNG, maths, formatting
 js/state.js              world + player creation, contracts, save/load
 js/scenarios.js          the interactive match moments
 js/engine.js             squads, match sim, calendar, progression, transfers, awards
-js/life.js               activities, relationships, money, random life events, legacy
+js/career.js             the training week, club events, legacy and retirement
 js/ui.js                 screens, rendering, modals, creation wizard
 js/main.js               game flow: match loop, weeks, seasons, retirement
 ```
 
 Plain ES5-compatible JavaScript with no framework and no bundler — every file attaches one
-global (`DATA`, `U`, `State`, `Scenarios`, `Engine`, `Life`, `UI`, `Game`) and the scripts
-load in order.
+global (`Icons`, `DATA`, `U`, `State`, `Scenarios`, `Engine`, `Career`, `UI`, `Game`) and the
+scripts load in order.
 
-Club and competition names are used for flavour; all players, results and events are
-generated by the simulation.
+### Icons
+
+Every icon is an inline SVG from a generated sprite — no icon font, no CDN, nothing fetched at
+runtime. To regenerate after adding one:
+
+```bash
+npm install          # dev-only: the two icon packs
+node tools/build-icons.js
+node build.js
+```
+
+- [Material Design Icons](https://pictogrammers.com/library/mdi/) by Pictogrammers — Apache 2.0
+- [Circle Flags](https://github.com/HatScripts/circle-flags) by HatScripts — MIT
+
+Both packs are indexed by [allsvgicons.com](https://allsvgicons.com/); the build pulls them from
+the Iconify npm mirrors so it is reproducible.
+
+Club and competition names are used for flavour. The legends in the draft are invented, and all
+players, results and events are generated by the simulation.
