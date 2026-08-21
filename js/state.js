@@ -161,18 +161,44 @@
       if (g.log.length > 400) g.log.length = 400;
     },
     // back-page headlines — Copero's press ticker
-    news(headline, kind, source) {
+    news(headline, kind, source, icon) {
       const g = State.game; if (!g) return;
       g.headlines = g.headlines || [];
       g.headlines.unshift({ t: headline, k: kind || 'info', season: g.world.year,
-                            src: source || U.pick(State.PAPERS) });
-      if (g.headlines.length > 80) g.headlines.length = 80;
+                            src: source || U.pick(State.PAPERS), ic: icon || State.newsIcon(headline) });
+      if (g.headlines.length > 140) g.headlines.length = 140;
+    },
+    // pick an icon for a headline nobody gave one to
+    newsIcon(t) {
+      const s = String(t).toLowerCase();
+      const MAP = [
+        ['hat-trick', 'ball'], ['brace', 'ball'], ['in a row', 'ball'], ['streak', 'ball'],
+        ['game running', 'ball'], ['on target', 'goal'], ['wondergoal', 'goal'],
+        ['goal of the', 'goal'], ['on the scoresheet', 'goal'],
+        ['done deal', 'transfer'], ['new deal', 'contract'], ['sign', 'contract'], ['loan', 'transfer'],
+        ['window', 'transfer'], ['on the move', 'transfer'], ['circle', 'transfer'], ['clause', 'contract'],
+        ['champions', 'trophy'], ['lifts', 'trophy'], ['title', 'trophy'], ['cup', 'trophy'],
+        ['ballon', 'star'], ['world player', 'star'], ['shortlist', 'star'], ['world xi', 'star'],
+        ['player of the', 'medal'], ['named', 'medal'], ['award', 'medal'], ['golden boot', 'goldenboot'],
+        ['call-up', 'nation'], ['allegiance', 'nation'], ['caps', 'nation'], ['national', 'nation'],
+        ['sent off', 'card'], ['seeing red', 'card'], ['red card', 'card'], ['charged', 'whistle'],
+        ['suffers', 'injury'], ['injur', 'injury'], ['weeks out', 'hospital'], ['scan', 'hospital'],
+        ['returns', 'fitness'], ['back in training', 'fitness'],
+        ['armband', 'crown'], ['captain', 'crown'],
+        ['debut', 'academy'], ['year-old', 'academy'], ['wonderkid', 'academy'],
+        ['retir', 'exit'], ['hangs up', 'exit'], ['an era', 'exit'],
+        ['record', 'legacy'], ['milestone', 'legacy'], ['appearances', 'legacy'], ['centur', 'legacy'],
+        ['promise', 'fans'], ['fans', 'fans'], ['terrace', 'fans'], ['badge', 'fans'],
+        ['sacked', 'manager'], ['manager', 'manager'],
+        ['rumour', 'microphone'], ['press', 'microphone'], ['leak', 'microphone']
+      ];
+      for (const [k, ic] of MAP) if (s.indexOf(k) >= 0) return ic;
+      return 'news';
     },
     PAPERS: ['The Back Page', 'Radio Deportiva', 'Match Weekly', 'El Diario', 'Sky Touchline',
              'The Terrace', 'Gazzetta Live', 'Kicker Daily', 'Fútbol Total'],
 
-    /* ---------------- persistence ---------------- */
-    save() {
+    /* ---------------- persistence ---------------- */    save() {
       try {
         localStorage.setItem(D.CONFIG.SAVE_KEY, JSON.stringify(State.game));
         return true;

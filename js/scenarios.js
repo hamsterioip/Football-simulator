@@ -45,7 +45,7 @@
     'Dark Arts': 'dive', 'Streetwise': 'dive'
   };
   const SCENARIO_STYLE = {
-    header: 'aerial', aerial: 'aerial', volley: 'aerial',
+    header: 'aerial', aerial: 'aerial', volley: 'aerial', flick_on: 'aerial',
     long_shot: 'longshot', keeper_rush: 'longshot',
     rebound: 'poacher', tight_angle: 'poacher',
     own_box: 'pressres', gk_backpass: 'pressres',
@@ -709,7 +709,7 @@
       return {
         title: 'The referee has given a shocker',
         sub: 'A clear foul on you, waved away. The bench is up in arms and you are already fuming.',
-        art: 'card',
+        art: 'varscreen',
         options: [
           { label: 'Get in his face', hint: 'Say what you think.', tag: 'Hot Head',
             run() {
@@ -1582,7 +1582,7 @@
       return {
         title: 'Your number is up',
         sub: `The fourth official holds up your number on ${ctx.minute} minutes. You did not expect it.`,
-        art: 'transfer',
+        art: 'sub',
         options: [
           { label: 'Applaud the fans on the way off', hint: 'Professional to the last.', tag: 'Class',
             run() { return E({ rating: 0.2, trust: 4, rep: 0.5, subbed: true, tone: GOOD,
@@ -1834,6 +1834,268 @@
                 fitness: -5, tone: red ? BAD : NEU,
                 text: red ? 'Last man, clear chance, cynical. The referee has no choice at all.'
                           : 'You clip his heels and take the booking. The attack is dead and your manager applauds.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 47. through his legs ---------- */
+  add({
+    id: 'nutmeg', kind: 'run',
+    weight: ctx => isPos(ctx, ATT) ? 1.6 : isPos(ctx, MID) ? 1.1 : 0.2,
+    build(ctx) {
+      return {
+        title: 'He is square on',
+        sub: U.pick([
+          `Their defender plants his feet and spreads himself wide. There is daylight between his boots.`,
+          `One man to beat and he is backing off, legs open, daring you to try something silly.`,
+          `The full-back plants himself like a traffic cone with ambition. His stance is an invitation.`
+        ]) + weakNote(ctx),
+        art: 'dribbling',
+        options: [
+          { label: 'Through his legs', hint: 'The nutmeg. Maximum humiliation.', tag: 'Flair',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), 52, 0.016, 0.42) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ rating: 1.4, rep: 1, crowd: 16, tone: GOOD, xp: { dribbling: .5 },
+                text: 'You pop it through his legs and collect on the other side. The crowd\'s "oooh" lasts thirty seconds.' });
+              return E({ rating: -0.5, tone: BAD, xp: { dribbling: .2 },
+                text: 'He closes the gate and you run straight into his shin. He wags a finger at you.' });
+            } },
+          { label: 'Knock it past and run', hint: 'Pure pace. No subtlety.', tag: 'Pace',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'pace'), 50, 0.016, 0.5));
+              if (U.chance(p)) return E({ rating: 1.1, tone: GOOD, xp: { pace: .4 }, crowd: 8,
+                text: 'Ten yards of separation in five strides. He is still turning as you hit the byline.' });
+              return E({ rating: -0.4, tone: BAD, xp: { pace: .2 },
+                text: 'He matches you stride for stride and shepherds it out for a goal kick.' });
+            } },
+          { label: 'Lay it back and keep the move going', hint: 'Recycle it. Nothing silly.', tag: 'Smart',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 40, 0.014, 0.78));
+              if (U.chance(p)) return E({ rating: 0.3, tone: NEU, xp: { passing: .2 },
+                text: 'You roll it back and the attack resets. Boring. Correct.' });
+              return E({ rating: -0.3, tone: BAD, text: 'The safe pass goes straight down his shin and out for a throw.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 48. goal-line clearance ---------- */
+  add({
+    id: 'goal_line', kind: 'defend',
+    weight: ctx => isPos(ctx, DEF) ? 1.5 : isPos(ctx, ['GK']) ? 0 : 0.4,
+    build(ctx) {
+      return {
+        title: 'It is bouncing towards the empty net',
+        sub: U.pick([
+          `The keeper is stranded, the net is gaping, and the ball is rolling in slow motion towards your line.`,
+          `A scramble, a ricochet, and suddenly the only thing between ${ctx.oppName} and a goal is you.`,
+          `You are sprinting back as it spins towards the corner of the goal. Nobody else is getting there.`
+        ]),
+        art: 'defending',
+        options: [
+          { label: 'Hack it into the stands', hint: 'Safety first. Row Z.', tag: 'Defending',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'defending'), 42, 0.014, 0.8));
+              if (U.chance(p)) return E({ rating: 0.9, tone: GOOD, xp: { defending: .4 }, crowd: 10,
+                text: 'You leather it into the third row off the line. The keeper claps you all the way back.' });
+              return E({ rating: -0.8, concede: true, tone: BAD, xp: { defending: .2 },
+                text: 'You slice it horribly and it spins in off the post. An own goal off the goal-line clearance. Agony.' });
+            } },
+          { label: 'Cushion it back to the keeper', hint: 'Ice in your veins, one yard from your own line.', tag: 'Composure',
+            run() {
+              let p = odds((eff(ctx, 'passing') + eff(ctx, 'defending')) / 2, 48, 0.015, 0.55);
+              if (trait(ctx, 'pressres')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ rating: 1.3, rep: 0.5, tone: GOOD, xp: { passing: .4 }, crowd: 12,
+                text: 'One yard out, you kill it dead and roll it calmly to your keeper. The away end cannot believe it.' });
+              return E({ rating: -0.9, concede: true, tone: BAD,
+                text: 'The touch is too cute. It squirms under your boot and over the line. Calamity.' });
+            } },
+          { label: 'Launch yourself at it', hint: 'Full-length slide, everything on it.', tag: 'Bravery',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'physical'), 50, 0.015, 0.6));
+              if (U.chance(p)) return E({ rating: 1.2, tone: GOOD, xp: { physical: .4 }, crowd: 14, injuryRisk: 0.08,
+                text: 'You hurl yourself at it and clear off the line by a stud\'s length. The stadium erupts.' });
+              return E({ rating: -0.6, tone: BAD, injuryRisk: 0.18,
+                text: 'You arrive a boot late and clatter the post instead. The physio is on.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 49. the backheel chance ---------- */
+  add({
+    id: 'backheel', kind: 'shot',
+    weight: ctx => isPos(ctx, ATT) ? 1.3 : isPos(ctx, MID) ? 0.5 : 0.1,
+    build(ctx) {
+      return {
+        title: 'It arrives behind you',
+        sub: U.pick([
+          `The cross is slightly behind your run — a proper finish is impossible, but something cheeky is not.`,
+          `It fizzes in at your heels, six yards out. The keeper has not set. Something unorthodox is on.`,
+          `The cut-back arrives at your standing leg. Conventional is off the menu.`
+        ]),
+        art: 'flair',
+        options: [
+          { label: 'Backheel it', hint: 'The audacious flick. Goal of the month if it lands.', tag: 'Audacity',
+            run() {
+              let p = odds(eff(ctx, 'shooting') * 0.7 + eff(ctx, 'dribbling') * 0.3, ctx.keeper + 8, 0.016, 0.34) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.07;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2, rep: 2, crowd: 18, tone: GOOD, xp: { shooting: .5, flair: .4 },
+                text: 'You flick it with your heel, wrong-footing everyone including the cameraman. GOAL — an outrageous one!' });
+              return E({ rating: -0.6, tone: BAD, xp: { flair: .2 },
+                text: 'Your heel meets mostly air. The ball rolls sadly through to the keeper. The bench looks away.' });
+            } },
+          { label: 'Step over it and let the runner behind you finish', hint: 'A dummy. Selfless.', tag: 'Vision',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 44, 0.015, 0.6));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.3, morale: 3, tone: GOOD, xp: { passing: .4 }, crowd: 9,
+                text: 'You step over it completely and the man arriving behind you buries it. The dummy sold everyone.' });
+              return E({ rating: -0.4, tone: BAD, xp: { passing: .2 },
+                text: 'Nobody reads the dummy. It rolls through everyone and out for a goal kick.' });
+            } },
+          { label: 'Swivel and scuff it anyway', hint: 'Ugly. Might work.', tag: 'Instinct',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting'), ctx.keeper + 4, 0.014, 0.4));
+              if (U.chance(p)) return E({ goal: true, rating: 1.4, tone: GOOD, xp: { shooting: .4 }, crowd: 9,
+                text: 'A half-volley off your shin bobbles past the keeper. They all count. GOAL!' });
+              return E({ rating: -0.4, tone: BAD, xp: { shooting: .2 },
+                text: 'You swipe at it and connect with nothing but night air.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 50. the quick throw ---------- */
+  add({
+    id: 'quick_throw', kind: 'set',
+    weight: ctx => isPos(ctx, DEF.concat(MID)) ? 1 : 0.4,
+    build(ctx) {
+      return {
+        title: 'Quick throw?',
+        sub: U.pick([
+          `The ball is out by the halfway line and ${ctx.oppName} are still walking back. One runner is pointing into space.`,
+          `You have the ball in your hands for the throw and their whole left side is empty for three seconds more.`,
+          `The winger is screaming for it early. Their defence has not noticed yet.`
+        ]),
+        art: 'corner',
+        options: [
+          { label: 'Take it quickly', hint: 'Catch them cold.', tag: 'Vision',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 42, 0.015, 0.62));
+              if (U.chance(p)) {
+                if (U.chance(0.3)) return E({ assist: true, teamGoal: true, rating: 1.4, rep: 0.5, tone: GOOD, xp: { passing: .5 }, crowd: 10,
+                  text: 'You hurl it into the channel, the runner is clean through, and he finishes. The throw-in assist. Genius!' });
+                return E({ rating: 0.7, tone: GOOD, xp: { passing: .3 },
+                  text: 'Quick, flat, into space — you are three on two before they wake up. The move dies at the edge of the box, but the intent is noted.' });
+              }
+              return E({ rating: -0.4, tone: BAD, xp: { passing: .2 },
+                text: 'You rush it and throw it straight to their midfielder. The manager is gesturing at you to calm down.' });
+            } },
+          { label: 'Wait for the shape', hint: 'Keep the ball. Nothing on yet.', tag: 'Patient',
+            run() {
+              return E({ rating: 0.2, tone: NEU, xp: { passing: .1 },
+                text: 'You wait, find the full-back, and the game restarts in order. The safe choice.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 51. the near-post flick ---------- */
+  add({
+    id: 'flick_on', kind: 'shot',
+    weight: ctx => isPos(ctx, ATT) ? 1.2 : isPos(ctx, MID) ? 0.6 : 0.3,
+    build(ctx) {
+      return {
+        title: 'Near-post corner, front man',
+        sub: U.pick([
+          `The corner is whipped towards the near post and you have lost your marker. First contact is yours.`,
+          `It comes in flat and fast to the front stick. You are the one attacking it.`,
+          `You spin off the front of the zone and the delivery is heading exactly where you want it.`
+        ]),
+        art: 'header',
+        options: [
+          { label: 'Flick it on across goal', hint: 'Glance it towards the far post.', tag: 'Technique',
+            run() {
+              let p = odds((eff(ctx, 'shooting') + eff(ctx, 'physical')) / 2, ctx.keeper + 4, 0.015, 0.42);
+              if (trait(ctx, 'aerial')) p += 0.07;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 1.7, tone: GOOD, xp: { shooting: .45 }, crowd: 12,
+                text: 'The merest glance and it arrows inside the far post. The keeper never moved. GOAL!' });
+              if (U.chance(0.4)) return E({ assist: true, teamGoal: true, rating: 1.1, tone: GOOD, xp: { shooting: .3 }, crowd: 8,
+                text: 'Your flick skims on and your centre-back bundles it in at the back post. They will give you the assist.' });
+              return E({ rating: -0.4, tone: BAD, xp: { shooting: .2 },
+                text: 'You get too much on it and it flies a yard over the angle. Hands on heads.' });
+            } },
+          { label: 'Attack it with everything', hint: 'Power through the near post.', tag: 'Physical',
+            run() {
+              let p = odds(eff(ctx, 'physical') * 0.6 + eff(ctx, 'shooting') * 0.4, ctx.keeper + 6, 0.015, 0.4);
+              if (trait(ctx, 'aerial')) p += 0.07;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 1.6, tone: GOOD, xp: { physical: .3, shooting: .3 }, crowd: 12,
+                text: 'You bully through two bodies and thump it home at the near stick. The keeper just watches it in. GOAL!' });
+              return E({ rating: -0.5, tone: BAD, xp: { physical: .2 },
+                text: 'You climb well but their centre-half gets his head in the way. It spins behind for another corner.' });
+            } },
+          { label: 'Leave it for the man behind', hint: 'He is screaming for it.', tag: 'Smart',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 45, 0.013, 0.55));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.1, morale: 2, tone: GOOD, xp: { passing: .3 }, crowd: 8,
+                text: 'You duck out of it and the man arriving behind you crashes it in. Perfectly read.' });
+              return E({ rating: -0.3, tone: BAD,
+                text: 'You both leave it for each other and it bounces through the six-yard box untouched. Criminal.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 52. the overlapping run (full-backs) ---------- */
+  add({
+    id: 'overlap', kind: 'run',
+    weight: ctx => isPos(ctx, ['LB', 'RB']) ? 2 : 0,
+    build(ctx) {
+      return {
+        title: 'The overlap is on',
+        sub: U.pick([
+          `Your winger has the ball and two defenders on him. You are flying up the outside, completely free.`,
+          `You have made forty yards at full sprint and the channel is wide open. The winger sees you. Maybe.`,
+          `Classic overlap — you are outside him, the full-back\'s position is yours, and the box is filling up.`
+        ]),
+        art: 'pace',
+        options: [
+          { label: 'Scream for the ball', hint: 'Demand it, then deliver.', tag: 'Work Rate',
+            run() {
+              const p = luck(ctx, odds((eff(ctx, 'pace') + eff(ctx, 'passing')) / 2, 46, 0.015, 0.58));
+              if (U.chance(p)) {
+                if (U.chance(0.4)) return E({ assist: true, teamGoal: true, rating: 1.5, tone: GOOD, xp: { passing: .5, pace: .3 }, crowd: 11,
+                  text: 'He slips you in, and your first-time cross is met on the volley. Assist from the overlap — textbook!' });
+                return E({ rating: 0.9, tone: GOOD, xp: { pace: .4 }, crowd: 7,
+                  text: 'You get it at full tilt and your cross flashes across the six-yard box. Nobody gambles, but the intent was perfect.' });
+              }
+              return E({ rating: -0.4, tone: BAD, xp: { pace: .2 },
+                text: 'He ignores you, runs into trouble and loses it. Forty yards of sprinting, wasted. You hold your arms out.' });
+            } },
+          { label: 'The decoy run', hint: 'Drag a man away. Never touch it.', tag: 'Team Player',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'pace'), 44, 0.013, 0.62));
+              if (U.chance(p)) {
+                if (U.chance(0.35)) return E({ teamGoal: true, rating: 1.1, trust: 2, tone: GOOD, xp: { pace: .3 }, crowd: 8,
+                  text: 'Their full-back goes with you, the winger cuts inside and scores. Your run made the whole goal.' });
+                return E({ rating: 0.5, tone: GOOD, xp: { pace: .2 },
+                  text: 'You take a defender with you and the winger wins a corner. Unselfish, unseen, appreciated by the staff.' });
+              }
+              return E({ rating: -0.2, tone: NEU,
+                text: 'Nobody follows you. You are just a man standing very wide, very alone.' });
             } }
         ]
       };

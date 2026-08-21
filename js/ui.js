@@ -288,14 +288,22 @@
       { id: 'home', icon: 'career', label: 'Career' },
       { id: 'club', icon: 'club', label: 'Club' },
       { id: 'player', icon: 'player', label: 'Player' },
-      { id: 'news', icon: 'news', label: 'Press' },
+      { id: 'news', icon: 'news', label: 'News' },
       { id: 'legacy', icon: 'legacy', label: 'Legacy' }
     ],
 
     renderTabs() {
+      const g = State.game;
+      const unread = g ? Math.max(0, (g.headlines || []).length - (g.newsSeen || 0)) : 0;
       $('tabbar').innerHTML = UI.tabsFor().map(t =>
-        `<button class="${UI.tab === t.id ? 'on' : ''}" data-tab="${t.id}">${ico(t.icon)}${t.label}</button>`).join('');
-      $('tabbar').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { UI.tab = b.dataset.tab; UI.render(); });
+        `<button class="${UI.tab === t.id ? 'on' : ''}" data-tab="${t.id}">${ico(t.icon)}${t.label}` +
+        (t.id === 'news' && unread > 0 ? `<span class="tab-badge">${unread > 99 ? '99+' : unread}</span>` : '') +
+        `</button>`).join('');
+      $('tabbar').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
+        UI.tab = b.dataset.tab;
+        if (UI.tab === 'news' && g) g.newsSeen = (g.headlines || []).length;
+        UI.render();
+      });
     },
 
     tabsFor() {
@@ -346,6 +354,7 @@
             · Match ${g.fixtureIndex + 1} of ${g.fixtures.length}
             ${opp.rating ? '· opposition rated ' + opp.rating : ''}</div>
           ${UI.formGuide(me)}
+          ${UI.oddsBar(g, f)}
         </div>`;
         if (f.star) {
           html += `<div class="card tight danger-man">
@@ -365,6 +374,7 @@
         html += `<div class="row" style="margin-bottom:12px">
           <button class="btn btn-primary grow" data-act="playMatch">${ico('play')} Play Match</button>
           <button class="btn btn-ghost" data-act="quickMatch">${ico('sim')} Quick Sim</button>
+          <button class="btn btn-ghost" data-act="skipMenu">${ico('sim')} Skip</button>
         </div>`;
 
         if (g.weekActionsLeft > 0) {
@@ -422,6 +432,24 @@
         `<span class="fg ${r === 'W' ? 'w' : r === 'D' ? 'd' : 'l'}">${r}</span>`).join('')}</div>`;
     },
 
+    // win/draw/loss probability bar for the upcoming fixture
+    oddsBar(g, f) {
+      const o = Engine.Match.odds(g, f);
+      if (!o) return '';
+      const pct = v => Math.round(v * 100) + '%';
+      const me = State.club(g.player.club).name;
+      const opp = f.oppId ? State.club(f.oppId).name : 'them';
+      return `<div class="odds">
+        <div class="odds-bar">
+          <span class="odds-w" style="width:${pct(o.win)}"></span><span class="odds-d" style="width:${pct(o.draw)}"></span><span class="odds-l" style="width:${pct(o.loss)}"></span>
+        </div>
+        <div class="odds-labels">
+          <span>${esc(me)} <b>${pct(o.win)}</b></span>
+          <span>Draw <b>${pct(o.draw)}</b></span>
+          <span>${esc(opp)} <b>${pct(o.loss)}</b></span>
+        </div></div>`;
+    },
+
     // the next few fixtures after this one
     upcoming(g, n) {
       const out = [];
@@ -463,26 +491,29 @@
         ${p.captain ? `<div class="kv">${ico('crown')} <span>You wear the armband.</span></div>` : ''}
       </div>`;
 
-      html += `<div class="card"><h3>${esc(league.name)}</h3><div class="scroll-x"><table class="tbl">
+      const titleOdds = Engine.Season.titleOdds(g);
+      html += `<div class="card"><h3>${ico('table')} ${esc(league.name)}</h3><div class="scroll-x"><table class="tbl">
         <tr><th>#</th><th>Club</th><th class="num">P</th><th class="num">W</th><th class="num">D</th>
-        <th class="num">L</th><th class="num">GD</th><th class="num">Pts</th></tr>` +
+        <th class="num">L</th><th class="num">GD</th><th class="num">Pts</th>${titleOdds ? '<th class="num">Title</th>' : ''}</tr>` +
         table.map((r, i) => {
           const cls = i < 4 ? 'ucl' : i >= table.length - 2 ? 'rel' : '';
+          const tp = titleOdds && titleOdds[r.id] >= 0.005
+            ? `<td class="num title-odds">${Math.round(titleOdds[r.id] * 100)}%</td>` : (titleOdds ? '<td class="num dim">—</td>' : '');
           return `<tr class="${r.id === club.id ? 'me' : ''}">
             <td><span class="pos-chip ${cls}">${i + 1}</span></td>
             <td>${crest(r.club.name, 'crest-sm')}${esc(r.club.name)}</td>
             <td class="num">${r.p}</td><td class="num">${r.w}</td><td class="num">${r.d}</td>
             <td class="num">${r.l}</td><td class="num">${r.gf - r.ga > 0 ? '+' : ''}${r.gf - r.ga}</td>
-            <td class="num"><b>${r.pts}</b></td></tr>`;
+            <td class="num"><b>${r.pts}</b></td>${tp}</tr>`;
         }).join('') + `</table></div></div>`;
 
       const scorers = Engine.Awards.leagueTopScorers(g).slice(0, 6);
-      html += `<div class="card"><h3>Top scorers</h3><table class="tbl">` +
+      html += `<div class="card"><h3>${ico('goldenboot')} Top scorers</h3><table class="tbl">` +
         scorers.map((sc, i) => `<tr class="${sc.you ? 'me' : ''}"><td>${i + 1}</td>
           <td>${sc.nation ? flag(sc.nation, 'sm') + ' ' : ''}${esc(sc.name)}</td>
-          <td class="dim">${esc(sc.club)}</td><td class="num"><b>${sc.goals}</b></td></tr>`).join('') + `</table></div>`;
+          <td class="dim">${crest(sc.club, 'crest-sm')}${esc(sc.club)}</td><td class="num"><b>${sc.goals}</b></td></tr>`).join('') + `</table></div>`;
 
-      html += `<div class="card"><h3>Squad</h3><div class="list">
+      html += `<div class="card"><h3>${crest(club.name, 'crest-sm')} Squad</h3><div class="list">
           <div class="item tight-item you-row">
             <div class="sq-no">${p.shirt}</div>
             <div class="tx"><b>${flag(p.nation, 'sm')} ${esc(p.firstName)} ${esc(p.lastName)}${p.captain ? ' (C)' : ''}</b>
@@ -576,8 +607,9 @@
           html += `<div class="section-title">${season}/${(season + 1) % 100}</div>`;
         }
         html += `<div class="headline ${h.k}">
-          <div class="hl-src">${esc(h.src || 'The Back Page')}</div>
-          <div class="hl-t">${esc(h.t)}</div></div>`;
+          <div class="ic hl-ic">${ico(h.ic || 'news')}</div>
+          <div class="hl-body"><div class="hl-src">${esc(h.src || 'The Back Page')}</div>
+          <div class="hl-t">${esc(h.t)}</div></div></div>`;
       });
       return html;
     },
@@ -606,13 +638,14 @@
 
       html += `<div class="card"><h3>Trophy cabinet</h3>`;
       html += p.career.trophies.length
-        ? p.career.trophies.map(t => `<span class="trophy">${ico('trophy')} ${esc(UI.trophyLabel(t))}</span>`).join('')
+        ? `<div class="cabinet">` + p.career.trophies.map(t => `<div class="cabinet-item">
+            ${global.Crest.trophy(UI.trophyLabel(t))}<span>${esc(UI.trophyLabel(t))}</span></div>`).join('') + `</div>`
         : `<p class="dim" style="margin:0">Empty. For now.</p>`;
       html += `</div>`;
 
       if (p.achievements.length) {
-        html += `<div class="card"><h3>Individual honours</h3>` +
-          p.achievements.map(a => `<span class="trophy">${ico('medal')} ${esc(a.name)} ${a.year}</span>`).join('') + `</div>`;
+        html += `<div class="card"><h3>Individual honours</h3><div class="cabinet">` +
+          p.achievements.map(a => `<div class="cabinet-item">${global.Crest.trophy(a.name, '', 'medal')}<span>${esc(a.name)} ${a.year}</span></div>`).join('') + `</div></div>`;
       }
 
       html += `<div class="card"><h3>Season by season</h3>`;

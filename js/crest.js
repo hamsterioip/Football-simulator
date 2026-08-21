@@ -1,9 +1,13 @@
 /* ==========================================================================
    crest.js — every club gets its own badge, drawn rather than borrowed.
 
-   Real club badges are trademarked artwork, so instead each club is rendered
-   as a shield in its real colours and shirt pattern with its initials on it.
-   Pure inline SVG: no images, no requests, scales to any size.
+   Each club is rendered as a shield in its real colours and shirt pattern
+   with its initials on it. Pure inline SVG: no images, no requests, scales
+   to any size.
+
+   When the club's real badge is known (js/badges.js, hot-linked from
+   Wikipedia), it is layered on top of the shield: online you see the real
+   thing, offline or on a failed request the drawn shield shows through.
    ========================================================================== */
 (function (global) {
   'use strict';
@@ -69,7 +73,9 @@
       return (D && D.CLUB_KIT && D.CLUB_KIT[clubName]) || fallbackKit(clubName || '?');
     },
 
-    /* Markup for one club badge. `cls` sizes it via CSS (.crest-sm/-md/-lg). */
+    /* Markup for one club badge. `cls` sizes it via CSS (.crest-sm/-md/-lg).
+       The real badge image (when known) floats over the drawn shield; if it
+       fails to load it removes itself and the shield remains. */
     svg(clubName, cls) {
       const kit = Crest.kitFor(clubName);
       const [a, b, kind] = kit;
@@ -78,7 +84,8 @@
       // the outline behind the initials guarantees contrast on any pattern
       const ink = readable(a);
       const size = text.length > 2 ? 11 : 13;
-      return `<svg class="crest ${cls || ''}" viewBox="0 0 32 32" role="img" aria-label="${String(clubName).replace(/[<>&"]/g, '')} crest">
+      const label = String(clubName).replace(/[<>&"]/g, '') + ' crest';
+      const shield = `<svg viewBox="0 0 32 32" role="img" aria-label="${label}">
         <defs><clipPath id="${uid}"><path d="${SHIELD}"/></clipPath></defs>
         <g clip-path="url(#${uid})">${pattern(kind, a, b)}</g>
         <path d="${SHIELD}" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="1.6"/>
@@ -87,12 +94,58 @@
           font-family="Inter,Helvetica,Arial,sans-serif" fill="${ink}"
           stroke="rgba(0,0,0,.35)" stroke-width=".4" paint-order="stroke">${text}</text>
       </svg>`;
+      const badge = (global.BADGES || {})[clubName];
+      if (!badge) return shield.replace('<svg ', '<svg class="crest ' + (cls || '') + '" ');
+      return `<span class="crest ${cls || ''} crest-badge">${shield}` +
+        `<img src="${badge}" alt="" loading="lazy" onerror="this.remove()"/></span>`;
     },
 
     // the colour to tint a panel with for this club
     accent(clubName) { return Crest.kitFor(clubName)[0]; },
-    accent2(clubName) { return Crest.kitFor(clubName)[1]; }
+    accent2(clubName) { return Crest.kitFor(clubName)[1]; },
+
+    /* Real trophy photographs, hot-linked from Wikimedia Commons (the same
+       pattern as the club badges: layer the photo over a drawn icon, drop it
+       on error). Matched by competition name — anything unmapped falls back
+       to the drawn trophy. */
+    trophyUrl(name) {
+      for (const [re, url] of TROPHY_IMGS) if (re.test(name)) return url;
+      return null;
+    },
+
+    /* A trophy photo on a light card, or the drawn icon when unmapped/offline.
+       fallbackIcon picks the icon ('trophy' for cups, 'medal' for awards). */
+    trophy(name, cls, fallbackIcon) {
+      const url = Crest.trophyUrl(name);
+      const fb = global.Icons.svg(fallbackIcon || 'trophy');
+      if (!url) return `<span class="trophy-ph ${cls || ''}">${fb}</span>`;
+      return `<span class="trophy-ph ${cls || ''}">${fb}` +
+        `<img src="${url}" alt="" loading="lazy" onerror="this.remove()"/></span>`;
+    }
   };
+
+  const W = 'https://upload.wikimedia.org/wikipedia/commons';
+  const TROPHY_IMGS = [
+    [/world cup/i, W + '/thumb/1/15/FIFA_World_Cup_Trophy_%28Ank_Kumar%2C_Infosys_Limited%29_01.jpg/400px-FIFA_World_Cup_Trophy_%28Ank_Kumar%2C_Infosys_Limited%29_01.jpg'],
+    [/champions league/i, W + '/c/c5/Trofeo_UEFA_Champions_League.jpg'],
+    [/europa league/i, W + '/thumb/4/42/Europa_league_trophy.jpg/400px-Europa_league_trophy.jpg'],
+    [/libertadores/i, W + '/thumb/b/b1/Final_de_la_Copa_CONMEBOL_Libertadores_en_el_Estadio_Centenario_-_20211127dicimouyap0852.jpg/400px-Final_de_la_Copa_CONMEBOL_Libertadores_en_el_Estadio_Centenario_-_20211127dicimouyap0852.jpg'],
+    [/concacaf/i, W + '/thumb/3/3e/CONCACAF_Champions_Cup_logo.svg/400px-CONCACAF_Champions_Cup_logo.svg.png'],
+    [/continental championship/i, W + '/thumb/8/81/Coupe_Henri_Delaunay_2017.jpg/400px-Coupe_Henri_Delaunay_2017.jpg'],
+    [/continental cup/i, W + '/thumb/9/97/Copa_america_trofeo.jpg/400px-Copa_america_trofeo.jpg'],
+    [/premier league/i, W + '/thumb/f/f2/Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg/400px-Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg'],
+    [/la liga/i, W + '/thumb/d/d3/Trofeo_de_La_Liga_9900.jpg/400px-Trofeo_de_La_Liga_9900.jpg'],
+    [/serie a/i, W + '/thumb/8/8e/Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg/400px-Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg'],
+    [/bundesliga/i, W + '/thumb/f/f9/Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg/400px-Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg'],
+    [/fa cup/i, W + '/thumb/3/3f/The_FA_Cup_Trophy.jpg/400px-The_FA_Cup_Trophy.jpg'],
+    [/copa del rey/i, W + '/thumb/a/a4/Copa_del_Rey_Trophy.png/400px-Copa_del_Rey_Trophy.png'],
+    [/coppa italia/i, W + '/thumb/2/23/The_Coppa_Italia_trophy.jpg/400px-The_Coppa_Italia_trophy.jpg'],
+    [/dfb-pokal/i, W + '/d/d8/DFB_Pokal_Trophy.png'],
+    [/coupe de france/i, W + '/thumb/1/1f/Coupe_de_France_trophy.png/400px-Coupe_de_France_trophy.png'],
+    [/knvb/i, W + '/thumb/d/d7/KNVB_Beker.svg/400px-KNVB_Beker.svg.png'],
+    [/world player|ballon/i, W + '/thumb/0/04/2016_Ballon_dOr_CR7Museum.jpg/400px-2016_Ballon_dOr_CR7Museum.jpg'],
+    [/golden boot|golden shoe/i, 'https://upload.wikimedia.org/wikipedia/en/2/2b/Golden_Shoe%2C_Lionel_Messi_2012-2013.jpg']
+  ];
 
   global.Crest = Crest;
 })(window);

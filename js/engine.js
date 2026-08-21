@@ -15,10 +15,13 @@
     generate(club) {
       const R = club.rating;
       const shape = FORMATION.concat(['GK', 'CB', 'CM', 'CM', 'RW', 'ST', 'LB']);
-      return shape.map((pos, i) => {
+      const seen = new Set(); // no two squad-mates with the same name
+      const squad = shape.map((pos, i) => {
         const starter = i < 11;
         const ovr = Math.round(U.clamp(R + (starter ? U.gauss(1, 3.5) : U.gauss(-7, 4)), 40, 96));
-        const who = global.Names.person(club.country);
+        let who = global.Names.person(club.country);
+        for (let t = 0; t < 8 && seen.has(who.name); t++) who = global.Names.person(club.country);
+        seen.add(who.name);
         return {
           id: U.id(),
           name: who.name, nation: who.nation,
@@ -27,6 +30,25 @@
           goals: 0, assists: 0, apps: 0,
           rel: 50 // how well he gets on with you, 0-100
         };
+      });
+      Squad.overlayStars(squad, club);
+      return squad;
+    },
+    // swap the club's real headline players into the generated squad, taking
+    // over slots that match their position — starters first
+    overlayStars(squad, club) {
+      const stars = (global.DATA.REAL_STARS || {})[club.name];
+      if (!stars) return;
+      const used = new Set();
+      stars.forEach(st => {
+        const [name, nation, pos, ovr, age] = st;
+        let idx = squad.findIndex((s, i) => i < 11 && !used.has(i) && s.pos === pos);
+        if (idx < 0) idx = squad.findIndex((s, i) => !used.has(i) && s.pos === pos);
+        if (idx < 0) idx = squad.findIndex((s, i) => !used.has(i) && s.pos === 'CM' && pos !== 'GK');
+        if (idx < 0) return;
+        used.add(idx);
+        const s = squad[idx];
+        s.name = name; s.nation = nation; s.ovr = ovr; s.age = age; s.star = true;
       });
     },
     ensure(g) {
@@ -482,6 +504,23 @@
       return { type: 'end', match: m };
     },
 
+    /* Bookmaker-style win/draw/loss probabilities for a fixture, sampled from
+       the same ratings + home-edge model the rest of the league sims with. */
+    odds(g, f) {
+      const club = State.club(g.player.club);
+      const opp = f.oppId ? State.club(f.oppId) : null;
+      if (!opp) return null;
+      const diff = f.home ? (club.rating + 2.5) - opp.rating : club.rating - (opp.rating + 2.5);
+      const la = U.clamp(1.35 + diff * 0.045, 0.25, 4), lb = U.clamp(1.35 - diff * 0.045, 0.25, 4);
+      let w = 0, d = 0;
+      const N = 500;
+      for (let i = 0; i < N; i++) {
+        const a = U.poisson(la), b = U.poisson(lb);
+        if (a > b) w++; else if (a === b) d++;
+      }
+      return { win: w / N, draw: d / N, loss: (N - w - d) / N };
+    },
+
     settle(g, m) {
       const p = g.player;
       const played = (m.role === 'start' || m.role === 'bench') && !m.dnp;
@@ -517,6 +556,8 @@
           * (State.hasTrait(p, 'idol') ? 1.5 : 1) * (m.comp === 'intl' || m.comp === 'cont' ? 1.6 : 1);
         State.addReputation(p, repGain);
         Press.matchHeadline(g, m);
+        Press.afterMatch(g, m);
+        Press.monthly(g, m);
         // injury from fatigue
         p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
         p.peakValue = Math.max(p.peakValue || 0, State.marketValue(p));
@@ -568,7 +609,10 @@
       const p = g.player;
       p.injuries.forEach(i => i.matches--);
       const healed = p.injuries.filter(i => i.matches <= 0);
-      healed.forEach(i => State.log(`Recovered from ${i.name}.`, 'good'));
+      healed.forEach(i => {
+        State.log(`Recovered from ${i.name}.`, 'good');
+        if (i.total >= 4) State.news(`${p.lastName} returns after ${i.total} weeks out: "I feel strong"`, 'good', null, 'fitness');
+      });
       p.injuries = p.injuries.filter(i => i.matches > 0);
     }
   };
@@ -606,7 +650,10 @@
       g.topScorers = {};
       league.clubs.forEach(id => {
         if (id === club.id) return;
-        const who = global.Names.person(State.club(id).country);
+        const opp = State.club(id);
+        // a real headliner leads their line when the club has one on file
+        const star = Season.starScorerFor(opp);
+        const who = star || global.Names.person(opp.country);
         g.topScorers[id] = { name: who.name, nation: who.nation, club: id, goals: 0 };
       });
 
@@ -695,10 +742,28 @@
       return f;
     },
 
+    /* A club's real goal threat, used to seed the scoring charts.
+       Returns null when the club has no stars on file or none who score. */
+    starScorerFor(club) {
+      const stars = (D.REAL_STARS || {})[club.name];
+      if (!stars) return null;
+      const score = { ST: 5, LW: 4, RW: 4, CAM: 3, CM: 2, CDM: 1 };
+      const pool = stars.filter(st => score[st[2]]).map(st => ({ st, w: score[st[2]] }));
+      if (!pool.length) return null;
+      const picked = U.weighted(pool.map(p => [p.st, p.w]));
+      return { name: picked[0], nation: picked[1] };
+    },
+
     // the opposition player you are warned about before kick-off
     ensureStar(g, f) {
       if (f.star || !f.oppId) return;
       const opp = State.club(f.oppId);
+      const stars = (D.REAL_STARS || {})[opp.name];
+      if (stars && stars.length) {
+        const st = U.pick(stars);
+        f.star = { name: st[0], nation: st[1], pos: st[2], ovr: st[3] };
+        return;
+      }
       const who = global.Names.person(opp.country);
       f.star = { name: who.name, nation: who.nation,
                  pos: U.pick(['ST', 'LW', 'RW', 'CAM', 'CM', 'CB']),
@@ -770,6 +835,45 @@
       return s.findIndex(r => r.id === club.id) + 1;
     },
 
+    /* Monte Carlo title odds: replay the remaining league rounds with the
+       ratings model and count champions. Cached per fixture — recomputed
+       only when a match has been played. */
+    titleOdds(g) {
+      const club = State.club(g.player.club);
+      if (g.titleOddsCache && g.titleOddsCache.idx === g.fixtureIndex) return g.titleOddsCache.res;
+      const table = Season.standings(g, club.league);
+      if (!table.some(r => r.p > 0)) return null;
+      const remaining = [];
+      for (let i = g.fixtureIndex; i < g.fixtures.length; i++) {
+        const f = g.fixtures[i];
+        if (f.comp !== 'league') continue;
+        const pairs = (f.others || []).slice();
+        if (f.oppId) pairs.push(f.home ? [club.id, f.oppId] : [f.oppId, club.id]);
+        remaining.push(pairs);
+      }
+      if (!remaining.length) return null;
+      const SIMS = 250, wins = {};
+      for (let s = 0; s < SIMS; s++) {
+        const pts = {};
+        table.forEach(r => { pts[r.id] = r.pts; });
+        remaining.forEach(pairs => pairs.forEach(pr => {
+          if (!pts[pr[0]] && pts[pr[0]] !== 0) return;
+          const A = State.club(pr[0]), B = State.club(pr[1]);
+          const diff = (A.rating + 2.5) - B.rating;
+          const ga = U.poisson(U.clamp(1.35 + diff * 0.045, 0.25, 4));
+          const gb = U.poisson(U.clamp(1.35 - diff * 0.045, 0.25, 4));
+          if (ga > gb) pts[pr[0]] += 3; else if (ga < gb) pts[pr[1]] += 3; else { pts[pr[0]]++; pts[pr[1]]++; }
+        }));
+        let champ = null, best = -1;
+        Object.keys(pts).forEach(id => { if (pts[id] > best) { best = pts[id]; champ = id; } });
+        wins[champ] = (wins[champ] || 0) + 1;
+      }
+      const res = {};
+      Object.keys(wins).forEach(id => { res[id] = wins[id] / SIMS; });
+      g.titleOddsCache = { idx: g.fixtureIndex, res };
+      return res;
+    },
+
     // returns whether we should skip fixtures (cup out / not in squad)
     nextPlayable(g) {
       let guard = 0;
@@ -816,12 +920,30 @@
       const bdScore = p.season.goals * 2.2 + p.season.assists * 1.5 + Math.max(0, rating - 6.4) * 42
         + results.trophies.length * 16 + (g.cont && g.cont.won ? 25 : 0) + p.reputation * 0.35
         + Math.max(0, p.ovr - 78) * 3;
-      if (bdScore > 175 && p.ovr >= 85 && U.chance(0.8)) results.awards.push('World Player of the Year');
-      else if (bdScore > 135 && p.ovr >= 80) results.awards.push('World XI Nomination');
+      if (bdScore > 175 && p.ovr >= 85 && U.chance(0.8)) {
+        results.awards.push('World Player of the Year');
+        State.news(`BALLON D'OR: ${p.lastName} is crowned the best player in the world`, 'good', null, 'star');
+      } else if (bdScore > 135 && p.ovr >= 80) {
+        results.awards.push('World XI Nomination');
+        State.news(`Ballon d'Or: ${p.lastName} makes the podium but misses the big one`, 'info', null, 'star');
+      } else if (bdScore > 100 && p.ovr >= 76) {
+        State.news(`Ballon d'Or shortlist: ${p.lastName} is among the 30 nominees`, 'info', null, 'star');
+      }
+
+      // the season's best goal, from your Goal of the Month nominations
+      if (p.gotm) {
+        State.news(`GOAL OF THE SEASON: ${p.lastName}'s wonder strike takes the award`, 'good', null, 'goal');
+        p.gotm = 0;
+      }
 
       results.value = State.marketValue(p);
       p.peakValue = Math.max(p.peakValue || 0, results.value);
       p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
+
+      // judge the season's final month, then tally the monthly awards
+      Press.judgeMonth(g, g.potmAcc);
+      g.potmAcc = null;
+      if (p.season.potm) results.notes.push(p.season.potm + 'x Player of the Month this season');
 
       results.trophies.forEach(t => {
         p.career.trophies.push({ name: t, year: g.world.year + 1, club: club.name });
@@ -878,6 +1000,7 @@
         State.addReputation(p, 6);
       } else if (!p.intl.called && wasCalled) {
         State.log(`You have been dropped from the ${p.nation} squad.`, 'bad');
+        State.news(`${p.lastName} axed from the latest ${p.nation} squad`, 'bad');
         results.notes.push('Dropped from the national squad.');
       }
     },
@@ -890,6 +1013,11 @@
         if (U.chance(U.clamp(D.POSITIONS[p.pos].attack * (p.attrs.shooting / 100) * 1.4, 0.03, 0.6))) goals++;
       }
       p.intl.caps += caps; p.intl.goals += goals;
+      const before = p.intl.caps - caps;
+      [25, 50, 75, 100].forEach(mark => {
+        if (before < mark && p.intl.caps >= mark)
+          State.news(`${p.lastName} reaches ${mark} caps for ${p.nation}`, 'good', null, 'nation');
+      });
       return { caps, goals };
     }
   };
@@ -951,6 +1079,8 @@
   /* ==========================================================================
      PRESS — the back pages react to what you actually did
      ========================================================================== */
+  const MONTHS = ['August', 'September', 'October', 'November', 'December', 'January',
+                  'February', 'March', 'April', 'May', 'June', 'July'];
   const Press = {
     matchHeadline(g, m) {
       const p = g.player, club = State.club(p.club);
@@ -969,6 +1099,175 @@
       if (results.pos === 1) State.news(`CHAMPIONS: ${club.name} win the league`, 'good');
       else if (results.pos >= 11) State.news(`Long summer ahead at ${club.name} after a ${U.ordinal(results.pos)}-place finish`, 'bad');
       if (p.season.goals >= 20) State.news(`${p.season.goals} goals: the season that made ${p.lastName}`, 'good');
+    },
+
+    /* Streaks, milestones and goal-of-the-month chatter — runs after every
+       match you actually play in. */
+    afterMatch(g, m) {
+      const p = g.player, club = State.club(p.club), last = p.lastName;
+
+      // scoring streak
+      p.goalStreak = m.stats.goals > 0 ? (p.goalStreak || 0) + 1 : 0;
+      if (p.goalStreak === 3) State.news(`${last} scores for a third game running — nobody can stop him`, 'good');
+      if (p.goalStreak === 5) State.news(`FIVE IN A ROW: ${last} cannot stop scoring`, 'good');
+      if (p.goalStreak === 8) State.news(`${last}'s streak hits eight — one for the record books`, 'good');
+
+      // a spectacular goal in a big performance makes the monthly shortlist
+      if (m.stats.goals > 0 && m.stats.rating >= 8.4 && U.chance(0.35)) {
+        p.gotm = (p.gotm || 0) + 1;
+        State.news(`WONDERGOAL: ${last}'s strike against ${m.oppName} is up for Goal of the Month`, 'good', null, 'goal');
+      }
+      if (p.gotm === 3 && U.chance(0.6)) {
+        State.news(`${last} collects the Goal of the Month award — again`, 'good', null, 'goal');
+      }
+
+      // career milestones
+      const apps = p.career.apps, goals = p.career.goals, assists = p.career.assists;
+      if ([50, 100, 150, 200, 250, 300, 400, 500].indexOf(apps) >= 0)
+        State.news(`${last} reaches ${apps} career appearances`, 'good', null, 'legacy');
+      if ([25, 50, 75, 100, 150, 200, 250, 300].indexOf(goals) >= 0)
+        State.news(`${goals} CAREER GOALS: ${last} hits another milestone`, 'good', null, 'goal');
+      if ([25, 50, 100, 150].indexOf(assists) >= 0)
+        State.news(`${last} registers his ${U.ordinal(assists)} career assist`, 'good', null, 'assist');
+      if ((p.pos === 'GK' || D.POSITIONS[p.pos].group === 'DEF') &&
+          [25, 50, 100, 150].indexOf(p.career.cleanSheets) >= 0)
+        State.news(`${last} keeps his ${U.ordinal(p.career.cleanSheets)} career clean sheet`, 'good', null, 'block');
+      if (p.career.motm === 25 || p.career.motm === 50 || p.career.motm === 100)
+        State.news(`${last}: ${p.career.motm} player-of-the-match awards and counting`, 'good', null, 'star');
+      if (m.stats.rating === 10)
+        State.news(`A PERFECT 10: ${last} gets a flawless rating against ${m.oppName}`, 'good', null, 'star');
+    },
+
+    /* Between-match chatter: rumours, hype and speculation, gated by where
+       your career actually is. Called once per week. */
+    buzz(g) {
+      const p = g.player, club = State.club(p.club);
+      if (!U.chance(0.3)) return;
+      const items = [];
+      if (p.reputation > 55 && p.ovr > 74) items.push(() => {
+        const giants = Object.values(g.world.clubs).filter(c => c.rating >= 85 && c.id !== club.id);
+        if (!giants.length) return;
+        const c = U.pick(giants);
+        State.news(`${c.name} circle as ${p.lastName} shines — "happy here", insists the agent`, 'info');
+      });
+      if (p.season.goals >= 8 && p.reputation >= 65) items.push(() =>
+        State.news(`${p.lastName} climbs the Ballon d'Or power rankings`, 'info', null, 'star'));
+      if (p.age >= 32 && g.world.year !== p.retireBuzzYear) items.push(() => {
+        p.retireBuzzYear = g.world.year;
+        State.news(`${p.lastName}, ${p.age}, refuses to rule out retirement at the end of the season`, 'info');
+      });
+      if (p.contract && p.contract.years <= 1) items.push(() =>
+        State.news(`Clubs on alert as ${p.lastName}'s ${club.name} deal runs down`, 'info'));
+      if (p.form >= 78) items.push(() =>
+        State.news(`"${p.lastName} is untouchable right now" — the manager runs out of superlatives`, 'good', null, 'manager'));
+      if (p.age <= 20 && p.ovr >= 72) items.push(() =>
+        State.news(`Remember the name: ${p.lastName}, ${p.age}, is the talk of the league`, 'good', null, 'academy'));
+      if (p.morale >= 80 && p.reputation >= 50) items.push(() =>
+        State.news(`The ${club.name} end has a new song — and it is all about ${p.lastName}`, 'good', null, 'fans'));
+      if (p.ovr >= 88) items.push(() =>
+        State.news(`Is ${p.lastName} the best player in the world right now? The debate is live`, 'info', null, 'star'));
+      if (p.reputation >= 70) items.push(() =>
+        State.news(`${p.lastName}'s shirt breaks the club's weekly sales record`, 'info', null, 'shirt'));
+      if (p.career.apps >= 300 && p.reputation >= 60) items.push(() =>
+        State.news(`The statue debate has started: does ${p.lastName} get one outside the ground?`, 'info', null, 'legacy'));
+      if (p.season.apps >= 10 && State.seasonRating(p) >= 7.5) items.push(() =>
+        State.news(`Pundits name ${p.lastName} in their team of the season so far`, 'good', null, 'medal'));
+      if (p.pos === 'GK' && p.season.cleanSheets >= 8) items.push(() =>
+        State.news(`The wall: ${p.season.cleanSheets} clean sheets and counting for ${p.lastName}`, 'good', null, 'keeper'));
+      if (p.age >= 34 && p.ovr >= 78) items.push(() =>
+        State.news(`Like a fine wine: ${p.lastName}, ${p.age}, is defying every ageing curve`, 'good', null, 'star'));
+      if (p.age <= 21 && p.season.apps >= 5) items.push(() =>
+        State.news(`Scouts from across Europe are now watching ${p.lastName} every week`, 'info', null, 'academy'));
+      if (club.rating >= 80) items.push(() =>
+        State.news(`${club.name} ultras unveil a ${p.lastName} tifo for the weekend`, 'info', null, 'fans'));
+      if (!items.length) return;
+      U.pick(items)();
+    },
+
+    /* Player of the Month — league form judged in four-fixture blocks,
+       August through July. Accumulates in settle(), judged when the calendar
+       turns (and once more at season end for the final block). */
+    monthly(g, m) {
+      if (m.comp !== 'league') return;
+      const p = g.player;
+      const idx = Math.floor(g.fixtureIndex / 4);
+      if (!g.potmAcc || g.potmAcc.idx !== idx) {
+        Press.judgeMonth(g, g.potmAcc);
+        g.potmAcc = { idx, apps: 0, goals: 0, assists: 0, ratingSum: 0 };
+      }
+      const a = g.potmAcc;
+      a.apps++; a.goals += m.stats.goals; a.assists += m.stats.assists; a.ratingSum += m.stats.rating;
+    },
+
+    judgeMonth(g, acc) {
+      if (!acc || acc.apps < 2) return;
+      const p = g.player;
+      const month = MONTHS[acc.idx];
+      if (!month) return;
+      const avg = acc.ratingSum / acc.apps, inv = acc.goals + acc.assists;
+      const group = p.pos === 'GK' ? 'GK' : D.POSITIONS[p.pos].group;
+      const won = (group === 'ATT' && avg >= 7.3 && (acc.goals >= 3 || inv >= 4))
+        || (group === 'MID' && avg >= 7.4 && inv >= 3)
+        || ((group === 'DEF' || group === 'GK') && avg >= 7.6);
+      if (!won) return;
+      p.season.potm = (p.season.potm || 0) + 1;
+      p.achievements.push({ name: 'Player of the Month — ' + month, year: g.world.year + 1 });
+      State.news(`PLAYER OF THE MONTH: ${p.lastName} takes the ${month} award`, 'good', null, 'medal');
+      State.addReputation(p, 2);
+      p.morale = U.clamp(p.morale + 6, 0, 100);
+    },
+
+    /* The rest of the football world ticking over whether you watch it or
+       not. Runs once a week. Star transfers are remembered in g.worldMoves
+       so later items keep naming the club he actually moved to. */
+    world(g) {
+      if (!U.chance(0.22)) return;
+      const club = State.club(g.player.club);
+      const starClubs = Object.keys(D.REAL_STARS || {});
+      if (!starClubs.length) return;
+      g.worldMoves = g.worldMoves || {};
+      const pickStar = () => {
+        for (let t = 0; t < 12; t++) {
+          const cn = U.pick(starClubs);
+          if (cn === club.name) continue;
+          const s = U.pick(D.REAL_STARS[cn]);
+          return { name: s[0], pos: s[2], ovr: s[3], club: g.worldMoves[s[0]] || cn };
+        }
+        return null;
+      };
+      const pickClub = () => {
+        const cs = Object.values(g.world.clubs).filter(c => c.id !== club.id);
+        return cs.length ? U.pick(cs) : null;
+      };
+      const items = [
+        () => { const s = pickStar(); return s && { t: `${s.name} hits a hat-trick as ${s.club} run riot`, ic: 'ball' }; },
+        () => { const s = pickStar(); return s && s.pos !== 'GK' && { t: `Four goals in one game — ${s.name} puts on a clinic for ${s.club}`, ic: 'ball' }; },
+        () => { const s = pickStar(); return s && s.pos === 'GK' && { t: `${s.name} saves two penalties in one match — ${s.club} still can't believe it`, ic: 'keeper' }; },
+        () => {
+          const s = pickStar();
+          if (!s || s.ovr < 84 || g.worldMoves[s.name]) return null;
+          const dest = U.pick(starClubs.filter(c => c !== s.club && c !== club.name));
+          if (!dest) return null;
+          g.worldMoves[s.name] = dest;
+          return { t: `RECORD MOVE: ${s.name} leaves ${s.club} for ${dest} in a ${U.cash(U.int(70, 180) * 1000000)} deal`, ic: 'transfer' };
+        },
+        () => { const s = pickStar(); return s && { t: `Blow for ${s.club}: ${s.name} faces two months out injured`, ic: 'injury' }; },
+        () => { const s = pickStar(); return s && s.ovr >= 85 && { t: `${s.name} stalls on a new ${s.club} deal — Europe's elite are circling`, ic: 'contract' }; },
+        () => { const c = pickClub(); return c && { t: `${c.name} sack their manager after a run of five without a win`, ic: 'manager' }; },
+        () => {
+          const c = pickClub(); if (!c) return null;
+          const who = global.Names.person(c.country);
+          return { t: `${c.name}'s ${U.int(16, 19)}-year-old ${who.name} scores on his debut — a star is born`, ic: 'academy' };
+        },
+        () => { const c = pickClub(); return c && { t: `Record crowd at ${c.name} as the title race catches fire`, ic: 'fans' }; }
+      ];
+      const r = U.pick(items)();
+      if (!r) return;
+      g.worldNewsLog = g.worldNewsLog || [];
+      if (g.worldNewsLog.indexOf(r.t) >= 0) return;
+      g.worldNewsLog.push(r.t);
+      if (g.worldNewsLog.length > 15) g.worldNewsLog.shift();
+      State.news(r.t, 'info', null, r.ic);
     }
   };
 

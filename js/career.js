@@ -250,7 +250,7 @@
             run(g) { const p = P(); p.morale = clamp(p.morale + 8); State.addReputation(p, 1);
               return { tone: 'good', text: 'You thank them politely and put the phone down. You were only ever going to play for one country.' }; } }
         ]},
-      { id: 'leak', w: 0.7, icon: 'news', cat: 'Media', title: 'Something private has leaked',
+      { id: 'leak', w: 0.7, icon: 'microphone', cat: 'Media', title: 'Something private has leaked',
         text: 'Word for word, what was said in the dressing room on Saturday is in a newspaper this morning. Somebody in that room talked.',
         options: [
           { label: 'Call a players-only meeting', hint: 'Sort it internally.', tag: 'Leadership',
@@ -545,6 +545,153 @@
             return { tone: 'good', text: 'Your face carries the trailer. By Christmas, people who do not watch football know your name.' }; } },
           { label: 'Stay out of it', hint: 'Keep the season for yourself.', tag: 'Private', run(g) { const p = P(); p.morale = clamp(p.morale + 3); p.managerTrust = clamp(p.managerTrust + 3);
             return { tone: 'neutral', text: 'You keep the season for yourself. No regrets.' }; } }
+        ]},
+      { id: 'boot_deal', w: 0.6, icon: 'value', cat: 'Media', title: 'The boot brands are calling',
+        text: 'Two sportswear giants both want your feet. One offers more money, the other offers a signature boot with your name on it.',
+        options: [
+          { label: 'Take the signature boot', hint: 'Your name on the boot. Kids wearing it.', tag: 'Image',
+            run(g) { const p = P(); State.addReputation(p, 5); p.morale = clamp(p.morale + 6);
+              State.news(`${p.lastName} gets a signature boot — the kids' sizes sell out in a day`, 'good');
+              return { tone: 'good', text: 'They stitch your name into the tongue. You score in the first pair and the clip does a million views by Monday.' }; } },
+          { label: 'Take the bigger cheque', hint: 'Money talks.', tag: 'Business',
+            run(g) { const p = P(); State.addReputation(p, 2); p.morale = clamp(p.morale + 3);
+              return { tone: 'good', text: 'A very healthy number lands every quarter. The boots are generic, but the bank balance is not.' }; } },
+          { label: 'Turn both down', hint: 'Boots are boots. Football first.', tag: 'Pure',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 6);
+              return { tone: 'neutral', text: 'You play in blacked-out boots and the manager loves you for it. The brands will be back.' }; } }
+        ]},
+      { id: 'cover_star', w: 0.5, icon: 'star', cat: 'Media', title: 'The cover vote',
+        text: 'The big football game is letting fans vote for its cover star. Your name is on the shortlist and the vote closes on Sunday.',
+        options: [
+          { label: 'Rally the fans online', hint: 'Post the link. Win the vote.', tag: 'Campaign',
+            run(g) { const p = P();
+              if (U.chance(0.6)) { State.addReputation(p, 7);
+                State.news(`${p.lastName} wins the fan vote — your face is on the cover`, 'good');
+                return { tone: 'good', text: 'The fans pile in and it is not close. Your face, on the cover, in every shop window.' }; }
+              p.morale = clamp(p.morale - 4);
+              return { tone: 'neutral', text: 'You finish second to a winger with a bigger following. The dressing room does not let it go for a week.' }; } },
+          { label: 'Ignore it', hint: 'Covers win nothing.', tag: 'Focused',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 4);
+              return { tone: 'neutral', text: 'You let the vote happen without you. The manager approves. The marketing department does not.' }; } }
+        ]},
+      { id: 'podcast', w: 0.6, icon: 'microphone', cat: 'Media', title: 'The big podcast wants you',
+        text: 'Two hours, no PR person, and a host who is very good at getting footballers to say the thing they should not say.',
+        options: [
+          { label: 'Tell a proper dressing-room story', hint: 'Great television. Risky Monday.', tag: 'Loose Lips',
+            run(g) { const p = P();
+              if (U.chance(0.5)) { State.addReputation(p, 5); p.morale = clamp(p.morale + 4);
+                State.news(`${p.lastName}'s podcast story has the whole country laughing`, 'good');
+                return { tone: 'good', text: 'The clip goes everywhere. Even the team-mate it was about admits it was funny. Eventually.' }; }
+              p.managerTrust = clamp(p.managerTrust - 10); p.morale = clamp(p.morale - 5);
+              State.news(`Manager unimpressed as ${p.lastName} spills dressing-room secrets`, 'bad');
+              return { tone: 'bad', text: 'The story lands badly. The manager calls you in before training and it is a short conversation.' }; } },
+          { label: 'Keep it vanilla', hint: 'Two hours of nothing. Safe.', tag: 'Professional',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 4);
+              return { tone: 'neutral', text: 'You give them two hours of weather and teamwork. Nobody clips anything. Nobody complains either.' }; } }
+        ]},
+      { id: 'rating_reveal', w: 0.7, icon: 'star', cat: 'Media', title: 'The ratings have leaked',
+        text: 'The new edition of the game drops next month and the ratings are out early. Yours is doing numbers on social media.',
+        options: [
+          { label: 'Demand a pace upgrade publicly', hint: 'Join the tradition.', tag: 'Outraged',
+            run(g) { const p = P(); State.addReputation(p, 2); p.morale = clamp(p.morale + 5);
+              State.news(`${p.lastName} leads the complaints as the new ratings drop`, 'info');
+              return { tone: 'good', text: 'You post the screenshot with three laughing emojis. Every player in the league does the same. It is basically a union.' }; } },
+          { label: 'Shrug it off', hint: 'It is a video game.', tag: 'Calm',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 2);
+              return { tone: 'neutral', text: 'You are too busy being good at the actual sport. The kids in the academy are furious on your behalf.' }; } }
+        ]},
+      { id: 'charity_match', w: 0.5, icon: 'fans', cat: 'Club', title: 'A charity asks for your Tuesday',
+        text: 'A children\'s hospital charity wants you at their fundraiser five-a-side night. It is the only evening off this week.',
+        options: [
+          { label: 'Go and stay late', hint: 'Sign everything. Play the kids.', tag: 'Heart',
+            run(g) { const p = P(); State.addReputation(p, 4); p.morale = clamp(p.morale + 7); p.fitness = clamp(p.fitness - 4);
+              State.news(`${p.lastName} spends his night off at a charity five-a-side — class`, 'good');
+              return { tone: 'good', text: 'You let a nine-year-old goalkeeper save your penalty. He will remember it longer than you will.' }; } },
+          { label: 'Send a signed shirt instead', hint: 'You need the rest.', tag: 'Practical',
+            run(g) { const p = P(); p.fitness = clamp(p.fitness + 8);
+              return { tone: 'neutral', text: 'The shirt raises four figures at auction and you get nine hours of sleep. Everyone wins, quietly.' }; } }
+        ]},
+      { id: 'intl_captain', w: 0.5, icon: 'crown', cat: 'International', title: 'The armband, internationally',
+        text: 'The national team captain has retired, and the coach calls you before the squad announcement. He wants you to lead the next camp.',
+        options: [
+          { label: 'Take the armband', hint: 'Captain your country.', tag: 'Leader',
+            run(g) { const p = P(); p.intlCaptain = true; State.addReputation(p, 6); p.morale = clamp(p.morale + 8);
+              State.news(`${p.lastName} named ${p.nation} captain`, 'good');
+              return { tone: 'good', text: 'Your mum cries on the phone. You pretend you are not going to. You are.' }; } },
+          { label: 'Suggest a senior pro instead', hint: 'It should be his.', tag: 'Humble',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 5); State.addReputation(p, 2);
+              State.news(`${p.lastName} turns down the ${p.nation} armband: "There is a better man for it"`, 'info');
+              return { tone: 'good', text: 'The coach respects it. The senior pro finds out and never forgets it.' }; } }
+        ]},
+      { id: 'tattoo_fan', w: 0.4, icon: 'fans', cat: 'Club', title: 'A fan has your face tattooed',
+        text: 'Forearm, full colour, your face mid-celebration. It is everywhere online. The club media team asks if you want to meet him.',
+        options: [
+          { label: 'Meet him and sign the arm', hint: 'Permanent ink. Permanent fan.', tag: 'Class',
+            run(g) { const p = P(); State.addReputation(p, 3); p.morale = clamp(p.morale + 5);
+              State.news(`${p.lastName} meets the fan with the tattoo — and signs it`, 'good');
+              return { tone: 'good', text: 'You sign under your own face and he books the laser-proof touch-up. That one is for life, for both of you.' }; } },
+          { label: 'Just like the post', hint: 'From a safe distance.', tag: 'Wary',
+            run(g) { return { tone: 'neutral', text: 'You like the post and move on. It is a lot of forehead, in fairness.' }; } }
+        ]},
+      { id: 'academy_recruit', w: 0.5, icon: 'academy', cat: 'Club', title: 'Help sign the next big thing',
+        text: 'The club is chasing a seventeen-year-old everyone wants. The director asks if you will host him at training and show him around.',
+        options: [
+          { label: 'Show him everything', hint: 'Sell the club. Mean it.', tag: 'Ambassador',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 8); Career.bumpTeammates(g, 4);
+              State.news(`${p.lastName} plays host as the club land the country's top prospect`, 'good');
+              return { tone: 'good', text: 'He signs on Friday and tells the press it was your pitch that did it. The director owes you one.' }; } },
+          { label: 'Politely pass', hint: 'Recruiting is not your job.', tag: 'Focused',
+            run(g) { const p = P(); p.fitness = clamp(p.fitness + 4);
+              return { tone: 'neutral', text: 'Someone from the marketing department does it instead. He signs anyway.' }; } }
+        ]},
+      { id: 'analyst_row', w: 0.6, icon: 'tactics', cat: 'Manager', title: 'The data says you do not run',
+        text: 'The performance team presents the pressing numbers. Yours are in red. The manager watches you while they do it.',
+        options: [
+          { label: 'Accept it and fix it', hint: 'The numbers do not lie.', tag: 'Pro',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 9); Engine.Progress.addXp(p, 'physical', 3); p.fitness = clamp(p.fitness - 6);
+              return { tone: 'good', text: 'You spend the week with the fitness coach. Next month your column is green and the manager makes a point of saying so.' }; } },
+          { label: 'Argue the context', hint: 'You save it for the moments that matter.', tag: 'Stubborn',
+            run(g) { const p = P();
+              if (U.chance(0.45)) { p.managerTrust = clamp(p.managerTrust + 2); p.morale = clamp(p.morale + 4);
+                return { tone: 'good', text: 'You point at the goals column and the room goes quiet. The manager lets you have it. This time.' }; }
+              p.managerTrust = clamp(p.managerTrust - 9);
+              State.news(`Tension behind the scenes as ${p.lastName} clashes with analysts`, 'bad');
+              return { tone: 'bad', text: 'The manager shows your defensive clips in reply. There is not much to say to that.' }; } }
+        ]},
+      { id: 'hall_of_fame', w: 0.4, icon: 'legacy', cat: 'Club', title: 'The hall of fame calls',
+        text: 'The club wants to induct you into its hall of fame while you are still playing. A dinner, a plaque, a speech they would like you to give.',
+        options: [
+          { label: 'Give the speech', hint: 'Say what the club meant.', tag: 'Legend',
+            run(g) { const p = P(); p.hof = true; State.addReputation(p, 8); p.morale = clamp(p.morale + 10);
+              State.news(`${p.lastName} inducted into the hall of fame — and he is still playing`, 'good');
+              return { tone: 'good', text: 'You thank the kit man by name and the room stands for that alone. A night you will keep.' }; } },
+          { label: 'Defer it until you retire', hint: 'It is a full-stop. You are not done.', tag: 'Unfinished',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 4);
+              State.news(`${p.lastName} puts off the hall of fame: "Ask me when I am finished"`, 'info');
+              return { tone: 'good', text: 'You tell them a hall of fame is for endings, and you are not ending yet. The room likes that even more.' }; } }
+        ]},
+      { id: 'superstition', w: 0.4, icon: 'ball', cat: 'Dressing room', title: 'The ritual is famous now',
+        text: 'Left boot first, same urinal, touch the badge twice. A TV segment just dissected your whole pre-match routine in slow motion.',
+        options: [
+          { label: 'Lean into it', hint: 'Never change a winning routine.', tag: 'Ritual',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 5);
+              return { tone: 'good', text: 'Kids across the country are now touching the badge twice before Sunday league. The ritual stays.' }; } },
+          { label: 'Scrap it all', hint: 'No routine owns you.', tag: 'Ruthless',
+            run(g) { const p = P();
+              if (U.chance(0.6)) { p.morale = clamp(p.morale + 6); p.form = clamp(p.form + 4);
+                return { tone: 'good', text: 'Right boot first, different urinal, and you score on Saturday. Liberating.' }; }
+              p.morale = clamp(p.morale - 5); p.form = clamp(p.form - 3);
+              return { tone: 'bad', text: 'You play like your boots are on the wrong feet, because spiritually they are. The ritual is back by Thursday.' }; } }
+        ]},
+      { id: 'old_club_return', w: 0.5, icon: 'back', cat: 'Club', title: 'Back where it started',
+        text: 'Your first club is celebrating an anniversary and wants you at the dinner. It is a long flight for a short evening, but they gave you your debut.',
+        options: [
+          { label: 'Go, and pay your respects', hint: 'They made you.', tag: 'Roots',
+            run(g) { const p = P(); State.addReputation(p, 3); p.morale = clamp(p.morale + 8); p.fitness = clamp(p.fitness - 5);
+              State.news(`${p.lastName} returns to where it all began: "This club made me"`, 'good');
+              return { tone: 'good', text: 'The old academy coach is there. He says he always knew. He absolutely did not, but it is a lovely evening.' }; } },
+          { label: 'Send a video message', hint: 'The schedule is the schedule.', tag: 'Busy',
+            run(g) { return { tone: 'neutral', text: 'Forty-five seconds, filmed in the boot room. They play it twice. It does the job.' }; } }
         ]}
     ],
 
@@ -564,6 +711,11 @@
         if (e.id === 'scan_results' && p.injuries.length) return false;
         if (e.id === 'deadline_day' && p.age < 19) return false;
         if (e.id === 'young_debut' && p.age < 24) return false;
+        if (e.id === 'boot_deal' && p.reputation < 45) return false;
+        if (e.id === 'cover_star' && p.reputation < 60) return false;
+        if (e.id === 'intl_captain' && (p.intl.caps < 30 || p.intlCaptain || !p.intl.called || p.intl.retired)) return false;
+        if (e.id === 'hall_of_fame' && (p.career.apps < 400 || p.hof)) return false;
+        if (e.id === 'old_club_return' && p.career.apps < 150) return false;
         return true;
       });
       if (!pool.length) return null;

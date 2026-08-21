@@ -225,11 +225,398 @@
     { name: 'Ghana',       rating: 75 }
   ];
 
+  /* --- Real stars -----------------------------------------------------------
+     Each club's headline players, overlaid onto its generated squad so squad
+     lists, top scorers and "danger man" warnings read like the real thing.
+     [name, nation, pos, ovr, age] — pos must exist in POSITIONS; nation must
+     have a flag in tools/build-icons.js. Squads as of the 2025-26 season,
+     best effort. Clubs not listed here stay fully generated.
+  --------------------------------------------------------------------------- */
+  const REAL_STARS = {
+    // England
+    'Manchester City': [
+      ['Erling Haaland', 'Norway', 'ST', 92, 25], ['Rodri', 'Spain', 'CDM', 90, 29],
+      ['Gianluigi Donnarumma', 'Italy', 'GK', 89, 26], ['Rúben Dias', 'Portugal', 'CB', 87, 28],
+      ['Phil Foden', 'England', 'CAM', 86, 25], ['Bernardo Silva', 'Portugal', 'CM', 85, 31]
+    ],
+    'Arsenal': [
+      ['Declan Rice', 'England', 'CDM', 88, 26], ['Bukayo Saka', 'England', 'RW', 88, 24],
+      ['William Saliba', 'France', 'CB', 87, 24], ['Martin Ødegaard', 'Norway', 'CAM', 87, 26],
+      ['Gabriel Magalhães', 'Brazil', 'CB', 86, 27], ['David Raya', 'Spain', 'GK', 85, 30]
+    ],
+    'Liverpool': [
+      ['Mohamed Salah', 'Egypt', 'RW', 89, 33], ['Virgil van Dijk', 'Netherlands', 'CB', 89, 34],
+      ['Alisson Becker', 'Brazil', 'GK', 89, 32], ['Florian Wirtz', 'Germany', 'CAM', 88, 22],
+      ['Alexander Isak', 'Sweden', 'ST', 88, 26], ['Alexis Mac Allister', 'Argentina', 'CM', 85, 26]
+    ],
+    'Chelsea': [
+      ['Cole Palmer', 'England', 'CAM', 88, 23], ['Moisés Caicedo', 'Ecuador', 'CDM', 85, 23],
+      ['Enzo Fernández', 'Argentina', 'CM', 84, 24], ['Reece James', 'England', 'RB', 83, 25]
+    ],
+    'Manchester United': [
+      ['Bruno Fernandes', 'Portugal', 'CAM', 86, 31], ['Bryan Mbeumo', 'Cameroon', 'RW', 84, 26],
+      ['Matthijs de Ligt', 'Netherlands', 'CB', 82, 26], ['Kobbie Mainoo', 'England', 'CM', 80, 20]
+    ],
+    'Tottenham': [
+      ['Cristian Romero', 'Argentina', 'CB', 84, 27], ['Mohammed Kudus', 'Ghana', 'RW', 83, 25],
+      ['Xavi Simons', 'Netherlands', 'CAM', 83, 22], ['Micky van de Ven', 'Netherlands', 'CB', 83, 24],
+      ['James Maddison', 'England', 'CM', 82, 29]
+    ],
+    'Newcastle': [
+      ['Bruno Guimarães', 'Brazil', 'CM', 85, 27], ['Sandro Tonali', 'Italy', 'CDM', 84, 25],
+      ['Anthony Gordon', 'England', 'LW', 83, 24], ['Nick Pope', 'England', 'GK', 82, 33]
+    ],
+    'Aston Villa': [
+      ['Emiliano Martínez', 'Argentina', 'GK', 87, 33], ['Ollie Watkins', 'England', 'ST', 84, 29],
+      ['Youri Tielemans', 'Belgium', 'CM', 83, 28], ['Morgan Rogers', 'England', 'CAM', 82, 23]
+    ],
+    'Brighton': [
+      ['Kaoru Mitoma', 'Japan', 'LW', 82, 28], ['Carlos Baleba', 'Cameroon', 'CM', 81, 21],
+      ['Bart Verbruggen', 'Netherlands', 'GK', 79, 23]
+    ],
+    'West Ham': [
+      ['Jarrod Bowen', 'England', 'RW', 82, 28], ['Lucas Paquetá', 'Brazil', 'CAM', 82, 28],
+      ['Alphonse Areola', 'France', 'GK', 79, 32]
+    ],
+    'Everton': [
+      ['Jordan Pickford', 'England', 'GK', 83, 31], ['Iliman Ndiaye', 'Senegal', 'RW', 80, 25],
+      ['Jarrad Branthwaite', 'England', 'CB', 80, 23]
+    ],
+    'Nottingham Forest': [
+      ['Morgan Gibbs-White', 'England', 'CAM', 82, 25], ['Murillo', 'Brazil', 'CB', 81, 23],
+      ['Elliot Anderson', 'England', 'CM', 80, 22]
+    ],
+    // Spain
+    'Real Madrid': [
+      ['Kylian Mbappé', 'France', 'ST', 91, 26], ['Jude Bellingham', 'England', 'CAM', 89, 22],
+      ['Vinícius Júnior', 'Brazil', 'LW', 89, 25], ['Thibaut Courtois', 'Belgium', 'GK', 89, 33],
+      ['Federico Valverde', 'Uruguay', 'CM', 86, 27], ['Antonio Rüdiger', 'Germany', 'CB', 84, 32]
+    ],
+    'Barcelona': [
+      ['Lamine Yamal', 'Spain', 'RW', 89, 18], ['Pedri', 'Spain', 'CM', 87, 22],
+      ['Raphinha', 'Brazil', 'LW', 87, 28], ['Robert Lewandowski', 'Poland', 'ST', 86, 37],
+      ['Marc-André ter Stegen', 'Germany', 'GK', 85, 33], ['Jules Koundé', 'France', 'RB', 84, 26]
+    ],
+    'Atlético Madrid': [
+      ['Jan Oblak', 'Slovenia', 'GK', 87, 32], ['Julián Alvarez', 'Argentina', 'ST', 86, 25],
+      ['Antoine Griezmann', 'France', 'CAM', 85, 34], ['Marcos Llorente', 'Spain', 'CM', 82, 30]
+    ],
+    'Athletic Club': [
+      ['Nico Williams', 'Spain', 'LW', 84, 23], ['Unai Simón', 'Spain', 'GK', 83, 28],
+      ['Oihan Sancet', 'Spain', 'CAM', 82, 25], ['Iñaki Williams', 'Ghana', 'ST', 80, 31]
+    ],
+    'Real Sociedad': [
+      ['Mikel Oyarzabal', 'Spain', 'ST', 83, 28], ['Takefusa Kubo', 'Japan', 'RW', 82, 24],
+      ['Brais Méndez', 'Spain', 'CAM', 81, 28]
+    ],
+    'Villarreal': [
+      ['Álex Baena', 'Spain', 'LW', 82, 24], ['Gerard Moreno', 'Spain', 'ST', 80, 33],
+      ['Dani Parejo', 'Spain', 'CM', 80, 36]
+    ],
+    'Real Betis': [
+      ['Isco', 'Spain', 'CAM', 82, 33], ['Giovani Lo Celso', 'Argentina', 'CM', 80, 29],
+      ['Antony', 'Brazil', 'RW', 79, 25]
+    ],
+    'Sevilla': [
+      ['Isaac Romero', 'Spain', 'ST', 78, 25], ['Nemanja Gudelj', 'Serbia', 'CDM', 78, 33]
+    ],
+    'Valencia': [
+      ['José Gayà', 'Spain', 'LB', 80, 30], ['Hugo Duro', 'Spain', 'ST', 78, 25],
+      ['Javi Guerra', 'Spain', 'CM', 78, 22]
+    ],
+    'Girona': [
+      ['Viktor Tsygankov', 'Ukraine', 'RW', 79, 27], ['Paulo Gazzaniga', 'Argentina', 'GK', 79, 33],
+      ['Cristhian Stuani', 'Uruguay', 'ST', 77, 39]
+    ],
+    'Celta Vigo': [
+      ['Iago Aspas', 'Spain', 'ST', 80, 38], ['Borja Iglesias', 'Spain', 'ST', 78, 32],
+      ['Marcos Alonso', 'Spain', 'LB', 76, 34]
+    ],
+    'Osasuna': [
+      ['Ante Budimir', 'Croatia', 'ST', 80, 34], ['Sergio Herrera', 'Spain', 'GK', 78, 32],
+      ['Aimar Oroz', 'Spain', 'CAM', 77, 23]
+    ],
+    // Italy
+    'Inter': [
+      ['Lautaro Martínez', 'Argentina', 'ST', 88, 28], ['Nicolò Barella', 'Italy', 'CM', 86, 28],
+      ['Alessandro Bastoni', 'Italy', 'CB', 84, 26], ['Hakan Çalhanoğlu', 'Turkey', 'CDM', 84, 31],
+      ['Yann Sommer', 'Switzerland', 'GK', 84, 36]
+    ],
+    'Juventus': [
+      ['Gleison Bremer', 'Brazil', 'CB', 84, 28], ['Dušan Vlahović', 'Serbia', 'ST', 82, 25],
+      ['Michele Di Gregorio', 'Italy', 'GK', 82, 28], ['Kenan Yıldız', 'Turkey', 'CAM', 81, 20],
+      ['Manuel Locatelli', 'Italy', 'CDM', 81, 27]
+    ],
+    'AC Milan': [
+      ['Mike Maignan', 'France', 'GK', 86, 30], ['Rafael Leão', 'Portugal', 'LW', 85, 26],
+      ['Christian Pulisic', 'USA', 'RW', 84, 27], ['Luka Modrić', 'Croatia', 'CM', 84, 40],
+      ['Fikayo Tomori', 'England', 'CB', 82, 27]
+    ],
+    'Napoli': [
+      ['Kevin De Bruyne', 'Belgium', 'CM', 85, 34], ['Scott McTominay', 'Scotland', 'CM', 83, 28],
+      ['Romelu Lukaku', 'Belgium', 'ST', 82, 32], ['Alex Meret', 'Italy', 'GK', 82, 28],
+      ['Giovanni Di Lorenzo', 'Italy', 'RB', 81, 32]
+    ],
+    'Atalanta': [
+      ['Ademola Lookman', 'Nigeria', 'LW', 84, 27], ['Éderson', 'Brazil', 'CDM', 83, 26],
+      ['Gianluca Scamacca', 'Italy', 'ST', 81, 26], ['Marten de Roon', 'Netherlands', 'CM', 81, 34]
+    ],
+    'Roma': [
+      ['Paulo Dybala', 'Argentina', 'CAM', 84, 31], ['Mile Svilar', 'Serbia', 'GK', 82, 26],
+      ['Evan Ndicka', 'Ivory Coast', 'CB', 82, 26], ['Matías Soulé', 'Argentina', 'RW', 80, 22]
+    ],
+    'Lazio': [
+      ['Mattia Zaccagni', 'Italy', 'LW', 81, 30], ['Ivan Provedel', 'Italy', 'GK', 81, 31],
+      ['Nicolò Rovella', 'Italy', 'CDM', 80, 23]
+    ],
+    'Fiorentina': [
+      ['Moise Kean', 'Italy', 'ST', 82, 25], ['David de Gea', 'Spain', 'GK', 82, 34],
+      ['Rolando Mandragora', 'Italy', 'CM', 79, 28]
+    ],
+    'Bologna': [
+      ['Riccardo Orsolini', 'Italy', 'RW', 81, 28], ['Łukasz Skorupski', 'Poland', 'GK', 80, 34],
+      ['Santiago Castro', 'Argentina', 'ST', 78, 21]
+    ],
+    'Torino': [
+      ['Nikola Vlašić', 'Croatia', 'CAM', 78, 27], ['Che Adams', 'Scotland', 'ST', 77, 29]
+    ],
+    'Udinese': [
+      ['Oumar Solet', 'France', 'CB', 78, 25], ['Maduka Okoye', 'Nigeria', 'GK', 77, 26],
+      ['Sandi Lovrić', 'Slovenia', 'CM', 77, 27]
+    ],
+    'Genoa': [
+      ['Ruslan Malinovskyi', 'Ukraine', 'CAM', 77, 32], ['Junior Messias', 'Brazil', 'RW', 76, 34],
+      ['Milan Badelj', 'Croatia', 'CDM', 76, 36]
+    ],
+    // Germany
+    'Bayern München': [
+      ['Harry Kane', 'England', 'ST', 90, 32], ['Jamal Musiala', 'Germany', 'CAM', 87, 22],
+      ['Michael Olise', 'France', 'RW', 85, 23], ['Joshua Kimmich', 'Germany', 'CDM', 85, 30],
+      ['Manuel Neuer', 'Germany', 'GK', 84, 39], ['Dayot Upamecano', 'France', 'CB', 83, 26]
+    ],
+    'Bayer Leverkusen': [
+      ['Alejandro Grimaldo', 'Spain', 'LB', 82, 29], ['Patrik Schick', 'Czechia', 'ST', 82, 29],
+      ['Exequiel Palacios', 'Argentina', 'CM', 81, 26], ['Jonas Hofmann', 'Germany', 'RW', 79, 33]
+    ],
+    'Borussia Dortmund': [
+      ['Gregor Kobel', 'Switzerland', 'GK', 85, 27], ['Serhou Guirassy', 'Guinea', 'ST', 84, 29],
+      ['Nico Schlotterbeck', 'Germany', 'CB', 82, 25], ['Karim Adeyemi', 'Germany', 'RW', 81, 23],
+      ['Julian Brandt', 'Germany', 'CAM', 81, 29]
+    ],
+    'RB Leipzig': [
+      ['Péter Gulácsi', 'Hungary', 'GK', 81, 35], ['Castello Lukeba', 'France', 'CB', 80, 22],
+      ['Christoph Baumgartner', 'Austria', 'CAM', 80, 26], ['Antonio Nusa', 'Norway', 'LW', 79, 20]
+    ],
+    'Eintracht Frankfurt': [
+      ['Kevin Trapp', 'Germany', 'GK', 81, 35], ['Jonathan Burkardt', 'Germany', 'ST', 79, 25],
+      ['Mario Götze', 'Germany', 'CAM', 79, 33], ['Rasmus Kristensen', 'Denmark', 'RB', 77, 28]
+    ],
+    'Stuttgart': [
+      ['Alexander Nübel', 'Germany', 'GK', 80, 29], ['Deniz Undav', 'Germany', 'ST', 80, 29],
+      ['Angelo Stiller', 'Germany', 'CM', 80, 24]
+    ],
+    'Wolfsburg': [
+      ['Maximilian Arnold', 'Germany', 'CM', 78, 31], ['Kamil Grabara', 'Poland', 'GK', 78, 26],
+      ['Mohammed Amoura', 'Algeria', 'ST', 78, 25]
+    ],
+    'Freiburg': [
+      ['Vincenzo Grifo', 'Italy', 'LW', 79, 32], ['Matthias Ginter', 'Germany', 'CB', 79, 31],
+      ['Noah Atubolu', 'Germany', 'GK', 77, 23]
+    ],
+    'Hoffenheim': [
+      ['Oliver Baumann', 'Germany', 'GK', 79, 35], ['Andrej Kramarić', 'Croatia', 'CAM', 79, 34],
+      ['Grischa Prömel', 'Germany', 'CM', 77, 30]
+    ],
+    'Werder Bremen': [
+      ['Marvin Ducksch', 'Germany', 'ST', 77, 31], ['Romano Schmid', 'Austria', 'CAM', 77, 25],
+      ['Milos Veljković', 'Serbia', 'CB', 76, 29]
+    ],
+    'Mainz': [
+      ['Nadiem Amiri', 'Germany', 'CM', 78, 28], ['Robin Zentner', 'Germany', 'GK', 78, 30],
+      ['Paul Nebel', 'Germany', 'CAM', 76, 22]
+    ],
+    'Augsburg': [
+      ['Finn Dahmen', 'Germany', 'GK', 76, 27], ['Alexis Claude-Maurice', 'France', 'CAM', 76, 27],
+      ['Jeffrey Gouweleeuw', 'Netherlands', 'CB', 75, 34]
+    ],
+    // France
+    'Paris SG': [
+      ['Ousmane Dembélé', 'France', 'RW', 88, 28], ['Khvicha Kvaratskhelia', 'Georgia', 'LW', 87, 24],
+      ['Vitinha', 'Portugal', 'CM', 86, 25], ['Achraf Hakimi', 'Morocco', 'RB', 86, 26],
+      ['Nuno Mendes', 'Portugal', 'LB', 84, 23], ['Willian Pacho', 'Ecuador', 'CB', 83, 23]
+    ],
+    'Monaco': [
+      ['Denis Zakaria', 'Switzerland', 'CDM', 80, 28], ['Pierre-Emerick Aubameyang', 'Gabon', 'ST', 80, 36],
+      ['Takumi Minamino', 'Japan', 'CAM', 78, 30], ['Folarin Balogun', 'USA', 'ST', 78, 24]
+    ],
+    'Marseille': [
+      ['Mason Greenwood', 'England', 'RW', 81, 24], ['Gerónimo Rulli', 'Argentina', 'GK', 80, 33],
+      ['Leonardo Balerdi', 'Argentina', 'CB', 79, 26]
+    ],
+    'Lille': [
+      ['Benjamin André', 'France', 'CDM', 78, 35], ['Hákon Arnar Haraldsson', 'Iceland', 'CAM', 77, 22],
+      ['Nabil Bentaleb', 'Algeria', 'CM', 76, 30]
+    ],
+    'Lyon': [
+      ['Corentin Tolisso', 'France', 'CM', 80, 31], ['Georges Mikautadze', 'Georgia', 'ST', 78, 24],
+      ['Malick Fofana', 'Belgium', 'LW', 77, 20]
+    ],
+    'Nice': [
+      ['Marcin Bułka', 'Poland', 'GK', 79, 25], ['Evann Guessand', 'Ivory Coast', 'ST', 77, 24],
+      ['Dante', 'Brazil', 'CB', 75, 41]
+    ],
+    'Rennes': [
+      ['Brice Samba', 'France', 'GK', 78, 31], ['Ludovic Blas', 'France', 'CAM', 77, 27],
+      ['Seko Fofana', 'Ivory Coast', 'CM', 77, 30]
+    ],
+    'Lens': [
+      ['Florian Thauvin', 'France', 'RW', 77, 32], ['Adrien Thomasson', 'France', 'CAM', 77, 31],
+      ['Deiver Machado', 'Colombia', 'LB', 76, 31]
+    ],
+    'Strasbourg': [
+      ['Emanuel Emegha', 'Netherlands', 'ST', 77, 22], ['Guéla Doué', 'Ivory Coast', 'RB', 76, 22],
+      ['Joaquín Panichelli', 'Argentina', 'ST', 76, 22]
+    ],
+    'Nantes': [
+      ['Alban Lafont', 'France', 'GK', 77, 26], ['Moses Simon', 'Nigeria', 'LW', 76, 30],
+      ['Matthis Abline', 'France', 'ST', 76, 22]
+    ],
+    'Toulouse': [
+      ['Guillaume Restes', 'France', 'GK', 77, 20], ['Cristian Cásseres Jr.', 'Venezuela', 'CM', 74, 25],
+      ['Aron Dønnum', 'Norway', 'RW', 74, 27]
+    ],
+    'Brest': [
+      ['Pierre Lees-Melou', 'France', 'CM', 76, 32], ['Romain Del Castillo', 'France', 'RW', 75, 29],
+      ['Brendan Chardonnet', 'France', 'CB', 74, 30]
+    ],
+    // Netherlands
+    'Ajax': [
+      ['Steven Berghuis', 'Netherlands', 'RW', 78, 33], ['Davy Klaassen', 'Netherlands', 'CM', 78, 32],
+      ['Wout Weghorst', 'Netherlands', 'ST', 78, 33], ['Kenneth Taylor', 'Netherlands', 'CM', 77, 23]
+    ],
+    'PSV': [
+      ['Jerdy Schouten', 'Netherlands', 'CDM', 79, 28], ['Ismael Saibari', 'Morocco', 'CAM', 78, 24],
+      ['Ricardo Pepi', 'USA', 'ST', 78, 22], ['Joey Veerman', 'Netherlands', 'CM', 78, 26]
+    ],
+    'Feyenoord': [
+      ['Quinten Timber', 'Netherlands', 'CM', 78, 24], ['Timon Wellenreuther', 'Germany', 'GK', 77, 29],
+      ['Ayase Ueda', 'Japan', 'ST', 76, 26], ['Anis Hadj Moussa', 'Algeria', 'RW', 76, 23]
+    ],
+    'AZ Alkmaar': [
+      ['Troy Parrott', 'Ireland', 'ST', 76, 23], ['Sven Mijnans', 'Netherlands', 'CAM', 76, 25],
+      ['Jordy Clasie', 'Netherlands', 'CDM', 75, 34]
+    ],
+    'Twente': [
+      ['Lars Unnerstall', 'Netherlands', 'GK', 75, 35], ['Ricky van Wolfswinkel', 'Netherlands', 'ST', 74, 36]
+    ],
+    'Utrecht': [
+      ['Vasilis Barkas', 'Greece', 'GK', 74, 31], ['Victor Jensen', 'Denmark', 'CAM', 74, 25],
+      ['Souffian El Karouani', 'Morocco', 'LB', 74, 24]
+    ],
+    // Portugal
+    'Benfica': [
+      ['Nicolás Otamendi', 'Argentina', 'CB', 81, 37], ['Vangelis Pavlidis', 'Greece', 'ST', 80, 26],
+      ['Anatoliy Trubin', 'Ukraine', 'GK', 80, 24], ['Fredrik Aursnes', 'Norway', 'CM', 78, 29]
+    ],
+    'Porto': [
+      ['Diogo Costa', 'Portugal', 'GK', 82, 26], ['Samu Aghehowa', 'Spain', 'ST', 79, 21],
+      ['Luuk de Jong', 'Netherlands', 'ST', 78, 35], ['Pepê', 'Brazil', 'RW', 77, 28]
+    ],
+    'Sporting CP': [
+      ['Pedro Gonçalves', 'Portugal', 'CAM', 81, 27], ['Morten Hjulmand', 'Denmark', 'CDM', 80, 26],
+      ['Francisco Trincão', 'Portugal', 'RW', 79, 25], ['Rui Silva', 'Portugal', 'GK', 76, 31]
+    ],
+    'Braga': [
+      ['Ricardo Horta', 'Portugal', 'RW', 78, 30], ['Rodrigo Zalazar', 'Uruguay', 'CAM', 77, 26],
+      ['Sikou Niakaté', 'Mali', 'CB', 75, 26]
+    ],
+    // Argentina
+    'River Plate': [
+      ['Franco Armani', 'Argentina', 'GK', 77, 39], ['Sebastián Driussi', 'Argentina', 'CAM', 76, 29],
+      ['Paulo Díaz', 'Chile', 'CB', 76, 31]
+    ],
+    'Boca Juniors': [
+      ['Leandro Paredes', 'Argentina', 'CDM', 79, 31], ['Edinson Cavani', 'Uruguay', 'ST', 78, 38],
+      ['Sergio Romero', 'Argentina', 'GK', 76, 38]
+    ],
+    'Racing Club': [
+      ['Adrián Martínez', 'Argentina', 'ST', 76, 33], ['Gabriel Arias', 'Chile', 'GK', 76, 37],
+      ['Agustín Almendra', 'Argentina', 'CM', 74, 25]
+    ],
+    // Brazil
+    'Flamengo': [
+      ['Giorgian de Arrascaeta', 'Uruguay', 'CAM', 81, 31], ['Pedro', 'Brazil', 'ST', 80, 28],
+      ['Agustín Rossi', 'Argentina', 'GK', 79, 30], ['Danilo', 'Brazil', 'CB', 76, 34]
+    ],
+    'Palmeiras': [
+      ['Gustavo Gómez', 'Paraguay', 'CB', 81, 32], ['Raphael Veiga', 'Brazil', 'CAM', 79, 30],
+      ['Weverton', 'Brazil', 'GK', 79, 37], ['Vitor Roque', 'Brazil', 'ST', 77, 20]
+    ],
+    'Botafogo': [
+      ['Alexander Barboza', 'Argentina', 'CB', 77, 30], ['Artur', 'Brazil', 'RW', 76, 27],
+      ['Marlon Freitas', 'Brazil', 'CDM', 75, 30]
+    ],
+    'São Paulo': [
+      ['Lucas Moura', 'Brazil', 'RW', 78, 33], ['Jonathan Calleri', 'Argentina', 'ST', 77, 32],
+      ['Rafael', 'Brazil', 'GK', 74, 36]
+    ],
+    // USA
+    'Inter Miami': [
+      ['Lionel Messi', 'Argentina', 'RW', 88, 38], ['Luis Suárez', 'Uruguay', 'ST', 82, 38],
+      ['Rodrigo De Paul', 'Argentina', 'CM', 82, 31], ['Sergio Busquets', 'Spain', 'CDM', 81, 37],
+      ['Jordi Alba', 'Spain', 'LB', 80, 36]
+    ],
+    'LAFC': [
+      ['Son Heung-min', 'South Korea', 'LW', 83, 33], ['Hugo Lloris', 'France', 'GK', 82, 38],
+      ['Denis Bouanga', 'Gabon', 'ST', 81, 30]
+    ],
+    'LA Galaxy': [
+      ['Marco Reus', 'Germany', 'CAM', 80, 36], ['Riqui Puig', 'Spain', 'CM', 78, 26],
+      ['Gabriel Pec', 'Brazil', 'RW', 78, 24]
+    ],
+    'Seattle Sounders': [
+      ['Albert Rusnák', 'Slovakia', 'CAM', 76, 31], ['Stefan Frei', 'USA', 'GK', 74, 39],
+      ['Pedro de la Vega', 'Argentina', 'LW', 74, 24]
+    ],
+    'Atlanta United': [
+      ['Miguel Almirón', 'Paraguay', 'CAM', 78, 31], ['Emmanuel Latte Lath', 'Ivory Coast', 'ST', 76, 26],
+      ['Aleksey Miranchuk', 'Russia', 'CAM', 76, 29]
+    ],
+    'Columbus Crew': [
+      ['Diego Rossi', 'Uruguay', 'ST', 78, 27], ['Darlington Nagbe', 'USA', 'CM', 74, 35],
+      ['Patrick Schulte', 'USA', 'GK', 74, 24]
+    ],
+    'NY Red Bulls': [
+      ['Emil Forsberg', 'Sweden', 'CAM', 78, 34], ['Lewis Morgan', 'Scotland', 'RW', 75, 29],
+      ['Carlos Coronel', 'Paraguay', 'GK', 74, 28]
+    ],
+    'Philadelphia Union': [
+      ['Andre Blake', 'Jamaica', 'GK', 76, 34], ['Tai Baribo', 'Israel', 'ST', 75, 27],
+      ['Quinn Sullivan', 'USA', 'CAM', 73, 21]
+    ],
+    'Portland Timbers': [
+      ['David da Costa', 'Portugal', 'CAM', 75, 24], ['Antony', 'Brazil', 'LW', 74, 24],
+      ['Maxime Crépeau', 'Canada', 'GK', 74, 31]
+    ],
+    'Austin FC': [
+      ['Brandon Vázquez', 'USA', 'ST', 75, 26], ['Osman Bukari', 'Ghana', 'RW', 75, 26],
+      ['Brad Stuver', 'USA', 'GK', 74, 34]
+    ],
+    'Nashville SC': [
+      ['Hany Mukhtar', 'Germany', 'CAM', 78, 30], ['Sam Surridge', 'England', 'ST', 75, 27],
+      ['Walker Zimmerman', 'USA', 'CB', 74, 32]
+    ],
+    'Chicago Fire': [
+      ['Hugo Cuypers', 'Belgium', 'ST', 77, 28], ['Philip Zinckernagel', 'Denmark', 'LW', 76, 30],
+      ['Chris Brady', 'USA', 'GK', 74, 21]
+    ]
+  };
+
   /* --- Names ---------------------------------------------------------------
-     Real footballers' names and likenesses are licensed rights, so the game
-     invents its own players. What makes a squad read as real is not famous
-     names but *consistent* ones: a Spanish club full of Spanish names with a
-     handful of imports, rather than a random mix of everything.
+     The bulk of every squad is generated. What makes a squad list read as
+     real is not famous names but *consistent* ones: a Spanish club full of
+     Spanish names with a handful of imports, rather than a random mix of
+     everything. The REAL_STARS above then anchor each club.
   --------------------------------------------------------------------------- */
   const NAMES = {
     England:     { first: ['Harry','Jack','Callum','Reece','Mason','Ollie','Tyler','Josh','Kieran','Declan','Aaron','Lewis','Charlie','Nathan','Jude','Bukayo','Marcus','Phil','Conor','Ben'],
@@ -438,7 +825,7 @@
 
   global.DATA = {
     POSITIONS, ATTR_KEYS, ATTR_LABEL, DRAFT_ATTRS, DRAFT_ATTRS_GK,
-    LEAGUES, CONTINENTAL, NATIONS, CLUB_KIT, NAMES, IMPORT_POOLS, FIRST_NAMES, LAST_NAMES,
+    LEAGUES, CONTINENTAL, NATIONS, CLUB_KIT, REAL_STARS, NAMES, IMPORT_POOLS, FIRST_NAMES, LAST_NAMES,
     TRAITS, TRAINING, LEGENDS, LEGENDS_GK, CONFIG
   };
 })(window);

@@ -258,6 +258,8 @@
       switch (act) {
         case 'playMatch': return Game.playMatch(true);
         case 'quickMatch': return Game.playMatch(false);
+        case 'skipMenu': return Game.skipMenu();
+        case 'skip': return Game.skip(arg === 'season' ? 999 : parseInt(arg, 10));
         case 'openWeek': return Game.weekMenu();
         case 'doActivity': return Game.runActivity(arg);
         case 'trainMenu': return Game.trainMenu();
@@ -461,6 +463,51 @@
       Game.matchSummary(m);
     },
 
+    /* ---------- time skip ---------- */
+    skipMenu() {
+      const g = State.game;
+      const left = g.fixtures.length - g.fixtureIndex;
+      UI.modal({
+        title: 'Skip ahead',
+        text: `${left} fixture(s) left this season. Skipped matches are quick-simmed —
+               the season, the press and the world carry on without you.
+               Anything important still stops the skip.`,
+        actions: [
+          { label: 'Skip 5 matches', onClick: () => Game.skip(5) },
+          { label: 'Skip 10 matches', cls: 'btn-ghost', onClick: () => Game.skip(10) },
+          { label: 'Skip to end of season', cls: 'btn-ghost', onClick: () => Game.skip(999) }
+        ]
+      });
+    },
+
+    skip(n) {
+      const g = State.game;
+      let played = 0, ev = null;
+      for (let i = 0; i < n; i++) {
+        const f = Engine.Season.nextPlayable(g);
+        if (!f) break;
+        Engine.Season.prepareFixture(g, f);
+        const m = Engine.Match.create(g, f);
+        Engine.Match.simRest(g, m);
+        if (m.needsShootout) Game.autoShootout(m);
+        Engine.Match.settle(g, m);
+        g.fixtureIndex++;
+        g.weekActionsLeft = 1;
+        played++;
+        Game.checkTraits();
+        ev = global.Career.rollEvent(g);
+        if (ev) break;
+        Engine.Press.buzz(g);
+        Engine.Press.world(g);
+      }
+      State.save();
+      UI.show('game');
+      UI.tab = 'home';
+      UI.render();
+      if (played) UI.toast(`Skipped ${played} match${played > 1 ? 'es' : ''}.`, 'good');
+      if (ev) Game.showEvent(ev);
+    },
+
     /* ---------- penalty shootout ---------- */
     startShootout() {
       const m = Game.match;
@@ -636,6 +683,8 @@
 
       const ev = Career.rollEvent(g);
       if (ev) Game.showEvent(ev);
+      else Engine.Press.buzz(g);
+      Engine.Press.world(g);
     },
 
     /* An off-field moment, presented like an on-pitch one: a card with the
@@ -1037,6 +1086,18 @@
       const score = Career.legacyScore(g);
       const rank = Career.legacyRank(score);
       p.legacy = score;
+
+      // the back pages say goodbye
+      const you = p.firstName + ' ' + p.lastName;
+      State.news(forced
+        ? `TIME CALLED: ${you} forced to hang up his boots at ${p.age}`
+        : `END OF AN ERA: ${you} announces his retirement from football`, 'info');
+      State.news(`Tributes pour in for ${p.lastName}: ${p.career.apps} games, ${p.career.goals} goals, ${p.career.trophies.length} trophies`, 'good', null, 'legacy');
+      if (p.career.clubs.length > 1)
+        State.news(`From ${p.career.clubs[0]} to ${p.career.clubs[p.career.clubs.length - 1]}: ${p.lastName}'s journey in shirts`, 'info', null, 'shirt');
+      if (p.intl.caps > 0)
+        State.news(`${p.nation} salute a servant — ${p.lastName} retires with ${p.intl.caps} caps`, 'good', null, 'nation');
+      State.save();
 
       UI.modal({
         title: 'The final whistle',

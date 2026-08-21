@@ -313,6 +313,10 @@ progress{width:100%}
 .item .ic{width:22px;height:22px;color:var(--green)}
 .item.tight-item{padding:8px 11px}
 .tabbar button .ic{width:21px;height:21px}
+.tabbar button{position:relative}
+.tab-badge{position:absolute;top:4px;right:50%;margin-right:-26px;min-width:17px;height:17px;
+  padding:0 4px;border-radius:9px;background:var(--red);color:#fff;font-size:9.5px;font-weight:800;
+  line-height:17px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.5)}
 .trait .ic{width:20px;height:20px;color:var(--green)}
 .trait.bad .ic{color:var(--red)}
 .scn-h .art{width:30px;height:30px;color:var(--green)}
@@ -331,6 +335,9 @@ progress{width:100%}
 /* ---------- club crests ---------- */
 .crest{width:1.6em;height:1.6em;flex:0 0 auto;vertical-align:-.35em;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+.crest-badge{position:relative;display:inline-block}
+.crest-badge svg{width:100%;height:100%;display:block}
+.crest-badge img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .crest-sm{width:20px;height:20px}
 .crest-md{width:30px;height:30px}
 .crest-lg{width:46px;height:46px}
@@ -435,9 +442,13 @@ table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6p
 #dev-clubs{max-height:38vh}
 
 /* ---------- press ---------- */
-.headline{border-left:3px solid var(--line);padding:8px 0 8px 12px;margin-bottom:10px}
+.headline{border-left:3px solid var(--line);padding:8px 0 8px 12px;margin-bottom:10px;
+  display:flex;align-items:flex-start;gap:10px}
 .headline.good{border-color:var(--green)}
 .headline.bad{border-color:var(--red)}
+.hl-ic{width:22px;height:22px;flex:0 0 auto;margin-top:1px;opacity:.85}
+.hl-ic .ic{width:22px;height:22px}
+.hl-body{min-width:0}
 .hl-src{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:700}
 .hl-t{font-size:14.5px;font-weight:700;line-height:1.35;margin-top:2px}
 .rank-title{font-weight:800;letter-spacing:1px;margin-top:4px}

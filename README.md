@@ -34,11 +34,12 @@ It is built mobile-first — designed at phone width and tested with touch input
 **Getting it onto a phone.** The GitHub app renders these files as text — it cannot run
 them — so the game needs to come from somewhere that serves it as a web page:
 
-1. **One downloadable file (no setup, works offline).** `play.html` is the entire game —
-   markup, styles and all eight scripts inlined into a single self-contained page with no
-   external requests of any kind. Open it in a mobile browser signed in to GitHub, tap
-   *Download raw file*, then open the download from Files (iOS) or Downloads (Android).
-   It plays offline from then on.
+1. **One downloadable file (no setup).** `play.html` is the entire game —
+   markup, styles and all scripts inlined into a single self-contained page. The only
+   external requests are the real club badges, which are hot-linked when you are online;
+   offline the game falls back to its own drawn crests. Open it in a mobile browser signed
+   in to GitHub, tap *Download raw file*, then open the download from Files (iOS) or
+   Downloads (Android). It plays offline from then on.
 2. **GitHub Pages.** `.github/workflows/pages.yml` deploys the game automatically — it
    enables Pages through the API on its first run, so there are no repository settings to
    visit from a phone. The job is skipped while the repository is private, because Pages
@@ -100,14 +101,14 @@ fighting a better player for the shirt.
 ### Play the moments, not the match
 Matches simulate around you and stop for the decisions you would actually be judged on:
 
-**46 different moments**, each with two to six real options:
+**52 different moments**, each with two to six real options:
 
 | | |
 |---|---|
-| **Attacking** | One-on-one · edge of the box · header from a cross · volley at the back post · back to goal · tight angle on the byline · one-two on the edge · overhead kick · the keeper is stranded · rebound in the six-yard box · long range · the ninety-first minute |
-| **On the ball** | Isolated 1v1 · three-on-two break · switching play · pressing trigger · fifty-fifty in the middle |
-| **Set pieces** | Penalty (six placements, including the Panenka) · free kick · corner · take it quickly · **shootouts you take yourself** |
-| **Defending** | Last man back · aerial duel · playing out of your own box · offside trap · man-marking their best player · blocking the shot · the recovery run · protecting a lead |
+| **Attacking** | One-on-one · edge of the box · header from a cross · volley at the back post · back to goal · tight angle on the byline · one-two on the edge · overhead kick · the keeper is stranded · rebound in the six-yard box · long range · the backheel · the flick-on · the ninety-first minute |
+| **On the ball** | Isolated 1v1 · three-on-two break · switching play · pressing trigger · fifty-fifty in the middle · the nutmeg · the overlapping run |
+| **Set pieces** | Penalty (six placements, including the Panenka) · free kick · corner · take it quickly · the quick throw · **shootouts you take yourself** |
+| **Defending** | Last man back · aerial duel · playing out of your own box · offside trap · man-marking their best player · blocking the shot · the recovery run · protecting a lead · the goal-line clearance |
 | **Goalkeeping** | One-v-one · crosses · distribution · facing a penalty · sweeping behind the line · shots from distance · setting the wall · a back pass under pressure |
 | **Everything else** | Contact in the box · referee flashpoint · he's on a hat-trick · playing through a twinge · being substituted · a team-mate down · a hostile away end · your celebration |
 
@@ -127,24 +128,26 @@ and a Serb, a Brazilian club with a couple of Argentines. 760 names across 28 na
 numbers handed out by position, flags on the team sheet, and a named danger man in the
 opposition before every kick-off.
 
-Real players are not in the game: names and likenesses are licensed rights. What makes a
-squad list convincing is consistency, not famous names.
+On top of that, **319 real star players** anchor 89 clubs — Haaland leads the line at
+Manchester City, Bellingham at Real Madrid, Messi at Inter Miami. They show up in squad
+lists, the top-scorer race and the pre-match danger-man warning. Squads as of 2025-26,
+best effort.
 
 ### The week in between
 One session before each match, and all of it football: a specific training drill, rest,
 video analysis, a word with the manager, press duty, or an afternoon with the academy.
-Then the game happens to you. **32 off-field moments**, presented like the ones on the pitch —
+Then the game happens to you. **44 off-field moments**, presented like the ones on the pitch —
 a situation, and choices with real consequences:
 
 | | |
 |---|---|
-| **Dressing room** | A row with the manager · who takes the penalties · a debut to look after · a training-ground flashpoint |
+| **Dressing room** | A row with the manager · who takes the penalties · a debut to look after · a training-ground flashpoint · the ritual is famous now |
 | **Transfer** | Deadline day at 11pm · a loan offer · your agent has news · early contract talks |
-| **Manager** | A change of shape · video review with the whole squad watching · the manager is sacked · a new role |
-| **Media** | A rumour in the press · something private has leaked · a rival takes aim · a documentary crew |
-| **International** | Left out of the squad · two countries want you |
+| **Manager** | A change of shape · video review with the whole squad watching · the manager is sacked · a new role · the data says you don't run |
+| **Media** | A rumour in the press · something private has leaked · a rival takes aim · a documentary crew · the boot deal · the cover vote · the big podcast · the ratings leak |
+| **International** | Left out of the squad · two countries want you · captain your country |
 | **Training ground** | Set-piece practice · the mid-season camp |
-| **Club** | Derby week · the supporters' forum · the club is in trouble · the number is free · a testimonial |
+| **Club** | Derby week · the supporters' forum · the club is in trouble · the number is free · a testimonial · the tattooed fan · recruiting a wonderkid · back where it started · the hall of fame |
 | **Awards, fitness, discipline** | You are nominated · the scan results are in · charged by the federation |
 
 Some of them stick: claim the penalties and you take them for the rest of your career, win
@@ -159,6 +162,9 @@ number and a team-mate swaps with you.
 - A squad-mate competing for your shirt; manager trust that decides whether you start
 - Injuries, suspensions, fitness, form and morale
 - **Press headlines** that react to what you did — hat-tricks, red cards, transfers, titles
+- **Player of the Month awards** judged on your league form, month by month
+- A living football world in the news feed — rival stars score hat-tricks, record transfers
+  happen and are remembered, managers get sacked and wonderkids break through
 - End-of-season awards: Golden Boot, Team of the Season, Young Player, World Player of the Year
 - A summer transfer window with real offers: fee, wages, contract length and a pitch
 - **25 traits** earned on the pitch, including a set of style traits that sharpen one
@@ -170,7 +176,9 @@ number and a team-mate swaps with you.
   of 77%, an Aerial Threat wins headers 15 points more often, and a Long Range Threat roughly
   doubles the odds of a worldie from thirty yards.
 - **A crest for every club**, drawn from its real colours and shirt pattern — stripes, hoops,
-  halves, sash — and shown on fixtures, the table, the scoreboard and every transfer offer
+  halves, sash — and shown on fixtures, the table, the scoreboard and every transfer offer.
+  Online, the club's real badge is layered over the drawn shield (hot-linked from Wikipedia);
+  offline the drawn crest is what you see.
 - Retirement with the full Copero career card — appearances, goals, clubs played for,
   collective and individual titles, international record, **peak overall** and **peak market
   value** — a legacy score from Journeyman to Immortal, and a life after football
@@ -187,13 +195,15 @@ index.html               markup shell
 play.html                generated: the whole game as one self-contained file
 build.js                 inlines css + js into play.html and dist/artifact.html
 tools/build-icons.js     generates js/icons.js from two open-source icon packs
+tools/build-badges.js    generates js/badges.js (real club badge URLs from Wikipedia)
 .github/workflows/       GitHub Pages deployment
 manifest.webmanifest     add-to-home-screen / installable web app
 icon.svg, *.png          app icons (SVG source + rendered PNG sizes)
 css/styles.css           dark, mobile-first stylesheet
 js/icons.js              generated SVG sprite — every icon in the game
-js/crest.js              draws each club's badge from its colours and pattern
-js/data.js               leagues, clubs, nations, positions, traits, legends
+js/badges.js             generated map of club -> real badge image URL
+js/crest.js              draws each club's badge; layers the real badge over it when online
+js/data.js               leagues, clubs, nations, positions, traits, legends, real stars
 js/util.js               RNG, maths, formatting
 js/state.js              world + player creation, contracts, save/load
 js/scenarios.js          the interactive match moments
@@ -224,6 +234,7 @@ node build.js
 Both packs are indexed by [allsvgicons.com](https://allsvgicons.com/); the build pulls them from
 the Iconify npm mirrors so it is reproducible.
 
-Club and competition names are used for flavour, and each club's crest is drawn by the game
-from its colours rather than reproducing a trademarked badge. The legends in the draft are
-invented, and all players, results and events are generated by the simulation.
+Club and competition names are used for flavour; each club also has a drawn crest from its
+colours, layered underneath its real badge image when one is reachable. The legends in the
+draft are invented; headline real players anchor the squads while the rest of each squad,
+all results and all events are generated by the simulation.

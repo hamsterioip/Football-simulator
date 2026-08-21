@@ -48,7 +48,10 @@ const ICONS = {
   // ui chrome
   'alert': 'alert', 'ok': 'check-circle', 'no': 'close-circle', 'back': 'arrow-left',
   'next': 'chevron-right', 'settings': 'cog', 'disk': 'content-save', 'exit': 'logout',
-  'up': 'trending-up', 'down': 'trending-down', 'info': 'information', 'clock': 'clock-outline'
+  'up': 'trending-up', 'down': 'trending-down', 'info': 'information', 'clock': 'clock-outline',
+  // extras
+  'goldenboot': 'trophy-award', 'sub': 'swap-horizontal-bold', 'varscreen': 'monitor',
+  'table': 'table-large', 'microphone': 'microphone-variant'
 };
 
 /* --- nations / league countries -> Circle Flags name --------------------- */
@@ -60,7 +63,15 @@ const FLAGS = {
   'Morocco': 'ma', 'Senegal': 'sn', 'Nigeria': 'ng', 'Japan': 'jp',
   'South Korea': 'kr', 'Norway': 'no', 'Sweden': 'se', 'Poland': 'pl',
   'Serbia': 'rs', 'Turkey': 'tr', 'Australia': 'au', 'Canada': 'ca',
-  'Ireland': 'ie', 'Ghana': 'gh'
+  'Ireland': 'ie', 'Ghana': 'gh',
+  // extra nations needed by the real star players
+  'Denmark': 'dk', 'Wales': 'gb-wls', 'Egypt': 'eg', 'Algeria': 'dz',
+  'Georgia': 'ge', 'Ecuador': 'ec', 'Slovenia': 'si', 'Switzerland': 'ch',
+  'Czechia': 'cz', 'Guinea': 'gn', 'Hungary': 'hu', 'Austria': 'at',
+  'Iceland': 'is', 'Ivory Coast': 'ci', 'Mali': 'ml', 'Chile': 'cl',
+  'Paraguay': 'py', 'Slovakia': 'sk', 'Jamaica': 'jm', 'Israel': 'il',
+  'Russia': 'ru', 'Venezuela': 've', 'Ukraine': 'ua', 'Cameroon': 'cm',
+  'Gabon': 'ga', 'Greece': 'gr'
 };
 
 function lookup(pack, name) {
