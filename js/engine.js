@@ -561,6 +561,7 @@
         Press.matchHeadline(g, m);
         Press.afterMatch(g, m);
         Press.monthly(g, m);
+        if (global.Social) global.Social.afterMatch(g, m, true);
         // injury from fatigue
         p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
         p.peakValue = Math.max(p.peakValue || 0, State.marketValue(p));
@@ -573,6 +574,7 @@
         p.fitness = U.clamp(p.fitness + 12, 0, 100);
         p.form = U.clamp(p.form - 2, 0, 100);
         if (m.role === 'out') p.morale = U.clamp(p.morale - 3, 0, 100);
+        if (global.Social) global.Social.afterMatch(g, m, false);
       }
 
       if (p.suspension > 0) p.suspension--;
@@ -957,6 +959,7 @@
         State.news(`${p.lastName} named ${a}`, 'good');
       });
       Press.seasonHeadline(g, results);
+      if (global.Social) global.Social.season(g, results);
 
       // development, then re-take the peaks so they include this summer's growth
       results.dev = Progress.seasonDevelopment(g);
@@ -999,6 +1002,7 @@
       if (p.intl.called && !wasCalled) {
         State.log(`You have been called up by ${p.nation} for the first time!`, 'good');
         State.news(`${p.lastName} earns a maiden ${p.nation} call-up`, 'good');
+        if (global.Social) global.Social.transfer(g, 'intl');
         results.notes.push('First international call-up!');
         State.addReputation(p, 6);
       } else if (!p.intl.called && wasCalled) {
@@ -1070,12 +1074,14 @@
     },
     accept(g, offer) {
       const p = g.player, oldClub = State.club(p.club), club = State.club(offer.clubId);
+      if (global.Social) global.Social.transfer(g, 'left');   // the old badge says goodbye first
       Contracts.joinClub(p, club, offer);
       g.squad = null; g.squadClub = null;
       Squad.ensure(g);
       State.log(`Signed for ${club.name} for ${U.cash(offer.fee)} — ${U.cash(offer.wage)}/week.`, 'good');
       State.news(`DONE DEAL: ${club.name} sign ${p.firstName} ${p.lastName} from ${oldClub.name} for ${U.cash(offer.fee)}`, 'good');
       State.addReputation(p, U.clamp((club.rating - oldClub.rating) * 0.6, 0, 10) + 2);
+      if (global.Social) global.Social.transfer(g, 'joined');
     }
   };
 

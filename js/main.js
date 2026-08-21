@@ -269,9 +269,37 @@
         case 'endSeason': return Game.endSeason();
         case 'retire': return Game.confirmRetire();
         case 'save': State.save(); return UI.toast('Career saved.', 'good');
+        case 'newsView': UI.newsView = arg; return UI.render();
+        case 'socialPost': return Game.socialPost();
         case 'matchLength': return Game.matchLengthMenu();
         case 'quit': return Game.quit();
       }
+    },
+
+    /* Your own account. One post a week, and the room answers back. */
+    socialPost() {
+      const g = State.game, S = global.Social;
+      if (!S.canPost(g)) {
+        return UI.toast('You have already posted this week. Let it breathe.', '');
+      }
+      UI.modal({
+        title: 'Post something',
+        html: `<p class="muted">${U.esc(S.compact(S.followers(g)))} people are about to read this.</p>
+          <div class="list">${S.POST_STYLES.map(st =>
+            `<div class="item click" data-ps="${st.id}"><div class="ic">${ico(st.icon)}</div>
+              <div class="tx"><b>${U.esc(st.label)}</b><span>${U.esc(st.hint)}</span></div></div>`).join('')}</div>`,
+        actions: [{ label: 'Not now', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-ps]').forEach(el => el.onclick = () => {
+            UI.closeModal();
+            const post = S.postAs(g, el.dataset.ps);
+            UI.tab = 'news'; UI.newsView = 'feed';
+            State.save();
+            UI.render();
+            if (post) UI.toast('Posted. ' + S.compact(post.likes) + ' likes already.', 'good');
+          });
+        }
+      });
     },
 
     simpleResult(res) {
@@ -494,6 +522,7 @@
         // the rest of the world keeps playing and the press keeps writing
         if (Engine.Press.buzz) Engine.Press.buzz(g);
         if (Engine.Press.world) Engine.Press.world(g);
+        if (global.Social) global.Social.weekly(g);
 
         // stop for things that are new, not for a state you are already in —
         // otherwise one long injury halts the skip on every single match
@@ -894,6 +923,7 @@
       if (ev) Game.showEvent(ev);
       else Engine.Press.buzz(g);
       Engine.Press.world(g);
+      if (global.Social) global.Social.weekly(g);
     },
 
     /* An off-field moment, presented like an on-pitch one: a card with the
@@ -1326,6 +1356,7 @@
         ? `TIME CALLED: ${you} forced to hang up his boots at ${p.age}`
         : `END OF AN ERA: ${you} announces his retirement from football`, 'info');
       State.news(`Tributes pour in for ${p.lastName}: ${p.career.apps} games, ${p.career.goals} goals, ${p.career.trophies.length} trophies`, 'good', null, 'legacy');
+      if (global.Social) global.Social.retire(g);
       if (p.career.clubs.length > 1)
         State.news(`From ${p.career.clubs[0]} to ${p.career.clubs[p.career.clubs.length - 1]}: ${p.lastName}'s journey in shirts`, 'info', null, 'shirt');
       if (p.intl.caps > 0)

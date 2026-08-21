@@ -343,14 +343,15 @@
 
     renderTabs() {
       const g = State.game;
-      const unread = g ? Math.max(0, (g.headlines || []).length - (g.newsSeen || 0)) : 0;
+      const written = g ? (g.newsCount || (g.headlines || []).length) + (g.feedCount || 0) : 0;
+      const unread = Math.max(0, written - (g && g.newsSeen || 0));
       $('tabbar').innerHTML = UI.tabsFor().map(t =>
         `<button class="${UI.tab === t.id ? 'on' : ''}" data-tab="${t.id}">${ico(t.icon)}${t.label}` +
         (t.id === 'news' && unread > 0 ? `<span class="tab-badge">${unread > 99 ? '99+' : unread}</span>` : '') +
         `</button>`).join('');
       $('tabbar').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
         UI.tab = b.dataset.tab;
-        if (UI.tab === 'news' && g) g.newsSeen = (g.headlines || []).length;
+        if (UI.tab === 'news' && g) g.newsSeen = written;
         UI.render();
       });
     },
@@ -648,14 +649,25 @@
 
     /* ---------------- PRESS ---------------- */
     tab_news() {
-      const g = State.game, p = g.player;
+      const g = State.game;
+      const view = UI.newsView || 'feed';
+      let html = `<div class="seg">
+        <button class="seg-b ${view === 'feed' ? 'on' : ''}" data-act="newsView" data-arg="feed">
+          ${ico('feed')} The Feed</button>
+        <button class="seg-b ${view === 'press' ? 'on' : ''}" data-act="newsView" data-arg="press">
+          ${ico('news')} Back pages</button>
+      </div>`;
+      return html + (view === 'press' ? UI.pressList(g) : UI.feedList(g));
+    },
+
+    /* the back pages, season by season */
+    pressList(g) {
       const heads = g.headlines || [];
       let html = `<div class="card tight"><h3>${ico('news')} Back pages</h3>
         <p class="dim" style="margin:0">What the press made of your career, season by season.</p></div>`;
       if (!heads.length) {
-        html += `<div class="card center"><p class="dim" style="margin:0">Nobody has written about you yet.
+        return html + `<div class="card center"><p class="dim" style="margin:0">Nobody has written about you yet.
           Do something worth reporting.</p></div>`;
-        return html;
       }
       let season = null;
       heads.forEach(h => {
@@ -669,6 +681,83 @@
           <div class="hl-t">${esc(h.t)}</div></div></div>`;
       });
       return html;
+    },
+
+    /* the timeline: everyone with an opinion about you */
+    feedList(g) {
+      const S = global.Social, p = g.player;
+      const me = S.you(p);
+      const posts = g.feed || [];
+      const trend = S.trending(g);
+      let html = `<div class="card tight me-card">
+        <div class="post-h">
+          ${UI.avatar(me.n, me.h, 'you')}
+          <div class="post-who"><div class="post-n"><b>${esc(me.n)}</b>${me.v ? UI.tick() : ''}</div>
+            <div class="post-sub">${esc(me.h)} · ${S.compact(S.followers(g))} followers</div></div>
+        </div>
+        <button class="btn btn-ghost btn-post${S.canPost(g) ? '' : ' spent'}" data-act="socialPost">
+          ${ico('send')} ${S.canPost(g) ? 'Post something' : 'You have posted this week'}</button>
+      </div>`;
+      if (trend.length) {
+        html += `<div class="card tight"><div class="trend-h">${ico('trend')} Trending</div>
+          <div class="trend">${trend.map(t => `<span class="hash">${esc(t)}</span>`).join('')}</div></div>`;
+      }
+      if (!posts.length) {
+        return html + `<div class="card center"><p class="dim" style="margin:0">Quiet in here.
+          Play some football and they will find you.</p></div>`;
+      }
+      posts.forEach(post => html += UI.post(g, post));
+      return html;
+    },
+
+    tick() { return `<span class="tick">${ico('verified')}</span>`; },
+
+    avatar(name, handle, kind, small) {
+      const S = global.Social;
+      if (kind === 'club') {
+        const club = Object.values(State.game.world.clubs).find(c => c.name === name);
+        if (club) return `<span class="av av-crest ${small ? 'sm' : ''}">${global.Crest.svg(club.name)}</span>`;
+      }
+      const h = S.hue(handle || name);
+      const cls = 'av' + (small ? ' sm' : '') + (kind === 'you' ? ' av-you' : '');
+      return `<span class="${cls}" style="--ah:${h}">${esc(S.initials(name))}</span>`;
+    },
+
+    post(g, post) {
+      const S = global.Social;
+      const w = post.who || {};
+      let html = `<div class="card post ${post.tone || 'info'}${post.mine ? ' mine' : ''}">
+        <div class="post-h">
+          ${UI.avatar(w.n, w.h, w.kind)}
+          <div class="post-who">
+            <div class="post-n"><b>${esc(w.n)}</b>${w.v ? UI.tick() : ''}
+              <span class="kind-tag k-${w.kind}">${UI.kindLabel(w.kind)}</span></div>
+            <div class="post-sub">${esc(w.h)} · ${S.when(g, post)}${w.bio ? ' · ' + esc(w.bio) : ''}</div>
+          </div>
+        </div>
+        <div class="post-t">${esc(post.t)}</div>`;
+      if ((post.tags || []).length)
+        html += `<div class="post-tags">${post.tags.map(t => `<span class="hash sm">${esc(t)}</span>`).join('')}</div>`;
+      html += `<div class="post-meta">
+          <span>${ico('reply')} ${(post.replies || []).length}</span>
+          <span>${ico('repost')} ${S.compact(post.reposts || 0)}</span>
+          <span class="likes">${ico('like')} ${S.compact(post.likes || 0)}</span>
+        </div>`;
+      if ((post.replies || []).length) {
+        html += `<div class="post-replies">` + post.replies.map(r => `<div class="reply">
+          ${UI.avatar(r.who.n, r.who.h, r.who.kind, true)}
+          <div class="reply-b"><div class="reply-n"><b>${esc(r.who.n)}</b>${r.who.v ? UI.tick() : ''}
+            <span class="dim">${esc(r.who.h)}</span></div>
+          <div class="reply-t">${esc(r.t)}</div>
+          <div class="reply-m">${ico('like')} ${S.compact(r.likes || 0)}</div></div>
+        </div>`).join('') + `</div>`;
+      }
+      return html + `</div>`;
+    },
+
+    kindLabel(kind) {
+      return { fan: 'fan', rival: 'rival fan', journo: 'reporter', pundit: 'pundit',
+        club: 'club', fantv: 'fan channel', stats: 'stats', you: 'you' }[kind] || 'fan';
     },
 
     /* ---------------- LEGACY ---------------- */

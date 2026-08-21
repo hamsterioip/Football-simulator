@@ -167,6 +167,7 @@
     news(headline, kind, source, icon) {
       const g = State.game; if (!g) return;
       g.headlines = g.headlines || [];
+      g.newsCount = (g.newsCount || 0) + 1;
       g.headlines.unshift({ t: headline, k: kind || 'info', season: g.world.year,
                             src: source || U.pick(State.PAPERS), ic: icon || State.newsIcon(headline) });
       if (g.headlines.length > 140) g.headlines.length = 140;

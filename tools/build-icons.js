@@ -51,7 +51,11 @@ const ICONS = {
   'up': 'trending-up', 'down': 'trending-down', 'info': 'information', 'clock': 'clock-outline',
   // extras
   'goldenboot': 'trophy-award', 'sub': 'swap-horizontal-bold', 'varscreen': 'monitor',
-  'table': 'table-large', 'microphone': 'microphone-variant'
+  'table': 'table-large', 'microphone': 'microphone-variant',
+  // the social feed
+  'like': 'heart', 'reply': 'comment-outline', 'repost': 'repeat-variant',
+  'verified': 'check-decagram', 'hash': 'pound', 'send': 'send',
+  'feed': 'at', 'eye': 'eye-outline', 'trend': 'trending-up', 'quote': 'format-quote-close'
 };
 
 /* --- nations / league countries -> Circle Flags name --------------------- */

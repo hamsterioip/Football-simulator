@@ -275,6 +275,72 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 .toast.gold{border-color:var(--gold);color:var(--gold)}
 @keyframes toastin{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
 
+/* ---------- the feed ---------- */
+.seg{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:5px;margin-bottom:12px}
+.seg-b{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:0;
+  color:var(--muted);font:800 12.5px/1 inherit;padding:10px 6px;border-radius:9px;cursor:pointer;
+  font-family:inherit;letter-spacing:.2px}
+.seg-b .ic{width:15px;height:15px}
+.seg-b.on{background:var(--card2);color:var(--txt);box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
+.seg-n{background:rgba(255,255,255,.1);border-radius:999px;padding:1px 6px;font-size:10.5px}
+
+.me-card .post-h{margin-bottom:10px}
+.btn-post{width:100%;justify-content:center}
+.btn-post.spent{color:var(--dim);opacity:.7}
+
+.trend-h{display:flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:1.1px;
+  text-transform:uppercase;color:var(--dim);font-weight:800;margin-bottom:8px}
+.trend-h .ic{width:14px;height:14px}
+.trend{display:flex;flex-wrap:wrap;gap:6px}
+.hash{background:rgba(90,168,255,.14);color:var(--blue);border-radius:8px;padding:4px 9px;
+  font-size:12px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hash.sm{font-size:11px;padding:3px 7px}
+
+.av{flex:0 0 38px;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:13px;font-weight:800;color:#0b1220;
+  background:linear-gradient(160deg,hsl(var(--ah,210) 70% 68%),hsl(var(--ah,210) 62% 46%))}
+.av.sm{flex-basis:26px;width:26px;height:26px;font-size:10px}
+.av-you{box-shadow:0 0 0 2px var(--green)}
+.av-crest{background:none;color:inherit}
+.av-crest .crest{width:38px;height:38px}
+.av.sm.av-crest .crest{width:26px;height:26px}
+
+.post{padding:14px}
+.post.good,.post.bad,.post.hot,.post.mine{color:var(--txt)}
+.post-h{display:flex;gap:10px;align-items:center}
+.post-who{min-width:0;flex:1}
+.post-n{display:flex;align-items:center;gap:4px;font-size:13.5px;flex-wrap:wrap}
+.post-n b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+.post-sub{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tick{display:inline-flex;color:var(--blue)}
+.tick .ic{width:13px;height:13px}
+.kind-tag{font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;font-weight:800;
+  border-radius:999px;padding:2px 6px;background:rgba(255,255,255,.07);color:var(--dim)}
+.k-rival{background:rgba(255,90,106,.16);color:var(--red)}
+.k-club{background:rgba(90,168,255,.16);color:var(--blue)}
+.k-journo,.k-pundit{background:rgba(180,131,255,.16);color:var(--purple)}
+.k-you{background:rgba(34,224,122,.16);color:var(--green)}
+.post-t{margin-top:10px;font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.post-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.post-meta{display:flex;gap:16px;margin-top:11px;font-size:11.5px;color:var(--dim);font-weight:700}
+.post-meta .ic{width:14px;height:14px;vertical-align:-2px}
+.post-meta .likes{color:#ff7a92}
+.post.good{border-left:3px solid rgba(34,224,122,.55)}
+.post.bad{border-left:3px solid rgba(255,90,106,.55)}
+.post.hot{border-left:3px solid rgba(255,201,77,.6)}
+.post.mine{border-left:3px solid var(--green);background:linear-gradient(180deg,rgba(34,224,122,.07),transparent 40%)}
+.post-replies{margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.06);
+  display:flex;flex-direction:column;gap:11px}
+.reply{display:flex;gap:8px}
+.reply-b{min-width:0;flex:1}
+.reply-n{display:flex;align-items:center;gap:5px;font-size:12px}
+.reply-n b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+.reply-n .dim{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reply-t{font-size:12.5px;line-height:1.4;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+.reply-m{font-size:10.5px;color:var(--dim);margin-top:4px;font-weight:700}
+.reply-m .ic{width:12px;height:12px;vertical-align:-2px}
+
 /* ---------- misc ---------- */
 .section-title{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);
   margin:16px 0 8px;font-weight:700}
