@@ -101,14 +101,14 @@ fighting a better player for the shirt.
 ### Play the moments, not the match
 Matches simulate around you and stop for the decisions you would actually be judged on:
 
-**46 different moments**, each with two to six real options:
+**52 different moments**, each with two to six real options:
 
 | | |
 |---|---|
-| **Attacking** | One-on-one · edge of the box · header from a cross · volley at the back post · back to goal · tight angle on the byline · one-two on the edge · overhead kick · the keeper is stranded · rebound in the six-yard box · long range · the ninety-first minute |
-| **On the ball** | Isolated 1v1 · three-on-two break · switching play · pressing trigger · fifty-fifty in the middle |
-| **Set pieces** | Penalty (six placements, including the Panenka) · free kick · corner · take it quickly · **shootouts you take yourself** |
-| **Defending** | Last man back · aerial duel · playing out of your own box · offside trap · man-marking their best player · blocking the shot · the recovery run · protecting a lead |
+| **Attacking** | One-on-one · edge of the box · header from a cross · volley at the back post · back to goal · tight angle on the byline · one-two on the edge · overhead kick · the keeper is stranded · rebound in the six-yard box · long range · the backheel · the flick-on · the ninety-first minute |
+| **On the ball** | Isolated 1v1 · three-on-two break · switching play · pressing trigger · fifty-fifty in the middle · the nutmeg · the overlapping run |
+| **Set pieces** | Penalty (six placements, including the Panenka) · free kick · corner · take it quickly · the quick throw · **shootouts you take yourself** |
+| **Defending** | Last man back · aerial duel · playing out of your own box · offside trap · man-marking their best player · blocking the shot · the recovery run · protecting a lead · the goal-line clearance |
 | **Goalkeeping** | One-v-one · crosses · distribution · facing a penalty · sweeping behind the line · shots from distance · setting the wall · a back pass under pressure |
 | **Everything else** | Contact in the box · referee flashpoint · he's on a hat-trick · playing through a twinge · being substituted · a team-mate down · a hostile away end · your celebration |
 
