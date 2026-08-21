@@ -30,17 +30,34 @@ It is built mobile-first — designed at phone width and tested with touch input
 - Sized to the *visible* viewport (`dvh`), so a mobile URL bar never covers the controls
 - No double-tap zoom delay, and pull-to-refresh won't yank the page mid-match
 
-**Getting it onto a phone:**
+**Getting it onto a phone.** The GitHub app renders these files as text — it cannot run
+them — so the game needs to come from somewhere that serves it as a web page:
 
-1. **GitHub Pages (easiest).** In this repo: *Settings → Pages → Source: Deploy from a
-   branch*, pick this branch and `/ (root)`. A minute later it is live at
-   `https://<user>.github.io/Football-simulator/` — open that on your phone.
-2. **Same Wi-Fi.** Run `python3 -m http.server 8000` on your computer and visit
+1. **One downloadable file (no setup, works offline).** `play.html` is the entire game —
+   markup, styles and all eight scripts inlined into a single self-contained page with no
+   external requests of any kind. Open it in a mobile browser signed in to GitHub, tap
+   *Download raw file*, then open the download from Files (iOS) or Downloads (Android).
+   It plays offline from then on.
+2. **GitHub Pages.** `.github/workflows/pages.yml` deploys the game automatically — it
+   enables Pages through the API on its first run, so there are no repository settings to
+   visit from a phone. The job is skipped while the repository is private, because Pages
+   for private repositories needs a paid plan; make the repository public and the next
+   push publishes to `https://<user>.github.io/Football-simulator/`.
+3. **Same Wi-Fi.** Run `python3 -m http.server 8000` on your computer and visit
    `http://<your-computer-ip>:8000` on your phone.
 
 Then use **Add to Home Screen** (Share menu on iOS, browser menu on Android). It installs
 with its own icon and launches fullscreen with no browser chrome — a web app manifest and
 the iOS meta tags are included.
+
+### Rebuilding the single file
+
+`play.html` and `dist/artifact.html` are generated. After changing anything under `js/` or
+`css/`, run:
+
+```bash
+node build.js
+```
 
 ---
 
@@ -116,6 +133,9 @@ burnout, a wonderkid arriving in your position, a relative asking for money.
 
 ```
 index.html               markup shell
+play.html                generated: the whole game as one self-contained file
+build.js                 inlines css + js into play.html and dist/artifact.html
+.github/workflows/       GitHub Pages deployment
 manifest.webmanifest     add-to-home-screen / installable web app
 icon.svg, *.png          app icons (SVG source + rendered PNG sizes)
 css/styles.css           dark, mobile-first stylesheet
