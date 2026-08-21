@@ -864,6 +864,49 @@
       });
     },
 
+    /* A penalty is aimed at the goal rather than picked from a list. */
+    renderPenalty(scn, onAim) {
+      $('match-action').innerHTML = `<div class="scn">
+        <div class="scn-h"><div class="art">${ico(scn.art || 'penalty')}</div><b>${esc(scn.title)}</b></div>
+        <div class="scn-sub">${esc(scn.sub || '')}</div>
+        <div class="goal-wrap">${global.Pitch.view({ aim: true })}</div>
+        <p class="goal-hint">Pick your corner. Top of the goal is harder to reach — and harder to save.</p>
+        <div class="goal-verdict" id="goal-verdict"></div>
+      </div>`;
+      const root = $('match-action').querySelector('.goal-view');
+      global.Pitch.reset(root);
+      global.Pitch.onAim(root, zone => onAim(zone, root));
+    },
+
+    // the same goal, watched from the keeper's end
+    renderKeeperCall(scn, onChoose) {
+      $('match-action').innerHTML = `<div class="scn">
+        <div class="scn-h"><div class="art">${ico(scn.art || 'save')}</div><b>${esc(scn.title)}</b></div>
+        <div class="scn-sub">${esc(scn.sub || '')}</div>
+        <div class="goal-wrap">${global.Pitch.view({ aim: false })}</div>
+        <div class="choices${scn.options.length >= 5 ? ' cols' : ''}">${scn.options.map((o, i) =>
+          `<button class="choice" data-ci="${i}">
+            <div class="cb"><b>${esc(o.label)}</b><span>${esc(o.hint || '')}</span></div>
+            ${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}</button>`).join('')}</div>
+        <div class="goal-verdict" id="goal-verdict"></div>
+      </div>`;
+      const root = $('match-action').querySelector('.goal-view');
+      global.Pitch.reset(root);
+      $('match-action').querySelectorAll('[data-ci]').forEach(b => {
+        b.onclick = () => {
+          $('match-action').querySelectorAll('.choice').forEach(c => c.disabled = true);
+          onChoose(+b.dataset.ci, root);
+        };
+      });
+    },
+
+    verdict(text, kind) {
+      const el = $('goal-verdict');
+      if (el) { el.textContent = text; el.className = 'goal-verdict ' + (kind || ''); }
+      const hint = document.querySelector('.goal-hint');
+      if (hint && text) hint.style.display = 'none';
+    },
+
     renderMatchButtons(buttons) {
       $('match-action').innerHTML = `<div class="row">` + buttons.map((b, i) =>
         `<button class="btn ${b.cls || 'btn-primary'} grow" data-bi="${i}">${b.label}</button>`).join('') + `</div>`;

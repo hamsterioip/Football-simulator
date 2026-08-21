@@ -603,11 +603,75 @@
         return;
       }
       if (r.type === 'scenario') {
+        if (r.scenario.id === 'penalty') {
+          UI.renderPenalty(r.scenario, (zone, root) => Game.takePenalty(r.scenario, zone, root, () => Game.runMatch()));
+          return;
+        }
+        if (r.scenario.id === 'gk_penalty') {
+          UI.renderKeeperCall(r.scenario, (i, root) => Game.keeperCall(r.scenario, i, root, () => Game.runMatch()));
+          return;
+        }
         UI.renderScenario(r.scenario, i => Game.choose(r.scenario, i));
         return;
       }
       if (r.type === 'shootout') { Game.startShootout(); return; }
       if (r.type === 'end') { Game.matchSummary(m); return; }
+    },
+
+    /* Aim, watch the kick, then apply what it did. `after` is what to do once
+       the animation and the outcome have been shown. */
+    takePenalty(scn, zone, root, after) {
+      const g = State.game, m = Game.match;
+      const label = global.Pitch.ZONES[zone].label;
+      const index = scn.options.findIndex(o => o.label === label);
+      if (index < 0) return;
+      const opt = scn.options[index];
+      const fx = Scenarios.resolve(scn, index);
+      const how = fx.how || (fx.goal ? 'goal' : 'saved');
+      const dive = Game.keeperGuess(zone, how);
+      UI.verdict('', '');
+      global.Pitch.kick(root, zone, dive, how, () => {
+        UI.verdict(how === 'goal' ? 'GOAL' : how === 'saved' ? 'SAVED' : 'MISSED', how);
+        const out = Engine.Match.applyEffects(g, m, fx, Scenarios.styleOf(scn, opt));
+        UI.pushEvent(`${opt.label} → ${fx.text}`, fx.tone, m.minute, true);
+        UI.renderScoreboard(m);
+        out.forEach(o => {
+          if (o.indexOf('attr:') === 0) UI.toast(`${D.ATTR_LABEL[o.slice(5)]} improved!`, 'good');
+          if (o === 'red') UI.toast('SENT OFF', 'bad');
+        });
+        if (fx.goal) UI.toast('GOAL!', 'gold');
+        setTimeout(after, 700);
+      });
+    },
+
+    // where the keeper went, chosen to match what actually happened
+    keeperGuess(zone, how) {
+      const side = zone === 'TL' || zone === 'BL' ? 'left'
+                 : zone === 'TR' || zone === 'BR' ? 'right' : 'centre';
+      if (how === 'saved') return side === 'centre' ? 'centre' : side;
+      // beaten: he commits the wrong way, which is what the commentary says he did
+      if (side === 'centre') return U.chance(0.5) ? 'left' : 'right';
+      return side === 'left' ? 'right' : 'left';
+    },
+
+    keeperCall(scn, index, root, after) {
+      const g = State.game, m = Game.match;
+      const opt = scn.options[index];
+      const fx = Scenarios.resolve(scn, index);
+      const saved = !!fx.save;
+      const dive = /left/i.test(opt.label) ? 'left' : /right/i.test(opt.label) ? 'right' : 'centre';
+      // if he saved it the ball went where he dived; if not, the other way
+      const zone = saved
+        ? (dive === 'left' ? U.pick(['TL', 'BL']) : dive === 'right' ? U.pick(['TR', 'BR']) : U.pick(['TC', 'BC']))
+        : (dive === 'left' ? U.pick(['TR', 'BR']) : dive === 'right' ? U.pick(['TL', 'BL']) : U.pick(['TL', 'TR', 'BL', 'BR']));
+      UI.verdict('', '');
+      global.Pitch.kick(root, zone, dive, saved ? 'saved' : 'goal', () => {
+        UI.verdict(saved ? 'SAVED' : 'GOAL', saved ? 'goal' : 'saved');
+        Engine.Match.applyEffects(g, m, fx, Scenarios.styleOf(scn, opt));
+        UI.pushEvent(`${opt.label} → ${fx.text}`, fx.tone, m.minute, true);
+        UI.renderScoreboard(m);
+        setTimeout(after, 700);
+      });
     },
 
     choose(scn, index) {
@@ -645,16 +709,19 @@
       Game.shootoutNext();
     },
 
+    /* Is the shootout over? Best of five until both have taken five, then
+       sudden death — and a shootout can never finish level. */
     shootoutDecided(s) {
-      const remainingUs = Math.max(0, 5 - s.round - (s.pendingUs ? 0 : 0));
-      if (s.round >= 5) {
-        if (s.usKicks === s.themKicks && s.us !== s.them) return true;
+      const us = s.usKicks || 0, them = s.themKicks || 0;
+      if (us < 5 || them < 5) {
+        // an unassailable lead with kicks still to come
+        const usLeft = Math.max(0, 5 - us), themLeft = Math.max(0, 5 - them);
+        if (s.us > s.them + themLeft) return true;
+        if (s.them > s.us + usLeft) return true;
         return false;
       }
-      const usLeft = 5 - (s.usKicks || 0), themLeft = 5 - (s.themKicks || 0);
-      if (s.us > s.them + themLeft) return true;
-      if (s.them > s.us + usLeft) return true;
-      return false;
+      // sudden death: only once both have taken the same number of kicks
+      return us === them && s.us !== s.them;
     },
 
     shootoutNext() {
@@ -662,7 +729,6 @@
       s.usKicks = s.usKicks || 0; s.themKicks = s.themKicks || 0;
 
       if (Game.shootoutDecided(s)) return Game.endShootout();
-      if (s.usKicks >= 5 && s.themKicks >= 5 && s.usKicks === s.themKicks && s.us !== s.them) return Game.endShootout();
 
       const ourTurn = s.usKicks <= s.themKicks;
       if (ourTurn) {
@@ -673,13 +739,20 @@
           const kick = Scenarios.shootoutKick(Object.assign(ctx, {
             shootoutSub: `Shootout ${s.us}–${s.them}. Kick ${s.usKicks + 1}. Eighty thousand people are watching you.`
           }));
-          UI.renderScenario(kick, i => {
+          UI.renderPenalty(kick, (zone, root) => {
+            const label = global.Pitch.ZONES[zone].label;
+            const i = kick.options.findIndex(o => o.label === label);
+            if (i < 0) return;
             const fx = Scenarios.resolve(kick, i);
+            const how = fx.how || (fx.goal ? 'goal' : 'saved');
             s.usKicks++;
             if (fx.goal) { s.us++; g.player.penScored = (g.player.penScored || 0) + 1; }
-            UI.pushEvent(`${kick.options[i].label} → ${fx.text}`, fx.tone, null, true);
-            Game.shootoutScore();
-            setTimeout(() => Game.shootoutNext(), 500);
+            global.Pitch.kick(root, zone, Game.keeperGuess(zone, how), how, () => {
+              UI.verdict(how === 'goal' ? 'SCORED' : how === 'saved' ? 'SAVED' : 'MISSED', how);
+              UI.pushEvent(`${kick.options[i].label} → ${fx.text}`, fx.tone, null, true);
+              Game.shootoutScore();
+              setTimeout(() => Game.shootoutNext(), 900);
+            });
           });
           return;
         }
@@ -701,17 +774,25 @@
               { label: 'Wait and react', hint: 'Reactions over guesswork.', tag: 'Reflex' }
             ]
           };
-          UI.renderScenario(dive, i => {
+          UI.renderKeeperCall(dive, (i, root) => {
             const gk = g.player.attrs.gk;
             let saveP = i === 3 ? 0.14 + (gk - 60) * 0.004 : i === 2 ? 0.13 : 0.24 + (gk - 60) * 0.003;
             const saved = U.chance(U.clamp(saveP, 0.05, 0.55));
             s.themKicks++;
             if (!saved) s.them++;
-            UI.pushEvent(saved ? `${dive.options[i].label} — SAVED! You are a hero.` : `${dive.options[i].label} — he scores.`,
-              saved ? 'good' : 'bad', null, true);
             if (saved) m.stats.saves++;
-            Game.shootoutScore();
-            setTimeout(() => Game.shootoutNext(), 500);
+            const label = dive.options[i].label;
+            const way = /left/i.test(label) ? 'left' : /right/i.test(label) ? 'right' : 'centre';
+            const zone = saved
+              ? (way === 'left' ? U.pick(['TL', 'BL']) : way === 'right' ? U.pick(['TR', 'BR']) : U.pick(['TC', 'BC']))
+              : (way === 'left' ? U.pick(['TR', 'BR']) : way === 'right' ? U.pick(['TL', 'BL']) : U.pick(['TL', 'TR', 'BL', 'BR']));
+            global.Pitch.kick(root, zone, way, saved ? 'saved' : 'goal', () => {
+              UI.verdict(saved ? 'SAVED' : 'HE SCORES', saved ? 'goal' : 'saved');
+              UI.pushEvent(saved ? `${label} — SAVED! You are a hero.` : `${label} — he scores.`,
+                saved ? 'good' : 'bad', null, true);
+              Game.shootoutScore();
+              setTimeout(() => Game.shootoutNext(), 900);
+            });
           });
           return;
         }
@@ -970,8 +1051,19 @@
         Game.timer = setTimeout(() => Game.runMatchIntl(), 850);
         return;
       }
-      if (r.type === 'scenario') { UI.renderScenario(r.scenario, i => { Game.choose(r.scenario, i);
-        UI.renderMatchButtons([{ label: 'Play on ▶', onClick: () => Game.runMatchIntl() }]); }); return; }
+      if (r.type === 'scenario') {
+        if (r.scenario.id === 'penalty') {
+          UI.renderPenalty(r.scenario, (zone, root) => Game.takePenalty(r.scenario, zone, root, () => Game.runMatchIntl()));
+          return;
+        }
+        if (r.scenario.id === 'gk_penalty') {
+          UI.renderKeeperCall(r.scenario, (i, root) => Game.keeperCall(r.scenario, i, root, () => Game.runMatchIntl()));
+          return;
+        }
+        UI.renderScenario(r.scenario, i => { Game.choose(r.scenario, i);
+          UI.renderMatchButtons([{ label: 'Play on ▶', onClick: () => Game.runMatchIntl() }]); });
+        return;
+      }
       if (r.type === 'shootout') { Game.startShootout(); return; }
       if (r.type === 'end') { Game.intlRecord(m); Game.matchSummary(m); }
     },

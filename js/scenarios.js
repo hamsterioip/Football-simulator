@@ -314,9 +314,9 @@
               text: icon ? 'You chip it straight down the middle as he dives. Absolute audacity — and it works.'
                          : 'Sent the keeper the wrong way. Cool as you like.' });
           }
-          if (U.chance(0.45)) return E({ rating: -1.4, morale: -8, tone: BAD, rep: -0.5,
+          if (U.chance(0.45)) return E({ rating: -1.4, morale: -8, tone: BAD, rep: -0.5, how: 'saved',
             text: 'SAVED! He guessed right and pushed it away. You cannot look up.' });
-          return E({ rating: -1.5, morale: -10, tone: BAD, rep: -0.5,
+          return E({ rating: -1.5, morale: -10, tone: BAD, rep: -0.5, how: 'missed',
             text: 'You drag it wide of the post. That will be on every highlight show tonight.' });
         })
       };
@@ -2168,10 +2168,16 @@
         title: 'Penalty shootout',
         sub: ctx.shootoutSub || 'Your turn. The whole season comes down to this.',
         art: 'penalty',
-        options: penaltyOptions(ctx, scored => E({
-          goal: scored, tone: scored ? GOOD : BAD,
-          text: scored ? 'Buried it. You do not even look at the keeper.' : 'Saved! You sink to your knees.'
-        }))
+        options: penaltyOptions(ctx, scored => {
+          const saved = !scored && U.chance(0.62);
+          return E({
+            goal: scored, tone: scored ? GOOD : BAD,
+            how: scored ? 'goal' : (saved ? 'saved' : 'missed'),
+            text: scored ? 'Buried it. You do not even look at the keeper.'
+                 : saved ? 'Saved! He got a strong hand to it and you sink to your knees.'
+                         : 'You blaze it over the bar. You cannot bring yourself to look up.'
+          });
+        })
       };
     },
 
