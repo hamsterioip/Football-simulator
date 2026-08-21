@@ -79,6 +79,7 @@
     startWizard() {
       UI.wizard = {
         step: 0,
+        era: 'modern',
         firstName: U.pick(D.NAMES.England.first),
         lastName: U.pick(D.NAMES.England.last),
         nation: 'England',
@@ -92,7 +93,7 @@
       UI.renderWizard();
     },
 
-    STEPS: ['Identity', 'Position', 'The Draft', 'Club'],
+    STEPS: ['Era', 'Identity', 'Position', 'The Draft', 'Club'],
 
     startDraft() {
       const w = UI.wizard;
@@ -112,6 +113,22 @@
       const body = $('create-body');
 
       if (w.step === 0) {
+        body.innerHTML = `
+          <h2 class="wz-h">Pick your era</h2>
+          <p class="wz-p">Which football world do you want to be born into? It decides who you
+            play alongside, who you play against, and how hard all of it is.</p>
+          <div class="era-list">${D.ERAS.map(e => `
+            <div class="era ${w.era === e.id ? 'sel' : ''}" data-era="${e.id}">
+              <div class="era-top">${ico(e.icon, 'era-icon')}
+                <div><b>${esc(e.name)}</b><span>${esc(e.years)}</span></div>
+              </div>
+              <p>${esc(e.blurb)}</p>
+            </div>`).join('')}</div>`;
+        body.querySelectorAll('[data-era]').forEach(el => el.onclick = () => {
+          w.era = el.dataset.era; UI.renderWizard();
+        });
+
+      } else if (w.step === 1) {
         body.innerHTML = `
           <h2 class="wz-h">Who are you?</h2>
           <p class="wz-p">Every career starts with a name on a team sheet.</p>
@@ -141,7 +158,7 @@
         body.querySelector('#w-shirt').oninput = e => w.shirt = U.clamp(parseInt(e.target.value, 10) || 10, 1, 99);
         UI.optGroup(body, 'foot', v => { w.foot = v; UI.renderWizard(); });
 
-      } else if (w.step === 1) {
+      } else if (w.step === 2) {
         body.innerHTML = `
           <h2 class="wz-h">Pick your position</h2>
           <p class="wz-p">This decides the moments you will face — and what you will be judged on.</p>
@@ -154,11 +171,11 @@
           </div>`;
         UI.optGroup(body, 'pos', v => { w.pos = v; w.draftPool = null; UI.renderWizard(); });
 
-      } else if (w.step === 2) {
+      } else if (w.step === 3) {
         if (!w.draftPool) UI.startDraft();
         const legend = w.draftPool[w.draftIndex];
         const done = w.draftIndex >= w.draftPool.length;
-        if (done || !legend) { w.step = 3; return UI.renderWizard(); }
+        if (done || !legend) { w.step = 4; return UI.renderWizard(); }
         const takenAttrs = w.robbed.map(r => r.attr);
         body.innerHTML = `
           <h2 class="wz-h">Rob a legend</h2>
@@ -194,7 +211,7 @@
             w.caps[a] = legend.attrs[a];
             w.robbed.push({ attr: a, value: legend.attrs[a], from: legend.name });
             w.draftIndex++;
-            if (w.draftIndex >= w.draftPool.length) w.step = 3;
+            if (w.draftIndex >= w.draftPool.length) w.step = 4;
             UI.renderWizard();
           };
         });
@@ -207,9 +224,15 @@
         });
         w.preview = preview;
         const potential = State.potentialOverall(preview);
-        const maxRating = Math.round(U.clamp(46 + potential * 0.5, 62, 93));
-        const world = State.buildWorld(D.CONFIG.SEASON_START_YEAR);
+        const world = State.buildWorld(D.CONFIG.SEASON_START_YEAR, w.era);
         UI.previewWorld = world;
+        // Which clubs would take a teenager depends on the world you are in: in the
+        // Golden Era the weakest club on earth is rated 84, so the gate is relative
+        // to what this era actually contains rather than an absolute number.
+        const allRatings = Object.values(world.clubs).map(c => c.rating);
+        const lo = Math.min.apply(null, allRatings), hi = Math.max.apply(null, allRatings);
+        const frac = U.clamp((potential - 55) / 40, 0, 1);
+        const maxRating = Math.round(lo + (hi - lo) * frac) + 2;
         body.innerHTML = `
           <h2 class="wz-h">Sign your first contract</h2>
           <div class="card tight preview-card">
@@ -249,8 +272,8 @@
       }
 
       $('create-back').textContent = w.step === 0 ? 'Cancel' : 'Back';
-      $('create-next').textContent = w.step === 3 ? 'Start Career' : 'Next';
-      $('create-next').classList.toggle('hidden', w.step === 2);
+      $('create-next').textContent = w.step === 4 ? 'Start Career' : 'Next';
+      $('create-next').classList.toggle('hidden', w.step === 3);
     },
 
     optGroup(root, group, cb) {
@@ -476,6 +499,8 @@
           ${crest(club.name, 'crest-xl')}
           <div class="grow"><b style="font-size:18px">${esc(club.name)}</b>
             <div class="dim">${flag(club.country, 'sm')} ${esc(State.league(club.league).name)}</div>
+            ${(() => { const e = global.Eras.byId(g.era);
+              return e.id === 'modern' ? '' : `<span class="era-badge">${ico(e.icon)} ${esc(e.name)} · ${esc(e.years)}</span>`; })()}
             ${UI.formGuide(club)}</div>
         </div>
         <div class="stat-grid">
@@ -620,11 +645,13 @@
       const Career = global.Career;
       const score = Career.legacyScore(g);
       const rank = Career.legacyRank(score);
+      const era = global.Eras.byId(g.era);
       let html = `<div class="card center">
         <span class="dim">LEGACY SCORE</span>
         <div class="big-num">${score}</div>
         <div class="gold rank-title">${rank.title}</div>
         <div class="dim" style="margin-top:6px">${esc(rank.desc)}</div>
+        <div style="margin-top:9px"><span class="era-badge">${ico(era.icon)} ${esc(era.name)} era · ${esc(era.years)}</span></div>
       </div>`;
 
       html += `<div class="card"><h3>Career at a glance</h3><div class="stat-grid">

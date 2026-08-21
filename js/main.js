@@ -64,23 +64,23 @@
     wizardBack() {
       const w = UI.wizard;
       if (!w || w.step === 0) { UI.show('start'); return; }
-      if (w.step === 2 && w.draftIndex > 0) {   // undo the last steal
+      if (w.step === 3 && w.draftIndex > 0) {   // undo the last steal
         const undo = w.robbed.pop();
         if (undo) delete w.caps[undo.attr];
         w.draftIndex--;
         return UI.renderWizard();
       }
-      if (w.step === 3) { w.step = 2; w.draftPool = null; return UI.renderWizard(); }
+      if (w.step === 4) { w.step = 3; w.draftPool = null; return UI.renderWizard(); }
       w.step--; UI.renderWizard();
     },
     wizardNext() {
       const w = UI.wizard;
-      if (w.step === 0) {
+      if (w.step === 1) {
         w.firstName = (w.firstName || '').trim() || U.pick(D.FIRST_NAMES);
         w.lastName = (w.lastName || '').trim() || U.pick(D.LAST_NAMES);
       }
-      if (w.step === 2) return;            // the draft advances itself, pick by pick
-      if (w.step < 3) { w.step++; UI.renderWizard(); return; }
+      if (w.step === 3) return;            // the draft advances itself, pick by pick
+      if (w.step < 4) { w.step++; UI.renderWizard(); return; }
       if (!w.clubId) { UI.toast('Pick a club to start at.', 'bad'); return; }
       Game.startCareer();
     },
@@ -90,7 +90,7 @@
       const g = State.newGame({
         firstName: w.firstName, lastName: w.lastName, nation: w.nation,
         pos: w.pos, foot: w.foot, shirt: w.shirt, age: 17,
-        caps: w.caps, draft: w.robbed
+        caps: w.caps, draft: w.robbed, era: w.era
       }, w.clubId);
       g.settings.matchLength = 'normal';
       g.contQualified = false;

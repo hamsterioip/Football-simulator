@@ -16,9 +16,12 @@
       const R = club.rating;
       const shape = FORMATION.concat(['GK', 'CB', 'CM', 'CM', 'RW', 'ST', 'LB']);
       const seen = new Set(); // no two squad-mates with the same name
+      // in the Golden Era the players who are not legends are still world class
+      const golden = State.game && State.game.era === 'golden';
       const squad = shape.map((pos, i) => {
         const starter = i < 11;
-        const ovr = Math.round(U.clamp(R + (starter ? U.gauss(1, 3.5) : U.gauss(-7, 4)), 40, 96));
+        let ovr = Math.round(U.clamp(R + (starter ? U.gauss(1, 3.5) : U.gauss(-7, 4)), 40, 96));
+        if (golden) ovr = Math.round(U.clamp(Math.max(ovr, R - 3) + U.gauss(2, 2.5), 78, 95));
         let who = global.Names.person(club.country);
         for (let t = 0; t < 8 && seen.has(who.name); t++) who = global.Names.person(club.country);
         seen.add(who.name);
@@ -37,7 +40,7 @@
     // swap the club's real headline players into the generated squad, taking
     // over slots that match their position — starters first
     overlayStars(squad, club) {
-      const stars = (global.DATA.REAL_STARS || {})[club.name];
+      const stars = global.Eras.starsFor(State.game, club.name);
       if (!stars) return;
       const used = new Set();
       stars.forEach(st => {
@@ -745,7 +748,7 @@
     /* A club's real goal threat, used to seed the scoring charts.
        Returns null when the club has no stars on file or none who score. */
     starScorerFor(club) {
-      const stars = (D.REAL_STARS || {})[club.name];
+      const stars = global.Eras.starsFor(State.game, club.name);
       if (!stars) return null;
       const score = { ST: 5, LW: 4, RW: 4, CAM: 3, CM: 2, CDM: 1 };
       const pool = stars.filter(st => score[st[2]]).map(st => ({ st, w: score[st[2]] }));
@@ -758,7 +761,7 @@
     ensureStar(g, f) {
       if (f.star || !f.oppId) return;
       const opp = State.club(f.oppId);
-      const stars = (D.REAL_STARS || {})[opp.name];
+      const stars = global.Eras.starsFor(State.game, opp.name);
       if (stars && stars.length) {
         const st = U.pick(stars);
         f.star = { name: st[0], nation: st[1], pos: st[2], ovr: st[3] };
@@ -1223,14 +1226,15 @@
     world(g) {
       if (!U.chance(0.22)) return;
       const club = State.club(g.player.club);
-      const starClubs = Object.keys(D.REAL_STARS || {});
+      const starMap = global.Eras.starMap(State.game ? State.game.era : 'modern', State.game.world);
+      const starClubs = Object.keys(starMap).filter(k => (starMap[k] || []).length);
       if (!starClubs.length) return;
       g.worldMoves = g.worldMoves || {};
       const pickStar = () => {
         for (let t = 0; t < 12; t++) {
           const cn = U.pick(starClubs);
           if (cn === club.name) continue;
-          const s = U.pick(D.REAL_STARS[cn]);
+          const s = U.pick(starMap[cn]);
           return { name: s[0], pos: s[2], ovr: s[3], club: g.worldMoves[s[0]] || cn };
         }
         return null;

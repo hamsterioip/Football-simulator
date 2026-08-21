@@ -378,6 +378,21 @@ table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6p
 .prev-ovr.pot b{color:var(--gold)}
 .prev-ovr span{font-size:8px;letter-spacing:1px;color:var(--muted)}
 
+/* ---------- era picker ---------- */
+.era-list{display:flex;flex-direction:column;gap:10px}
+.era{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px;cursor:pointer;transition:.14s}
+.era:hover{border-color:var(--green)}
+.era.sel{background:rgba(34,224,122,.1);border-color:var(--green)}
+.era-top{display:flex;align-items:center;gap:11px;margin-bottom:7px}
+.era-icon{width:26px;height:26px;color:var(--green)}
+.era-top b{display:block;font-size:17px;line-height:1.15}
+.era-top span{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:700}
+.era p{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.era-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,201,77,.14);
+  color:var(--gold);border-radius:7px;padding:2px 7px;font-size:10px;font-weight:800;
+  letter-spacing:.6px;text-transform:uppercase}
+
 /* ---------- the draft ---------- */
 .legend-card{background:linear-gradient(160deg,#152a44,#101c2f);border:1px solid var(--line);
   border-radius:var(--radius);padding:16px;margin-bottom:12px}

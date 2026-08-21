@@ -9,13 +9,15 @@
     game: null,
 
     /* ---------------- world ---------------- */
-    buildWorld(startYear) {
+    buildWorld(startYear, eraId) {
+      const era = Eras.byId(eraId || 'modern');
       const clubs = {};
       const leagues = D.LEAGUES.map(L => {
         const ids = L.clubs.map(([name, rating, prestige]) => {
           const id = L.id + '-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12);
+          const eraRating = Eras.ratingFor(era, name, rating);
           clubs[id] = {
-            id, name, rating, baseRating: rating, prestige,
+            id, name, rating: eraRating, baseRating: eraRating, prestige,
             league: L.id, country: L.country,
             morale: 70, form: [], trophies: 0
           };
@@ -24,7 +26,7 @@
         return { id: L.id, name: L.name, country: L.country, tier: L.tier,
                  cup: L.cup, cont: L.cont, clubs: ids };
       });
-      return { year: startYear, clubs, leagues };
+      return { year: era.startYear || startYear, clubs, leagues, era: era.id };
     },
 
     league(id) { return this.game.world.leagues.find(l => l.id === id); },
@@ -129,10 +131,11 @@
 
     /* ---------------- new game ---------------- */
     newGame(playerOpts, clubId) {
-      const world = State.buildWorld(D.CONFIG.SEASON_START_YEAR);
+      const era = (playerOpts && playerOpts.era) || 'modern';
+      const world = State.buildWorld(D.CONFIG.SEASON_START_YEAR, era);
       const g = {
         version: 1,
-        world,
+        world, era,
         player: State.createPlayer(playerOpts),
         seasonIndex: 0,
         log: [],
@@ -217,6 +220,66 @@
     hasSave() { try { return !!localStorage.getItem(D.CONFIG.SAVE_KEY); } catch (e) { return false; } },
     wipe() { try { localStorage.removeItem(D.CONFIG.SAVE_KEY); } catch (e) {} State.game = null; }
   };
+
+  /* ==================== eras ====================
+     Resolves which real players belong to which club for the era being played,
+     and how strong every club is in that world. */
+  const Eras = {
+    byId(id) { return D.ERAS.find(e => e.id === id) || D.ERAS[0]; },
+
+    /* club name -> [[name, nation, pos, ovr, age], …] for this era.
+       In the Golden Era the assigned legends are placed first, then the spares
+       are dealt round-robin across every remaining club, so nowhere is easy. */
+    starMap(eraId, world) {
+      const era = Eras.byId(eraId);
+      const base = D[era.stars] || {};
+      if (!era.spare) return base;
+
+      const map = {};
+      Object.keys(base).forEach(k => { map[k] = base[k].slice(); });
+
+      const clubs = Object.values(world.clubs).map(c => c.name);
+      // biggest clubs first, so the greatest spares land where they belong
+      const ranked = Object.values(world.clubs).sort((a, b) => b.rating - a.rating).map(c => c.name);
+      const spare = D.GOLDEN_SPARE.slice();
+      let i = 0;
+      // fill every club up to six, dealing round-robin from the strongest down
+      for (let pass = 0; pass < 6 && i < spare.length; pass++) {
+        for (let c = 0; c < ranked.length && i < spare.length; c++) {
+          const name = ranked[c];
+          map[name] = map[name] || [];
+          if (map[name].length > pass) continue;
+          map[name].push(spare[i++]);
+        }
+      }
+      clubs.forEach(n => { map[n] = map[n] || []; });
+      return map;
+    },
+
+    // what a club is worth in this era
+    ratingFor(era, clubName, baseRating) {
+      if (era.id === 'classic') {
+        const r = D.CLASSIC_RATINGS[clubName];
+        return r != null ? r : U.clamp(Math.round(baseRating - 4), 52, 92);
+      }
+      if (era.id === 'golden') {
+        return U.clamp(Math.round(Math.max(era.ratingFloor, baseRating + era.ratingBoost)), 60, 97);
+      }
+      return baseRating;
+    },
+
+    // the star list for one club, in the era the game is being played in
+    starsFor(g, clubName) {
+      if (!g) return (D.REAL_STARS || {})[clubName];
+      if (!g._starMap || g._starMapEra !== g.era) {
+        g._starMap = Eras.starMap(g.era, g.world);
+        g._starMapEra = g.era;
+      }
+      return g._starMap[clubName];
+    }
+  };
+
+  global.Eras = Eras;
 
   /* ==================== player names ====================
      A club's squad is mostly local with a scattering of imports, and every

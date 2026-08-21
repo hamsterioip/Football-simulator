@@ -73,6 +73,21 @@ node build.js
 
 ## What you actually do
 
+### Choose an era
+A new career starts by picking which football world you are born into:
+
+| Era | Year | What it means |
+|---|---|---|
+| **Modern** | 2026 | The game as it is now — Haaland, Mbappé, Bellingham, Vinícius |
+| **Classic** | 2005 | Ronaldinho's Barcelona, Shevchenko's Milan, Henry's Arsenal, a twenty-year-old Ronaldo at United. Chelsea are the strongest side in England and Manchester City are rated 71 |
+| **Golden Era** | All time | Every club on earth stacked with all-time greats. R9 at Inter, Maradona at Napoli, Di Stéfano and Cristiano at Madrid, Pelé and Cruyff somewhere down the leagues |
+
+The era decides who your team-mates are, who you face, what each club is worth and how hard
+the whole thing is. In the Golden Era **all 120 clubs** have legends — 534 named players —
+the weakest club on earth is rated 84, and even the squad-mates who are not legends are 78+.
+Which clubs will sign a teenager scales with the era, so the bottom of the Golden Era is
+still the bottom, it is just full of Ballon d'Or winners.
+
 ### Create a player
 Name, nationality, strong foot, squad number, and one of ten positions.
 
