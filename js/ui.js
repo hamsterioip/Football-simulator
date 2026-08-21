@@ -57,6 +57,32 @@
 
     /* ---------------- small render helpers ---------------- */
     trophyLabel(t) { return /\d{4}$/.test(t.name) ? t.name : t.name + ' ' + t.year; },
+    /* The grouped trophy cabinet: one shelf per family, one plinth per honour. */
+    cabinetHtml(cab) {
+      if (!cab.total) return `<p class="dim" style="margin:0">Empty. For now. Go and win something.</p>`;
+      return `<div class="cabinet">` + cab.shelves.map(sh => {
+        const n = sh.rows.reduce((a, r) => a + r.count, 0);
+        return `<div class="shelf">
+          <div class="shelf-head"><span class="shelf-label">${esc(sh.label)}</span>
+            <span class="shelf-n">${n}</span></div>
+          <div class="shelf-row">${sh.rows.map(r => `<div class="tro">
+            <div class="tro-art">${global.Trophies.svg(r.art)}${r.count > 1 ? `<span class="tro-x">&times;${r.count}</span>` : ''}</div>
+            <div class="tro-n">${esc(r.name)}</div>
+            <div class="tro-y">${UI.yearList(r.years)}</div>
+          </div>`).join('')}</div>
+          <div class="shelf-plank"></div>
+        </div>`;
+      }).join('') + `</div>`;
+    },
+    yearList(years) {
+      const ys = years.slice().sort((a, b) => a - b).map(y => "'" + String(y).slice(2));
+      return ys.length <= 4 ? ys.join(' ') : ys.slice(0, 3).join(' ') + ' +' + (ys.length - 3);
+    },
+    /* A small inline chip with the real trophy drawing, for summaries. */
+    trophyChip(name, year) {
+      const c = global.Trophies.classify(name);
+      return `<span class="trophy">${global.Trophies.svg(c.art, 'tiny')} ${esc(name)}${year ? ' ' + year : ''}</span>`;
+    },
     bar(label, value, color) {
       const v = U.clamp(value, 0, 100);
       return `<div class="bar"><div class="bar-l"><span>${label}</span><span>${Math.round(v)}</span></div>
@@ -669,17 +695,11 @@
         <div class="stat"><b>${p.career.clubs.length}</b><span>Clubs</span></div>
       </div></div>`;
 
-      html += `<div class="card"><h3>Trophy cabinet</h3>`;
-      html += p.career.trophies.length
-        ? `<div class="cabinet">` + p.career.trophies.map(t => `<div class="cabinet-item">
-            ${global.Crest.trophy(UI.trophyLabel(t))}<span>${esc(UI.trophyLabel(t))}</span></div>`).join('') + `</div>`
-        : `<p class="dim" style="margin:0">Empty. For now.</p>`;
+      const cab = global.Trophies.cabinet(p);
+      html += `<div class="card"><h3>${ico('trophy')} Trophy cabinet
+        ${cab.total ? `<span class="pill-count">${cab.total}</span>` : ''}</h3>`;
+      html += UI.cabinetHtml(cab);
       html += `</div>`;
-
-      if (p.achievements.length) {
-        html += `<div class="card"><h3>Individual honours</h3><div class="cabinet">` +
-          p.achievements.map(a => `<div class="cabinet-item">${global.Crest.trophy(a.name, '', 'medal')}<span>${esc(a.name)} ${a.year}</span></div>`).join('') + `</div></div>`;
-      }
 
       html += `<div class="card"><h3>Season by season</h3>`;
       if (p.career.seasons.length) {

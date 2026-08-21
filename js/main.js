@@ -1127,9 +1127,9 @@
         <div class="stat"><b>${State.seasonRating(p) || '—'}</b><span>Rating</span></div>
       </div>`;
       if (results.trophies.length) html += `<div style="margin-top:12px">` +
-        results.trophies.map(t => `<span class="trophy">${ico('trophy')} ${U.esc(t)}</span>`).join('') + `</div>`;
+        results.trophies.map(t => UI.trophyChip(t)).join('') + `</div>`;
       if (results.awards.length) html += `<div style="margin-top:6px">` +
-        results.awards.map(a => `<span class="trophy">${ico('medal')} ${U.esc(a)}</span>`).join('') + `</div>`;
+        results.awards.map(a => UI.trophyChip(a)).join('') + `</div>`;
       html += `<div class="divider"></div><div class="dim">
         Market value ${U.cash(results.value)} · overall ${p.ovr}</div>`;
       if (results.dev.notes.length) {
@@ -1350,8 +1350,9 @@
           </div>
           <div class="divider"></div>
           <div class="dim">Clubs: ${p.career.clubs.map(U.esc).join(' · ') || '—'}</div>
-          ${p.career.trophies.length ? '<div style="margin-top:10px">' + p.career.trophies.map(t =>
-            `<span class="trophy">${ico('trophy')} ${U.esc(UI.trophyLabel(t))}</span>`).join('') + '</div>' : ''}`,
+          <div class="divider"></div>
+          <h3 style="margin:0 0 8px">${ico('trophy')} The cabinet</h3>
+          ${UI.cabinetHtml(global.Trophies.cabinet(p))}`,
         actions: [{ label: 'What next?', onClick: () => Game.postCareer() }]
       });
     },

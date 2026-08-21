@@ -909,7 +909,7 @@
       const results = { pos, trophies: [], awards: [], notes: [] };
       const rating = State.seasonRating(p);
 
-      if (pos === 1) { results.trophies.push(club.league + ' Title'); }
+      if (pos === 1) { results.trophies.push(State.league(club.league).name + ' Title'); }
       if (g.cup && g.cup.won) results.trophies.push(g.cup.name);
       if (g.cont && g.cont.won) results.trophies.push(g.cont.name);
       if (g.intlTournament && g.intlTournament.won) results.trophies.push(g.intlTournament.name);

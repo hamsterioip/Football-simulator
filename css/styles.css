@@ -261,7 +261,9 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
   animation:pop .2s ease}
 .modal h2{margin:0 0 6px;font-size:20px}
 .modal p{margin:0 0 14px;color:var(--muted);white-space:pre-line}
-.modal .modal-actions{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.modal .modal-actions{display:flex;flex-direction:column;gap:8px;margin-top:6px;
+  position:sticky;bottom:-20px;padding:12px 0 4px;
+  background:linear-gradient(180deg,rgba(18,28,46,0),var(--card) 30%)}
 
 /* ---------- toasts ---------- */
 .toasts{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;
@@ -280,6 +282,40 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 .season-row .yr{font-weight:800;flex:0 0 46px;font-variant-numeric:tabular-nums}
 .trophy{display:inline-flex;align-items:center;gap:5px;background:rgba(255,201,77,.13);color:var(--gold);
   border-radius:8px;padding:4px 9px;font-size:12px;font-weight:700;margin:0 5px 5px 0}
+.trophy .trophy-art.tiny{height:16px;width:12px;margin:-2px 0}
+
+/* ---------- trophy cabinet ---------- */
+.pill-count{display:inline-block;background:rgba(255,201,77,.16);color:var(--gold);border-radius:999px;
+  padding:1px 8px;font-size:11px;font-weight:800;vertical-align:middle;margin-left:6px}
+.cabinet{display:flex;flex-direction:column;gap:14px}
+.shelf-head{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.shelf-label{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:800}
+.shelf-n{background:rgba(255,255,255,.07);color:var(--dim);border-radius:999px;padding:0 7px;
+  font-size:10px;font-weight:800;line-height:16px}
+.shelf-head::after{content:'';flex:1;height:1px;background:var(--line)}
+.shelf-row{display:flex;gap:8px;align-items:stretch;overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.shelf-row::-webkit-scrollbar{display:none}
+.shelf-plank{height:7px;border-radius:0 0 4px 4px;margin-top:-1px;
+  background:linear-gradient(180deg,#4a3618,#241a0c);
+  box-shadow:0 4px 10px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,201,77,.25)}
+.tro{flex:0 0 100px;scroll-snap-align:start;
+  background:linear-gradient(180deg,rgba(255,201,77,.10),rgba(255,201,77,.02));
+  border:1px solid rgba(255,201,77,.16);border-bottom:none;border-radius:12px 12px 0 0;
+  padding:9px 5px 8px;text-align:center;min-width:0}
+.trophy-art .t-base{fill:#241a0c}
+.tro-art{position:relative;height:54px;display:flex;align-items:flex-end;justify-content:center}
+.trophy-art{height:54px;width:auto;display:block;filter:drop-shadow(0 5px 7px rgba(0,0,0,.55))}
+.tro-x{position:absolute;top:0;right:0;background:var(--gold);color:#241a00;font-size:10px;
+  font-weight:900;border-radius:999px;padding:1px 6px;line-height:14px}
+.tro-n{font-size:10.5px;font-weight:700;line-height:1.25;margin-top:7px;
+  overflow-wrap:anywhere;hyphens:auto}
+.tro-y{font-size:9.5px;color:var(--dim);font-variant-numeric:tabular-nums;margin-top:2px}
+@media (min-width:520px){
+  .tro{flex-basis:114px}
+  .tro-art,.trophy-art{height:62px}
+  .tro-n{font-size:11.5px}
+}
 .big-num{font-size:40px;font-weight:900;line-height:1}
 progress{width:100%}
 .divider{height:1px;background:var(--line);margin:14px 0}
