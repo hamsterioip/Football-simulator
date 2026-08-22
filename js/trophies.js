@@ -107,27 +107,27 @@
      failed request the drawing shows through. Same pattern as club badges. */
   const WMC = 'https://upload.wikimedia.org/wikipedia/commons';
   const PHOTOS = [
-    [/world cup/i, WMC + '/thumb/c/ce/FIFA_World_Cup_Trophy_photo_by_Djuradj_Vujcic.jpg/500px-FIFA_World_Cup_Trophy_photo_by_Djuradj_Vujcic.jpg'],
-    [/continental championship/i, WMC + '/thumb/8/81/Coupe_Henri_Delaunay_2017.jpg/500px-Coupe_Henri_Delaunay_2017.jpg'],
-    [/continental cup/i, WMC + '/thumb/9/97/Copa_america_trofeo.jpg/500px-Copa_america_trofeo.jpg'],
-    [/champions league/i, WMC + '/1/18/Coppacampioni_%28closer%29.png'],
-    [/europa league/i, WMC + '/thumb/4/42/Europa_league_trophy.jpg/500px-Europa_league_trophy.jpg'],
-    [/libertadores/i, WMC + '/7/7a/328-3287452_copa-libertadores-primer-trofeo-hd-png-download.png'],
-    [/concacaf/i, WMC + '/thumb/3/3e/CONCACAF_Champions_Cup_logo.svg/500px-CONCACAF_Champions_Cup_logo.svg.png'],
-    [/premier league/i, WMC + '/thumb/f/f2/Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg/500px-Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg'],
-    [/la liga/i, WMC + '/thumb/d/d3/Trofeo_de_La_Liga_9900.jpg/500px-Trofeo_de_La_Liga_9900.jpg'],
-    [/serie a/i, WMC + '/thumb/8/8e/Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg/500px-Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg'],
-    [/bundesliga/i, WMC + '/thumb/f/f9/Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg/500px-Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg'],
-    [/ligue 1/i, WMC + '/5/5a/Hexagoal.jpg'],
-    [/fa cup/i, WMC + '/thumb/3/3f/The_FA_Cup_Trophy.jpg/500px-The_FA_Cup_Trophy.jpg'],
-    [/copa del rey/i, WMC + '/thumb/a/a4/Copa_del_Rey_Trophy.png/500px-Copa_del_Rey_Trophy.png'],
-    [/coppa italia/i, WMC + '/thumb/2/23/The_Coppa_Italia_trophy.jpg/500px-The_Coppa_Italia_trophy.jpg'],
-    [/dfb-pokal/i, WMC + '/d/d8/DFB_Pokal_Trophy.png'],
-    [/coupe de france/i, WMC + '/thumb/1/1f/Coupe_de_France_trophy.png/500px-Coupe_de_France_trophy.png'],
-    [/knvb/i, WMC + '/thumb/d/d7/KNVB_Beker.svg/500px-KNVB_Beker.svg.png'],
-    [/taça de portugal|taca de portugal/i, WMC + '/7/70/Ta%C3%A7a_de_Portugal_Trophy.png'],
-    [/world player|ballon/i, WMC + '/thumb/0/04/2016_Ballon_dOr_CR7Museum.jpg/500px-2016_Ballon_dOr_CR7Museum.jpg'],
-    [/golden boot|golden shoe/i, 'https://upload.wikimedia.org/wikipedia/en/2/2b/Golden_Shoe%2C_Lionel_Messi_2012-2013.jpg']
+    [/world cup/i, 'worldcup', WMC + '/thumb/c/ce/FIFA_World_Cup_Trophy_photo_by_Djuradj_Vujcic.jpg/500px-FIFA_World_Cup_Trophy_photo_by_Djuradj_Vujcic.jpg'],
+    [/continental championship/i, 'euros', WMC + '/thumb/8/81/Coupe_Henri_Delaunay_2017.jpg/500px-Coupe_Henri_Delaunay_2017.jpg'],
+    [/continental cup/i, 'copaamerica', WMC + '/thumb/9/97/Copa_america_trofeo.jpg/500px-Copa_america_trofeo.jpg'],
+    [/champions league/i, 'ucl', WMC + '/1/18/Coppacampioni_%28closer%29.png'],
+    [/europa league/i, 'uel', WMC + '/thumb/4/42/Europa_league_trophy.jpg/500px-Europa_league_trophy.jpg'],
+    [/libertadores/i, 'libertadores', WMC + '/7/7a/328-3287452_copa-libertadores-primer-trofeo-hd-png-download.png'],
+    [/concacaf/i, 'concacaf', WMC + '/thumb/d/de/CONCACAF_Champions_League_Cup.svg/500px-CONCACAF_Champions_League_Cup.svg.png'],
+    [/premier league/i, 'pl', WMC + '/thumb/f/f2/Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg/500px-Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg'],
+    [/la liga/i, 'laliga', WMC + '/thumb/d/d3/Trofeo_de_La_Liga_9900.jpg/500px-Trofeo_de_La_Liga_9900.jpg'],
+    [/serie a/i, 'seriea', WMC + '/thumb/a/ae/Coppa_Campioni_d%27Italia_%28Serie_A%29.png/330px-Coppa_Campioni_d%27Italia_%28Serie_A%29.png'],
+    [/bundesliga/i, 'bundesliga', WMC + '/thumb/f/f9/Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg/500px-Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg'],
+    [/ligue 1/i, 'ligue1', WMC + '/5/5a/Hexagoal.jpg'],
+    [/fa cup/i, 'facup', WMC + '/thumb/3/3f/The_FA_Cup_Trophy.jpg/500px-The_FA_Cup_Trophy.jpg'],
+    [/copa del rey/i, 'copadelrey', WMC + '/thumb/a/a4/Copa_del_Rey_Trophy.png/500px-Copa_del_Rey_Trophy.png'],
+    [/coppa italia/i, 'coppaitalia', WMC + '/thumb/2/29/Coppa_Italia_trophy_icon.jpg/330px-Coppa_Italia_trophy_icon.jpg'],
+    [/dfb-pokal/i, 'dfbpokal', WMC + '/d/d8/DFB_Pokal_Trophy.png'],
+    [/coupe de france/i, 'coupefrance', WMC + '/thumb/1/1f/Coupe_de_France_trophy.png/500px-Coupe_de_France_trophy.png'],
+    [/knvb/i, 'knvb', WMC + '/d/d2/Gouden_KNVB_beker.png'],
+    [/taça de portugal|taca de portugal/i, 'taca', WMC + '/7/70/Ta%C3%A7a_de_Portugal_Trophy.png'],
+    [/world player|ballon/i, 'ballondor', WMC + '/thumb/0/04/2016_Ballon_dOr_CR7Museum.jpg/500px-2016_Ballon_dOr_CR7Museum.jpg'],
+    [/golden boot|golden shoe/i, 'goldenshoe', 'https://upload.wikimedia.org/wikipedia/en/2/2b/Golden_Shoe%2C_Lionel_Messi_2012-2013.jpg']
   ];
 
   const CUP_WORDS = /(cup|copa|coppa|pokal|coupe|beker|taça|taca|trophy|shield)/i;
@@ -160,14 +160,27 @@
     // the real photograph of this competition's trophy, when we have one
     photo(name) {
       const n = String(name);
-      for (const [re, url] of PHOTOS) if (re.test(n)) return url;
+      for (const [re, , url] of PHOTOS) if (re.test(n)) return url;
       return null;
     },
 
-    /* The drawn trophy with the real photograph layered on top when known;
-       the photo removes itself on error and the drawing remains. */
+    // which embedded cut-out (js/trophy-imgs.js) belongs to this honour
+    photoId(name) {
+      const n = String(name);
+      for (const [re, id] of PHOTOS) if (re.test(n)) return id;
+      return null;
+    },
+
+    /* What the cabinet shows. Best: the embedded transparent cut-out of the
+       real trophy. Then: a hot-linked photo on a card. Last: the drawing. */
     figure(name, cls) {
-      const drawn = Trophies.svg(classify(name).art, cls);
+      const art = classify(name).art;
+      const drawn = Trophies.svg(art, cls);
+      const id = Trophies.photoId(name);
+      if (!id) return drawn;
+      const data = (global.TROPHY_IMGS || {})[id];
+      if (data) return `<img class="tro-cut ${cls || ''}" src="${data}" alt="" loading="lazy"
+        onerror="this.outerHTML=window.Trophies.svg('${art}')"/>`;
       const url = Trophies.photo(name);
       if (!url) return drawn;
       return `<span class="tro-fig">${drawn}<img src="${url}" alt="" loading="lazy" onerror="this.remove()"/></span>`;

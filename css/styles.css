@@ -378,6 +378,9 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
   object-fit:contain;padding:3px;border-radius:8px 8px 0 0;
   background:linear-gradient(180deg,#f7f3e8,#ded7c4);
   box-shadow:0 5px 9px rgba(0,0,0,.5)}
+/* background-free trophy cut-out, embedded as a data URI — no card behind it */
+.tro-cut{height:54px;width:auto;display:block;margin:0 auto;
+  filter:drop-shadow(0 5px 8px rgba(0,0,0,.65)) drop-shadow(0 0 10px rgba(255,201,77,.14))}
 .tro-x{position:absolute;top:0;right:0;background:var(--gold);color:#241a00;font-size:10px;
   font-weight:900;border-radius:999px;padding:1px 6px;line-height:14px}
 .tro-n{font-size:10.5px;font-weight:700;line-height:1.25;margin-top:7px;
@@ -385,7 +388,7 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 .tro-y{font-size:9.5px;color:var(--dim);font-variant-numeric:tabular-nums;margin-top:2px}
 @media (min-width:520px){
   .tro{flex-basis:114px}
-  .tro-art,.trophy-art{height:62px}
+  .tro-art,.trophy-art,.tro-cut{height:62px}
   .tro-n{font-size:11.5px}
 }
 .big-num{font-size:40px;font-weight:900;line-height:1}
