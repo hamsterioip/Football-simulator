@@ -66,7 +66,7 @@
           <div class="shelf-head"><span class="shelf-label">${esc(sh.label)}</span>
             <span class="shelf-n">${n}</span></div>
           <div class="shelf-row">${sh.rows.map(r => `<div class="tro">
-            <div class="tro-art">${global.Trophies.svg(r.art)}${r.count > 1 ? `<span class="tro-x">&times;${r.count}</span>` : ''}</div>
+            <div class="tro-art">${global.Trophies.figure(r.name)}${r.count > 1 ? `<span class="tro-x">&times;${r.count}</span>` : ''}</div>
             <div class="tro-n">${esc(r.name)}</div>
             <div class="tro-y">${UI.yearList(r.years)}</div>
           </div>`).join('')}</div>

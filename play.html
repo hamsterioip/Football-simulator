@@ -387,6 +387,12 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 .trophy-art .t-base{fill:#241a0c}
 .tro-art{position:relative;height:54px;display:flex;align-items:flex-end;justify-content:center}
 .trophy-art{height:54px;width:auto;display:block;filter:drop-shadow(0 5px 7px rgba(0,0,0,.55))}
+/* the real trophy photograph, laid over the drawing on a light card */
+.tro-fig{position:relative;display:inline-flex;align-items:flex-end;justify-content:center}
+.tro-fig img{position:absolute;inset:-4px -8px 0;width:calc(100% + 16px);height:calc(100% + 4px);
+  object-fit:cover;object-position:top;border-radius:8px 8px 0 0;
+  background:linear-gradient(180deg,#f7f3e8,#ded7c4);
+  box-shadow:0 5px 9px rgba(0,0,0,.5)}
 .tro-x{position:absolute;top:0;right:0;background:var(--gold);color:#241a00;font-size:10px;
   font-weight:900;border-radius:999px;padding:1px 6px;line-height:14px}
 .tro-n{font-size:10.5px;font-weight:700;line-height:1.25;margin-top:7px;
@@ -2526,6 +2532,33 @@ table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6p
     { id: 'individual', label: 'Individual honours' }
   ];
 
+  /* Real trophy photographs, hot-linked from Wikimedia Commons and layered
+     over the drawn artwork — online you see the actual cup, offline or on a
+     failed request the drawing shows through. Same pattern as club badges. */
+  const WMC = 'https://upload.wikimedia.org/wikipedia/commons';
+  const PHOTOS = [
+    [/world cup/i, WMC + '/thumb/1/15/FIFA_World_Cup_Trophy_%28Ank_Kumar%2C_Infosys_Limited%29_01.jpg/500px-FIFA_World_Cup_Trophy_%28Ank_Kumar%2C_Infosys_Limited%29_01.jpg'],
+    [/continental championship/i, WMC + '/thumb/8/81/Coupe_Henri_Delaunay_2017.jpg/500px-Coupe_Henri_Delaunay_2017.jpg'],
+    [/continental cup/i, WMC + '/thumb/9/97/Copa_america_trofeo.jpg/500px-Copa_america_trofeo.jpg'],
+    [/champions league/i, WMC + '/c/c5/Trofeo_UEFA_Champions_League.jpg'],
+    [/europa league/i, WMC + '/thumb/4/42/Europa_league_trophy.jpg/500px-Europa_league_trophy.jpg'],
+    [/libertadores/i, WMC + '/thumb/b/b1/Final_de_la_Copa_CONMEBOL_Libertadores_en_el_Estadio_Centenario_-_20211127dicimouyap0852.jpg/500px-Final_de_la_Copa_CONMEBOL_Libertadores_en_el_Estadio_Centenario_-_20211127dicimouyap0852.jpg'],
+    [/concacaf/i, WMC + '/thumb/3/3e/CONCACAF_Champions_Cup_logo.svg/500px-CONCACAF_Champions_Cup_logo.svg.png'],
+    [/premier league/i, WMC + '/thumb/f/f2/Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg/500px-Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg'],
+    [/la liga/i, WMC + '/thumb/d/d3/Trofeo_de_La_Liga_9900.jpg/500px-Trofeo_de_La_Liga_9900.jpg'],
+    [/serie a/i, WMC + '/thumb/8/8e/Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg/500px-Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg'],
+    [/bundesliga/i, WMC + '/thumb/f/f9/Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg/500px-Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg'],
+    [/fa cup/i, WMC + '/thumb/3/3f/The_FA_Cup_Trophy.jpg/500px-The_FA_Cup_Trophy.jpg'],
+    [/copa del rey/i, WMC + '/thumb/a/a4/Copa_del_Rey_Trophy.png/500px-Copa_del_Rey_Trophy.png'],
+    [/coppa italia/i, WMC + '/thumb/2/23/The_Coppa_Italia_trophy.jpg/500px-The_Coppa_Italia_trophy.jpg'],
+    [/dfb-pokal/i, WMC + '/d/d8/DFB_Pokal_Trophy.png'],
+    [/coupe de france/i, WMC + '/thumb/1/1f/Coupe_de_France_trophy.png/500px-Coupe_de_France_trophy.png'],
+    [/knvb/i, WMC + '/thumb/d/d7/KNVB_Beker.svg/500px-KNVB_Beker.svg.png'],
+    [/taça de portugal|taca de portugal/i, WMC + '/7/70/Ta%C3%A7a_de_Portugal_Trophy.png'],
+    [/world player|ballon/i, WMC + '/thumb/0/04/2016_Ballon_dOr_CR7Museum.jpg/500px-2016_Ballon_dOr_CR7Museum.jpg'],
+    [/golden boot|golden shoe/i, 'https://upload.wikimedia.org/wikipedia/en/2/2b/Golden_Shoe%2C_Lionel_Messi_2012-2013.jpg']
+  ];
+
   const CUP_WORDS = /(cup|copa|coppa|pokal|coupe|beker|taça|taca|trophy|shield)/i;
 
   function classify(name) {
@@ -2551,6 +2584,22 @@ table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6p
       const body = ART[art] || ART.medal;
       return `<svg class="trophy-art ${cls || ''}" viewBox="0 0 48 64" aria-hidden="true">
         <defs>${GOLD}</defs>${body}</svg>`;
+    },
+
+    // the real photograph of this competition's trophy, when we have one
+    photo(name) {
+      const n = String(name);
+      for (const [re, url] of PHOTOS) if (re.test(n)) return url;
+      return null;
+    },
+
+    /* The drawn trophy with the real photograph layered on top when known;
+       the photo removes itself on error and the drawing remains. */
+    figure(name, cls) {
+      const drawn = Trophies.svg(classify(name).art, cls);
+      const url = Trophies.photo(name);
+      if (!url) return drawn;
+      return `<span class="tro-fig">${drawn}<img src="${url}" alt="" loading="lazy" onerror="this.remove()"/></span>`;
     },
 
     /* Group a career's honours: one row per competition, with how many and when.
@@ -8000,7 +8049,7 @@ table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6p
           <div class="shelf-head"><span class="shelf-label">${esc(sh.label)}</span>
             <span class="shelf-n">${n}</span></div>
           <div class="shelf-row">${sh.rows.map(r => `<div class="tro">
-            <div class="tro-art">${global.Trophies.svg(r.art)}${r.count > 1 ? `<span class="tro-x">&times;${r.count}</span>` : ''}</div>
+            <div class="tro-art">${global.Trophies.figure(r.name)}${r.count > 1 ? `<span class="tro-x">&times;${r.count}</span>` : ''}</div>
             <div class="tro-n">${esc(r.name)}</div>
             <div class="tro-y">${UI.yearList(r.years)}</div>
           </div>`).join('')}</div>

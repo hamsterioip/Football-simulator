@@ -102,6 +102,33 @@
     { id: 'individual', label: 'Individual honours' }
   ];
 
+  /* Real trophy photographs, hot-linked from Wikimedia Commons and layered
+     over the drawn artwork — online you see the actual cup, offline or on a
+     failed request the drawing shows through. Same pattern as club badges. */
+  const WMC = 'https://upload.wikimedia.org/wikipedia/commons';
+  const PHOTOS = [
+    [/world cup/i, WMC + '/thumb/1/15/FIFA_World_Cup_Trophy_%28Ank_Kumar%2C_Infosys_Limited%29_01.jpg/500px-FIFA_World_Cup_Trophy_%28Ank_Kumar%2C_Infosys_Limited%29_01.jpg'],
+    [/continental championship/i, WMC + '/thumb/8/81/Coupe_Henri_Delaunay_2017.jpg/500px-Coupe_Henri_Delaunay_2017.jpg'],
+    [/continental cup/i, WMC + '/thumb/9/97/Copa_america_trofeo.jpg/500px-Copa_america_trofeo.jpg'],
+    [/champions league/i, WMC + '/c/c5/Trofeo_UEFA_Champions_League.jpg'],
+    [/europa league/i, WMC + '/thumb/4/42/Europa_league_trophy.jpg/500px-Europa_league_trophy.jpg'],
+    [/libertadores/i, WMC + '/thumb/b/b1/Final_de_la_Copa_CONMEBOL_Libertadores_en_el_Estadio_Centenario_-_20211127dicimouyap0852.jpg/500px-Final_de_la_Copa_CONMEBOL_Libertadores_en_el_Estadio_Centenario_-_20211127dicimouyap0852.jpg'],
+    [/concacaf/i, WMC + '/thumb/3/3e/CONCACAF_Champions_Cup_logo.svg/500px-CONCACAF_Champions_Cup_logo.svg.png'],
+    [/premier league/i, WMC + '/thumb/f/f2/Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg/500px-Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg'],
+    [/la liga/i, WMC + '/thumb/d/d3/Trofeo_de_La_Liga_9900.jpg/500px-Trofeo_de_La_Liga_9900.jpg'],
+    [/serie a/i, WMC + '/thumb/8/8e/Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg/500px-Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg'],
+    [/bundesliga/i, WMC + '/thumb/f/f9/Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg/500px-Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg'],
+    [/fa cup/i, WMC + '/thumb/3/3f/The_FA_Cup_Trophy.jpg/500px-The_FA_Cup_Trophy.jpg'],
+    [/copa del rey/i, WMC + '/thumb/a/a4/Copa_del_Rey_Trophy.png/500px-Copa_del_Rey_Trophy.png'],
+    [/coppa italia/i, WMC + '/thumb/2/23/The_Coppa_Italia_trophy.jpg/500px-The_Coppa_Italia_trophy.jpg'],
+    [/dfb-pokal/i, WMC + '/d/d8/DFB_Pokal_Trophy.png'],
+    [/coupe de france/i, WMC + '/thumb/1/1f/Coupe_de_France_trophy.png/500px-Coupe_de_France_trophy.png'],
+    [/knvb/i, WMC + '/thumb/d/d7/KNVB_Beker.svg/500px-KNVB_Beker.svg.png'],
+    [/taça de portugal|taca de portugal/i, WMC + '/7/70/Ta%C3%A7a_de_Portugal_Trophy.png'],
+    [/world player|ballon/i, WMC + '/thumb/0/04/2016_Ballon_dOr_CR7Museum.jpg/500px-2016_Ballon_dOr_CR7Museum.jpg'],
+    [/golden boot|golden shoe/i, 'https://upload.wikimedia.org/wikipedia/en/2/2b/Golden_Shoe%2C_Lionel_Messi_2012-2013.jpg']
+  ];
+
   const CUP_WORDS = /(cup|copa|coppa|pokal|coupe|beker|taça|taca|trophy|shield)/i;
 
   function classify(name) {
@@ -127,6 +154,22 @@
       const body = ART[art] || ART.medal;
       return `<svg class="trophy-art ${cls || ''}" viewBox="0 0 48 64" aria-hidden="true">
         <defs>${GOLD}</defs>${body}</svg>`;
+    },
+
+    // the real photograph of this competition's trophy, when we have one
+    photo(name) {
+      const n = String(name);
+      for (const [re, url] of PHOTOS) if (re.test(n)) return url;
+      return null;
+    },
+
+    /* The drawn trophy with the real photograph layered on top when known;
+       the photo removes itself on error and the drawing remains. */
+    figure(name, cls) {
+      const drawn = Trophies.svg(classify(name).art, cls);
+      const url = Trophies.photo(name);
+      if (!url) return drawn;
+      return `<span class="tro-fig">${drawn}<img src="${url}" alt="" loading="lazy" onerror="this.remove()"/></span>`;
     },
 
     /* Group a career's honours: one row per competition, with how many and when.
