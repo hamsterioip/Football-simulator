@@ -94,7 +94,7 @@
           font-family="Inter,Helvetica,Arial,sans-serif" fill="${ink}"
           stroke="rgba(0,0,0,.35)" stroke-width=".4" paint-order="stroke">${text}</text>
       </svg>`;
-      const badge = (global.BADGES || {})[clubName];
+      const badge = (global.BADGE_IMGS || {})[clubName] || (global.BADGES || {})[clubName];
       if (!badge) return shield.replace('<svg ', '<svg class="crest ' + (cls || '') + '" ');
       return `<span class="crest ${cls || ''} crest-badge">${shield}` +
         `<img src="${badge}" alt="" loading="lazy" onerror="this.remove()"/></span>`;
