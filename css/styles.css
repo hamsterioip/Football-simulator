@@ -199,10 +199,11 @@ button,.choice,.item.click,.opt,.club,.tabbar button{touch-action:manipulation;u
 .news .n.bad{border-color:var(--red)}
 
 /* ---------- tables ---------- */
-table.tbl{width:100%;border-collapse:collapse;font-size:13px}
-table.tbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);
-  padding:6px 4px;border-bottom:1px solid var(--line);font-weight:700}
-table.tbl td{padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.05)}
+table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+table.tbl th{text-align:left;font-family:var(--font-d);font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.14em;color:var(--dim);
+  padding:6px 4px;border-bottom:1px solid var(--line)}
+table.tbl td{padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.05)}
 table.tbl tr.me td{background:rgba(42,230,126,.1);font-weight:700}
 table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
 .pos-chip{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;
@@ -475,11 +476,12 @@ progress{width:100%}
 .crest-badge{position:relative;display:inline-block}
 .crest-badge svg{width:100%;height:100%;display:block}
 .crest-badge img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
-.crest-sm{width:20px;height:20px}
-.crest-md{width:30px;height:30px}
-.crest-lg{width:46px;height:46px}
-.crest-xl{width:62px;height:62px}
-table.tbl .crest-sm{width:17px;height:17px;vertical-align:-.28em;margin-right:6px}
+.crest-sm{width:22px;height:22px}
+.crest-md{width:32px;height:32px}
+.crest-lg{width:48px;height:48px}
+.crest-xl{width:64px;height:64px}
+table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9px;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 .fixture .team .crest{display:block;margin:0 auto 6px}
 .sb-team .crest{display:block;margin:0 auto 4px}
 .hud-club{display:flex;align-items:center;gap:5px}
