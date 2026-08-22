@@ -107,17 +107,18 @@
      failed request the drawing shows through. Same pattern as club badges. */
   const WMC = 'https://upload.wikimedia.org/wikipedia/commons';
   const PHOTOS = [
-    [/world cup/i, WMC + '/thumb/1/15/FIFA_World_Cup_Trophy_%28Ank_Kumar%2C_Infosys_Limited%29_01.jpg/500px-FIFA_World_Cup_Trophy_%28Ank_Kumar%2C_Infosys_Limited%29_01.jpg'],
+    [/world cup/i, WMC + '/thumb/c/ce/FIFA_World_Cup_Trophy_photo_by_Djuradj_Vujcic.jpg/500px-FIFA_World_Cup_Trophy_photo_by_Djuradj_Vujcic.jpg'],
     [/continental championship/i, WMC + '/thumb/8/81/Coupe_Henri_Delaunay_2017.jpg/500px-Coupe_Henri_Delaunay_2017.jpg'],
     [/continental cup/i, WMC + '/thumb/9/97/Copa_america_trofeo.jpg/500px-Copa_america_trofeo.jpg'],
-    [/champions league/i, WMC + '/c/c5/Trofeo_UEFA_Champions_League.jpg'],
+    [/champions league/i, WMC + '/1/18/Coppacampioni_%28closer%29.png'],
     [/europa league/i, WMC + '/thumb/4/42/Europa_league_trophy.jpg/500px-Europa_league_trophy.jpg'],
-    [/libertadores/i, WMC + '/thumb/b/b1/Final_de_la_Copa_CONMEBOL_Libertadores_en_el_Estadio_Centenario_-_20211127dicimouyap0852.jpg/500px-Final_de_la_Copa_CONMEBOL_Libertadores_en_el_Estadio_Centenario_-_20211127dicimouyap0852.jpg'],
+    [/libertadores/i, WMC + '/7/7a/328-3287452_copa-libertadores-primer-trofeo-hd-png-download.png'],
     [/concacaf/i, WMC + '/thumb/3/3e/CONCACAF_Champions_Cup_logo.svg/500px-CONCACAF_Champions_Cup_logo.svg.png'],
     [/premier league/i, WMC + '/thumb/f/f2/Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg/500px-Premier_League_Trophy_at_Manchester%27s_National_Football_Museum_%28Ank_Kumar%29_01.jpg'],
     [/la liga/i, WMC + '/thumb/d/d3/Trofeo_de_La_Liga_9900.jpg/500px-Trofeo_de_La_Liga_9900.jpg'],
     [/serie a/i, WMC + '/thumb/8/8e/Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg/500px-Juventus_FC_-_Serie_A_champions_2016-17_%28edited%29.jpg'],
     [/bundesliga/i, WMC + '/thumb/f/f9/Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg/500px-Trophy_of_Fu%C3%9Fball-Bundesliga_in_Singapore%2C_2023.jpg'],
+    [/ligue 1/i, WMC + '/5/5a/Hexagoal.jpg'],
     [/fa cup/i, WMC + '/thumb/3/3f/The_FA_Cup_Trophy.jpg/500px-The_FA_Cup_Trophy.jpg'],
     [/copa del rey/i, WMC + '/thumb/a/a4/Copa_del_Rey_Trophy.png/500px-Copa_del_Rey_Trophy.png'],
     [/coppa italia/i, WMC + '/thumb/2/23/The_Coppa_Italia_trophy.jpg/500px-The_Coppa_Italia_trophy.jpg'],
