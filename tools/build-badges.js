@@ -92,7 +92,7 @@ async function thumbnailsFor(titles) {
   const map = {};
   for (let i = 0; i < titles.length; i += 50) {
     const pages = await apiJson({ action: 'query', prop: 'pageimages', piprop: 'thumbnail',
-                                  pithumbsize: 128, pilicense: 'any', redirects: 1,
+                                  pithumbsize: 500, pilicense: 'any', redirects: 1,
                                   titles: titles.slice(i, i + 50).join('|') });
     Object.values(pages.query.pages).forEach(p => {
       if (p.thumbnail && p.thumbnail.source) map[p.title] = p.thumbnail.source;
@@ -112,11 +112,15 @@ const OVERRIDES = {
   'Corinthians': 'https://r2.thesportsdb.com/images/media/team/badge/vvuvps1473538042.png',
   'Inter Miami': 'https://r2.thesportsdb.com/images/media/team/badge/m4it3e1602103647.png',
   'Rosario Central': 'https://r2.thesportsdb.com/images/media/team/badge/y6q1ds1769660256.png',
-  'Seattle Sounders': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/MLS_crest_logo_RGB_-_Seattle_Sounders_FC_2024.svg/250px-MLS_crest_logo_RGB_-_Seattle_Sounders_FC_2024.svg.png',
-  'Atlanta United': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/MLS_crest_logo_RGB_-_Atlanta_United_FC.svg/250px-MLS_crest_logo_RGB_-_Atlanta_United_FC.svg.png',
-  'NY Red Bulls': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/MLS_crest_logo_RGB_-_New_York_Red_Bulls.svg/250px-MLS_crest_logo_RGB_-_New_York_Red_Bulls.svg.png',
-  'Philadelphia Union': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/MLS_crest_logo_RGB_-_Philadelphia_Union_2018.svg/250px-MLS_crest_logo_RGB_-_Philadelphia_Union_2018.svg.png',
-  'Austin FC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/MLS_crest_logo_RGB_-_Austin_FC.svg/250px-MLS_crest_logo_RGB_-_Austin_FC.svg.png'
+  // full primary crests — TheSportsDB's Liverpool is a red-on-transparent
+  // Liver bird that vanishes over the club's red shield, and the Commons
+  // "MLS crest logo" files are generic league shields, not the club crests
+  'Liverpool': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/500px-Liverpool_FC.svg.png',
+  'Seattle Sounders': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Seattle_Sounders_FC.svg/500px-Seattle_Sounders_FC.svg.png',
+  'Atlanta United': 'https://r2.thesportsdb.com/images/media/team/badge/ej091x1602103070.png',
+  'NY Red Bulls': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/51/New_York_Red_Bulls_logo.svg/500px-New_York_Red_Bulls_logo.svg.png',
+  'Philadelphia Union': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/46/Philadelphia_Union_2018_logo.svg/500px-Philadelphia_Union_2018_logo.svg.png',
+  'Austin FC': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/85/Austin_FC_logo.svg/500px-Austin_FC_logo.svg.png'
 };
 
 /* A Wikipedia page image is only a badge if it looks like one — real crests
