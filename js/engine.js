@@ -1165,6 +1165,8 @@
         p.retireBuzzYear = g.world.year;
         State.news(`${p.lastName}, ${p.age}, refuses to rule out retirement at the end of the season`, 'info');
       });
+      if (p.farewell) items.push(() =>
+        State.news(`The farewell tour: both sets of fans rise for ${p.lastName} — every ground wants its goodbye`, 'good', null, 'legacy'));
       if (p.contract && p.contract.years <= 1) items.push(() =>
         State.news(`Clubs on alert as ${p.lastName}'s ${club.name} deal runs down`, 'info'));
       if (p.form >= 78) items.push(() =>

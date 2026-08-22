@@ -641,6 +641,13 @@
         ${UI.bar('Fitness', p.fitness, '#22e07a')}${UI.bar('Form', p.form, '#5aa8ff')}
         ${UI.bar('Morale', p.morale, '#b483ff')}${UI.bar('Reputation', p.reputation, '#f5b224')}</div>`;
 
+      if (p.farewell) {
+        html += `<div class="card gold-edge center"><b class="gold">Farewell season announced</b>
+          <div class="dim" style="margin-top:4px">This is your last. The testimonial comes after the final whistle of the season.</div></div>`;
+      }
+      if (p.intl.called && !p.intl.retired) {
+        html += `<button class="btn btn-ghost btn-block" data-act="retireIntl" style="margin-bottom:8px">Retire from international football</button>`;
+      }
       if (p.age >= D.CONFIG.RETIRE_MIN_AGE) {
         html += `<button class="btn btn-danger btn-block" data-act="retire">Retire from football</button>`;
       }

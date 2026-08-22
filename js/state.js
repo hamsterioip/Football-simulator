@@ -79,7 +79,7 @@
                   trophies: [], ratingSum: 0, seasons: [], clubs: [] },
         intl: { caps: 0, goals: 0, called: false, retired: false },
         injuries: [], suspension: 0, lastInjury: null,
-        achievements: [], peakOvr: 0, peakValue: 0, legacy: 0, retired: false
+        achievements: [], peakOvr: 0, peakValue: 0, legacy: 0, retired: false, farewell: false
       };
       p.ovr = State.overall(p);
       p.potential = State.potentialOverall(p);

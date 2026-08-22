@@ -775,6 +775,9 @@
       { id: 'academy', name: 'Coach the academy',  icon: 'academy', text: 'You go back to where it started and spend your days making teenagers better. Nothing has ever felt more right.' },
       { id: 'scout',   name: 'Head of recruitment', icon: 'tactics', text: 'You always saw the game a beat early. Now you get paid to spot it in seventeen-year-olds.' },
       { id: 'director',name: 'Sporting director',  icon: 'contract', text: 'You take the job upstairs at a club that needed rebuilding, and rebuild it properly.' },
+      { id: 'ntcoach', name: 'Coach your country', icon: 'nation', text: 'A career in the shirt taught you what it means. Now you pick the squad, and a nation holds its breath every other summer.' },
+      { id: 'ambassador', name: 'Club ambassador', icon: 'club', text: 'Suit and a smile: opening schools, charming sponsors, applauding from the directors\' box. The badge never leaves your lapel.' },
+      { id: 'agent',   name: 'Players\' agent',    icon: 'transfer', text: 'You know every trick because you lived every trick. Your phone never stops, and your clients sign very good contracts.' },
       { id: 'walk',    name: 'Walk away from the game', icon: 'exit', text: 'Phone off. No badges, no punditry, no comeback. Some players need the noise to stop, and you are one of them.' }
     ]
   };

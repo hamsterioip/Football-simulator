@@ -2846,7 +2846,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
                   trophies: [], ratingSum: 0, seasons: [], clubs: [] },
         intl: { caps: 0, goals: 0, called: false, retired: false },
         injuries: [], suspension: 0, lastInjury: null,
-        achievements: [], peakOvr: 0, peakValue: 0, legacy: 0, retired: false
+        achievements: [], peakOvr: 0, peakValue: 0, legacy: 0, retired: false, farewell: false
       };
       p.ovr = State.overall(p);
       p.potential = State.potentialOverall(p);
@@ -6473,6 +6473,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         p.retireBuzzYear = g.world.year;
         State.news(`${p.lastName}, ${p.age}, refuses to rule out retirement at the end of the season`, 'info');
       });
+      if (p.farewell) items.push(() =>
+        State.news(`The farewell tour: both sets of fans rise for ${p.lastName} — every ground wants its goodbye`, 'good', null, 'legacy'));
       if (p.contract && p.contract.years <= 1) items.push(() =>
         State.news(`Clubs on alert as ${p.lastName}'s ${club.name} deal runs down`, 'info'));
       if (p.form >= 78) items.push(() =>
@@ -7372,6 +7374,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       { id: 'academy', name: 'Coach the academy',  icon: 'academy', text: 'You go back to where it started and spend your days making teenagers better. Nothing has ever felt more right.' },
       { id: 'scout',   name: 'Head of recruitment', icon: 'tactics', text: 'You always saw the game a beat early. Now you get paid to spot it in seventeen-year-olds.' },
       { id: 'director',name: 'Sporting director',  icon: 'contract', text: 'You take the job upstairs at a club that needed rebuilding, and rebuild it properly.' },
+      { id: 'ntcoach', name: 'Coach your country', icon: 'nation', text: 'A career in the shirt taught you what it means. Now you pick the squad, and a nation holds its breath every other summer.' },
+      { id: 'ambassador', name: 'Club ambassador', icon: 'club', text: 'Suit and a smile: opening schools, charming sponsors, applauding from the directors\' box. The badge never leaves your lapel.' },
+      { id: 'agent',   name: 'Players\' agent',    icon: 'transfer', text: 'You know every trick because you lived every trick. Your phone never stops, and your clients sign very good contracts.' },
       { id: 'walk',    name: 'Walk away from the game', icon: 'exit', text: 'Phone off. No badges, no punditry, no comeback. Some players need the noise to stop, and you are one of them.' }
     ]
   };
@@ -8684,6 +8689,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         ${UI.bar('Fitness', p.fitness, '#22e07a')}${UI.bar('Form', p.form, '#5aa8ff')}
         ${UI.bar('Morale', p.morale, '#b483ff')}${UI.bar('Reputation', p.reputation, '#f5b224')}</div>`;
 
+      if (p.farewell) {
+        html += `<div class="card gold-edge center"><b class="gold">Farewell season announced</b>
+          <div class="dim" style="margin-top:4px">This is your last. The testimonial comes after the final whistle of the season.</div></div>`;
+      }
+      if (p.intl.called && !p.intl.retired) {
+        html += `<button class="btn btn-ghost btn-block" data-act="retireIntl" style="margin-bottom:8px">Retire from international football</button>`;
+      }
       if (p.age >= D.CONFIG.RETIRE_MIN_AGE) {
         html += `<button class="btn btn-danger btn-block" data-act="retire">Retire from football</button>`;
       }
@@ -9344,6 +9356,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         case 'mediaMenu': return Game.mediaMenu();
         case 'endSeason': return Game.endSeason();
         case 'retire': return Game.confirmRetire();
+        case 'retireIntl': return Game.confirmRetireIntl();
         case 'save': State.save(); return UI.toast('Career saved.', 'good');
         case 'newsView': UI.newsView = arg; return UI.render();
         case 'socialPost': return Game.socialPost();
@@ -10372,6 +10385,18 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         c.form = [];
       });
 
+      // a farewell season ends at the testimonial, before any ageing check
+      if (p.farewell) {
+        const club = State.club(p.club);
+        State.news(`The testimonial: ${club.name} legends return for ${p.lastName}'s farewell match`, 'good', null, 'legacy');
+        UI.modal({
+          title: 'The testimonial',
+          text: `A guard of honour, a legends XI, your name sung for ninety minutes. The ${club.name} end will not sit down.\n\nThis is how it ends — and it is a good way to end.`,
+          actions: [{ label: 'Hang up the boots', cls: 'btn-danger', onClick: () => Game.retire(false) }]
+        });
+        return;
+      }
+
       // ageing / forced retirement
       if (p.age >= 41 || (p.age >= 36 && p.ovr < 58)) {
         UI.modal({ title: 'Time is up',
@@ -10409,14 +10434,59 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     /* ==================== RETIREMENT ==================== */
     confirmRetire() {
       const p = State.game.player;
+      const actions = [
+        { label: 'Retire at once', cls: 'btn-danger', onClick: () => Game.retire(false) },
+        { label: 'Play on', cls: 'btn-ghost' }
+      ];
+      // announce now, bow out at the end of the season with a testimonial
+      if (!p.farewell) actions.splice(1, 0,
+        { label: 'Announce a farewell season', cls: 'btn-gold', onClick: () => Game.farewellSeason() });
       UI.modal({
         title: 'Retire?',
-        text: `You are ${p.age}. ${p.career.apps} appearances, ${p.career.goals} goals.\n\nOnce you retire, this career is over for good.`,
+        text: `You are ${p.age}. ${p.career.apps} appearances, ${p.career.goals} goals.` +
+          (p.farewell ? '\n\nYou have already announced this is your final season — the testimonial awaits.' :
+          '\n\nRetire at once and it ends today. Announce a farewell season and every ground gets to say goodbye before the testimonial.') +
+          '\n\nOnce you retire, this career is over for good.',
+        actions
+      });
+    },
+
+    farewellSeason() {
+      const g = State.game, p = g.player;
+      p.farewell = true;
+      p.morale = U.clamp(p.morale + 3, 0, 100);
+      const you = p.firstName + ' ' + p.lastName;
+      State.news(`"ONE LAST DANCE": ${you} announces he will retire at the end of the season`, 'info', null, 'legacy');
+      State.news(`${State.club(p.club).name} confirm a testimonial for ${p.lastName} — legends XI to return`, 'good', null, 'club');
+      State.save();
+      UI.modal({
+        title: 'The announcement',
+        text: `Cameras, a lump in the throat. "This is my last season," you say, and the room goes quiet.\n\nEvery away end will applaud you off from here to May. Then the testimonial, then the rest of your life.`,
+        actions: [{ label: 'Make it count' }]
+      });
+      UI.render();
+    },
+
+    confirmRetireIntl() {
+      const p = State.game.player;
+      UI.modal({
+        title: 'International retirement?',
+        text: `${p.intl.caps} caps, ${p.intl.goals} goals for ${p.nation}.\n\nStep away from the national team and the summers become yours again — no more call-ups, no more tournaments. The club career goes on.`,
         actions: [
-          { label: 'Retire', cls: 'btn-danger', onClick: () => Game.retire(false) },
-          { label: 'One more season', cls: 'btn-ghost' }
+          { label: 'Retire from internationals', cls: 'btn-danger', onClick: () => Game.retireIntl() },
+          { label: 'Keep answering the call', cls: 'btn-ghost' }
         ]
       });
+    },
+
+    retireIntl() {
+      const g = State.game, p = g.player;
+      p.intl.retired = true;
+      p.morale = U.clamp(p.morale + 2, 0, 100);
+      State.news(`${p.lastName} calls time on ${p.nation}: ${p.intl.caps} caps, ${p.intl.goals} goals — "the shirt deserved my freshest legs"`, 'info', null, 'nation');
+      State.save();
+      UI.toast('International career over. The club grind goes on.', 'good');
+      UI.render();
     },
 
     retire(forced) {
@@ -10437,6 +10507,14 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         State.news(`From ${p.career.clubs[0]} to ${p.career.clubs[p.career.clubs.length - 1]}: ${p.lastName}'s journey in shirts`, 'info', null, 'shirt');
       if (p.intl.caps > 0)
         State.news(`${p.nation} salute a servant — ${p.lastName} retires with ${p.intl.caps} caps`, 'good', null, 'nation');
+
+      // the honours a club hands out on a day like this, scaled to the career
+      const honors = [];
+      if (score >= 1400) honors.push(`A statue of ${p.lastName} is commissioned outside the ground`);
+      if (score >= 1000) honors.push(`${State.club(p.club).name} rename a stand in ${p.lastName}'s honour`);
+      if (score >= 700) honors.push(`The no. ${p.shirt} shirt is retired — nobody wears it again`);
+      if (score >= 450) honors.push(`${p.lastName} enters the club's hall of fame, first ballot`);
+      honors.forEach(h => State.news(h, 'good', null, 'legacy'));
       State.save();
 
       UI.modal({
@@ -10456,6 +10534,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
             <div class="stat"><b>${State.careerRating(p) || '—'}</b><span>Rating</span></div>
           </div>
           <div class="divider"></div>
+          ${honors.length ? `<h3 style="margin:0 0 8px">${ico('trophy')} The club honours you</h3>
+            <div class="list">` + honors.map(h => `<div class="item tight-item"><div class="ic">${ico('medal')}</div>
+              <div class="tx"><b>${U.esc(h)}</b></div></div>`).join('') + `</div><div class="divider"></div>` : ''}
           <div class="dim">Clubs: ${p.career.clubs.map(U.esc).join(' · ') || '—'}</div>
           <div class="divider"></div>
           <h3 style="margin:0 0 8px">${ico('trophy')} The cabinet</h3>
@@ -10465,10 +10546,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     },
 
     postCareer() {
-      const g = State.game;
+      const g = State.game, p = g.player;
+      const paths = Career.POST_CAREER.filter(o => o.id !== 'ntcoach' || p.intl.caps >= 40);
       UI.modal({
         title: 'Life after football',
-        html: `<div class="list">` + Career.POST_CAREER.map(o =>
+        html: `<div class="list">` + paths.map(o =>
           `<div class="item click" data-p="${o.id}"><div class="ic">${ico(o.icon)}</div>
             <div class="tx"><b>${U.esc(o.name)}</b></div></div>`).join('') + `</div>`,
         actions: [],
