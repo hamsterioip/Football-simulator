@@ -92,7 +92,7 @@ async function thumbnailsFor(titles) {
   const map = {};
   for (let i = 0; i < titles.length; i += 50) {
     const pages = await apiJson({ action: 'query', prop: 'pageimages', piprop: 'thumbnail',
-                                  pithumbsize: 128, redirects: 1,
+                                  pithumbsize: 128, pilicense: 'any', redirects: 1,
                                   titles: titles.slice(i, i + 50).join('|') });
     Object.values(pages.query.pages).forEach(p => {
       if (p.thumbnail && p.thumbnail.source) map[p.title] = p.thumbnail.source;
@@ -119,13 +119,24 @@ const OVERRIDES = {
   'Austin FC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/MLS_crest_logo_RGB_-_Austin_FC.svg/250px-MLS_crest_logo_RGB_-_Austin_FC.svg.png'
 };
 
+/* A Wikipedia page image is only a badge if it looks like one — real crests
+   are almost always SVG/PNG files named logo/crest/badge. A stadium or
+   street photo (.jpg page images like "Estadio El Sadar") means the crest is
+   non-free and TheSportsDB (pass 3) should supply it instead. */
+function looksLikeCrest(url) {
+  if (/thesportsdb/.test(url)) return true;
+  return /\.svg/i.test(url) || /logo|crest|badge|wappen|emblem|escudo/i.test(url);
+}
+
 (async () => {
-  // merge with what a previous run already resolved — re-runs only fill gaps
+  // merge with what a previous run already resolved — re-runs only fill gaps.
+  // Anything that isn't actually a crest gets re-resolved from scratch.
   const badges = {};
   const prevFile = path.join(__dirname, '..', 'js', 'badges.js');
   if (fs.existsSync(prevFile)) {
     const prev = fs.readFileSync(prevFile, 'utf8').match(/global\.BADGES = (\{[\s\S]*?\n\});/);
     if (prev) Object.assign(badges, JSON.parse(prev[1]));
+    Object.keys(badges).forEach(c => { if (!looksLikeCrest(badges[c])) delete badges[c]; });
     console.log('starting with ' + Object.keys(badges).length + ' badges from previous run');
   }
   Object.assign(badges, OVERRIDES);
@@ -138,7 +149,7 @@ const OVERRIDES = {
   const missing = [];
   todo.forEach(c => {
     const t = thumbs[guesses[c]];
-    if (t) badges[c] = t; else missing.push(c);
+    if (t && looksLikeCrest(t)) badges[c] = t; else missing.push(c);
   });
   console.log('pass 1: ' + Object.keys(badges).length + '/' + clubs.length + ' badges');
 
@@ -148,7 +159,7 @@ const OVERRIDES = {
     const still = [];
     missing.forEach(c => {
       const guess = (QUERY[c] || c).replace(/ F\.C\.$/, ' FC');
-      if (thumbs[guess]) badges[c] = thumbs[guess]; else still.push(c);
+      if (thumbs[guess] && looksLikeCrest(thumbs[guess])) badges[c] = thumbs[guess]; else still.push(c);
     });
     console.log('pass 2: +' + (missing.length - still.length) + ' badges');
     missing.length = 0; missing.push(...still);
@@ -160,7 +171,7 @@ const OVERRIDES = {
   for (const club of missing) {
     try {
       const url = 'https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t='
-        + encodeURIComponent(club);
+        + encodeURIComponent(QUERY[club] || club);
       const res = await fetch(url, { headers: HEADERS });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const d = await res.json();
