@@ -64,23 +64,23 @@
     wizardBack() {
       const w = UI.wizard;
       if (!w || w.step === 0) { UI.show('start'); return; }
-      if (w.step === 2 && w.draftIndex > 0) {   // undo the last steal
+      if (w.step === 3 && w.draftIndex > 0) {   // undo the last steal
         const undo = w.robbed.pop();
         if (undo) delete w.caps[undo.attr];
         w.draftIndex--;
         return UI.renderWizard();
       }
-      if (w.step === 3) { w.step = 2; w.draftPool = null; return UI.renderWizard(); }
+      if (w.step === 4) { w.step = 3; w.draftPool = null; return UI.renderWizard(); }
       w.step--; UI.renderWizard();
     },
     wizardNext() {
       const w = UI.wizard;
-      if (w.step === 0) {
+      if (w.step === 1) {
         w.firstName = (w.firstName || '').trim() || U.pick(D.FIRST_NAMES);
         w.lastName = (w.lastName || '').trim() || U.pick(D.LAST_NAMES);
       }
-      if (w.step === 2) return;            // the draft advances itself, pick by pick
-      if (w.step < 3) { w.step++; UI.renderWizard(); return; }
+      if (w.step === 3) return;            // the draft advances itself, pick by pick
+      if (w.step < 4) { w.step++; UI.renderWizard(); return; }
       if (!w.clubId) { UI.toast('Pick a club to start at.', 'bad'); return; }
       Game.startCareer();
     },
@@ -90,7 +90,7 @@
       const g = State.newGame({
         firstName: w.firstName, lastName: w.lastName, nation: w.nation,
         pos: w.pos, foot: w.foot, shirt: w.shirt, age: 17,
-        caps: w.caps, draft: w.robbed
+        caps: w.caps, draft: w.robbed, era: w.era
       }, w.clubId);
       g.settings.matchLength = 'normal';
       g.contQualified = false;
@@ -258,6 +258,10 @@
       switch (act) {
         case 'playMatch': return Game.playMatch(true);
         case 'quickMatch': return Game.playMatch(false);
+        case 'skip': case 'skipMenu': return Game.skipMenu();
+        case 'resumeSkip': return Game.runSkip();
+        case 'cancelSkip': State.game.skip = null; State.save(); UI.render();
+          return UI.toast('Skip cancelled.', '');
         case 'openWeek': return Game.weekMenu();
         case 'doActivity': return Game.runActivity(arg);
         case 'trainMenu': return Game.trainMenu();
@@ -265,9 +269,37 @@
         case 'endSeason': return Game.endSeason();
         case 'retire': return Game.confirmRetire();
         case 'save': State.save(); return UI.toast('Career saved.', 'good');
+        case 'newsView': UI.newsView = arg; return UI.render();
+        case 'socialPost': return Game.socialPost();
         case 'matchLength': return Game.matchLengthMenu();
         case 'quit': return Game.quit();
       }
+    },
+
+    /* Your own account. One post a week, and the room answers back. */
+    socialPost() {
+      const g = State.game, S = global.Social;
+      if (!S.canPost(g)) {
+        return UI.toast('You have already posted this week. Let it breathe.', '');
+      }
+      UI.modal({
+        title: 'Post something',
+        html: `<p class="muted">${U.esc(S.compact(S.followers(g)))} people are about to read this.</p>
+          <div class="list">${S.POST_STYLES.map(st =>
+            `<div class="item click" data-ps="${st.id}"><div class="ic">${ico(st.icon)}</div>
+              <div class="tx"><b>${U.esc(st.label)}</b><span>${U.esc(st.hint)}</span></div></div>`).join('')}</div>`,
+        actions: [{ label: 'Not now', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-ps]').forEach(el => el.onclick = () => {
+            UI.closeModal();
+            const post = S.postAs(g, el.dataset.ps);
+            UI.tab = 'news'; UI.newsView = 'feed';
+            State.save();
+            UI.render();
+            if (post) UI.toast('Posted. ' + S.compact(post.likes) + ' likes already.', 'good');
+          });
+        }
+      });
     },
 
     simpleResult(res) {
@@ -388,6 +420,178 @@
       UI.render();
     },
 
+    /* ==================== SKIPPING AHEAD ====================
+       Sim forward several weeks at once, the way a manager holds down
+       "continue". It stops early the moment something wants your attention:
+       a bad injury, a moment off the pitch, the end of the season. */
+    SKIPS: [
+      { id: 'month', label: 'One month', weeks: 4, hint: 'About four matches' },
+      { id: 'quarter', label: 'Three months', weeks: 13, hint: 'A third of a season' },
+      { id: 'season', label: 'Rest of the season', weeks: 999, hint: 'Straight to the end-of-season review' },
+      { id: 'year', label: 'A full year', weeks: 46, hint: 'Through the summer and into next season' }
+    ],
+
+    skipMenu() {
+      const g = State.game;
+      UI.modal({
+        title: 'Skip ahead',
+        html: `<p class="muted">${Math.max(0, g.fixtures.length - g.fixtureIndex)} fixture(s) left this season.
+          Matches are simulated and you train in between. It stops early if anything needs you.</p>
+          <div class="list">${Game.SKIPS.map(sk =>
+            `<div class="item click" data-sk="${sk.id}"><div class="ic">${ico('sim')}</div>
+              <div class="tx"><b>${U.esc(sk.label)}</b><span>${U.esc(sk.hint)}</span></div></div>`).join('')}</div>`,
+        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-sk]').forEach(el => el.onclick = () => {
+            UI.closeModal();
+            Game.startSkip(el.dataset.sk);
+          });
+        }
+      });
+    },
+
+    startSkip(id) {
+      const g = State.game;
+      const sk = Game.SKIPS.find(x => x.id === id) || Game.SKIPS[0];
+      g.skip = {
+        id: sk.id, label: sk.label, remaining: sk.weeks,
+        digest: { played: 0, w: 0, d: 0, l: 0, goals: 0, assists: 0, motm: 0,
+                  ratingSum: 0, cards: 0, startOvr: g.player.ovr, seasons: 0,
+                  results: [], notes: [] }
+      };
+      Game.runSkip();
+    },
+
+    // choose the week's session for you: recover if you need to, otherwise train
+    autoWeek(g) {
+      const p = g.player;
+      if (g.weekActionsLeft <= 0) return;
+      let res;
+      if (p.injuries.length) res = Career.doActivity(g, 'rehab');
+      else if (p.fitness < 58) res = Career.doActivity(g, 'rest');
+      else {
+        // train whichever key attribute has the most room left below its ceiling
+        const w = D.POSITIONS[p.pos].w;
+        const drills = D.TRAINING
+          .filter(t => (w[t.attr] || 0) > 0.05 || t.attr === 'weakFoot')
+          .filter(t => t.attr !== 'gk' || p.pos === 'GK')
+          .filter(t => t.attr !== 'shooting' || p.pos !== 'GK')
+          .map(t => ({ t, room: Engine.Progress.cap(p, t.attr) - p.attrs[t.attr] }))
+          .filter(x => x.room > 0)
+          .sort((a, b) => b.room - a.room);
+        res = drills.length ? Career.doActivity(g, 'train', drills[0].t.id)
+                            : Career.doActivity(g, 'rest');
+      }
+      g.weekActionsLeft--;
+      return res;
+    },
+
+    runSkip() {
+      const g = State.game, sk = g.skip;
+      if (!sk) return;
+      const dg = sk.digest;
+      let stop = null, guard = 0;
+
+      while (sk.remaining > 0 && guard++ < 200) {
+        const f = Engine.Season.nextPlayable(g);
+        if (!f) { stop = 'The season is over.'; break; }
+
+        const injuriesBefore = g.player.injuryCount || 0;
+        const suspensionBefore = g.player.suspension;
+        Game.autoWeek(g);
+        Engine.Season.prepareFixture(g, f);
+        const m = Engine.Match.create(g, f);
+        Engine.Match.simRest(g, m);
+        if (m.needsShootout) Game.autoShootout(m);
+        if (!m.result) Engine.Match.settle(g, m);
+
+        dg.played++;
+        dg.results.push(m.result);
+        if (m.result === 'W') dg.w++; else if (m.result === 'D') dg.d++; else dg.l++;
+        if (m.role === 'start' || m.role === 'bench') {
+          dg.goals += m.stats.goals; dg.assists += m.stats.assists;
+          dg.ratingSum += m.stats.rating; dg.rated = (dg.rated || 0) + 1;
+          if (m.motm) dg.motm++;
+          if (m.stats.card) dg.cards++;
+        }
+
+        g.fixtureIndex++;
+        g.weekActionsLeft = 1;
+        sk.remaining--;
+        Game.checkTraits();
+        // the rest of the world keeps playing and the press keeps writing
+        if (Engine.Press.buzz) Engine.Press.buzz(g);
+        if (Engine.Press.world) Engine.Press.world(g);
+        if (global.Social) global.Social.weekly(g);
+
+        // stop for things that are new, not for a state you are already in —
+        // otherwise one long injury halts the skip on every single match
+        if ((g.player.injuryCount || 0) > injuriesBefore) {
+          const bad = g.player.injuries[g.player.injuries.length - 1];
+          if (bad && bad.matches >= 3) { stop = `You picked up a serious injury: ${bad.name}.`; break; }
+        }
+        if (g.player.suspension > 0 && suspensionBefore === 0) { stop = 'You have been suspended.'; break; }
+
+        const ev = U.chance(0.3) ? Career.rollEvent(g) : null;
+        if (ev) { g.pendingEvent = ev; stop = 'Something needs your attention.'; break; }
+      }
+
+      if (sk.remaining <= 0) stop = stop || `${sk.label} done.`;
+      State.save();
+      UI.show('game');
+      UI.tab = 'home';
+      UI.render();
+      Game.skipSummary(stop);
+    },
+
+    skipSummary(stop) {
+      const g = State.game, sk = g.skip, dg = sk ? sk.digest : null;
+      if (!dg) return;
+      const p = g.player;
+      const avg = dg.rated ? U.round(dg.ratingSum / dg.rated, 2) : '—';
+      const ovrDelta = p.ovr - dg.startOvr;
+      const seasonOver = !Engine.Season.nextPlayable(g);
+      const done = sk.remaining <= 0 || seasonOver;
+
+      const html = `
+        <div class="skip-line">${ico('calendar')} <span>${U.esc(stop || '')}</span></div>
+        <div class="stat-grid" style="margin-top:12px">
+          <div class="stat"><b>${dg.played}</b><span>Matches</span></div>
+          <div class="stat"><b>${dg.w}-${dg.d}-${dg.l}</b><span>W-D-L</span></div>
+          <div class="stat"><b>${dg.goals}</b><span>Goals</span></div>
+          <div class="stat"><b>${dg.assists}</b><span>Assists</span></div>
+          <div class="stat"><b>${avg}</b><span>Avg rating</span></div>
+          <div class="stat"><b>${ovrDelta >= 0 ? '+' : ''}${ovrDelta}</b><span>Overall</span></div>
+        </div>
+        ${dg.results.length ? `<div class="form-guide" style="margin-top:12px;flex-wrap:wrap">${
+          dg.results.slice(-14).map(r => `<span class="fg ${r === 'W' ? 'w' : r === 'D' ? 'd' : 'l'}">${r}</span>`).join('')
+        }</div>` : ''}
+        ${(g.headlines || []).length ? `<div class="section-title">While you were away</div>` +
+          (g.headlines || []).slice(0, 4).map(h => `<div class="headline ${h.k}">
+            <div class="hl-src">${U.esc(h.src || '')}</div><div class="hl-t">${U.esc(h.t)}</div></div>`).join('') : ''}`;
+
+      const actions = [];
+      if (!done && sk.remaining > 0) {
+        actions.push({ label: `Keep skipping (${sk.remaining} to go)`, onClick: () => Game.runSkip() });
+      }
+      actions.push({ label: done ? 'Continue' : 'Stop here', cls: done ? 'btn-primary' : 'btn-ghost',
+        onClick: () => { if (done) g.skip = null; Game.afterSkip(); } });
+
+      UI.modal({ title: 'Skipped ' + dg.played + ' week' + (dg.played === 1 ? '' : 's'), html, actions });
+    },
+
+    // whatever interrupted the skip gets dealt with now
+    afterSkip() {
+      const g = State.game;
+      if (g.pendingEvent) {
+        const ev = g.pendingEvent;
+        g.pendingEvent = null;
+        Game.showEvent(ev);   // the home screen behind it offers to resume the skip
+        return;
+      }
+      UI.render();
+    },
+
     /* ==================== MATCH ==================== */
     playMatch(interactive) {
       const g = State.game;
@@ -428,11 +632,75 @@
         return;
       }
       if (r.type === 'scenario') {
+        if (r.scenario.id === 'penalty') {
+          UI.renderPenalty(r.scenario, (zone, root) => Game.takePenalty(r.scenario, zone, root, () => Game.runMatch()));
+          return;
+        }
+        if (r.scenario.id === 'gk_penalty') {
+          UI.renderKeeperCall(r.scenario, (i, root) => Game.keeperCall(r.scenario, i, root, () => Game.runMatch()));
+          return;
+        }
         UI.renderScenario(r.scenario, i => Game.choose(r.scenario, i));
         return;
       }
       if (r.type === 'shootout') { Game.startShootout(); return; }
       if (r.type === 'end') { Game.matchSummary(m); return; }
+    },
+
+    /* Aim, watch the kick, then apply what it did. `after` is what to do once
+       the animation and the outcome have been shown. */
+    takePenalty(scn, zone, root, after) {
+      const g = State.game, m = Game.match;
+      const label = global.Pitch.ZONES[zone].label;
+      const index = scn.options.findIndex(o => o.label === label);
+      if (index < 0) return;
+      const opt = scn.options[index];
+      const fx = Scenarios.resolve(scn, index);
+      const how = fx.how || (fx.goal ? 'goal' : 'saved');
+      const dive = Game.keeperGuess(zone, how);
+      UI.verdict('', '');
+      global.Pitch.kick(root, zone, dive, how, () => {
+        UI.verdict(how === 'goal' ? 'GOAL' : how === 'saved' ? 'SAVED' : 'MISSED', how);
+        const out = Engine.Match.applyEffects(g, m, fx, Scenarios.styleOf(scn, opt));
+        UI.pushEvent(`${opt.label} → ${fx.text}`, fx.tone, m.minute, true);
+        UI.renderScoreboard(m);
+        out.forEach(o => {
+          if (o.indexOf('attr:') === 0) UI.toast(`${D.ATTR_LABEL[o.slice(5)]} improved!`, 'good');
+          if (o === 'red') UI.toast('SENT OFF', 'bad');
+        });
+        if (fx.goal) UI.toast('GOAL!', 'gold');
+        setTimeout(after, 700);
+      });
+    },
+
+    // where the keeper went, chosen to match what actually happened
+    keeperGuess(zone, how) {
+      const side = zone === 'TL' || zone === 'BL' ? 'left'
+                 : zone === 'TR' || zone === 'BR' ? 'right' : 'centre';
+      if (how === 'saved') return side === 'centre' ? 'centre' : side;
+      // beaten: he commits the wrong way, which is what the commentary says he did
+      if (side === 'centre') return U.chance(0.5) ? 'left' : 'right';
+      return side === 'left' ? 'right' : 'left';
+    },
+
+    keeperCall(scn, index, root, after) {
+      const g = State.game, m = Game.match;
+      const opt = scn.options[index];
+      const fx = Scenarios.resolve(scn, index);
+      const saved = !!fx.save;
+      const dive = /left/i.test(opt.label) ? 'left' : /right/i.test(opt.label) ? 'right' : 'centre';
+      // if he saved it the ball went where he dived; if not, the other way
+      const zone = saved
+        ? (dive === 'left' ? U.pick(['TL', 'BL']) : dive === 'right' ? U.pick(['TR', 'BR']) : U.pick(['TC', 'BC']))
+        : (dive === 'left' ? U.pick(['TR', 'BR']) : dive === 'right' ? U.pick(['TL', 'BL']) : U.pick(['TL', 'TR', 'BL', 'BR']));
+      UI.verdict('', '');
+      global.Pitch.kick(root, zone, dive, saved ? 'saved' : 'goal', () => {
+        UI.verdict(saved ? 'SAVED' : 'GOAL', saved ? 'goal' : 'saved');
+        Engine.Match.applyEffects(g, m, fx, Scenarios.styleOf(scn, opt));
+        UI.pushEvent(`${opt.label} → ${fx.text}`, fx.tone, m.minute, true);
+        UI.renderScoreboard(m);
+        setTimeout(after, 700);
+      });
     },
 
     choose(scn, index) {
@@ -470,16 +738,19 @@
       Game.shootoutNext();
     },
 
+    /* Is the shootout over? Best of five until both have taken five, then
+       sudden death — and a shootout can never finish level. */
     shootoutDecided(s) {
-      const remainingUs = Math.max(0, 5 - s.round - (s.pendingUs ? 0 : 0));
-      if (s.round >= 5) {
-        if (s.usKicks === s.themKicks && s.us !== s.them) return true;
+      const us = s.usKicks || 0, them = s.themKicks || 0;
+      if (us < 5 || them < 5) {
+        // an unassailable lead with kicks still to come
+        const usLeft = Math.max(0, 5 - us), themLeft = Math.max(0, 5 - them);
+        if (s.us > s.them + themLeft) return true;
+        if (s.them > s.us + usLeft) return true;
         return false;
       }
-      const usLeft = 5 - (s.usKicks || 0), themLeft = 5 - (s.themKicks || 0);
-      if (s.us > s.them + themLeft) return true;
-      if (s.them > s.us + usLeft) return true;
-      return false;
+      // sudden death: only once both have taken the same number of kicks
+      return us === them && s.us !== s.them;
     },
 
     shootoutNext() {
@@ -487,7 +758,6 @@
       s.usKicks = s.usKicks || 0; s.themKicks = s.themKicks || 0;
 
       if (Game.shootoutDecided(s)) return Game.endShootout();
-      if (s.usKicks >= 5 && s.themKicks >= 5 && s.usKicks === s.themKicks && s.us !== s.them) return Game.endShootout();
 
       const ourTurn = s.usKicks <= s.themKicks;
       if (ourTurn) {
@@ -498,13 +768,20 @@
           const kick = Scenarios.shootoutKick(Object.assign(ctx, {
             shootoutSub: `Shootout ${s.us}–${s.them}. Kick ${s.usKicks + 1}. Eighty thousand people are watching you.`
           }));
-          UI.renderScenario(kick, i => {
+          UI.renderPenalty(kick, (zone, root) => {
+            const label = global.Pitch.ZONES[zone].label;
+            const i = kick.options.findIndex(o => o.label === label);
+            if (i < 0) return;
             const fx = Scenarios.resolve(kick, i);
+            const how = fx.how || (fx.goal ? 'goal' : 'saved');
             s.usKicks++;
             if (fx.goal) { s.us++; g.player.penScored = (g.player.penScored || 0) + 1; }
-            UI.pushEvent(`${kick.options[i].label} → ${fx.text}`, fx.tone, null, true);
-            Game.shootoutScore();
-            setTimeout(() => Game.shootoutNext(), 500);
+            global.Pitch.kick(root, zone, Game.keeperGuess(zone, how), how, () => {
+              UI.verdict(how === 'goal' ? 'SCORED' : how === 'saved' ? 'SAVED' : 'MISSED', how);
+              UI.pushEvent(`${kick.options[i].label} → ${fx.text}`, fx.tone, null, true);
+              Game.shootoutScore();
+              setTimeout(() => Game.shootoutNext(), 900);
+            });
           });
           return;
         }
@@ -526,17 +803,25 @@
               { label: 'Wait and react', hint: 'Reactions over guesswork.', tag: 'Reflex' }
             ]
           };
-          UI.renderScenario(dive, i => {
+          UI.renderKeeperCall(dive, (i, root) => {
             const gk = g.player.attrs.gk;
             let saveP = i === 3 ? 0.14 + (gk - 60) * 0.004 : i === 2 ? 0.13 : 0.24 + (gk - 60) * 0.003;
             const saved = U.chance(U.clamp(saveP, 0.05, 0.55));
             s.themKicks++;
             if (!saved) s.them++;
-            UI.pushEvent(saved ? `${dive.options[i].label} — SAVED! You are a hero.` : `${dive.options[i].label} — he scores.`,
-              saved ? 'good' : 'bad', null, true);
             if (saved) m.stats.saves++;
-            Game.shootoutScore();
-            setTimeout(() => Game.shootoutNext(), 500);
+            const label = dive.options[i].label;
+            const way = /left/i.test(label) ? 'left' : /right/i.test(label) ? 'right' : 'centre';
+            const zone = saved
+              ? (way === 'left' ? U.pick(['TL', 'BL']) : way === 'right' ? U.pick(['TR', 'BR']) : U.pick(['TC', 'BC']))
+              : (way === 'left' ? U.pick(['TR', 'BR']) : way === 'right' ? U.pick(['TL', 'BL']) : U.pick(['TL', 'TR', 'BL', 'BR']));
+            global.Pitch.kick(root, zone, way, saved ? 'saved' : 'goal', () => {
+              UI.verdict(saved ? 'SAVED' : 'HE SCORES', saved ? 'goal' : 'saved');
+              UI.pushEvent(saved ? `${label} — SAVED! You are a hero.` : `${label} — he scores.`,
+                saved ? 'good' : 'bad', null, true);
+              Game.shootoutScore();
+              setTimeout(() => Game.shootoutNext(), 900);
+            });
           });
           return;
         }
@@ -638,6 +923,7 @@
       if (ev) Game.showEvent(ev);
       else Engine.Press.buzz(g);
       Engine.Press.world(g);
+      if (global.Social) global.Social.weekly(g);
     },
 
     /* An off-field moment, presented like an on-pitch one: a card with the
@@ -795,8 +1081,19 @@
         Game.timer = setTimeout(() => Game.runMatchIntl(), 850);
         return;
       }
-      if (r.type === 'scenario') { UI.renderScenario(r.scenario, i => { Game.choose(r.scenario, i);
-        UI.renderMatchButtons([{ label: 'Play on ▶', onClick: () => Game.runMatchIntl() }]); }); return; }
+      if (r.type === 'scenario') {
+        if (r.scenario.id === 'penalty') {
+          UI.renderPenalty(r.scenario, (zone, root) => Game.takePenalty(r.scenario, zone, root, () => Game.runMatchIntl()));
+          return;
+        }
+        if (r.scenario.id === 'gk_penalty') {
+          UI.renderKeeperCall(r.scenario, (i, root) => Game.keeperCall(r.scenario, i, root, () => Game.runMatchIntl()));
+          return;
+        }
+        UI.renderScenario(r.scenario, i => { Game.choose(r.scenario, i);
+          UI.renderMatchButtons([{ label: 'Play on ▶', onClick: () => Game.runMatchIntl() }]); });
+        return;
+      }
       if (r.type === 'shootout') { Game.startShootout(); return; }
       if (r.type === 'end') { Game.intlRecord(m); Game.matchSummary(m); }
     },
@@ -860,9 +1157,9 @@
         <div class="stat"><b>${State.seasonRating(p) || '—'}</b><span>Rating</span></div>
       </div>`;
       if (results.trophies.length) html += `<div style="margin-top:12px">` +
-        results.trophies.map(t => `<span class="trophy">${ico('trophy')} ${U.esc(t)}</span>`).join('') + `</div>`;
+        results.trophies.map(t => UI.trophyChip(t)).join('') + `</div>`;
       if (results.awards.length) html += `<div style="margin-top:6px">` +
-        results.awards.map(a => `<span class="trophy">${ico('medal')} ${U.esc(a)}</span>`).join('') + `</div>`;
+        results.awards.map(a => UI.trophyChip(a)).join('') + `</div>`;
       html += `<div class="divider"></div><div class="dim">
         Market value ${U.cash(results.value)} · overall ${p.ovr}</div>`;
       if (results.dev.notes.length) {
@@ -1013,6 +1310,19 @@
       UI.show('game');
       UI.tab = 'home';
       UI.render();
+      // a "full year" skip carries on through the summer into the new season
+      if (g.skip && g.skip.remaining > 0) {
+        g.skip.digest.seasons++;
+        UI.modal({
+          title: `Season ${g.world.year}/${(g.world.year + 1) % 100}`,
+          text: `A new season begins and you are still skipping ahead — ${g.skip.remaining} week(s) left.`,
+          actions: [
+            { label: 'Keep skipping', onClick: () => Game.runSkip() },
+            { label: 'Stop here', cls: 'btn-ghost', onClick: () => { g.skip = null; UI.render(); } }
+          ]
+        });
+        return;
+      }
       UI.modal({
         title: `Season ${g.world.year}/${(g.world.year + 1) % 100}`,
         text: `${p.age} years old · ${State.club(p.club).name} · Overall ${p.ovr}\n\n${g.contQualified ? 'You are in continental competition this season.' : 'League and cup football this season.'}\n\nPre-season is done. Let's go again.`,
@@ -1046,6 +1356,7 @@
         ? `TIME CALLED: ${you} forced to hang up his boots at ${p.age}`
         : `END OF AN ERA: ${you} announces his retirement from football`, 'info');
       State.news(`Tributes pour in for ${p.lastName}: ${p.career.apps} games, ${p.career.goals} goals, ${p.career.trophies.length} trophies`, 'good', null, 'legacy');
+      if (global.Social) global.Social.retire(g);
       if (p.career.clubs.length > 1)
         State.news(`From ${p.career.clubs[0]} to ${p.career.clubs[p.career.clubs.length - 1]}: ${p.lastName}'s journey in shirts`, 'info', null, 'shirt');
       if (p.intl.caps > 0)
@@ -1070,8 +1381,9 @@
           </div>
           <div class="divider"></div>
           <div class="dim">Clubs: ${p.career.clubs.map(U.esc).join(' · ') || '—'}</div>
-          ${p.career.trophies.length ? '<div style="margin-top:10px">' + p.career.trophies.map(t =>
-            `<span class="trophy">${ico('trophy')} ${U.esc(UI.trophyLabel(t))}</span>`).join('') + '</div>' : ''}`,
+          <div class="divider"></div>
+          <h3 style="margin:0 0 8px">${ico('trophy')} The cabinet</h3>
+          ${UI.cabinetHtml(global.Trophies.cabinet(p))}`,
         actions: [{ label: 'What next?', onClick: () => Game.postCareer() }]
       });
     },

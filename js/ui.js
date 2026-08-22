@@ -57,6 +57,32 @@
 
     /* ---------------- small render helpers ---------------- */
     trophyLabel(t) { return /\d{4}$/.test(t.name) ? t.name : t.name + ' ' + t.year; },
+    /* The grouped trophy cabinet: one shelf per family, one plinth per honour. */
+    cabinetHtml(cab) {
+      if (!cab.total) return `<p class="dim" style="margin:0">Empty. For now. Go and win something.</p>`;
+      return `<div class="cabinet">` + cab.shelves.map(sh => {
+        const n = sh.rows.reduce((a, r) => a + r.count, 0);
+        return `<div class="shelf">
+          <div class="shelf-head"><span class="shelf-label">${esc(sh.label)}</span>
+            <span class="shelf-n">${n}</span></div>
+          <div class="shelf-row">${sh.rows.map(r => `<div class="tro">
+            <div class="tro-art">${global.Trophies.figure(r.name)}${r.count > 1 ? `<span class="tro-x">&times;${r.count}</span>` : ''}</div>
+            <div class="tro-n">${esc(r.name)}</div>
+            <div class="tro-y">${UI.yearList(r.years)}</div>
+          </div>`).join('')}</div>
+          <div class="shelf-plank"></div>
+        </div>`;
+      }).join('') + `</div>`;
+    },
+    yearList(years) {
+      const ys = years.slice().sort((a, b) => a - b).map(y => "'" + String(y).slice(2));
+      return ys.length <= 4 ? ys.join(' ') : ys.slice(0, 3).join(' ') + ' +' + (ys.length - 3);
+    },
+    /* A small inline chip with the real trophy drawing, for summaries. */
+    trophyChip(name, year) {
+      const c = global.Trophies.classify(name);
+      return `<span class="trophy">${global.Trophies.svg(c.art, 'tiny')} ${esc(name)}${year ? ' ' + year : ''}</span>`;
+    },
     bar(label, value, color) {
       const v = U.clamp(value, 0, 100);
       return `<div class="bar"><div class="bar-l"><span>${label}</span><span>${Math.round(v)}</span></div>
@@ -79,6 +105,7 @@
     startWizard() {
       UI.wizard = {
         step: 0,
+        era: 'modern',
         firstName: U.pick(D.NAMES.England.first),
         lastName: U.pick(D.NAMES.England.last),
         nation: 'England',
@@ -92,7 +119,7 @@
       UI.renderWizard();
     },
 
-    STEPS: ['Identity', 'Position', 'The Draft', 'Club'],
+    STEPS: ['Era', 'Identity', 'Position', 'The Draft', 'Club'],
 
     startDraft() {
       const w = UI.wizard;
@@ -112,6 +139,22 @@
       const body = $('create-body');
 
       if (w.step === 0) {
+        body.innerHTML = `
+          <h2 class="wz-h">Pick your era</h2>
+          <p class="wz-p">Which football world do you want to be born into? It decides who you
+            play alongside, who you play against, and how hard all of it is.</p>
+          <div class="era-list">${D.ERAS.map(e => `
+            <div class="era ${w.era === e.id ? 'sel' : ''}" data-era="${e.id}">
+              <div class="era-top">${ico(e.icon, 'era-icon')}
+                <div><b>${esc(e.name)}</b><span>${esc(e.years)}</span></div>
+              </div>
+              <p>${esc(e.blurb)}</p>
+            </div>`).join('')}</div>`;
+        body.querySelectorAll('[data-era]').forEach(el => el.onclick = () => {
+          w.era = el.dataset.era; UI.renderWizard();
+        });
+
+      } else if (w.step === 1) {
         body.innerHTML = `
           <h2 class="wz-h">Who are you?</h2>
           <p class="wz-p">Every career starts with a name on a team sheet.</p>
@@ -141,7 +184,7 @@
         body.querySelector('#w-shirt').oninput = e => w.shirt = U.clamp(parseInt(e.target.value, 10) || 10, 1, 99);
         UI.optGroup(body, 'foot', v => { w.foot = v; UI.renderWizard(); });
 
-      } else if (w.step === 1) {
+      } else if (w.step === 2) {
         body.innerHTML = `
           <h2 class="wz-h">Pick your position</h2>
           <p class="wz-p">This decides the moments you will face — and what you will be judged on.</p>
@@ -154,11 +197,11 @@
           </div>`;
         UI.optGroup(body, 'pos', v => { w.pos = v; w.draftPool = null; UI.renderWizard(); });
 
-      } else if (w.step === 2) {
+      } else if (w.step === 3) {
         if (!w.draftPool) UI.startDraft();
         const legend = w.draftPool[w.draftIndex];
         const done = w.draftIndex >= w.draftPool.length;
-        if (done || !legend) { w.step = 3; return UI.renderWizard(); }
+        if (done || !legend) { w.step = 4; return UI.renderWizard(); }
         const takenAttrs = w.robbed.map(r => r.attr);
         body.innerHTML = `
           <h2 class="wz-h">Rob a legend</h2>
@@ -194,7 +237,7 @@
             w.caps[a] = legend.attrs[a];
             w.robbed.push({ attr: a, value: legend.attrs[a], from: legend.name });
             w.draftIndex++;
-            if (w.draftIndex >= w.draftPool.length) w.step = 3;
+            if (w.draftIndex >= w.draftPool.length) w.step = 4;
             UI.renderWizard();
           };
         });
@@ -207,9 +250,15 @@
         });
         w.preview = preview;
         const potential = State.potentialOverall(preview);
-        const maxRating = Math.round(U.clamp(46 + potential * 0.5, 62, 93));
-        const world = State.buildWorld(D.CONFIG.SEASON_START_YEAR);
+        const world = State.buildWorld(D.CONFIG.SEASON_START_YEAR, w.era);
         UI.previewWorld = world;
+        // Which clubs would take a teenager depends on the world you are in: in the
+        // Golden Era the weakest club on earth is rated 84, so the gate is relative
+        // to what this era actually contains rather than an absolute number.
+        const allRatings = Object.values(world.clubs).map(c => c.rating);
+        const lo = Math.min.apply(null, allRatings), hi = Math.max.apply(null, allRatings);
+        const frac = U.clamp((potential - 55) / 40, 0, 1);
+        const maxRating = Math.round(lo + (hi - lo) * frac) + 2;
         body.innerHTML = `
           <h2 class="wz-h">Sign your first contract</h2>
           <div class="card tight preview-card">
@@ -249,8 +298,8 @@
       }
 
       $('create-back').textContent = w.step === 0 ? 'Cancel' : 'Back';
-      $('create-next').textContent = w.step === 3 ? 'Start Career' : 'Next';
-      $('create-next').classList.toggle('hidden', w.step === 2);
+      $('create-next').textContent = w.step === 4 ? 'Start Career' : 'Next';
+      $('create-next').classList.toggle('hidden', w.step === 3);
     },
 
     optGroup(root, group, cb) {
@@ -294,14 +343,15 @@
 
     renderTabs() {
       const g = State.game;
-      const unread = g ? Math.max(0, (g.headlines || []).length - (g.newsSeen || 0)) : 0;
+      const written = g ? (g.newsCount || (g.headlines || []).length) + (g.feedCount || 0) : 0;
+      const unread = Math.max(0, written - (g && g.newsSeen || 0));
       $('tabbar').innerHTML = UI.tabsFor().map(t =>
         `<button class="${UI.tab === t.id ? 'on' : ''}" data-tab="${t.id}">${ico(t.icon)}${t.label}` +
         (t.id === 'news' && unread > 0 ? `<span class="tab-badge">${unread > 99 ? '99+' : unread}</span>` : '') +
         `</button>`).join('');
       $('tabbar').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
         UI.tab = b.dataset.tab;
-        if (UI.tab === 'news' && g) g.newsSeen = (g.headlines || []).length;
+        if (UI.tab === 'news' && g) g.newsSeen = written;
         UI.render();
       });
     },
@@ -354,6 +404,7 @@
             · Match ${g.fixtureIndex + 1} of ${g.fixtures.length}
             ${opp.rating ? '· opposition rated ' + opp.rating : ''}</div>
           ${UI.formGuide(me)}
+          ${UI.oddsBar(g, f)}
         </div>`;
         if (f.star) {
           html += `<div class="card tight danger-man">
@@ -373,7 +424,14 @@
         html += `<div class="row" style="margin-bottom:12px">
           <button class="btn btn-primary grow" data-act="playMatch">${ico('play')} Play Match</button>
           <button class="btn btn-ghost" data-act="quickMatch">${ico('sim')} Quick Sim</button>
+          <button class="btn btn-ghost" data-act="skipMenu">${ico('clock')} Skip</button>
         </div>`;
+        if (g.skip && g.skip.remaining > 0) {
+          html += `<div class="row" style="margin-bottom:12px">
+            <button class="btn btn-gold grow" data-act="resumeSkip">${ico('sim')} Resume skip — ${g.skip.remaining} week${g.skip.remaining === 1 ? '' : 's'} left</button>
+            <button class="btn btn-ghost" data-act="cancelSkip">${ico('no')}</button>
+          </div>`;
+        }
 
         if (g.weekActionsLeft > 0) {
           html += `<div class="card gold-edge">
@@ -430,6 +488,24 @@
         `<span class="fg ${r === 'W' ? 'w' : r === 'D' ? 'd' : 'l'}">${r}</span>`).join('')}</div>`;
     },
 
+    // win/draw/loss probability bar for the upcoming fixture
+    oddsBar(g, f) {
+      const o = Engine.Match.odds(g, f);
+      if (!o) return '';
+      const pct = v => Math.round(v * 100) + '%';
+      const me = State.club(g.player.club).name;
+      const opp = f.oppId ? State.club(f.oppId).name : 'them';
+      return `<div class="odds">
+        <div class="odds-bar">
+          <span class="odds-w" style="width:${pct(o.win)}"></span><span class="odds-d" style="width:${pct(o.draw)}"></span><span class="odds-l" style="width:${pct(o.loss)}"></span>
+        </div>
+        <div class="odds-labels">
+          <span>${esc(me)} <b>${pct(o.win)}</b></span>
+          <span>Draw <b>${pct(o.draw)}</b></span>
+          <span>${esc(opp)} <b>${pct(o.loss)}</b></span>
+        </div></div>`;
+    },
+
     // the next few fixtures after this one
     upcoming(g, n) {
       const out = [];
@@ -456,6 +532,8 @@
           ${crest(club.name, 'crest-xl')}
           <div class="grow"><b style="font-size:18px">${esc(club.name)}</b>
             <div class="dim">${flag(club.country, 'sm')} ${esc(State.league(club.league).name)}</div>
+            ${(() => { const e = global.Eras.byId(g.era);
+              return e.id === 'modern' ? '' : `<span class="era-badge">${ico(e.icon)} ${esc(e.name)} · ${esc(e.years)}</span>`; })()}
             ${UI.formGuide(club)}</div>
         </div>
         <div class="stat-grid">
@@ -471,17 +549,20 @@
         ${p.captain ? `<div class="kv">${ico('crown')} <span>You wear the armband.</span></div>` : ''}
       </div>`;
 
+      const titleOdds = Engine.Season.titleOdds(g);
       html += `<div class="card"><h3>${ico('table')} ${esc(league.name)}</h3><div class="scroll-x"><table class="tbl">
         <tr><th>#</th><th>Club</th><th class="num">P</th><th class="num">W</th><th class="num">D</th>
-        <th class="num">L</th><th class="num">GD</th><th class="num">Pts</th></tr>` +
+        <th class="num">L</th><th class="num">GD</th><th class="num">Pts</th>${titleOdds ? '<th class="num">Title</th>' : ''}</tr>` +
         table.map((r, i) => {
           const cls = i < 4 ? 'ucl' : i >= table.length - 2 ? 'rel' : '';
+          const tp = titleOdds && titleOdds[r.id] >= 0.005
+            ? `<td class="num title-odds">${Math.round(titleOdds[r.id] * 100)}%</td>` : (titleOdds ? '<td class="num dim">—</td>' : '');
           return `<tr class="${r.id === club.id ? 'me' : ''}">
             <td><span class="pos-chip ${cls}">${i + 1}</span></td>
             <td>${crest(r.club.name, 'crest-sm')}${esc(r.club.name)}</td>
             <td class="num">${r.p}</td><td class="num">${r.w}</td><td class="num">${r.d}</td>
             <td class="num">${r.l}</td><td class="num">${r.gf - r.ga > 0 ? '+' : ''}${r.gf - r.ga}</td>
-            <td class="num"><b>${r.pts}</b></td></tr>`;
+            <td class="num"><b>${r.pts}</b></td>${tp}</tr>`;
         }).join('') + `</table></div></div>`;
 
       const scorers = Engine.Awards.leagueTopScorers(g).slice(0, 6);
@@ -568,14 +649,25 @@
 
     /* ---------------- PRESS ---------------- */
     tab_news() {
-      const g = State.game, p = g.player;
+      const g = State.game;
+      const view = UI.newsView || 'feed';
+      let html = `<div class="seg">
+        <button class="seg-b ${view === 'feed' ? 'on' : ''}" data-act="newsView" data-arg="feed">
+          ${ico('feed')} The Feed</button>
+        <button class="seg-b ${view === 'press' ? 'on' : ''}" data-act="newsView" data-arg="press">
+          ${ico('news')} Back pages</button>
+      </div>`;
+      return html + (view === 'press' ? UI.pressList(g) : UI.feedList(g));
+    },
+
+    /* the back pages, season by season */
+    pressList(g) {
       const heads = g.headlines || [];
       let html = `<div class="card tight"><h3>${ico('news')} Back pages</h3>
         <p class="dim" style="margin:0">What the press made of your career, season by season.</p></div>`;
       if (!heads.length) {
-        html += `<div class="card center"><p class="dim" style="margin:0">Nobody has written about you yet.
+        return html + `<div class="card center"><p class="dim" style="margin:0">Nobody has written about you yet.
           Do something worth reporting.</p></div>`;
-        return html;
       }
       let season = null;
       heads.forEach(h => {
@@ -591,17 +683,96 @@
       return html;
     },
 
+    /* the timeline: everyone with an opinion about you */
+    feedList(g) {
+      const S = global.Social, p = g.player;
+      const me = S.you(p);
+      const posts = g.feed || [];
+      const trend = S.trending(g);
+      let html = `<div class="card tight me-card">
+        <div class="post-h">
+          ${UI.avatar(me.n, me.h, 'you')}
+          <div class="post-who"><div class="post-n"><b>${esc(me.n)}</b>${me.v ? UI.tick() : ''}</div>
+            <div class="post-sub">${esc(me.h)} · ${S.compact(S.followers(g))} followers</div></div>
+        </div>
+        <button class="btn btn-ghost btn-post${S.canPost(g) ? '' : ' spent'}" data-act="socialPost">
+          ${ico('send')} ${S.canPost(g) ? 'Post something' : 'You have posted this week'}</button>
+      </div>`;
+      if (trend.length) {
+        html += `<div class="card tight"><div class="trend-h">${ico('trend')} Trending</div>
+          <div class="trend">${trend.map(t => `<span class="hash">${esc(t)}</span>`).join('')}</div></div>`;
+      }
+      if (!posts.length) {
+        return html + `<div class="card center"><p class="dim" style="margin:0">Quiet in here.
+          Play some football and they will find you.</p></div>`;
+      }
+      posts.forEach(post => html += UI.post(g, post));
+      return html;
+    },
+
+    tick() { return `<span class="tick">${ico('verified')}</span>`; },
+
+    avatar(name, handle, kind, small) {
+      const S = global.Social;
+      if (kind === 'club') {
+        const club = Object.values(State.game.world.clubs).find(c => c.name === name);
+        if (club) return `<span class="av av-crest ${small ? 'sm' : ''}">${global.Crest.svg(club.name)}</span>`;
+      }
+      const h = S.hue(handle || name);
+      const cls = 'av' + (small ? ' sm' : '') + (kind === 'you' ? ' av-you' : '');
+      return `<span class="${cls}" style="--ah:${h}">${esc(S.initials(name))}</span>`;
+    },
+
+    post(g, post) {
+      const S = global.Social;
+      const w = post.who || {};
+      let html = `<div class="card post ${post.tone || 'info'}${post.mine ? ' mine' : ''}">
+        <div class="post-h">
+          ${UI.avatar(w.n, w.h, w.kind)}
+          <div class="post-who">
+            <div class="post-n"><b>${esc(w.n)}</b>${w.v ? UI.tick() : ''}
+              <span class="kind-tag k-${w.kind}">${UI.kindLabel(w.kind)}</span></div>
+            <div class="post-sub">${esc(w.h)} · ${S.when(g, post)}${w.bio ? ' · ' + esc(w.bio) : ''}</div>
+          </div>
+        </div>
+        <div class="post-t">${esc(post.t)}</div>`;
+      if ((post.tags || []).length)
+        html += `<div class="post-tags">${post.tags.map(t => `<span class="hash sm">${esc(t)}</span>`).join('')}</div>`;
+      html += `<div class="post-meta">
+          <span>${ico('reply')} ${(post.replies || []).length}</span>
+          <span>${ico('repost')} ${S.compact(post.reposts || 0)}</span>
+          <span class="likes">${ico('like')} ${S.compact(post.likes || 0)}</span>
+        </div>`;
+      if ((post.replies || []).length) {
+        html += `<div class="post-replies">` + post.replies.map(r => `<div class="reply">
+          ${UI.avatar(r.who.n, r.who.h, r.who.kind, true)}
+          <div class="reply-b"><div class="reply-n"><b>${esc(r.who.n)}</b>${r.who.v ? UI.tick() : ''}
+            <span class="dim">${esc(r.who.h)}</span></div>
+          <div class="reply-t">${esc(r.t)}</div>
+          <div class="reply-m">${ico('like')} ${S.compact(r.likes || 0)}</div></div>
+        </div>`).join('') + `</div>`;
+      }
+      return html + `</div>`;
+    },
+
+    kindLabel(kind) {
+      return { fan: 'fan', rival: 'rival fan', journo: 'reporter', pundit: 'pundit',
+        club: 'club', fantv: 'fan channel', stats: 'stats', you: 'you' }[kind] || 'fan';
+    },
+
     /* ---------------- LEGACY ---------------- */
     tab_legacy() {
       const g = State.game, p = g.player;
       const Career = global.Career;
       const score = Career.legacyScore(g);
       const rank = Career.legacyRank(score);
+      const era = global.Eras.byId(g.era);
       let html = `<div class="card center">
         <span class="dim">LEGACY SCORE</span>
         <div class="big-num">${score}</div>
         <div class="gold rank-title">${rank.title}</div>
         <div class="dim" style="margin-top:6px">${esc(rank.desc)}</div>
+        <div style="margin-top:9px"><span class="era-badge">${ico(era.icon)} ${esc(era.name)} era · ${esc(era.years)}</span></div>
       </div>`;
 
       html += `<div class="card"><h3>Career at a glance</h3><div class="stat-grid">
@@ -613,16 +784,11 @@
         <div class="stat"><b>${p.career.clubs.length}</b><span>Clubs</span></div>
       </div></div>`;
 
-      html += `<div class="card"><h3>Trophy cabinet</h3>`;
-      html += p.career.trophies.length
-        ? p.career.trophies.map(t => `<span class="trophy">${ico('trophy')} ${esc(UI.trophyLabel(t))}</span>`).join('')
-        : `<p class="dim" style="margin:0">Empty. For now.</p>`;
+      const cab = global.Trophies.cabinet(p);
+      html += `<div class="card"><h3>${ico('trophy')} Trophy cabinet
+        ${cab.total ? `<span class="pill-count">${cab.total}</span>` : ''}</h3>`;
+      html += UI.cabinetHtml(cab);
       html += `</div>`;
-
-      if (p.achievements.length) {
-        html += `<div class="card"><h3>Individual honours</h3>` +
-          p.achievements.map(a => `<span class="trophy">${ico('medal')} ${esc(a.name)} ${a.year}</span>`).join('') + `</div>`;
-      }
 
       html += `<div class="card"><h3>Season by season</h3>`;
       if (p.career.seasons.length) {
@@ -805,6 +971,49 @@
       $('match-action').querySelectorAll('[data-ci]').forEach(b => {
         b.onclick = () => onChoose(+b.dataset.ci);
       });
+    },
+
+    /* A penalty is aimed at the goal rather than picked from a list. */
+    renderPenalty(scn, onAim) {
+      $('match-action').innerHTML = `<div class="scn">
+        <div class="scn-h"><div class="art">${ico(scn.art || 'penalty')}</div><b>${esc(scn.title)}</b></div>
+        <div class="scn-sub">${esc(scn.sub || '')}</div>
+        <div class="goal-wrap">${global.Pitch.view({ aim: true })}</div>
+        <p class="goal-hint">Pick your corner. Top of the goal is harder to reach — and harder to save.</p>
+        <div class="goal-verdict" id="goal-verdict"></div>
+      </div>`;
+      const root = $('match-action').querySelector('.goal-view');
+      global.Pitch.reset(root);
+      global.Pitch.onAim(root, zone => onAim(zone, root));
+    },
+
+    // the same goal, watched from the keeper's end
+    renderKeeperCall(scn, onChoose) {
+      $('match-action').innerHTML = `<div class="scn">
+        <div class="scn-h"><div class="art">${ico(scn.art || 'save')}</div><b>${esc(scn.title)}</b></div>
+        <div class="scn-sub">${esc(scn.sub || '')}</div>
+        <div class="goal-wrap">${global.Pitch.view({ aim: false })}</div>
+        <div class="choices${scn.options.length >= 5 ? ' cols' : ''}">${scn.options.map((o, i) =>
+          `<button class="choice" data-ci="${i}">
+            <div class="cb"><b>${esc(o.label)}</b><span>${esc(o.hint || '')}</span></div>
+            ${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}</button>`).join('')}</div>
+        <div class="goal-verdict" id="goal-verdict"></div>
+      </div>`;
+      const root = $('match-action').querySelector('.goal-view');
+      global.Pitch.reset(root);
+      $('match-action').querySelectorAll('[data-ci]').forEach(b => {
+        b.onclick = () => {
+          $('match-action').querySelectorAll('.choice').forEach(c => c.disabled = true);
+          onChoose(+b.dataset.ci, root);
+        };
+      });
+    },
+
+    verdict(text, kind) {
+      const el = $('goal-verdict');
+      if (el) { el.textContent = text; el.className = 'goal-verdict ' + (kind || ''); }
+      const hint = document.querySelector('.goal-hint');
+      if (hint && text) hint.style.display = 'none';
     },
 
     renderMatchButtons(buttons) {

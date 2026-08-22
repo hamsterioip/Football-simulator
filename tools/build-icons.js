@@ -51,7 +51,11 @@ const ICONS = {
   'up': 'trending-up', 'down': 'trending-down', 'info': 'information', 'clock': 'clock-outline',
   // extras
   'goldenboot': 'trophy-award', 'sub': 'swap-horizontal-bold', 'varscreen': 'monitor',
-  'table': 'table-large', 'microphone': 'microphone-variant'
+  'table': 'table-large', 'microphone': 'microphone-variant',
+  // the social feed
+  'like': 'heart', 'reply': 'comment-outline', 'repost': 'repeat-variant',
+  'verified': 'check-decagram', 'hash': 'pound', 'send': 'send',
+  'feed': 'at', 'eye': 'eye-outline', 'trend': 'trending-up', 'quote': 'format-quote-close'
 };
 
 /* --- nations / league countries -> Circle Flags name --------------------- */
@@ -71,7 +75,12 @@ const FLAGS = {
   'Iceland': 'is', 'Ivory Coast': 'ci', 'Mali': 'ml', 'Chile': 'cl',
   'Paraguay': 'py', 'Slovakia': 'sk', 'Jamaica': 'jm', 'Israel': 'il',
   'Russia': 'ru', 'Venezuela': 've', 'Ukraine': 'ua', 'Cameroon': 'cm',
-  'Gabon': 'ga', 'Greece': 'gr'
+  'Gabon': 'ga', 'Greece': 'gr',
+  // era legends reach further back and wider still
+  'Bulgaria': 'bg', 'Northern Ireland': 'gb-nir', 'Liberia': 'lr', 'Bosnia': 'ba',
+  'Romania': 'ro', 'Peru': 'pe', 'Togo': 'tg', 'DR Congo': 'cd', 'Tunisia': 'tn',
+  'South Africa': 'za', 'Finland': 'fi', 'Montenegro': 'me', 'Albania': 'al',
+  'North Macedonia': 'mk', 'Armenia': 'am', 'Costa Rica': 'cr', 'Iran': 'ir'
 };
 
 function lookup(pack, name) {

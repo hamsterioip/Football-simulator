@@ -73,6 +73,21 @@ node build.js
 
 ## What you actually do
 
+### Choose an era
+A new career starts by picking which football world you are born into:
+
+| Era | Year | What it means |
+|---|---|---|
+| **Modern** | 2026 | The game as it is now — Haaland, Mbappé, Bellingham, Vinícius |
+| **Classic** | 2005 | Ronaldinho's Barcelona, Shevchenko's Milan, Henry's Arsenal, a twenty-year-old Ronaldo at United. Chelsea are the strongest side in England and Manchester City are rated 71 |
+| **Golden Era** | All time | Every club on earth stacked with all-time greats. R9 at Inter, Maradona at Napoli, Di Stéfano and Cristiano at Madrid, Pelé and Cruyff somewhere down the leagues |
+
+The era decides who your team-mates are, who you face, what each club is worth and how hard
+the whole thing is. In the Golden Era **all 120 clubs** have legends — 534 named players —
+the weakest club on earth is rated 84, and even the squad-mates who are not legends are 78+.
+Which clubs will sign a teenager scales with the era, so the bottom of the Golden Era is
+still the bottom, it is just full of Ballon d'Or winners.
+
 ### Create a player
 Name, nationality, strong foot, squad number, and one of ten positions.
 
@@ -107,7 +122,7 @@ Matches simulate around you and stop for the decisions you would actually be jud
 |---|---|
 | **Attacking** | One-on-one · edge of the box · header from a cross · volley at the back post · back to goal · tight angle on the byline · one-two on the edge · overhead kick · the keeper is stranded · rebound in the six-yard box · long range · the backheel · the flick-on · the ninety-first minute |
 | **On the ball** | Isolated 1v1 · three-on-two break · switching play · pressing trigger · fifty-fifty in the middle · the nutmeg · the overlapping run |
-| **Set pieces** | Penalty (six placements, including the Panenka) · free kick · corner · take it quickly · the quick throw · **shootouts you take yourself** |
+| **Set pieces** | **Penalties aimed at a drawn goal** (six corners, including the Panenka) · free kick · corner · take it quickly · the quick throw · **shootouts you take yourself** |
 | **Defending** | Last man back · aerial duel · playing out of your own box · offside trap · man-marking their best player · blocking the shot · the recovery run · protecting a lead · the goal-line clearance |
 | **Goalkeeping** | One-v-one · crosses · distribution · facing a penalty · sweeping behind the line · shots from distance · setting the wall · a back pass under pressure |
 | **Everything else** | Contact in the box · referee flashpoint · he's on a hat-trick · playing through a twinge · being substituted · a team-mate down · a hostile away end · your celebration |
@@ -117,6 +132,30 @@ across matches and heavily down-weights them, so the rotation keeps turning over
 cycling through the same handful. The most common moment in a full career simulation accounts
 for around a tenth of what you see, and the frequent ones have several different set-ups so
 they do not read the same way twice.
+
+### Penalties are watched, not read
+Penalties and shootouts use a drawn goalmouth rather than a list of buttons. You tap the
+corner you want and the kick plays out: the ball arcs towards it, the keeper commits — the
+right way if he saves it, the wrong way if he does not — the net ripples on a goal, a save is
+punched back out, and a Panenka floats in slowly enough to be embarrassing. Facing one as a
+goalkeeper works the same way from the other end: pick your dive, then watch whether you read
+him.
+
+It is inline SVG animated with the Web Animations API — no images, no libraries — and it
+respects `prefers-reduced-motion` by cutting straight to the outcome.
+
+### Skipping ahead
+A career does not have to be played match by match. **Skip Ahead** offers a month, three
+months, the rest of the season, or a full year that carries on through the summer into the
+next one. Matches are simulated, and in between you train — recovering when your fitness is
+low, rehabbing when injured, otherwise working on whichever attribute has the most room left
+below its ceiling.
+
+It works like holding down "continue" in a management game: it stops the moment something
+wants you, whether that is a serious injury, a suspension, an off-field moment or the end of
+the season, and then hands you a card showing what happened while you were away — record,
+goals, average rating, how your overall moved, and the back pages you missed. You can resume
+from where it stopped or call it off.
 
 Three, five or eight interactive moments per match, your choice. Everything else is simulated
 and narrated live, and you can sim the rest at any time.

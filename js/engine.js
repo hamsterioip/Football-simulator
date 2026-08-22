@@ -16,9 +16,12 @@
       const R = club.rating;
       const shape = FORMATION.concat(['GK', 'CB', 'CM', 'CM', 'RW', 'ST', 'LB']);
       const seen = new Set(); // no two squad-mates with the same name
+      // in the Golden Era the players who are not legends are still world class
+      const golden = State.game && State.game.era === 'golden';
       const squad = shape.map((pos, i) => {
         const starter = i < 11;
-        const ovr = Math.round(U.clamp(R + (starter ? U.gauss(1, 3.5) : U.gauss(-7, 4)), 40, 96));
+        let ovr = Math.round(U.clamp(R + (starter ? U.gauss(1, 3.5) : U.gauss(-7, 4)), 40, 96));
+        if (golden) ovr = Math.round(U.clamp(Math.max(ovr, R - 3) + U.gauss(2, 2.5), 78, 95));
         let who = global.Names.person(club.country);
         for (let t = 0; t < 8 && seen.has(who.name); t++) who = global.Names.person(club.country);
         seen.add(who.name);
@@ -37,7 +40,7 @@
     // swap the club's real headline players into the generated squad, taking
     // over slots that match their position — starters first
     overlayStars(squad, club) {
-      const stars = (global.DATA.REAL_STARS || {})[club.name];
+      const stars = global.Eras.starsFor(State.game, club.name);
       if (!stars) return;
       const used = new Set();
       stars.forEach(st => {
@@ -504,6 +507,23 @@
       return { type: 'end', match: m };
     },
 
+    /* Bookmaker-style win/draw/loss probabilities for a fixture, sampled from
+       the same ratings + home-edge model the rest of the league sims with. */
+    odds(g, f) {
+      const club = State.club(g.player.club);
+      const opp = f.oppId ? State.club(f.oppId) : null;
+      if (!opp) return null;
+      const diff = f.home ? (club.rating + 2.5) - opp.rating : club.rating - (opp.rating + 2.5);
+      const la = U.clamp(1.35 + diff * 0.045, 0.25, 4), lb = U.clamp(1.35 - diff * 0.045, 0.25, 4);
+      let w = 0, d = 0;
+      const N = 500;
+      for (let i = 0; i < N; i++) {
+        const a = U.poisson(la), b = U.poisson(lb);
+        if (a > b) w++; else if (a === b) d++;
+      }
+      return { win: w / N, draw: d / N, loss: (N - w - d) / N };
+    },
+
     settle(g, m) {
       const p = g.player;
       const played = (m.role === 'start' || m.role === 'bench') && !m.dnp;
@@ -541,6 +561,7 @@
         Press.matchHeadline(g, m);
         Press.afterMatch(g, m);
         Press.monthly(g, m);
+        if (global.Social) global.Social.afterMatch(g, m, true);
         // injury from fatigue
         p.peakOvr = Math.max(p.peakOvr || 0, p.ovr);
         p.peakValue = Math.max(p.peakValue || 0, State.marketValue(p));
@@ -553,6 +574,7 @@
         p.fitness = U.clamp(p.fitness + 12, 0, 100);
         p.form = U.clamp(p.form - 2, 0, 100);
         if (m.role === 'out') p.morale = U.clamp(p.morale - 3, 0, 100);
+        if (global.Social) global.Social.afterMatch(g, m, false);
       }
 
       if (p.suspension > 0) p.suspension--;
@@ -728,7 +750,7 @@
     /* A club's real goal threat, used to seed the scoring charts.
        Returns null when the club has no stars on file or none who score. */
     starScorerFor(club) {
-      const stars = (D.REAL_STARS || {})[club.name];
+      const stars = global.Eras.starsFor(State.game, club.name);
       if (!stars) return null;
       const score = { ST: 5, LW: 4, RW: 4, CAM: 3, CM: 2, CDM: 1 };
       const pool = stars.filter(st => score[st[2]]).map(st => ({ st, w: score[st[2]] }));
@@ -741,7 +763,7 @@
     ensureStar(g, f) {
       if (f.star || !f.oppId) return;
       const opp = State.club(f.oppId);
-      const stars = (D.REAL_STARS || {})[opp.name];
+      const stars = global.Eras.starsFor(State.game, opp.name);
       if (stars && stars.length) {
         const st = U.pick(stars);
         f.star = { name: st[0], nation: st[1], pos: st[2], ovr: st[3] };
@@ -818,6 +840,45 @@
       return s.findIndex(r => r.id === club.id) + 1;
     },
 
+    /* Monte Carlo title odds: replay the remaining league rounds with the
+       ratings model and count champions. Cached per fixture — recomputed
+       only when a match has been played. */
+    titleOdds(g) {
+      const club = State.club(g.player.club);
+      if (g.titleOddsCache && g.titleOddsCache.idx === g.fixtureIndex) return g.titleOddsCache.res;
+      const table = Season.standings(g, club.league);
+      if (!table.some(r => r.p > 0)) return null;
+      const remaining = [];
+      for (let i = g.fixtureIndex; i < g.fixtures.length; i++) {
+        const f = g.fixtures[i];
+        if (f.comp !== 'league') continue;
+        const pairs = (f.others || []).slice();
+        if (f.oppId) pairs.push(f.home ? [club.id, f.oppId] : [f.oppId, club.id]);
+        remaining.push(pairs);
+      }
+      if (!remaining.length) return null;
+      const SIMS = 250, wins = {};
+      for (let s = 0; s < SIMS; s++) {
+        const pts = {};
+        table.forEach(r => { pts[r.id] = r.pts; });
+        remaining.forEach(pairs => pairs.forEach(pr => {
+          if (!pts[pr[0]] && pts[pr[0]] !== 0) return;
+          const A = State.club(pr[0]), B = State.club(pr[1]);
+          const diff = (A.rating + 2.5) - B.rating;
+          const ga = U.poisson(U.clamp(1.35 + diff * 0.045, 0.25, 4));
+          const gb = U.poisson(U.clamp(1.35 - diff * 0.045, 0.25, 4));
+          if (ga > gb) pts[pr[0]] += 3; else if (ga < gb) pts[pr[1]] += 3; else { pts[pr[0]]++; pts[pr[1]]++; }
+        }));
+        let champ = null, best = -1;
+        Object.keys(pts).forEach(id => { if (pts[id] > best) { best = pts[id]; champ = id; } });
+        wins[champ] = (wins[champ] || 0) + 1;
+      }
+      const res = {};
+      Object.keys(wins).forEach(id => { res[id] = wins[id] / SIMS; });
+      g.titleOddsCache = { idx: g.fixtureIndex, res };
+      return res;
+    },
+
     // returns whether we should skip fixtures (cup out / not in squad)
     nextPlayable(g) {
       let guard = 0;
@@ -850,7 +911,7 @@
       const results = { pos, trophies: [], awards: [], notes: [] };
       const rating = State.seasonRating(p);
 
-      if (pos === 1) { results.trophies.push(club.league + ' Title'); }
+      if (pos === 1) { results.trophies.push(State.league(club.league).name + ' Title'); }
       if (g.cup && g.cup.won) results.trophies.push(g.cup.name);
       if (g.cont && g.cont.won) results.trophies.push(g.cont.name);
       if (g.intlTournament && g.intlTournament.won) results.trophies.push(g.intlTournament.name);
@@ -898,6 +959,7 @@
         State.news(`${p.lastName} named ${a}`, 'good');
       });
       Press.seasonHeadline(g, results);
+      if (global.Social) global.Social.season(g, results);
 
       // development, then re-take the peaks so they include this summer's growth
       results.dev = Progress.seasonDevelopment(g);
@@ -940,6 +1002,7 @@
       if (p.intl.called && !wasCalled) {
         State.log(`You have been called up by ${p.nation} for the first time!`, 'good');
         State.news(`${p.lastName} earns a maiden ${p.nation} call-up`, 'good');
+        if (global.Social) global.Social.transfer(g, 'intl');
         results.notes.push('First international call-up!');
         State.addReputation(p, 6);
       } else if (!p.intl.called && wasCalled) {
@@ -1011,12 +1074,14 @@
     },
     accept(g, offer) {
       const p = g.player, oldClub = State.club(p.club), club = State.club(offer.clubId);
+      if (global.Social) global.Social.transfer(g, 'left');   // the old badge says goodbye first
       Contracts.joinClub(p, club, offer);
       g.squad = null; g.squadClub = null;
       Squad.ensure(g);
       State.log(`Signed for ${club.name} for ${U.cash(offer.fee)} — ${U.cash(offer.wage)}/week.`, 'good');
       State.news(`DONE DEAL: ${club.name} sign ${p.firstName} ${p.lastName} from ${oldClub.name} for ${U.cash(offer.fee)}`, 'good');
       State.addReputation(p, U.clamp((club.rating - oldClub.rating) * 0.6, 0, 10) + 2);
+      if (global.Social) global.Social.transfer(g, 'joined');
     }
   };
 
@@ -1167,14 +1232,15 @@
     world(g) {
       if (!U.chance(0.22)) return;
       const club = State.club(g.player.club);
-      const starClubs = Object.keys(D.REAL_STARS || {});
+      const starMap = global.Eras.starMap(State.game ? State.game.era : 'modern', State.game.world);
+      const starClubs = Object.keys(starMap).filter(k => (starMap[k] || []).length);
       if (!starClubs.length) return;
       g.worldMoves = g.worldMoves || {};
       const pickStar = () => {
         for (let t = 0; t < 12; t++) {
           const cn = U.pick(starClubs);
           if (cn === club.name) continue;
-          const s = U.pick(D.REAL_STARS[cn]);
+          const s = U.pick(starMap[cn]);
           return { name: s[0], pos: s[2], ovr: s[3], club: g.worldMoves[s[0]] || cn };
         }
         return null;
