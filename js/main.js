@@ -54,6 +54,7 @@
       $('create-next').onclick = () => Game.wizardNext();
       $('modal-back').onclick = e => { if (e.target === $('modal-back')) { /* click-off does nothing */ } };
       $('btn-continue').disabled = !State.hasSave();
+      Game.startMarquee();
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') UI.closeModal();
         // typing the code anywhere also works, for anyone on a keyboard
@@ -64,6 +65,23 @@
           if (Game._typed.indexOf('gkgo') >= 0) { Game._typed = ''; Game.codePrompt(); }
         }
       });
+    },
+
+    /* scrolling club-crest strips on the start screen */
+    startMarquee() {
+      const imgs = global.BADGE_IMGS || {};
+      const keys = Object.keys(imgs);
+      if (!keys.length) return;
+      const shuffled = keys.slice().sort(() => Math.random() - 0.5);
+      const fill = (id, list) => {
+        const track = $(id);
+        if (!track) return;
+        // duplicate the set so the -50% scroll loops seamlessly
+        track.innerHTML = list.concat(list)
+          .map(k => `<img src="${imgs[k]}" alt="" loading="eager">`).join('');
+      };
+      fill('mq-top', shuffled.slice(0, 18));
+      fill('mq-bot', shuffled.slice(18, 36));
     },
 
     howToPlay() {

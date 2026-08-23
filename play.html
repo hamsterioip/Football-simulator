@@ -106,17 +106,57 @@ button,.choice,.item.click,.opt,.club,.tabbar button{touch-action:manipulation;u
 .pill.blue{background:rgba(90,168,255,.16);color:var(--blue)}
 
 /* ---------- start screen ---------- */
-.start-wrap{margin:auto;text-align:center;padding:24px;max-width:520px}
-.start-badge{width:86px;height:86px;margin:0 auto;color:var(--green);
-  filter:drop-shadow(0 8px 24px rgba(42,230,126,.35));animation:bob 3s ease-in-out infinite}
+#screen-start{justify-content:space-between}
+.start-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.start-flood{position:absolute;top:-32%;width:70%;height:75%;border-radius:50%;
+  filter:blur(10px);animation:floodPulse 5.5s ease-in-out infinite}
+.start-flood.f1{left:-18%;background:radial-gradient(closest-side,rgba(42,230,126,.17),transparent 70%)}
+.start-flood.f2{right:-18%;background:radial-gradient(closest-side,rgba(90,168,255,.11),transparent 70%);
+  animation-delay:2.7s}
+@keyframes floodPulse{0%,100%{opacity:.75}50%{opacity:1}}
+.start-circle{position:absolute;left:50%;top:46%;width:130vmin;height:130vmin;transform:translate(-50%,-50%);
+  border:2px solid rgba(255,255,255,.05);border-radius:50%}
+.start-circle::before{content:"";position:absolute;left:50%;top:-15%;bottom:-15%;width:2px;
+  background:rgba(255,255,255,.045)}
+.start-circle::after{content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;border-radius:50%;
+  background:rgba(255,255,255,.07);transform:translate(-50%,-50%)}
+
+.start-marquee{position:relative;z-index:1;overflow:hidden;padding:14px 0;flex:none;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.start-marquee.bottom{padding-bottom:18px}
+.mq-track{display:inline-flex;gap:34px;width:max-content;animation:mqScroll 60s linear infinite}
+.mq-track.rev{animation-direction:reverse;animation-duration:70s}
+.mq-track img{width:34px;height:34px;object-fit:contain;opacity:.5;filter:saturate(.85)}
+@keyframes mqScroll{to{transform:translateX(-50%)}}
+
+.start-wrap{margin:auto;text-align:center;padding:12px 24px;max-width:560px;position:relative;z-index:1}
+.start-wrap>*{animation:rise .55s cubic-bezier(.2,.7,.3,1) both}
+.start-wrap>*:nth-child(2){animation-delay:.06s}
+.start-wrap>*:nth-child(3){animation-delay:.12s}
+.start-wrap>*:nth-child(4){animation-delay:.18s}
+.start-wrap>*:nth-child(5){animation-delay:.26s}
+.start-wrap>*:nth-child(6){animation-delay:.34s}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.start-badge{width:74px;height:74px;margin:0 auto;color:var(--green);
+  filter:drop-shadow(0 8px 26px rgba(42,230,126,.45));animation:bob 3s ease-in-out infinite}
 .start-badge svg{width:100%;height:100%;fill:currentColor}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.start-title{font-family:var(--font-d);font-size:52px;font-weight:800;text-transform:uppercase;
-  margin:6px 0 4px;letter-spacing:.02em}
-.start-title span{color:var(--green)}
-.start-sub{color:var(--muted);margin:0 0 26px}
-.start-actions{display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto}
-.start-feats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:28px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.start-kicker{margin:10px 0 0;font-family:var(--font-d);font-size:14px;font-weight:600;
+  letter-spacing:.52em;text-transform:uppercase;color:var(--muted)}
+.start-title{font-family:var(--font-d);font-size:clamp(56px,11vw,86px);font-weight:800;text-transform:uppercase;
+  margin:2px 0 6px;letter-spacing:.02em;line-height:.95;
+  text-shadow:0 0 34px rgba(42,230,126,.22),0 3px 0 rgba(0,0,0,.4)}
+.start-title span{color:var(--green);
+  text-shadow:0 0 40px rgba(42,230,126,.5),0 3px 0 rgba(0,0,0,.4)}
+.start-sub{color:var(--muted);margin:0 auto 24px;font-size:15px;max-width:340px}
+.start-actions{display:flex;flex-direction:column;gap:10px;max-width:320px;margin:0 auto}
+.btn-kickoff{position:relative;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-d);
+  font-size:20px;font-weight:700;padding:15px 26px}
+.btn-kickoff::after{content:"";position:absolute;inset:-3px;border-radius:14px;pointer-events:none;
+  border:1px solid rgba(42,230,126,.4);opacity:0;transition:opacity .15s ease}
+.btn-kickoff:hover::after{opacity:1}
+.start-feats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:26px}
 .start-feats span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);
   background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .start-feats .ic{color:var(--green)}
@@ -672,12 +712,19 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 <body>
 <!-- ===================== START SCREEN ===================== -->
 <div id="screen-start" class="screen active">
+  <div class="start-bg" aria-hidden="true">
+    <div class="start-flood f1"></div>
+    <div class="start-flood f2"></div>
+    <div class="start-circle"></div>
+  </div>
+  <div class="start-marquee" aria-hidden="true"><div class="mq-track" id="mq-top"></div></div>
   <div class="start-wrap">
     <div class="start-badge"><svg viewBox="0 0 24 24"><use href="#i-ball"/></svg></div>
+    <p class="start-kicker">Career Simulator</p>
     <h1 class="start-title">FOOTBALL <span>LIFE</span></h1>
     <p class="start-sub">Rob eight legends. Build one career. Play every moment that matters.</p>
     <div class="start-actions">
-      <button class="btn btn-primary btn-lg" id="btn-new">New Career</button>
+      <button class="btn btn-primary btn-lg btn-kickoff" id="btn-new">New Career</button>
       <button class="btn btn-ghost btn-lg" id="btn-continue">Continue Career</button>
       <button class="btn btn-ghost" id="btn-how">How to Play</button>
     </div>
@@ -690,6 +737,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       <span><svg class="ic"><use href="#i-nation"/></svg> International football</span>
     </div>
   </div>
+  <div class="start-marquee bottom" aria-hidden="true"><div class="mq-track rev" id="mq-bot"></div></div>
 </div>
 
 <!-- ===================== CREATE SCREEN ===================== -->
@@ -9982,6 +10030,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       $('create-next').onclick = () => Game.wizardNext();
       $('modal-back').onclick = e => { if (e.target === $('modal-back')) { /* click-off does nothing */ } };
       $('btn-continue').disabled = !State.hasSave();
+      Game.startMarquee();
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') UI.closeModal();
         // typing the code anywhere also works, for anyone on a keyboard
@@ -9992,6 +10041,23 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           if (Game._typed.indexOf('gkgo') >= 0) { Game._typed = ''; Game.codePrompt(); }
         }
       });
+    },
+
+    /* scrolling club-crest strips on the start screen */
+    startMarquee() {
+      const imgs = global.BADGE_IMGS || {};
+      const keys = Object.keys(imgs);
+      if (!keys.length) return;
+      const shuffled = keys.slice().sort(() => Math.random() - 0.5);
+      const fill = (id, list) => {
+        const track = $(id);
+        if (!track) return;
+        // duplicate the set so the -50% scroll loops seamlessly
+        track.innerHTML = list.concat(list)
+          .map(k => `<img src="${imgs[k]}" alt="" loading="eager">`).join('');
+      };
+      fill('mq-top', shuffled.slice(0, 18));
+      fill('mq-bot', shuffled.slice(18, 36));
     },
 
     howToPlay() {
