@@ -275,9 +275,28 @@
       return scn;
     },
 
+    /* There is no formal derby list, so for promises and big-match moments a
+       "rival" is a top-four league opponent, or anyone rated at least our level. */
+    isTopOpp(g, m) {
+      const club = State.club(g.player.club);
+      if (m.comp === 'league' && m.fixture.oppId) {
+        const pos = Season.standings(g, club.league).findIndex(r => r.id === m.fixture.oppId) + 1;
+        return pos > 0 && pos <= 4;
+      }
+      return m.oppRating >= club.rating;
+    },
+
+    // eight or fewer league games left: the run-in
+    lateSeason(g) {
+      let left = 0;
+      for (let i = g.fixtureIndex; i < g.fixtures.length; i++) if (g.fixtures[i].comp === 'league') left++;
+      return left > 0 && left <= 8;
+    },
+
     ctxFor(g, m, extra) {
       const p = g.player;
       const oppQ = m.oppRating;
+      const topOpp = Match.isTopOpp(g, m);
       return Object.assign({
         player: p, minute: m.minute, oppName: m.oppName,
         // roughly a quarter of chances fall on the wrong foot
@@ -286,7 +305,10 @@
         pressure: (m.comp === 'cup' || m.comp === 'cont' || m.comp === 'intl') && m.minute > 70,
         crowdHostile: !m.isHome,
         losing: m.us < m.them,
-        score: m.us + '-' + m.them
+        score: m.us + '-' + m.them,
+        comp: m.comp, knockout: !!m.fixture.knockout,
+        drawing: m.us === m.them, goalsThisMatch: m.stats.goals,
+        derby: topOpp, topOpp: topOpp, lateSeason: Match.lateSeason(g)
       }, extra || {});
     },
 
@@ -369,7 +391,18 @@
           'A chance goes begging at the far post.',
           'Good move, poor final ball.',
           'Shot from distance — deflected wide.',
-          'The keeper makes a routine save.'
+          'The keeper makes a routine save.',
+          `${m.myName} are turning the screw now. Another corner.`,
+          'A sweeping counter ends with a shot straight at the keeper.',
+          'The cross is begging to be finished — nobody gambles.',
+          'Blocked at source, and the rebound falls kindly for the defence.',
+          'Off the bar! The keeper was beaten all ends up.',
+          'One-touch stuff around the box, but the final pass is picked off.',
+          'In behind here… and the flag goes up. Marginal call.',
+          'A piledriver from the edge — parried away with strong wrists.',
+          'Groans all round as the cutback is sliced behind for a goal kick.',
+          `${m.myName} work it wide again, patient, probing for a gap.`,
+          'The crowd senses something. The noise is building.'
         ]), 'neutral');
       }
       if (scored) {
@@ -383,7 +416,18 @@
         `${m.oppName} threaten but the offside flag saves you.`,
         'Your keeper makes a smart stop.',
         'A warning sign — the post is rattled!',
-        'Cleared off the line! Heart-in-mouth stuff.'
+        'Cleared off the line! Heart-in-mouth stuff.',
+        `${m.oppName} are asking questions now. Your back four holds its shape.`,
+        'A cross flashes across your six-yard box — nobody gets on the end of it.',
+        'Your centre-half steps in with a perfectly timed interception.',
+        'The through ball has them in… and a recovering challenge saves the day.',
+        'A long-range effort skids a yard wide of the upright.',
+        'The free kick is bent over the wall — and over the bar. Nervy moment.',
+        'Your keeper comes, claims, and calms everything down.',
+        'Headed away, hooked clear, booted anywhere. Survival stuff.',
+        `${m.oppName} pen you in for a spell. The crowd is getting anxious.`,
+        'A snap shot from the corner of the box dribbles harmlessly wide.',
+        'A dangerous break is cut short by a cynical tug. Only a word from the ref.'
       ]), 'neutral');
     },
 
@@ -539,6 +583,11 @@
         if (m.them === 0 && (p.pos === 'GK' || D.POSITIONS[p.pos].group === 'DEF') && mins > 60) {
           m.stats.rating += 0.5; p.season.cleanSheets++; p.career.cleanSheets++;
         }
+        // dressing-room chemistry nudges your rating a touch either way
+        const squadRel = Squad.ensure(g).reduce((a, s) => a + s.rel, 0) / Squad.ensure(g).length;
+        if (squadRel >= 65) m.stats.rating += 0.1;
+        else if (squadRel <= 35) m.stats.rating -= 0.1;
+        if (p.captain) m.stats.rating += 0.05;
         m.stats.rating = U.clamp(U.round(m.stats.rating, 1), 3.0, 10);
         m.motm = m.stats.rating >= 8.2 && result !== 'L';
         if (m.motm) { p.season.motm++; p.career.motm++; }
@@ -554,6 +603,19 @@
         p.form = U.clamp(p.form * 0.72 + (m.stats.rating - 6.5) * 30 + 18, 5, 100);
         p.morale = U.clamp(p.morale + (result === 'W' ? 4 : result === 'L' ? -3 : 0) + (m.stats.goals * 3), 0, 100);
         p.managerTrust = U.clamp(p.managerTrust + (m.stats.rating - 6.6) * 1.5, 0, 100);
+        if (p.captain && result === 'W') p.morale = U.clamp(p.morale + 2, 0, 100);
+        // the derby promise you made in the press gets judged on the big one
+        if (p.derbyPromise && Match.isTopOpp(g, m)) {
+          if (m.stats.rating >= 7.5) {
+            p.morale = U.clamp(p.morale + 6, 0, 100);
+            State.news(`${p.lastName} keeps his derby promise`, 'good');
+          } else if (m.stats.rating < 6.3) {
+            p.morale = U.clamp(p.morale - 8, 0, 100);
+            p.managerTrust = U.clamp(p.managerTrust - 6, 0, 100);
+            State.news(`${p.lastName} goes missing after promising derby glory`, 'bad');
+          }
+          p.derbyPromise = false;
+        }
         // reputation: earned strictly on the pitch
         const repGain = (m.stats.goals * 0.6 + m.stats.assists * 0.3 + (m.motm ? 0.5 : 0))
           * (State.hasTrait(p, 'idol') ? 1.5 : 1) * (m.comp === 'intl' || m.comp === 'cont' ? 1.6 : 1);

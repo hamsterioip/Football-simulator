@@ -108,7 +108,8 @@
 
   /* ==========================================================================
      Scenario definitions
-     each: { id, kind, weight(ctx), build(ctx) -> {title, sub, options[]} }
+     each: { id, kind, gate?(ctx), weight(ctx), build(ctx) -> {title, sub, options[]} }
+     gate, when present, must pass for the moment to be pickable at all
      ========================================================================== */
   const LIB = [];
   function add(def) { LIB.push(def); }
@@ -2102,6 +2103,555 @@
     }
   });
 
+  /* ---------- 53. penalty to win a knockout tie ---------- */
+  add({
+    id: 'final_penalty_shootout', kind: 'set',
+    gate: ctx => ctx.knockout && ctx.drawing && ctx.minute >= 75,
+    weight: ctx => isPos(ctx, ATT) ? 3 : 1.4,
+    build(ctx) {
+      return {
+        title: 'PENALTY — to win the tie',
+        sub: U.pick([
+          `${ctx.minute}' — level, and the referee points at the spot. A shootout looms unless you end this now.`,
+          'The whole tie has shrunk to twelve yards. Their keeper is taking an age to get set. The whistle goes.'
+        ]),
+        art: 'penalty',
+        options: penaltyOptions(ctx, (scored, label) => {
+          if (scored) {
+            const icon = label === 'Panenka';
+            return E({ goal: true, rating: 2.4, rep: icon ? 4 : 2.5, morale: 8, crowd: 20, tone: GOOD,
+              xp: { shooting: .5 },
+              text: icon ? 'A Panenka. In this moment. The away end cannot believe what it has just seen.'
+                         : 'Buries it. The bench empties, the tie is won, and you are at the bottom of a pile of bodies.' });
+          }
+          return E({ rating: -1.8, morale: -10, rep: -1, tone: BAD, how: 'missed',
+            text: 'It stays out. The shootout that follows feels like your fault before it has even started.' });
+        })
+      };
+    }
+  });
+
+  /* ---------- 54. title decider ---------- */
+  add({
+    id: 'title_decider', kind: 'shot',
+    gate: ctx => ctx.comp === 'league' && ctx.lateSeason && ctx.topOpp,
+    weight: ctx => isPos(ctx, ATT) ? 2.6 : isPos(ctx, MID) ? 1.4 : 0.5,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'The title is right there',
+        sub: U.pick([
+          `Top against second, ${ctx.minute}' gone, and the ball breaks to you in the channel. The league is inside this moment.`,
+          'Win this and the trophy is all but yours. The ball has squirmed loose to you twenty-five yards out.',
+          'Every camera in the country is on this game. One chance to be the man who won the league.'
+        ]) + weakNote(ctx),
+        art: 'net',
+        options: [
+          { label: 'Hit it early', hint: 'Before the defence can set.', tag: 'Shooting',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 8 : 0), gk + 16, 0.015, 0.36));
+              if (U.chance(p)) return E({ goal: true, rating: 2.5, rep: 3, morale: 6, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Struck before anyone can react and it nestles in the far corner. The title race just tilted.' });
+              if (U.chance(0.3)) return E({ rating: 0.1, tone: NEU, xp: { shooting: .25 },
+                text: 'Tipped onto the post and scrambled clear. The whole ground is still recovering.' });
+              return E({ rating: -0.5, tone: BAD, xp: { shooting: .15 },
+                text: 'Snatched at it. High, wide, and the away end is suddenly very loud.' });
+            } },
+          { label: 'Carry it and commit him', hint: 'Make the defender blink first.', tag: 'Dribbling',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 4, 0.016, 0.48) + flairBonus(ctx);
+              p = luck(ctx, p);
+              if (U.chance(p)) {
+                if (U.chance(0.55)) return E({ goal: true, rating: 2.6, rep: 3.2, crowd: 22, tone: GOOD,
+                  xp: { dribbling: .5, shooting: .3 }, text: 'You beat him, you beat the next man, and you roll it home. Goal to win a league.' });
+                return E({ penalty: true, rating: 1.0, tone: GOOD, xp: { dribbling: .4 },
+                  text: 'Past him, chopped down in the box. PENALTY! Absolute bedlam.' });
+              }
+              return E({ rating: -0.6, tone: BAD, xp: { dribbling: .2 },
+                text: 'He stands up, times it, and walks away with the ball. Chance gone.' });
+            } },
+          { label: 'Slide in the runner', hint: 'Someone has made the angle.', tag: 'Passing',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), ctx.defender + 6, 0.015, 0.5));
+              if (U.chance(p)) {
+                if (U.chance(0.6)) return E({ assist: true, teamGoal: true, rating: 1.6, trust: 2, morale: 4, tone: GOOD,
+                  xp: { passing: .6 }, crowd: 12, text: 'Weighted to perfection and he sweeps it in. The bench is on the pitch.' });
+                return E({ rating: 0.5, tone: NEU, xp: { passing: .4 },
+                  text: 'A beautiful ball that deserved better — he drags it wide. You stare at the turf.' });
+              }
+              return E({ rating: -0.4, tone: BAD, text: 'Cut out at the crucial moment. Twenty minutes of pressure, wasted.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 55. one goal from the club record ---------- */
+  add({
+    id: 'record_goal_moment', kind: 'shot',
+    gate: ctx => (ctx.player.career.goals || 0) >= 180,
+    weight: ctx => isPos(ctx, ATT) ? 2.2 : 0.8,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'The record is one goal away',
+        sub: U.pick([
+          `One more and you stand alone as this club's greatest scorer. The ball falls to you with the goal half open.`,
+          `The fans know it. The bench knows it. One short of the record — and here is the chance, right on cue.`,
+          `It is written, surely. The record books are open and the ball has just landed at your feet.`
+        ]) + weakNote(ctx),
+        art: 'net',
+        options: [
+          { label: 'First-time finish', hint: 'Do not overthink it.', tag: 'Instinct',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'poacher') ? 8 : 0), gk + 4, 0.015, 0.44));
+              if (U.chance(p)) return E({ goal: true, rating: 2.2, rep: 3, crowd: 18, tone: GOOD,
+                xp: { shooting: .55 }, text: 'One touch, back of the net, history made. The stadium announcer is shouting your name.' });
+              return E({ rating: -0.6, tone: BAD, xp: { shooting: .2 },
+                text: 'You drag it wide. The record will have to wait, and the groan tells you everyone knew.' });
+            } },
+          { label: 'Take it round the keeper', hint: 'Do it in style.', tag: 'Dribbling',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), gk + 6, 0.017, 0.44) + flairBonus(ctx);
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 3.4, crowd: 20, tone: GOOD,
+                xp: { dribbling: .6 }, text: 'Around the keeper, into the empty net. A record-breaking goal scored like a training drill.' });
+              return E({ rating: -0.7, tone: BAD, xp: { dribbling: .2 },
+                text: 'Too many touches. He smothers it, and the moment passes. Greed, perhaps.' });
+            } },
+          { label: 'Lob him', hint: 'He is off his line.', tag: 'Composure',
+            run() {
+              let p = odds(eff(ctx, 'shooting'), gk + 8, 0.015, 0.38);
+              if (trait(ctx, 'ice')) p += 0.07;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.3, rep: 3, crowd: 19, tone: GOOD,
+                xp: { shooting: .5 }, text: 'Lifted over him, bouncing once, in. The record is yours and the away end is limp.' });
+              return E({ rating: -0.5, tone: BAD, text: 'It drops onto the roof of the net. So close the photographers flinched.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 56. the hat-trick chance ---------- */
+  add({
+    id: 'hattrick_ball', kind: 'shot',
+    gate: ctx => ctx.goalsThisMatch === 2,
+    weight: ctx => isPos(ctx, ATT) ? 3.4 : isPos(ctx, MID) ? 2 : 1,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'Hat-trick ball',
+        sub: U.pick([
+          'Two already, and the third is sitting up for you. The match ball is calling your name.',
+          'You are one away. The ball drops to you in the box and the whole ground rises as one.',
+          'Hat-trick chance. Your team-mates are already looking for the match ball. Do not fluff it.'
+        ]) + weakNote(ctx),
+        art: 'ball',
+        options: [
+          { label: 'Smash it', hint: 'No placement. Pure violence.', tag: 'Power',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting'), gk + 4, 0.016, 0.42));
+              if (U.chance(p)) return E({ goal: true, rating: 2.2, rep: 2.5, morale: 5, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'HAT-TRICK! It nearly takes the net off. You scoop up the match ball and wave it at the cameras.' });
+              return E({ rating: -0.6, tone: BAD, xp: { shooting: .2 },
+                text: 'Blazed over. The hat-trick ball stays in the referee\'s bag, and he looks smug about it.' });
+            } },
+          { label: 'Side-foot the corner', hint: 'Calm. Collected. Greedy.', tag: 'Placement',
+            run() {
+              let p = odds(eff(ctx, 'shooting'), gk, 0.015, 0.5);
+              if (trait(ctx, 'clinical')) p += 0.06;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.1, rep: 2.4, morale: 5, crowd: 18, tone: GOOD,
+                xp: { shooting: .55 }, text: 'Passed into the bottom corner like it is five-a-side. HAT-TRICK. The ball is coming home with you.' });
+              return E({ rating: -0.5, tone: BAD, xp: { shooting: .2 },
+                text: 'The keeper reads it and claws it away. Two will have to do.' });
+            } },
+          { label: 'Dink over the dive', hint: 'The cheeky third.', tag: 'Flair',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), gk + 2, 0.015, 0.42) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 3, crowd: 22, tone: GOOD,
+                xp: { dribbling: .5, shooting: .3 }, text: 'A little dink over him for the hat-trick. Pure arrogance, pure joy. The ground is shaking.' });
+              return E({ rating: -0.7, tone: BAD, text: 'Too cute. He catches it one-handed and gives you a look that says everything.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 57. one last attack ---------- */
+  add({
+    id: 'last_minute_winner', kind: 'shot',
+    gate: ctx => ctx.drawing && ctx.minute > 85,
+    weight: ctx => isPos(ctx, ATT) ? 2.8 : isPos(ctx, MID) ? 1.8 : 0.8,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'One last attack',
+        sub: U.pick([
+          `${ctx.minute}' — level, and this is the last time the ball goes into their box. It is coming to you.`,
+          'The board is up, the draw suits nobody, and the final cross of the night is arcing towards you.',
+          'Stoppage time, bodies everywhere, and it bounces loose at your feet. Once chance. Take it.'
+        ]) + weakNote(ctx),
+        art: 'clock',
+        options: [
+          { label: 'Catch it first time', hint: 'No time for a touch.', tag: 'Technique',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 7 : 0), gk + 14, 0.015, 0.34));
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 2.4, morale: 7, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'First time, through the crowd of legs, IN. The winner, in the last minute. Absolute scenes.' });
+              return E({ rating: -0.3, tone: BAD, xp: { shooting: .2 },
+                text: 'Blocked. The whistle goes a minute later. Two points left on the pitch.' });
+            } },
+          { label: 'Head it at goal', hint: 'Attack the cross.', tag: 'Physical',
+            run() {
+              const p = luck(ctx, odds((eff(ctx, 'physical') + eff(ctx, 'shooting')) / 2, gk + 8, 0.015, 0.4));
+              if (U.chance(p)) return E({ goal: true, rating: 2.3, rep: 2.2, morale: 7, crowd: 18, tone: GOOD,
+                xp: { physical: .3, shooting: .3 }, text: 'You hang in the air forever and plant it in the corner. The winner. Limbs everywhere.' });
+              return E({ rating: -0.2, tone: NEU, text: 'Over the bar. The referee puts everyone out of their misery seconds later.' });
+            } },
+          { label: 'Hold it and find a runner', hint: 'One more pass.', tag: 'Smart',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 46, 0.014, 0.55));
+              if (U.chance(p)) {
+                if (U.chance(0.55)) return E({ assist: true, teamGoal: true, rating: 1.7, trust: 3, morale: 5, tone: GOOD,
+                  xp: { passing: .55 }, crowd: 14, text: 'You wait, and wait, and slide him in at the death. He scores the winner. Genius patience.' });
+                return E({ rating: 0.4, tone: NEU, xp: { passing: .35 },
+                  text: 'Perfect ball, skied finish. You sink to your knees. That was the one.' });
+              }
+              return E({ rating: -0.3, tone: BAD,
+                text: 'The pass never arrives. Full time. A point that feels like a defeat.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 58. stoppage-time free kick to win it ---------- */
+  add({
+    id: 'free_kick_to_win', kind: 'set',
+    gate: ctx => ctx.drawing && ctx.minute >= 88 && (ctx.player.setPieceDuty || (ctx.player.attrs.shooting || 0) >= 72),
+    weight: () => 2.6,
+    build(ctx) {
+      return {
+        title: 'Free kick to win it',
+        sub: U.pick([
+          'Twenty-five yards, stoppage time, scores level. Everyone else is watching you.',
+          'The last kick of the game, dead centre. The wall is arguing. The keeper is screaming. It is yours.',
+          'You have scored from here in training all week. Now do it with the points on it.'
+        ]),
+        art: 'wall',
+        options: [
+          { label: 'Over the wall, top corner', hint: 'The dream strike.', tag: 'Technique',
+            run() {
+              let p = odds(eff(ctx, 'shooting') + (trait(ctx, 'wizard') ? 12 : 0), ctx.keeper + 24, 0.014, 0.3);
+              if (U.chance(luck(ctx, p))) return E({ goal: true, rating: 2.6, rep: 3, crowd: 22, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Up and down, top bins, last kick of the game. The winner. They will show this one for years.' });
+              if (U.chance(.3)) return E({ rating: 0.1, tone: NEU, text: 'The crossbar is still shaking when the whistle goes. Inches from immortality.' });
+              return E({ rating: -0.2, tone: BAD, text: 'Into the wall. The rebound is hoofed away and that is that.' });
+            } },
+          { label: 'Whip it round the wall', hint: 'Catch him unsighted.', tag: 'Placement',
+            run() {
+              let p = odds(eff(ctx, 'shooting') + (trait(ctx, 'wizard') ? 10 : 0), ctx.keeper + 28, 0.014, 0.28);
+              if (U.chance(luck(ctx, p))) return E({ goal: true, rating: 2.7, rep: 2.8, crowd: 20, tone: GOOD,
+                xp: { shooting: .55 }, text: 'Bent around the wall and inside the post. He never saw it. Bedlam in the stands.' });
+              return E({ rating: -0.15, tone: BAD, text: 'A yard wide. You knew it the second it left your boot.' });
+            } },
+          { label: 'Float it into the mixer', hint: 'Let the giants go and win it.', tag: 'Delivery',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing') + (trait(ctx, 'wizard') ? 8 : 0), 55, 0.013, 0.42));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.6, morale: 4, tone: GOOD,
+                xp: { passing: .5 }, text: 'Dangled onto the big man\'s head — buried! The winner, from your delivery.' });
+              return E({ rating: -0.1, tone: NEU, text: 'The keeper claims it and hugs the ball like a newborn. Full time.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 59. derby comeback ---------- */
+  add({
+    id: 'derby_comeback', kind: 'shot',
+    gate: ctx => ctx.derby && ctx.losing,
+    weight: ctx => isPos(ctx, ATT) ? 2.8 : isPos(ctx, MID) ? 1.6 : 0.6,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'The derby is slipping away',
+        sub: U.pick([
+          `A goal down against ${ctx.oppName} and the crowd is roaring for blood. The ball breaks to you on the edge.`,
+          'They have been singing about your lot all afternoon. Here is the chance to shut them up.',
+          'One down in the derby, and the loose ball rolls to you with their defence backing off. Do something.'
+        ]) + weakNote(ctx),
+        art: 'duel',
+        options: [
+          { label: 'Leather it', hint: 'Feed off the noise.', tag: 'Power',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 7 : 0), gk + 18, 0.015, 0.34));
+              if (U.chance(p)) return E({ goal: true, rating: 2.3, rep: 2.6, morale: 8, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'You absolutely leather it home. The away end goes silent, and yours is deafening. Derby levelled!' });
+              return E({ rating: -0.4, tone: BAD, xp: { shooting: .2 },
+                text: 'Row Z. Their fans are singing your name now — and not kindly.' });
+            } },
+          { label: 'Take on the last man', hint: 'Make a hero of yourself.', tag: 'Dribbling',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 4, 0.016, 0.46) + flairBonus(ctx);
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.5, rep: 3, crowd: 22, tone: GOOD,
+                xp: { dribbling: .6 }, text: 'Past him, into the box, rolled in. Derby equaliser, and you made their captain look silly doing it.' });
+              if (U.chance(0.35)) return E({ rating: -0.7, tone: BAD, injuryRisk: 0.1, xp: { dribbling: .2 },
+                text: 'He goes through you to get it. No foul given. Welcome to the derby.' });
+              return E({ rating: -0.5, tone: BAD, xp: { dribbling: .2 },
+                text: 'Pocket picked, counter on. You chase back with the boos in your ears.' });
+            } },
+          { label: 'Cross to the far post', hint: 'Someone is arriving.', tag: 'Delivery',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), ctx.defender + 8, 0.014, 0.44));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.6, morale: 6, trust: 2, tone: GOOD,
+                xp: { passing: .5 }, crowd: 12, text: 'You hang it up and your strike partner crashes it home. All square in the derby!' });
+              return E({ rating: -0.2, tone: NEU, text: 'Straight down the keeper\'s throat. The groan could strip paint.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 60. the captain's intervention ---------- */
+  add({
+    id: 'captain_influence', kind: 'social',
+    gate: ctx => ctx.player.captain && ctx.losing,
+    weight: () => 1.6,
+    build(ctx) {
+      return {
+        title: 'Conceded a soft one',
+        sub: U.pick([
+          'A cheap goal given away, and you can see heads dropping all over the pitch. You are wearing the armband. Act like it.',
+          'The goal was a shambles and fingers are being pointed. As captain, this next minute sets the tone for the rest.'
+        ]),
+        art: 'fans',
+        options: [
+          { label: 'Gather them in a huddle', hint: 'Right now, in the middle of the pitch.', tag: 'Leadership',
+            run() {
+              const p = luck(ctx, 0.5 + (trait(ctx, 'leader') ? .2 : 0) + ctx.player.reputation / 500);
+              if (U.chance(p)) return E({ rating: 0.9, morale: 7, trust: 5, teamBoost: 7, tone: GOOD,
+                text: 'You pull them in, say three sentences, and something shifts. The response is immediate — the crowd senses it too.' });
+              return E({ rating: 0.1, tone: NEU, text: 'You talk, they listen, but the flatness stays. Words are cheap today.' });
+            } },
+          { label: 'Publicly demand more', hint: 'Arms out, volume up.', tag: 'Bold',
+            run() {
+              const p = luck(ctx, 0.45 + (trait(ctx, 'leader') ? .2 : 0));
+              if (U.chance(p)) return E({ rating: 0.6, morale: 4, trust: 3, teamBoost: 5, tone: GOOD,
+                text: 'You let them have it and they snap back into shape. Nobody likes it. It works anyway.' });
+              return E({ rating: -0.2, morale: -3, tone: BAD,
+                text: 'You scream at the nearest midfielder and he screams back. The cameras catch all of it.' });
+            } },
+          { label: 'Set the standard yourself', hint: 'First to every second ball.', tag: 'Work Rate',
+            run() { return E({ rating: 0.5, fitness: -4, trust: 2, teamBoost: 2, tone: GOOD,
+              text: 'No speech. You just win the next three tackles and suddenly everyone else remembers their jobs.' }); } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 61. 1v1 against the rival star ---------- */
+  add({
+    id: 'superstar_duel', kind: 'shot',
+    gate: ctx => (ctx.player.ovr || 0) >= 85,
+    weight: ctx => isPos(ctx, ATT) ? 2.2 : 0.8,
+    build(ctx) {
+      return {
+        title: 'You against their best',
+        sub: U.pick([
+          `Isolated on the flank with ${ctx.oppName}'s star defender. The whole stadium knows this duel decides the game.`,
+          'Their headline centre-half against you, one on one, thirty yards of grass behind him. He is smiling. So are you.',
+          'It has come down to the duel everyone paid to see. Him or you. The ball is at your feet.'
+        ]) + weakNote(ctx),
+        art: 'duel',
+        options: [
+          { label: 'Go outside and burn him', hint: 'Pace does not lie.', tag: 'Pace',
+            run() {
+              let p = odds(eff(ctx, 'pace'), ctx.defender + 4, 0.017, 0.48);
+              if (trait(ctx, 'showman')) p += 0.05;
+              p = luck(ctx, p);
+              if (U.chance(p)) {
+                if (U.chance(0.5)) return E({ goal: true, rating: 2.5, rep: 3.2, crowd: 20, tone: GOOD,
+                  xp: { pace: .4, shooting: .4 }, text: 'You give him two yards and take four. The finish is emphatic. The duel is yours.' });
+                return E({ assist: true, teamGoal: true, rating: 1.7, rep: 1.5, crowd: 12, tone: GOOD,
+                  xp: { pace: .4, passing: .3 }, text: 'You roast him and cut it back for the tap-in. He is still on the ground.' });
+              }
+              return E({ rating: -0.6, tone: BAD, xp: { pace: .2 },
+                text: 'He matches you stride for stride and shepherds it out. A point to him.' });
+            } },
+          { label: 'Send him the wrong way', hint: 'Feet faster than his brain.', tag: 'Dribbling',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 6, 0.017, 0.44) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.7, rep: 3.5, crowd: 22, tone: GOOD,
+                xp: { dribbling: .6, shooting: .3 }, text: 'A drop of the shoulder and he sits down. You roll it in and point at him. Ruthless.' });
+              return E({ rating: -0.7, tone: BAD, xp: { dribbling: .2 },
+                text: 'He reads every shimmy and walks off with the ball, patting you on the head. Humiliating.' });
+            } },
+          { label: 'Shoot before he sets', hint: 'Catch them all watching.', tag: 'Shooting',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting'), ctx.keeper + 20, 0.015, 0.3));
+              if (U.chance(p)) return E({ goal: true, rating: 2.6, rep: 3, crowd: 21, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Struck early through his legs — the keeper sees it late, if at all. What a way to win the duel.' });
+              return E({ rating: -0.3, tone: NEU, xp: { shooting: .2 },
+                text: 'Straight at the keeper. He smothers it and their man mutters something you choose not to hear.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 62. goal number one hundred ---------- */
+  add({
+    id: 'century_goal', kind: 'shot',
+    gate: ctx => { const cg = ctx.player.career.goals || 0; return cg >= 95 && cg <= 105; },
+    weight: ctx => isPos(ctx, ATT) ? 2.6 : 1,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'The century is in reach',
+        sub: U.pick([
+          'Ninety-nine career goals. The hundredth has been following you around all week — and here is the chance for it.',
+          'One hundred career goals, one kick away. The ball has broken to you and the stadium already knows the script.',
+          'They have been counting you down for a month. Number one hundred is sitting up, begging to be struck.'
+        ]) + weakNote(ctx),
+        art: 'net',
+        options: [
+          { label: 'Finish it properly', hint: 'Low, hard, no fuss.', tag: 'Placement',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 8 : 0), gk + 2, 0.015, 0.46));
+              if (U.chance(p)) return E({ goal: true, rating: 2.3, rep: 3.2, morale: 6, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Side-footed home. One hundred career goals. You hold the ball up to all four stands like a trophy.' });
+              return E({ rating: -0.6, tone: BAD, xp: { shooting: .2 },
+                text: 'Saved! The hundred stays at ninety-nine, and his gloves are suddenly enormous.' });
+            } },
+          { label: 'Make it one to remember', hint: 'The century deserves a highlight.', tag: 'Audacity',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), gk + 8, 0.016, 0.36) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.6, rep: 4, crowd: 24, tone: GOOD,
+                xp: { dribbling: .5, shooting: .3 }, text: 'You beat two and finish with the outside of the boot. One hundred goals, and this might be the best of them.' });
+              return E({ rating: -0.8, tone: BAD, xp: { dribbling: .2 },
+                text: 'You try to be a highlight reel and end up on the floor. The century will have to be mundane next time.' });
+            } },
+          { label: 'Square it instead', hint: 'Let him have his moment.', tag: 'Team Player',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 44, 0.015, 0.6));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.3, morale: 5, trust: 3, tone: GOOD,
+                xp: { passing: .5 }, crowd: 10,
+                text: 'You slide it across for the tap-in and raise a hand to the crowd: not today. They love the restraint even more.' });
+              return E({ rating: -0.3, tone: BAD,
+                text: 'Intercepted. A hundred would have been easier than explaining that decision.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 63. the big-game question ---------- */
+  add({
+    id: 'big_game_bottle', kind: 'shot',
+    gate: ctx => (ctx.player.reputation || 0) >= 75 && (ctx.knockout || ctx.topOpp),
+    weight: ctx => isPos(ctx, ATT) ? 2.4 : isPos(ctx, MID) ? 1.4 : 0.5,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'They say you hide in these games',
+        sub: U.pick([
+          'The papers all week: you never turn up when it matters. The ball has just fallen to you in the biggest game of the season.',
+          'A pundit called you a flat-track bully on live television. The chance to answer him has arrived on a plate.',
+          'Big game, big stage, and the old question hanging over you. Here is the moment they said you would miss.'
+        ]) + weakNote(ctx),
+        art: 'net',
+        options: [
+          { label: 'Answer with a goal', hint: 'Let the football talk.', tag: 'Composure',
+            run() {
+              let p = odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 8 : 0), gk + 6, 0.015, 0.42);
+              if (trait(ctx, 'ice')) p += 0.06;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 3.4, morale: 6, crowd: 18, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Calmly dispatched, then a finger to the lips aimed at the press box. Question answered.' });
+              return E({ rating: -0.9, rep: -0.6, tone: BAD, xp: { shooting: .2 },
+                text: 'You drag it wide and the cameras find your face instantly. The narrative writes itself.' });
+            } },
+          { label: 'Do something outrageous', hint: 'Give them a headline.', tag: 'Audacity',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 8, 0.016, 0.34) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.7, rep: 4, crowd: 22, tone: GOOD,
+                xp: { dribbling: .6, shooting: .3 }, text: 'Three men beaten and a finish into the top corner. There will be an apology segment on Monday.' });
+              return E({ rating: -1.0, rep: -0.8, tone: BAD, xp: { dribbling: .2 },
+                text: 'Dispossessed in the centre circle and they nearly score on the break. The critics are warming up their laptops.' });
+            } },
+          { label: 'Create for someone else', hint: 'Win the game, not the argument.', tag: 'Team Player',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), ctx.defender + 6, 0.014, 0.5));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.7, rep: 1.2, trust: 3, morale: 4, tone: GOOD,
+                xp: { passing: .55 }, crowd: 10,
+                text: 'You thread him through for the opener. No celebration, just a slow look up at the directors\' box.' });
+              return E({ rating: -0.4, tone: BAD,
+                text: 'The pass is undercooked and cut out. Anonymous again, they will say.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 64. the old guard's ovation ---------- */
+  add({
+    id: 'legend_ovation', kind: 'shot',
+    gate: ctx => (ctx.player.age || 0) >= 32 && (ctx.player.career.apps || 0) >= 300,
+    weight: ctx => isPos(ctx, ATT) ? 2 : isPos(ctx, MID) ? 1.4 : 0.6,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'They are singing your name',
+        sub: U.pick([
+          'Word is this might be your last season here. The crowd has been singing your name all game — and now the ball finds you.',
+          'Three hundred appearances and counting, and the whole ground is on its feet. The chance falls to the man they came to honour.',
+          'The tifo in the end behind the goal is your face. Fittingly, the ball drops to you with the keeper slightly off his line.'
+        ]) + weakNote(ctx),
+        art: 'fans',
+        options: [
+          { label: 'Roll back the years', hint: 'One more for the collection.', tag: 'Technique',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 7 : 0), gk + 6, 0.014, 0.42));
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 3, morale: 8, crowd: 24, tone: GOOD,
+                xp: { shooting: .5 }, text: 'You score and run to the corner where they are singing loudest. They will talk about this one for decades.' });
+              return E({ rating: -0.4, tone: NEU, xp: { shooting: .2 },
+                text: 'Into the side netting. The ovation comes anyway, a little sadder and a lot louder.' });
+            } },
+          { label: 'The veteran\'s dink', hint: 'Legs go. Touch never does.', tag: 'Composure',
+            run() {
+              let p = odds(eff(ctx, 'shooting'), gk + 10, 0.014, 0.36);
+              if (trait(ctx, 'ice')) p += 0.07;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.6, rep: 3.4, crowd: 22, tone: GOOD,
+                xp: { shooting: .5 }, text: 'Chipped over him with a touch from 2012. The noise is unlike anything this ground has made in years.' });
+              return E({ rating: -0.3, tone: NEU, text: 'It drops agonisingly wide. They applaud the attempt like it went in.' });
+            } },
+          { label: 'Set up the next generation', hint: 'The kid is making a run.', tag: 'Team Player',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 46, 0.014, 0.55));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.6, morale: 6, trust: 3, tone: GOOD,
+                xp: { passing: .5 }, crowd: 12,
+                text: 'You slide in the academy kid for his first senior goal and ruffle his hair at the corner flag. The circle closes.' });
+              return E({ rating: -0.2, tone: NEU,
+                text: 'The youngster miscontrols it. You laugh, he apologises, the crowd sings for both of you.' });
+            } }
+        ]
+      };
+    }
+  });
+
   /* ==========================================================================
      Selection
      ========================================================================== */
@@ -2126,7 +2676,8 @@
       const ex = opts.exclude || [], recent = opts.recent || [], kinds = opts.kinds;
       const candidates = LIB.filter(s => !s.explicitOnly
         && ex.indexOf(s.id) < 0
-        && (!kinds || kinds.indexOf(s.kind) >= 0));
+        && (!kinds || kinds.indexOf(s.kind) >= 0)
+        && (!s.gate || s.gate(ctx)));
 
       const pool = candidates.map(s => {
         let w = s.weight(ctx);

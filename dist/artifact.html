@@ -876,6 +876,18 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     ]}
   ];
 
+  /* --- Starting paths -------------------------------------------------------
+     The four leagues offered as ways into the game at the end of the wizard —
+     the weakest leagues above by average club rating, so every path starts at
+     one of its smaller clubs. `league` is a LEAGUES id.
+  --------------------------------------------------------------------------- */
+  const START_PATHS = [
+    { league: 'NED', blurb: 'Technical, fearless with kids — the shop window of Europe.' },
+    { league: 'POR', blurb: 'A finishing school for forwards. The giants come shopping here first.' },
+    { league: 'ARG', blurb: 'Street football with the studs showing. Survive it and Europe calls.' },
+    { league: 'USA', blurb: 'A growing league, a softer landing, and a spotlight all your own.' }
+  ];
+
   /* --- Club identity ------------------------------------------------------
      Real club badges are trademarked, so the game draws its own crest for every
      club instead: each one's real colours and shirt pattern, rendered as a
@@ -1981,7 +1993,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     POSITIONS, ATTR_KEYS, ATTR_LABEL, DRAFT_ATTRS, DRAFT_ATTRS_GK,
     LEAGUES, CONTINENTAL, NATIONS, CLUB_KIT, REAL_STARS,
     ERAS, GOLDEN_STARS, GOLDEN_SPARE, CLASSIC_STARS, CLASSIC_RATINGS, NAMES, IMPORT_POOLS, FIRST_NAMES, LAST_NAMES,
-    TRAITS, TRAINING, LEGENDS, LEGENDS_GK, CONFIG
+    START_PATHS, TRAITS, TRAINING, LEGENDS, LEGENDS_GK, CONFIG
   };
 })(window);
 
@@ -3225,7 +3237,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* ==========================================================================
      Scenario definitions
-     each: { id, kind, weight(ctx), build(ctx) -> {title, sub, options[]} }
+     each: { id, kind, gate?(ctx), weight(ctx), build(ctx) -> {title, sub, options[]} }
+     gate, when present, must pass for the moment to be pickable at all
      ========================================================================== */
   const LIB = [];
   function add(def) { LIB.push(def); }
@@ -5219,6 +5232,555 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     }
   });
 
+  /* ---------- 53. penalty to win a knockout tie ---------- */
+  add({
+    id: 'final_penalty_shootout', kind: 'set',
+    gate: ctx => ctx.knockout && ctx.drawing && ctx.minute >= 75,
+    weight: ctx => isPos(ctx, ATT) ? 3 : 1.4,
+    build(ctx) {
+      return {
+        title: 'PENALTY — to win the tie',
+        sub: U.pick([
+          `${ctx.minute}' — level, and the referee points at the spot. A shootout looms unless you end this now.`,
+          'The whole tie has shrunk to twelve yards. Their keeper is taking an age to get set. The whistle goes.'
+        ]),
+        art: 'penalty',
+        options: penaltyOptions(ctx, (scored, label) => {
+          if (scored) {
+            const icon = label === 'Panenka';
+            return E({ goal: true, rating: 2.4, rep: icon ? 4 : 2.5, morale: 8, crowd: 20, tone: GOOD,
+              xp: { shooting: .5 },
+              text: icon ? 'A Panenka. In this moment. The away end cannot believe what it has just seen.'
+                         : 'Buries it. The bench empties, the tie is won, and you are at the bottom of a pile of bodies.' });
+          }
+          return E({ rating: -1.8, morale: -10, rep: -1, tone: BAD, how: 'missed',
+            text: 'It stays out. The shootout that follows feels like your fault before it has even started.' });
+        })
+      };
+    }
+  });
+
+  /* ---------- 54. title decider ---------- */
+  add({
+    id: 'title_decider', kind: 'shot',
+    gate: ctx => ctx.comp === 'league' && ctx.lateSeason && ctx.topOpp,
+    weight: ctx => isPos(ctx, ATT) ? 2.6 : isPos(ctx, MID) ? 1.4 : 0.5,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'The title is right there',
+        sub: U.pick([
+          `Top against second, ${ctx.minute}' gone, and the ball breaks to you in the channel. The league is inside this moment.`,
+          'Win this and the trophy is all but yours. The ball has squirmed loose to you twenty-five yards out.',
+          'Every camera in the country is on this game. One chance to be the man who won the league.'
+        ]) + weakNote(ctx),
+        art: 'net',
+        options: [
+          { label: 'Hit it early', hint: 'Before the defence can set.', tag: 'Shooting',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 8 : 0), gk + 16, 0.015, 0.36));
+              if (U.chance(p)) return E({ goal: true, rating: 2.5, rep: 3, morale: 6, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Struck before anyone can react and it nestles in the far corner. The title race just tilted.' });
+              if (U.chance(0.3)) return E({ rating: 0.1, tone: NEU, xp: { shooting: .25 },
+                text: 'Tipped onto the post and scrambled clear. The whole ground is still recovering.' });
+              return E({ rating: -0.5, tone: BAD, xp: { shooting: .15 },
+                text: 'Snatched at it. High, wide, and the away end is suddenly very loud.' });
+            } },
+          { label: 'Carry it and commit him', hint: 'Make the defender blink first.', tag: 'Dribbling',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 4, 0.016, 0.48) + flairBonus(ctx);
+              p = luck(ctx, p);
+              if (U.chance(p)) {
+                if (U.chance(0.55)) return E({ goal: true, rating: 2.6, rep: 3.2, crowd: 22, tone: GOOD,
+                  xp: { dribbling: .5, shooting: .3 }, text: 'You beat him, you beat the next man, and you roll it home. Goal to win a league.' });
+                return E({ penalty: true, rating: 1.0, tone: GOOD, xp: { dribbling: .4 },
+                  text: 'Past him, chopped down in the box. PENALTY! Absolute bedlam.' });
+              }
+              return E({ rating: -0.6, tone: BAD, xp: { dribbling: .2 },
+                text: 'He stands up, times it, and walks away with the ball. Chance gone.' });
+            } },
+          { label: 'Slide in the runner', hint: 'Someone has made the angle.', tag: 'Passing',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), ctx.defender + 6, 0.015, 0.5));
+              if (U.chance(p)) {
+                if (U.chance(0.6)) return E({ assist: true, teamGoal: true, rating: 1.6, trust: 2, morale: 4, tone: GOOD,
+                  xp: { passing: .6 }, crowd: 12, text: 'Weighted to perfection and he sweeps it in. The bench is on the pitch.' });
+                return E({ rating: 0.5, tone: NEU, xp: { passing: .4 },
+                  text: 'A beautiful ball that deserved better — he drags it wide. You stare at the turf.' });
+              }
+              return E({ rating: -0.4, tone: BAD, text: 'Cut out at the crucial moment. Twenty minutes of pressure, wasted.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 55. one goal from the club record ---------- */
+  add({
+    id: 'record_goal_moment', kind: 'shot',
+    gate: ctx => (ctx.player.career.goals || 0) >= 180,
+    weight: ctx => isPos(ctx, ATT) ? 2.2 : 0.8,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'The record is one goal away',
+        sub: U.pick([
+          `One more and you stand alone as this club's greatest scorer. The ball falls to you with the goal half open.`,
+          `The fans know it. The bench knows it. One short of the record — and here is the chance, right on cue.`,
+          `It is written, surely. The record books are open and the ball has just landed at your feet.`
+        ]) + weakNote(ctx),
+        art: 'net',
+        options: [
+          { label: 'First-time finish', hint: 'Do not overthink it.', tag: 'Instinct',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'poacher') ? 8 : 0), gk + 4, 0.015, 0.44));
+              if (U.chance(p)) return E({ goal: true, rating: 2.2, rep: 3, crowd: 18, tone: GOOD,
+                xp: { shooting: .55 }, text: 'One touch, back of the net, history made. The stadium announcer is shouting your name.' });
+              return E({ rating: -0.6, tone: BAD, xp: { shooting: .2 },
+                text: 'You drag it wide. The record will have to wait, and the groan tells you everyone knew.' });
+            } },
+          { label: 'Take it round the keeper', hint: 'Do it in style.', tag: 'Dribbling',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), gk + 6, 0.017, 0.44) + flairBonus(ctx);
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 3.4, crowd: 20, tone: GOOD,
+                xp: { dribbling: .6 }, text: 'Around the keeper, into the empty net. A record-breaking goal scored like a training drill.' });
+              return E({ rating: -0.7, tone: BAD, xp: { dribbling: .2 },
+                text: 'Too many touches. He smothers it, and the moment passes. Greed, perhaps.' });
+            } },
+          { label: 'Lob him', hint: 'He is off his line.', tag: 'Composure',
+            run() {
+              let p = odds(eff(ctx, 'shooting'), gk + 8, 0.015, 0.38);
+              if (trait(ctx, 'ice')) p += 0.07;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.3, rep: 3, crowd: 19, tone: GOOD,
+                xp: { shooting: .5 }, text: 'Lifted over him, bouncing once, in. The record is yours and the away end is limp.' });
+              return E({ rating: -0.5, tone: BAD, text: 'It drops onto the roof of the net. So close the photographers flinched.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 56. the hat-trick chance ---------- */
+  add({
+    id: 'hattrick_ball', kind: 'shot',
+    gate: ctx => ctx.goalsThisMatch === 2,
+    weight: ctx => isPos(ctx, ATT) ? 3.4 : isPos(ctx, MID) ? 2 : 1,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'Hat-trick ball',
+        sub: U.pick([
+          'Two already, and the third is sitting up for you. The match ball is calling your name.',
+          'You are one away. The ball drops to you in the box and the whole ground rises as one.',
+          'Hat-trick chance. Your team-mates are already looking for the match ball. Do not fluff it.'
+        ]) + weakNote(ctx),
+        art: 'ball',
+        options: [
+          { label: 'Smash it', hint: 'No placement. Pure violence.', tag: 'Power',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting'), gk + 4, 0.016, 0.42));
+              if (U.chance(p)) return E({ goal: true, rating: 2.2, rep: 2.5, morale: 5, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'HAT-TRICK! It nearly takes the net off. You scoop up the match ball and wave it at the cameras.' });
+              return E({ rating: -0.6, tone: BAD, xp: { shooting: .2 },
+                text: 'Blazed over. The hat-trick ball stays in the referee\'s bag, and he looks smug about it.' });
+            } },
+          { label: 'Side-foot the corner', hint: 'Calm. Collected. Greedy.', tag: 'Placement',
+            run() {
+              let p = odds(eff(ctx, 'shooting'), gk, 0.015, 0.5);
+              if (trait(ctx, 'clinical')) p += 0.06;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.1, rep: 2.4, morale: 5, crowd: 18, tone: GOOD,
+                xp: { shooting: .55 }, text: 'Passed into the bottom corner like it is five-a-side. HAT-TRICK. The ball is coming home with you.' });
+              return E({ rating: -0.5, tone: BAD, xp: { shooting: .2 },
+                text: 'The keeper reads it and claws it away. Two will have to do.' });
+            } },
+          { label: 'Dink over the dive', hint: 'The cheeky third.', tag: 'Flair',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), gk + 2, 0.015, 0.42) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 3, crowd: 22, tone: GOOD,
+                xp: { dribbling: .5, shooting: .3 }, text: 'A little dink over him for the hat-trick. Pure arrogance, pure joy. The ground is shaking.' });
+              return E({ rating: -0.7, tone: BAD, text: 'Too cute. He catches it one-handed and gives you a look that says everything.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 57. one last attack ---------- */
+  add({
+    id: 'last_minute_winner', kind: 'shot',
+    gate: ctx => ctx.drawing && ctx.minute > 85,
+    weight: ctx => isPos(ctx, ATT) ? 2.8 : isPos(ctx, MID) ? 1.8 : 0.8,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'One last attack',
+        sub: U.pick([
+          `${ctx.minute}' — level, and this is the last time the ball goes into their box. It is coming to you.`,
+          'The board is up, the draw suits nobody, and the final cross of the night is arcing towards you.',
+          'Stoppage time, bodies everywhere, and it bounces loose at your feet. Once chance. Take it.'
+        ]) + weakNote(ctx),
+        art: 'clock',
+        options: [
+          { label: 'Catch it first time', hint: 'No time for a touch.', tag: 'Technique',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 7 : 0), gk + 14, 0.015, 0.34));
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 2.4, morale: 7, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'First time, through the crowd of legs, IN. The winner, in the last minute. Absolute scenes.' });
+              return E({ rating: -0.3, tone: BAD, xp: { shooting: .2 },
+                text: 'Blocked. The whistle goes a minute later. Two points left on the pitch.' });
+            } },
+          { label: 'Head it at goal', hint: 'Attack the cross.', tag: 'Physical',
+            run() {
+              const p = luck(ctx, odds((eff(ctx, 'physical') + eff(ctx, 'shooting')) / 2, gk + 8, 0.015, 0.4));
+              if (U.chance(p)) return E({ goal: true, rating: 2.3, rep: 2.2, morale: 7, crowd: 18, tone: GOOD,
+                xp: { physical: .3, shooting: .3 }, text: 'You hang in the air forever and plant it in the corner. The winner. Limbs everywhere.' });
+              return E({ rating: -0.2, tone: NEU, text: 'Over the bar. The referee puts everyone out of their misery seconds later.' });
+            } },
+          { label: 'Hold it and find a runner', hint: 'One more pass.', tag: 'Smart',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 46, 0.014, 0.55));
+              if (U.chance(p)) {
+                if (U.chance(0.55)) return E({ assist: true, teamGoal: true, rating: 1.7, trust: 3, morale: 5, tone: GOOD,
+                  xp: { passing: .55 }, crowd: 14, text: 'You wait, and wait, and slide him in at the death. He scores the winner. Genius patience.' });
+                return E({ rating: 0.4, tone: NEU, xp: { passing: .35 },
+                  text: 'Perfect ball, skied finish. You sink to your knees. That was the one.' });
+              }
+              return E({ rating: -0.3, tone: BAD,
+                text: 'The pass never arrives. Full time. A point that feels like a defeat.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 58. stoppage-time free kick to win it ---------- */
+  add({
+    id: 'free_kick_to_win', kind: 'set',
+    gate: ctx => ctx.drawing && ctx.minute >= 88 && (ctx.player.setPieceDuty || (ctx.player.attrs.shooting || 0) >= 72),
+    weight: () => 2.6,
+    build(ctx) {
+      return {
+        title: 'Free kick to win it',
+        sub: U.pick([
+          'Twenty-five yards, stoppage time, scores level. Everyone else is watching you.',
+          'The last kick of the game, dead centre. The wall is arguing. The keeper is screaming. It is yours.',
+          'You have scored from here in training all week. Now do it with the points on it.'
+        ]),
+        art: 'wall',
+        options: [
+          { label: 'Over the wall, top corner', hint: 'The dream strike.', tag: 'Technique',
+            run() {
+              let p = odds(eff(ctx, 'shooting') + (trait(ctx, 'wizard') ? 12 : 0), ctx.keeper + 24, 0.014, 0.3);
+              if (U.chance(luck(ctx, p))) return E({ goal: true, rating: 2.6, rep: 3, crowd: 22, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Up and down, top bins, last kick of the game. The winner. They will show this one for years.' });
+              if (U.chance(.3)) return E({ rating: 0.1, tone: NEU, text: 'The crossbar is still shaking when the whistle goes. Inches from immortality.' });
+              return E({ rating: -0.2, tone: BAD, text: 'Into the wall. The rebound is hoofed away and that is that.' });
+            } },
+          { label: 'Whip it round the wall', hint: 'Catch him unsighted.', tag: 'Placement',
+            run() {
+              let p = odds(eff(ctx, 'shooting') + (trait(ctx, 'wizard') ? 10 : 0), ctx.keeper + 28, 0.014, 0.28);
+              if (U.chance(luck(ctx, p))) return E({ goal: true, rating: 2.7, rep: 2.8, crowd: 20, tone: GOOD,
+                xp: { shooting: .55 }, text: 'Bent around the wall and inside the post. He never saw it. Bedlam in the stands.' });
+              return E({ rating: -0.15, tone: BAD, text: 'A yard wide. You knew it the second it left your boot.' });
+            } },
+          { label: 'Float it into the mixer', hint: 'Let the giants go and win it.', tag: 'Delivery',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing') + (trait(ctx, 'wizard') ? 8 : 0), 55, 0.013, 0.42));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.6, morale: 4, tone: GOOD,
+                xp: { passing: .5 }, text: 'Dangled onto the big man\'s head — buried! The winner, from your delivery.' });
+              return E({ rating: -0.1, tone: NEU, text: 'The keeper claims it and hugs the ball like a newborn. Full time.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 59. derby comeback ---------- */
+  add({
+    id: 'derby_comeback', kind: 'shot',
+    gate: ctx => ctx.derby && ctx.losing,
+    weight: ctx => isPos(ctx, ATT) ? 2.8 : isPos(ctx, MID) ? 1.6 : 0.6,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'The derby is slipping away',
+        sub: U.pick([
+          `A goal down against ${ctx.oppName} and the crowd is roaring for blood. The ball breaks to you on the edge.`,
+          'They have been singing about your lot all afternoon. Here is the chance to shut them up.',
+          'One down in the derby, and the loose ball rolls to you with their defence backing off. Do something.'
+        ]) + weakNote(ctx),
+        art: 'duel',
+        options: [
+          { label: 'Leather it', hint: 'Feed off the noise.', tag: 'Power',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 7 : 0), gk + 18, 0.015, 0.34));
+              if (U.chance(p)) return E({ goal: true, rating: 2.3, rep: 2.6, morale: 8, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'You absolutely leather it home. The away end goes silent, and yours is deafening. Derby levelled!' });
+              return E({ rating: -0.4, tone: BAD, xp: { shooting: .2 },
+                text: 'Row Z. Their fans are singing your name now — and not kindly.' });
+            } },
+          { label: 'Take on the last man', hint: 'Make a hero of yourself.', tag: 'Dribbling',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 4, 0.016, 0.46) + flairBonus(ctx);
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.5, rep: 3, crowd: 22, tone: GOOD,
+                xp: { dribbling: .6 }, text: 'Past him, into the box, rolled in. Derby equaliser, and you made their captain look silly doing it.' });
+              if (U.chance(0.35)) return E({ rating: -0.7, tone: BAD, injuryRisk: 0.1, xp: { dribbling: .2 },
+                text: 'He goes through you to get it. No foul given. Welcome to the derby.' });
+              return E({ rating: -0.5, tone: BAD, xp: { dribbling: .2 },
+                text: 'Pocket picked, counter on. You chase back with the boos in your ears.' });
+            } },
+          { label: 'Cross to the far post', hint: 'Someone is arriving.', tag: 'Delivery',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), ctx.defender + 8, 0.014, 0.44));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.6, morale: 6, trust: 2, tone: GOOD,
+                xp: { passing: .5 }, crowd: 12, text: 'You hang it up and your strike partner crashes it home. All square in the derby!' });
+              return E({ rating: -0.2, tone: NEU, text: 'Straight down the keeper\'s throat. The groan could strip paint.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 60. the captain's intervention ---------- */
+  add({
+    id: 'captain_influence', kind: 'social',
+    gate: ctx => ctx.player.captain && ctx.losing,
+    weight: () => 1.6,
+    build(ctx) {
+      return {
+        title: 'Conceded a soft one',
+        sub: U.pick([
+          'A cheap goal given away, and you can see heads dropping all over the pitch. You are wearing the armband. Act like it.',
+          'The goal was a shambles and fingers are being pointed. As captain, this next minute sets the tone for the rest.'
+        ]),
+        art: 'fans',
+        options: [
+          { label: 'Gather them in a huddle', hint: 'Right now, in the middle of the pitch.', tag: 'Leadership',
+            run() {
+              const p = luck(ctx, 0.5 + (trait(ctx, 'leader') ? .2 : 0) + ctx.player.reputation / 500);
+              if (U.chance(p)) return E({ rating: 0.9, morale: 7, trust: 5, teamBoost: 7, tone: GOOD,
+                text: 'You pull them in, say three sentences, and something shifts. The response is immediate — the crowd senses it too.' });
+              return E({ rating: 0.1, tone: NEU, text: 'You talk, they listen, but the flatness stays. Words are cheap today.' });
+            } },
+          { label: 'Publicly demand more', hint: 'Arms out, volume up.', tag: 'Bold',
+            run() {
+              const p = luck(ctx, 0.45 + (trait(ctx, 'leader') ? .2 : 0));
+              if (U.chance(p)) return E({ rating: 0.6, morale: 4, trust: 3, teamBoost: 5, tone: GOOD,
+                text: 'You let them have it and they snap back into shape. Nobody likes it. It works anyway.' });
+              return E({ rating: -0.2, morale: -3, tone: BAD,
+                text: 'You scream at the nearest midfielder and he screams back. The cameras catch all of it.' });
+            } },
+          { label: 'Set the standard yourself', hint: 'First to every second ball.', tag: 'Work Rate',
+            run() { return E({ rating: 0.5, fitness: -4, trust: 2, teamBoost: 2, tone: GOOD,
+              text: 'No speech. You just win the next three tackles and suddenly everyone else remembers their jobs.' }); } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 61. 1v1 against the rival star ---------- */
+  add({
+    id: 'superstar_duel', kind: 'shot',
+    gate: ctx => (ctx.player.ovr || 0) >= 85,
+    weight: ctx => isPos(ctx, ATT) ? 2.2 : 0.8,
+    build(ctx) {
+      return {
+        title: 'You against their best',
+        sub: U.pick([
+          `Isolated on the flank with ${ctx.oppName}'s star defender. The whole stadium knows this duel decides the game.`,
+          'Their headline centre-half against you, one on one, thirty yards of grass behind him. He is smiling. So are you.',
+          'It has come down to the duel everyone paid to see. Him or you. The ball is at your feet.'
+        ]) + weakNote(ctx),
+        art: 'duel',
+        options: [
+          { label: 'Go outside and burn him', hint: 'Pace does not lie.', tag: 'Pace',
+            run() {
+              let p = odds(eff(ctx, 'pace'), ctx.defender + 4, 0.017, 0.48);
+              if (trait(ctx, 'showman')) p += 0.05;
+              p = luck(ctx, p);
+              if (U.chance(p)) {
+                if (U.chance(0.5)) return E({ goal: true, rating: 2.5, rep: 3.2, crowd: 20, tone: GOOD,
+                  xp: { pace: .4, shooting: .4 }, text: 'You give him two yards and take four. The finish is emphatic. The duel is yours.' });
+                return E({ assist: true, teamGoal: true, rating: 1.7, rep: 1.5, crowd: 12, tone: GOOD,
+                  xp: { pace: .4, passing: .3 }, text: 'You roast him and cut it back for the tap-in. He is still on the ground.' });
+              }
+              return E({ rating: -0.6, tone: BAD, xp: { pace: .2 },
+                text: 'He matches you stride for stride and shepherds it out. A point to him.' });
+            } },
+          { label: 'Send him the wrong way', hint: 'Feet faster than his brain.', tag: 'Dribbling',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 6, 0.017, 0.44) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.7, rep: 3.5, crowd: 22, tone: GOOD,
+                xp: { dribbling: .6, shooting: .3 }, text: 'A drop of the shoulder and he sits down. You roll it in and point at him. Ruthless.' });
+              return E({ rating: -0.7, tone: BAD, xp: { dribbling: .2 },
+                text: 'He reads every shimmy and walks off with the ball, patting you on the head. Humiliating.' });
+            } },
+          { label: 'Shoot before he sets', hint: 'Catch them all watching.', tag: 'Shooting',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting'), ctx.keeper + 20, 0.015, 0.3));
+              if (U.chance(p)) return E({ goal: true, rating: 2.6, rep: 3, crowd: 21, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Struck early through his legs — the keeper sees it late, if at all. What a way to win the duel.' });
+              return E({ rating: -0.3, tone: NEU, xp: { shooting: .2 },
+                text: 'Straight at the keeper. He smothers it and their man mutters something you choose not to hear.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 62. goal number one hundred ---------- */
+  add({
+    id: 'century_goal', kind: 'shot',
+    gate: ctx => { const cg = ctx.player.career.goals || 0; return cg >= 95 && cg <= 105; },
+    weight: ctx => isPos(ctx, ATT) ? 2.6 : 1,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'The century is in reach',
+        sub: U.pick([
+          'Ninety-nine career goals. The hundredth has been following you around all week — and here is the chance for it.',
+          'One hundred career goals, one kick away. The ball has broken to you and the stadium already knows the script.',
+          'They have been counting you down for a month. Number one hundred is sitting up, begging to be struck.'
+        ]) + weakNote(ctx),
+        art: 'net',
+        options: [
+          { label: 'Finish it properly', hint: 'Low, hard, no fuss.', tag: 'Placement',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 8 : 0), gk + 2, 0.015, 0.46));
+              if (U.chance(p)) return E({ goal: true, rating: 2.3, rep: 3.2, morale: 6, crowd: 20, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Side-footed home. One hundred career goals. You hold the ball up to all four stands like a trophy.' });
+              return E({ rating: -0.6, tone: BAD, xp: { shooting: .2 },
+                text: 'Saved! The hundred stays at ninety-nine, and his gloves are suddenly enormous.' });
+            } },
+          { label: 'Make it one to remember', hint: 'The century deserves a highlight.', tag: 'Audacity',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), gk + 8, 0.016, 0.36) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.6, rep: 4, crowd: 24, tone: GOOD,
+                xp: { dribbling: .5, shooting: .3 }, text: 'You beat two and finish with the outside of the boot. One hundred goals, and this might be the best of them.' });
+              return E({ rating: -0.8, tone: BAD, xp: { dribbling: .2 },
+                text: 'You try to be a highlight reel and end up on the floor. The century will have to be mundane next time.' });
+            } },
+          { label: 'Square it instead', hint: 'Let him have his moment.', tag: 'Team Player',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 44, 0.015, 0.6));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.3, morale: 5, trust: 3, tone: GOOD,
+                xp: { passing: .5 }, crowd: 10,
+                text: 'You slide it across for the tap-in and raise a hand to the crowd: not today. They love the restraint even more.' });
+              return E({ rating: -0.3, tone: BAD,
+                text: 'Intercepted. A hundred would have been easier than explaining that decision.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 63. the big-game question ---------- */
+  add({
+    id: 'big_game_bottle', kind: 'shot',
+    gate: ctx => (ctx.player.reputation || 0) >= 75 && (ctx.knockout || ctx.topOpp),
+    weight: ctx => isPos(ctx, ATT) ? 2.4 : isPos(ctx, MID) ? 1.4 : 0.5,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'They say you hide in these games',
+        sub: U.pick([
+          'The papers all week: you never turn up when it matters. The ball has just fallen to you in the biggest game of the season.',
+          'A pundit called you a flat-track bully on live television. The chance to answer him has arrived on a plate.',
+          'Big game, big stage, and the old question hanging over you. Here is the moment they said you would miss.'
+        ]) + weakNote(ctx),
+        art: 'net',
+        options: [
+          { label: 'Answer with a goal', hint: 'Let the football talk.', tag: 'Composure',
+            run() {
+              let p = odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 8 : 0), gk + 6, 0.015, 0.42);
+              if (trait(ctx, 'ice')) p += 0.06;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 3.4, morale: 6, crowd: 18, tone: GOOD,
+                xp: { shooting: .6 }, text: 'Calmly dispatched, then a finger to the lips aimed at the press box. Question answered.' });
+              return E({ rating: -0.9, rep: -0.6, tone: BAD, xp: { shooting: .2 },
+                text: 'You drag it wide and the cameras find your face instantly. The narrative writes itself.' });
+            } },
+          { label: 'Do something outrageous', hint: 'Give them a headline.', tag: 'Audacity',
+            run() {
+              let p = odds(eff(ctx, 'dribbling'), ctx.defender + 8, 0.016, 0.34) + flairBonus(ctx);
+              if (trait(ctx, 'showman')) p += 0.08;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.7, rep: 4, crowd: 22, tone: GOOD,
+                xp: { dribbling: .6, shooting: .3 }, text: 'Three men beaten and a finish into the top corner. There will be an apology segment on Monday.' });
+              return E({ rating: -1.0, rep: -0.8, tone: BAD, xp: { dribbling: .2 },
+                text: 'Dispossessed in the centre circle and they nearly score on the break. The critics are warming up their laptops.' });
+            } },
+          { label: 'Create for someone else', hint: 'Win the game, not the argument.', tag: 'Team Player',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), ctx.defender + 6, 0.014, 0.5));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.7, rep: 1.2, trust: 3, morale: 4, tone: GOOD,
+                xp: { passing: .55 }, crowd: 10,
+                text: 'You thread him through for the opener. No celebration, just a slow look up at the directors\' box.' });
+              return E({ rating: -0.4, tone: BAD,
+                text: 'The pass is undercooked and cut out. Anonymous again, they will say.' });
+            } }
+        ]
+      };
+    }
+  });
+
+  /* ---------- 64. the old guard's ovation ---------- */
+  add({
+    id: 'legend_ovation', kind: 'shot',
+    gate: ctx => (ctx.player.age || 0) >= 32 && (ctx.player.career.apps || 0) >= 300,
+    weight: ctx => isPos(ctx, ATT) ? 2 : isPos(ctx, MID) ? 1.4 : 0.6,
+    build(ctx) {
+      const gk = ctx.keeper;
+      return {
+        title: 'They are singing your name',
+        sub: U.pick([
+          'Word is this might be your last season here. The crowd has been singing your name all game — and now the ball finds you.',
+          'Three hundred appearances and counting, and the whole ground is on its feet. The chance falls to the man they came to honour.',
+          'The tifo in the end behind the goal is your face. Fittingly, the ball drops to you with the keeper slightly off his line.'
+        ]) + weakNote(ctx),
+        art: 'fans',
+        options: [
+          { label: 'Roll back the years', hint: 'One more for the collection.', tag: 'Technique',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'shooting') + (trait(ctx, 'clinical') ? 7 : 0), gk + 6, 0.014, 0.42));
+              if (U.chance(p)) return E({ goal: true, rating: 2.4, rep: 3, morale: 8, crowd: 24, tone: GOOD,
+                xp: { shooting: .5 }, text: 'You score and run to the corner where they are singing loudest. They will talk about this one for decades.' });
+              return E({ rating: -0.4, tone: NEU, xp: { shooting: .2 },
+                text: 'Into the side netting. The ovation comes anyway, a little sadder and a lot louder.' });
+            } },
+          { label: 'The veteran\'s dink', hint: 'Legs go. Touch never does.', tag: 'Composure',
+            run() {
+              let p = odds(eff(ctx, 'shooting'), gk + 10, 0.014, 0.36);
+              if (trait(ctx, 'ice')) p += 0.07;
+              p = luck(ctx, p);
+              if (U.chance(p)) return E({ goal: true, rating: 2.6, rep: 3.4, crowd: 22, tone: GOOD,
+                xp: { shooting: .5 }, text: 'Chipped over him with a touch from 2012. The noise is unlike anything this ground has made in years.' });
+              return E({ rating: -0.3, tone: NEU, text: 'It drops agonisingly wide. They applaud the attempt like it went in.' });
+            } },
+          { label: 'Set up the next generation', hint: 'The kid is making a run.', tag: 'Team Player',
+            run() {
+              const p = luck(ctx, odds(eff(ctx, 'passing'), 46, 0.014, 0.55));
+              if (U.chance(p)) return E({ assist: true, teamGoal: true, rating: 1.6, morale: 6, trust: 3, tone: GOOD,
+                xp: { passing: .5 }, crowd: 12,
+                text: 'You slide in the academy kid for his first senior goal and ruffle his hair at the corner flag. The circle closes.' });
+              return E({ rating: -0.2, tone: NEU,
+                text: 'The youngster miscontrols it. You laugh, he apologises, the crowd sings for both of you.' });
+            } }
+        ]
+      };
+    }
+  });
+
   /* ==========================================================================
      Selection
      ========================================================================== */
@@ -5243,7 +5805,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       const ex = opts.exclude || [], recent = opts.recent || [], kinds = opts.kinds;
       const candidates = LIB.filter(s => !s.explicitOnly
         && ex.indexOf(s.id) < 0
-        && (!kinds || kinds.indexOf(s.kind) >= 0));
+        && (!kinds || kinds.indexOf(s.kind) >= 0)
+        && (!s.gate || s.gate(ctx)));
 
       const pool = candidates.map(s => {
         let w = s.weight(ctx);
@@ -5584,9 +6147,28 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       return scn;
     },
 
+    /* There is no formal derby list, so for promises and big-match moments a
+       "rival" is a top-four league opponent, or anyone rated at least our level. */
+    isTopOpp(g, m) {
+      const club = State.club(g.player.club);
+      if (m.comp === 'league' && m.fixture.oppId) {
+        const pos = Season.standings(g, club.league).findIndex(r => r.id === m.fixture.oppId) + 1;
+        return pos > 0 && pos <= 4;
+      }
+      return m.oppRating >= club.rating;
+    },
+
+    // eight or fewer league games left: the run-in
+    lateSeason(g) {
+      let left = 0;
+      for (let i = g.fixtureIndex; i < g.fixtures.length; i++) if (g.fixtures[i].comp === 'league') left++;
+      return left > 0 && left <= 8;
+    },
+
     ctxFor(g, m, extra) {
       const p = g.player;
       const oppQ = m.oppRating;
+      const topOpp = Match.isTopOpp(g, m);
       return Object.assign({
         player: p, minute: m.minute, oppName: m.oppName,
         // roughly a quarter of chances fall on the wrong foot
@@ -5595,7 +6177,10 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         pressure: (m.comp === 'cup' || m.comp === 'cont' || m.comp === 'intl') && m.minute > 70,
         crowdHostile: !m.isHome,
         losing: m.us < m.them,
-        score: m.us + '-' + m.them
+        score: m.us + '-' + m.them,
+        comp: m.comp, knockout: !!m.fixture.knockout,
+        drawing: m.us === m.them, goalsThisMatch: m.stats.goals,
+        derby: topOpp, topOpp: topOpp, lateSeason: Match.lateSeason(g)
       }, extra || {});
     },
 
@@ -5678,7 +6263,18 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           'A chance goes begging at the far post.',
           'Good move, poor final ball.',
           'Shot from distance — deflected wide.',
-          'The keeper makes a routine save.'
+          'The keeper makes a routine save.',
+          `${m.myName} are turning the screw now. Another corner.`,
+          'A sweeping counter ends with a shot straight at the keeper.',
+          'The cross is begging to be finished — nobody gambles.',
+          'Blocked at source, and the rebound falls kindly for the defence.',
+          'Off the bar! The keeper was beaten all ends up.',
+          'One-touch stuff around the box, but the final pass is picked off.',
+          'In behind here… and the flag goes up. Marginal call.',
+          'A piledriver from the edge — parried away with strong wrists.',
+          'Groans all round as the cutback is sliced behind for a goal kick.',
+          `${m.myName} work it wide again, patient, probing for a gap.`,
+          'The crowd senses something. The noise is building.'
         ]), 'neutral');
       }
       if (scored) {
@@ -5692,7 +6288,18 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         `${m.oppName} threaten but the offside flag saves you.`,
         'Your keeper makes a smart stop.',
         'A warning sign — the post is rattled!',
-        'Cleared off the line! Heart-in-mouth stuff.'
+        'Cleared off the line! Heart-in-mouth stuff.',
+        `${m.oppName} are asking questions now. Your back four holds its shape.`,
+        'A cross flashes across your six-yard box — nobody gets on the end of it.',
+        'Your centre-half steps in with a perfectly timed interception.',
+        'The through ball has them in… and a recovering challenge saves the day.',
+        'A long-range effort skids a yard wide of the upright.',
+        'The free kick is bent over the wall — and over the bar. Nervy moment.',
+        'Your keeper comes, claims, and calms everything down.',
+        'Headed away, hooked clear, booted anywhere. Survival stuff.',
+        `${m.oppName} pen you in for a spell. The crowd is getting anxious.`,
+        'A snap shot from the corner of the box dribbles harmlessly wide.',
+        'A dangerous break is cut short by a cynical tug. Only a word from the ref.'
       ]), 'neutral');
     },
 
@@ -5848,6 +6455,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         if (m.them === 0 && (p.pos === 'GK' || D.POSITIONS[p.pos].group === 'DEF') && mins > 60) {
           m.stats.rating += 0.5; p.season.cleanSheets++; p.career.cleanSheets++;
         }
+        // dressing-room chemistry nudges your rating a touch either way
+        const squadRel = Squad.ensure(g).reduce((a, s) => a + s.rel, 0) / Squad.ensure(g).length;
+        if (squadRel >= 65) m.stats.rating += 0.1;
+        else if (squadRel <= 35) m.stats.rating -= 0.1;
+        if (p.captain) m.stats.rating += 0.05;
         m.stats.rating = U.clamp(U.round(m.stats.rating, 1), 3.0, 10);
         m.motm = m.stats.rating >= 8.2 && result !== 'L';
         if (m.motm) { p.season.motm++; p.career.motm++; }
@@ -5863,6 +6475,19 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         p.form = U.clamp(p.form * 0.72 + (m.stats.rating - 6.5) * 30 + 18, 5, 100);
         p.morale = U.clamp(p.morale + (result === 'W' ? 4 : result === 'L' ? -3 : 0) + (m.stats.goals * 3), 0, 100);
         p.managerTrust = U.clamp(p.managerTrust + (m.stats.rating - 6.6) * 1.5, 0, 100);
+        if (p.captain && result === 'W') p.morale = U.clamp(p.morale + 2, 0, 100);
+        // the derby promise you made in the press gets judged on the big one
+        if (p.derbyPromise && Match.isTopOpp(g, m)) {
+          if (m.stats.rating >= 7.5) {
+            p.morale = U.clamp(p.morale + 6, 0, 100);
+            State.news(`${p.lastName} keeps his derby promise`, 'good');
+          } else if (m.stats.rating < 6.3) {
+            p.morale = U.clamp(p.morale - 8, 0, 100);
+            p.managerTrust = U.clamp(p.managerTrust - 6, 0, 100);
+            State.news(`${p.lastName} goes missing after promising derby glory`, 'bad');
+          }
+          p.derbyPromise = false;
+        }
         // reputation: earned strictly on the pitch
         const repGain = (m.stats.goals * 0.6 + m.stats.assists * 0.3 + (m.motm ? 0.5 : 0))
           * (State.hasTrait(p, 'idol') ? 1.5 : 1) * (m.comp === 'intl' || m.comp === 'cont' ? 1.6 : 1);
@@ -6748,6 +7373,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     },
 
     /* ================= things that happen at a football club ================= */
+    // one career, one telling — these never come round twice
+    ONCE: new Set(['testimonial', 'hall_of_fame', 'old_club_return', 'dual_nation',
+                   'armband', 'intl_captain', 'shirt_number']),
     EVENTS: [
       { id: 'deadline_day', w: 1, icon: 'transfer', cat: 'Transfer', title: 'Deadline day, 11pm',
         text: 'A bid has landed with two hours of the window left. Your phone has not stopped. The club will not stand in your way if you want it.',
@@ -7292,13 +7920,160 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
               return { tone: 'good', text: 'The old academy coach is there. He says he always knew. He absolutely did not, but it is a lovely evening.' }; } },
           { label: 'Send a video message', hint: 'The schedule is the schedule.', tag: 'Busy',
             run(g) { return { tone: 'neutral', text: 'Forty-five seconds, filmed in the boot room. They play it twice. It does the job.' }; } }
+        ]},
+      { id: 'statue_debate', w: 0.5, icon: 'legacy', cat: 'Club', title: 'The statue petition',
+        text: 'A petition for a statue of you outside the ground has fifty thousand signatures. The local paper is running a poll on the pose.',
+        options: [
+          { label: 'Embrace it', hint: 'Pick the pose. Point at something.', tag: 'Icon',
+            run(g) { const p = P(); State.addReputation(p, 4); p.morale = clamp(p.morale + 8);
+              State.news(`Statue petition for ${p.lastName} passes 50,000 signatures`, 'good');
+              return { tone: 'good', text: 'You suggest the overhead kick against the old enemy. The sculptor is commissioned before Christmas.' }; } },
+          { label: 'Deflect it humbly', hint: '"Statues are for when you are done."', tag: 'Humble',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 4); Career.bumpTeammates(g, 4);
+              return { tone: 'good', text: 'You tell them to build it when the boots are hung up. Somehow they love you even more for saying it.' }; } }
+        ]},
+      { id: 'record_chase', w: 0.6, icon: 'ball', cat: 'Club', title: 'Closing on the record',
+        text: 'You are a handful of goals from the club\'s all-time scoring record. Every interview now ends with the same question, and the man who holds it has started doing podcasts.',
+        options: [
+          { label: 'Talk about it', hint: 'Say you want it. Loudly.', tag: 'Bold',
+            run(g) { const p = P(); p.form = clamp(p.form + 6); State.addReputation(p, 2.5);
+              State.news(`"I am coming for it" — ${p.lastName} has the record in his sights`, 'info');
+              return { tone: 'neutral', text: '"I am coming for it." The record holder wishes you luck through gritted teeth on his podcast.' }; } },
+          { label: 'Avoid the noise', hint: 'One game at a time. Yawn.', tag: 'Professional',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 6); p.morale = clamp(p.morale + 3);
+              return { tone: 'good', text: 'You give the press nothing, week after week. The goals keep coming anyway, which is the loudest answer there is.' }; } }
+        ]},
+      { id: 'all_access', w: 0.5, icon: 'video', cat: 'Media', title: 'All access, all season',
+        text: 'A streaming service wants cameras embedded with you for the whole season — home, dressing room, the lot. The money is absurd and the editing is theirs.',
+        options: [
+          { label: 'Let them in', hint: 'Full access. Full exposure.', tag: 'Exposure',
+            run(g) { const p = P(); State.addReputation(p, 5); p.fitness = clamp(p.fitness - 6); p.managerTrust = clamp(p.managerTrust - 6);
+              State.news(`Cameras in: ${p.lastName} to front all-access documentary series`, 'info');
+              return { tone: 'neutral', text: 'The trailer alone does forty million views. Your manager watches episode one with his face in his hands.' }; } },
+          { label: 'Refuse', hint: 'Some doors stay closed.', tag: 'Private',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 6); p.morale = clamp(p.morale + 4);
+              return { tone: 'good', text: 'You tell them the dressing room is not content. The manager sends a bottle of wine to your house.' }; } }
+        ]},
+      { id: 'farewell_offer', w: 0.6, icon: 'transfer', cat: 'Transfer', title: 'One last payday',
+        text: 'A league where the pitches are pristine and the defending is optional wants you for a farewell season. The number has so many zeroes your agent read it twice.',
+        options: [
+          { label: 'Consider it seriously', hint: 'The biggest cheque you will ever see.', tag: 'Tempted',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 12); p.morale = clamp(p.morale - 6); State.addReputation(p, 1);
+              State.news(`${p.lastName} weighing up one last payday abroad`, 'bad');
+              return { tone: 'neutral', text: 'You ask for the week to think. The manager stops meeting your eye, and the dressing room goes quiet when you walk in.' }; } },
+          { label: 'Reject it out of hand', hint: 'You finish where it matters.', tag: 'Loyal',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 10); p.managerTrust = clamp(p.managerTrust + 8); State.addReputation(p, 2);
+              State.news(`"I am not finished here" — ${p.lastName} turns down the farewell payday`, 'good');
+              return { tone: 'good', text: '"I am not finished here." The quote is on a t-shirt by the weekend, and the terraces sing your name for ninety minutes.' }; } }
+        ]},
+      { id: 'coaching_badges', w: 0.6, icon: 'manager', cat: 'Club', title: 'The badges course',
+        text: 'The federation is running a coaching badges course for senior pros. Evenings and international breaks, two years of it, starting now.',
+        options: [
+          { label: 'Enrol and do it properly', hint: 'Tuesday nights with a tactics board.', tag: 'Future',
+            run(g) { const p = P(); Engine.Progress.addXp(p, 'passing', 4); p.fitness = clamp(p.fitness - 5); p.morale = clamp(p.morale + 4);
+              return { tone: 'good', text: 'You spend Tuesday nights moving counters around a whiteboard. You start seeing runs three passes before they happen.' }; } },
+          { label: 'Focus on playing', hint: 'Plenty of time for that later.', tag: 'Now',
+            run(g) { const p = P(); p.form = clamp(p.form + 5); p.fitness = clamp(p.fitness + 4);
+              return { tone: 'neutral', text: 'The badges can wait. Your legs cannot.' }; } }
+        ]},
+      { id: 'ownership_stake', w: 0.5, icon: 'contract', cat: 'Club', title: 'A seat near the boardroom',
+        text: 'A consortium circling the club wants your name attached — a future stake, an ambassador role, a voice upstairs. All they need is a handshake and a photograph.',
+        options: [
+          { label: 'Shake on it', hint: 'Your name above the door, one day.', tag: 'Business',
+            run(g) { const p = P(); State.addReputation(p, 4); p.morale = clamp(p.morale + 6);
+              State.news(`${p.lastName} linked with future stake in the club`, 'info');
+              return { tone: 'good', text: 'You sign nothing yet, but the photograph alone moves the share price. Football men start returning your calls.' }; } },
+          { label: 'Stay clear', hint: 'You play. That is all.', tag: 'Cautious',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 6); p.form = clamp(p.form + 4);
+              return { tone: 'neutral', text: 'You have seen what boardrooms do to players who wander in early. The answer is no, politely, in writing.' }; } }
+        ]},
+      { id: 'century_caps', w: 0.5, once: true, icon: 'nation', cat: 'International', title: 'The hundredth cap is coming',
+        text: 'Ninety-something caps and counting. The federation is planning a ceremony for the hundredth — a presentation on the pitch, your family in the front row.',
+        options: [
+          { label: 'Let them make a fuss', hint: 'You earned every one of them.', tag: 'Proud',
+            run(g) { const p = P(); State.addReputation(p, 5); p.morale = clamp(p.morale + 10);
+              State.news(`Federation plans pitch ceremony as ${p.lastName} closes on 100 caps`, 'good');
+              return { tone: 'good', text: 'They will walk you out before kick-off and a whole country will stand. Your dad has already bought a new suit.' }; } },
+          { label: 'Keep it low-key', hint: 'Handshake, framed shirt, done.', tag: 'Modest',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 6); State.addReputation(p, 2);
+              return { tone: 'good', text: 'You ask for a handshake and a framed shirt in the tunnel. The federation pretends to be disappointed and is quietly relieved.' }; } }
+        ]},
+      { id: 'wonderkid_mentor', w: 0.6, icon: 'academy', cat: 'Dressing room', title: 'He is modelling his game on you',
+        text: 'The seventeen-year-old the academy will not stop talking about has told a fan channel he bases his whole game on yours. He means it — the haircut is yours too.',
+        options: [
+          { label: 'Take him under your wing', hint: 'Proper mentorship. All season.', tag: 'Mentor',
+            run(g) { const p = P(); const kid = global.Names.person(State.club(p.club).country).name;
+              Career.bumpTeammates(g, 6); p.managerTrust = clamp(p.managerTrust + 8); p.morale = clamp(p.morale + 5);
+              State.news(`${kid} learning from the best — ${p.lastName} takes the wonderkid under his wing`, 'good');
+              return { tone: 'good', text: `You move ${kid} onto your table at lunch and stay an hour after training with him every day. He will be a problem for defenders inside two years.` }; } },
+          { label: 'Keep a polite distance', hint: 'He has to earn it himself.', tag: 'Distant',
+            run(g) { const p = P(); p.form = clamp(p.form + 4);
+              return { tone: 'neutral', text: 'A nod in the corridor is all he gets for now. Nobody carried you, and it did you no harm.' }; } }
+        ]},
+      { id: 'legacy_brand', w: 0.5, icon: 'value', cat: 'Media', title: 'A boot deal for life',
+        text: 'The boot brand wants to sign you for life — your own line, your name on the box, royalties long after the boots are hung up. The first draft of the contract is forty pages.',
+        options: [
+          { label: 'Sign for life', hint: 'The boots outlive the career.', tag: 'Legacy',
+            run(g) { const p = P(); State.addReputation(p, 6); p.morale = clamp(p.morale + 8);
+              State.news(`${p.lastName} signs lifetime boot deal — his own line is coming`, 'good');
+              return { tone: 'good', text: 'Kids will be wearing your boot line when you are doing punditry in a bad suit. Your signature is now a logo.' }; } },
+          { label: 'Send it back with notes', hint: 'Forty pages of leverage.', tag: 'Shrewd',
+            run(g) { const p = P();
+              if (U.chance(0.5)) { State.addReputation(p, 8); p.morale = clamp(p.morale + 8);
+                return { tone: 'good', text: 'Your lawyer finds three clauses they hoped you would miss. The improved offer arrives inside a week, and it is obscene.' }; }
+              p.morale = clamp(p.morale - 4);
+              State.news(`${p.lastName}'s boot line shelved as lifetime deal talks collapse`, 'bad');
+              return { tone: 'bad', text: 'You ask for more and they walk to a younger winger instead. The line launches without your name on it.' }; } }
+        ]},
+      { id: 'rival_duel', w: 0.6, icon: 'star', cat: 'Media', title: 'Vellani has spoken',
+        text: 'Dario Vellani has told a podcast, at length, that he is the better player and it is "not particularly close". The clip has eight million views and counting.',
+        options: [
+          { label: 'Respond with class', hint: '"He is entitled to his opinion."', tag: 'Class',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 4); State.addReputation(p, 3); p.form = clamp(p.form + 3);
+              State.news(`${p.lastName} on Vellani: "A wonderful player. I will see him in the spring"`, 'info');
+              return { tone: 'good', text: 'Short, calm, and it somehow makes him look worse. The spring fixture sells out in an hour anyway.' }; } },
+          { label: 'Respond with fire', hint: 'Give them the feud they want.', tag: 'Fire',
+            run(g) { const p = P(); p.form = clamp(p.form + 10); State.addReputation(p, 2); p.morale = clamp(p.morale - 3);
+              State.news(`${p.lastName} and Vellani trade barbs as the feud ignites`, 'bad');
+              return { tone: 'neutral', text: '"He can count my medals when I am done." The spring fixture is now the biggest game on the continent.' }; } }
+        ]},
+      { id: 'captain_succession', w: 0.5, once: true, icon: 'crown', cat: 'Dressing room', title: 'The armband, eventually',
+        text: 'The manager mentions, casually and very deliberately, that the armband might need a new arm next season. He is looking at you when he says it.',
+        options: [
+          { label: 'Campaign for it', hint: 'Make it impossible to give it to anyone else.', tag: 'Ambition',
+            run(g) { const p = P();
+              if (U.chance(0.65)) { p.captain = true; p.managerTrust = clamp(p.managerTrust + 10); State.addReputation(p, 3);
+                State.news(`${p.lastName} to take the armband next season`, 'good');
+                return { tone: 'good', text: 'He names you captain for next season in front of the whole squad. The current skipper shakes your hand first.' }; }
+              p.managerTrust = clamp(p.managerTrust - 8); p.morale = clamp(p.morale - 5);
+              return { tone: 'bad', text: 'You push too hard, too visibly. He gives it to the goalkeeper and never mentions your name again.' }; } },
+          { label: 'Back the current captain', hint: 'It is his until he says otherwise.', tag: 'Loyal',
+            run(g) { const p = P(); Career.bumpTeammates(g, 8); p.managerTrust = clamp(p.managerTrust + 5); p.morale = clamp(p.morale + 4);
+              return { tone: 'good', text: 'You tell him the armband is in the right place already. It gets back to the skipper, who never forgets it — and neither does the manager.' }; } }
+        ]},
+      { id: 'testimonial_planning', w: 0.5, once: true, icon: 'trophy', cat: 'Club', title: 'Planning the testimonial',
+        text: 'Three hundred appearances came and went, and the club wants to start planning your testimonial properly. Committee, date, opponents — the lot.',
+        options: [
+          { label: 'Make it a charity day', hint: 'Every penny to the foundation.', tag: 'Heart',
+            run(g) { const p = P(); State.addReputation(p, 5); p.morale = clamp(p.morale + 8);
+              State.news(`${p.lastName}'s testimonial to raise funds for the club foundation`, 'good');
+              return { tone: 'good', text: 'The whole gate goes to the foundation and the opponents are your old team-mates. It will be the best-attended friendly in the club\'s history.' }; } },
+          { label: 'Make it a spectacle', hint: 'Fireworks, legends, a live band.', tag: 'Showman',
+            run(g) { const p = P(); State.addReputation(p, 3); p.morale = clamp(p.morale + 5); p.form = clamp(p.form + 3);
+              return { tone: 'good', text: 'A legends XI, fireworks, and a band you have loved since you were twelve. The gate alone sets a club record, and they will talk about it for years — mostly about the band.' }; } }
         ]}
     ],
 
     rollEvent(g) {
       const p = g.player;
       if (!U.chance(0.45)) return null;
+      // event memory: an absolute tick so nothing repeats within ~a season,
+      // and one-shots can only ever happen once per career
+      g.eventHist = g.eventHist || {};
+      g.eventTick = (g.eventTick || 0) + 1;
       const pool = Career.EVENTS.filter(e => {
+        const last = g.eventHist[e.id];
+        if (last != null && (e.once || Career.ONCE.has(e.id) || g.eventTick - last < 30)) return false;
         if (e.id === 'loan_offer' && (p.managerTrust > 45 || p.season.apps > 8)) return false;
         if (e.id === 'armband' && p.captain) return false;
         if (e.id === 'contract_talks' && (!p.contract || p.contract.years > 2)) return false;
@@ -7316,12 +8091,48 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         if (e.id === 'intl_captain' && (p.intl.caps < 30 || p.intlCaptain || !p.intl.called || p.intl.retired)) return false;
         if (e.id === 'hall_of_fame' && (p.career.apps < 400 || p.hof)) return false;
         if (e.id === 'old_club_return' && p.career.apps < 150) return false;
+        // late-career events: for established superstars and veterans only
+        if (e.id === 'statue_debate' && (p.ovr < 84 || p.reputation < 65)) return false;
+        if (e.id === 'record_chase' && p.career.goals < 180) return false;
+        if (e.id === 'all_access' && p.reputation < 70) return false;
+        if (e.id === 'farewell_offer' && (p.age < 31 || p.ovr < 80)) return false;
+        if (e.id === 'coaching_badges' && p.age < 30) return false;
+        if (e.id === 'ownership_stake' && (p.reputation < 75 || p.age < 32)) return false;
+        if (e.id === 'century_caps' && (p.intl.caps < 90 || !p.intl.called || p.intl.retired)) return false;
+        if (e.id === 'wonderkid_mentor' && p.age < 29) return false;
+        if (e.id === 'legacy_brand' && p.reputation < 72) return false;
+        if (e.id === 'rival_duel' && p.ovr < 83) return false;
+        if (e.id === 'captain_succession' && (p.age < 28 || p.ovr < 80 || p.captain)) return false;
+        if (e.id === 'testimonial_planning' && (p.career.apps < 280 || p.age < 30)) return false;
         return true;
       });
       if (!pool.length) return null;
       const ev = U.weighted(pool.map(e => [e, e.w || 1]));
+      g.eventHist[ev.id] = g.eventTick;
       return { id: ev.id, title: ev.title, text: ev.text, icon: ev.icon,
                cat: ev.cat || 'Club', options: ev.options };
+    },
+
+    /* ================= the weekly bill for the flags you raised ================= */
+    weeklyFlagEffects(g) {
+      const p = g.player;
+      // wants out: the manager cools on him weekly, and once a season it leaks
+      if (p.agitated) {
+        p.managerTrust = clamp(p.managerTrust - 2);
+        if (!p.agitatedNoted) {
+          p.agitatedNoted = true;
+          State.news(`Dressing-room whispers: ${p.lastName} wants out`, 'bad');
+          State.addReputation(p, 1); // the vultures are circling
+        }
+      }
+      // a chip on the shoulder, converted to fuel exactly once
+      if (p.grudge && !p.grudgeFueled) {
+        p.grudgeFueled = true;
+        p.form = clamp(p.form + 4);
+      }
+      // promisedTrophy is settled in seasonUpkeep — nothing weekly
+      // the armband still feels good every single week
+      if (p.captain) p.morale = clamp(p.morale + 1);
     },
 
     /* ================= between seasons ================= */
@@ -7339,9 +8150,23 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       p.lastValue = val;
       notes.push(`Market value: ${U.cash(val)}${val > prev ? ' (up)' : val < prev ? ' (down)' : ''}.`);
       if (p.peakValue && val >= p.peakValue) notes.push('That is the highest you have ever been valued.');
+      // settle the trophy promise before anyone is allowed to forget it
+      if (p.promisedTrophy) {
+        const wonSomething = p.career.trophies.some(t => t.year === g.world.year + 1);
+        if (wonSomething) {
+          State.addReputation(p, 4); p.morale = clamp(p.morale + 6);
+          State.news(`${p.lastName} promised a trophy and delivered — the fans have not forgotten`, 'good');
+          notes.push('You promised a trophy and you delivered. They will never let you forget that either.');
+        } else {
+          State.addReputation(p, -4); p.morale = clamp(p.morale - 10);
+          State.news(`${p.lastName}'s trophy promise comes back to haunt him`, 'bad');
+          notes.push('The trophy promise came back to haunt you. The fans remember everything.');
+        }
+      }
       p.captain = p.captain && U.chance(0.8);
       p.agitated = false; p.grudge = false; p.derbyPromise = false;
       p.promisedTrophy = false; p.deadlineMove = false; p.marketTested = false;
+      p.grudgeFueled = false; p.agitatedNoted = false;
       return notes;
     },
 
@@ -9098,6 +9923,37 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   const ico = (n, c) => global.Icons.svg(n, c);
   const $ = id => document.getElementById(id);
 
+  /* Living world: the era data files are static, so everything that changes
+     about the wider game — stars ageing, retiring, home-grown kids breaking
+     through — is layered on here, at the one place the world reads its star
+     lists. Press rumours, squad overlays and the social feed all flow through
+     Eras.starMap, so filtering here hides a retired great from all of them.
+     The mutable bits live on g.world (starAges / retiredStars / youngsters)
+     so they serialise with the save. */
+  const staticStarMap = global.Eras.starMap;
+  global.Eras.starMap = function (eraId, world) {
+    const map = staticStarMap.call(global.Eras, eraId, world);
+    const g = State.game;
+    if (!g || !g.world) return map;
+    const off = g.world.starAges, retired = g.world.retiredStars, kids = g.world.youngsters;
+    if (!off && !retired && !kids) return map;
+    const out = {};
+    Object.keys(map).forEach(k => {
+      out[k] = (map[k] || [])
+        .filter(s => !retired || retired.indexOf(s[0]) < 0)
+        .map(s => {
+          const extra = (off && off[s[0]]) || 0;
+          if (!extra) return s;
+          const c = s.slice(); c[4] += extra; return c;
+        });
+    });
+    (kids || []).forEach(y => {
+      if (!y.star || (retired && retired.indexOf(y.name) >= 0)) return;
+      (out[y.club] = out[y.club] || []).push([y.name, y.nation, y.pos, y.ovr, y.age]);
+    });
+    return out;
+  };
+
   const Game = {
     match: null,
     timer: null,
@@ -9142,6 +9998,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     continueGame() {
       const g = State.load();
       if (!g) { UI.toast('No saved career found.', 'bad'); return; }
+      g._starMap = null;   // rebuild star lists through the living-world filter
       Engine.Squad.ensure(g);
       UI.show('game');
       UI.tab = 'home';
@@ -9170,8 +10027,67 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       }
       if (w.step === 3) return;            // the draft advances itself, pick by pick
       if (w.step < 4) { w.step++; UI.renderWizard(); return; }
-      if (!w.clubId) { UI.toast('Pick a club to start at.', 'bad'); return; }
-      Game.startCareer();
+      Game.startLeagueChoice();
+    },
+
+    /* ---------- starting path ----------
+       The last wizard screen lists every club that would take you; this is
+       the short, story version of that choice: four of the weakest leagues,
+       each a different way up. Picking one draws your first club at random
+       from that league's smallest sides. */
+    // the same gate the club list uses, scoped to one league's smallest clubs
+    starterClubFor(world, leagueId, maxRating) {
+      const league = world.leagues.find(l => l.id === leagueId);
+      if (!league) return null;
+      const clubs = league.clubs.map(id => world.clubs[id]).sort((a, b) => a.rating - b.rating);
+      const eligible = clubs.filter(c => c.rating <= maxRating);
+      return U.pick((eligible.length ? eligible : clubs).slice(0, 3));
+    },
+
+    startLeagueChoice() {
+      const w = UI.wizard;
+      const world = UI.previewWorld || State.buildWorld(D.CONFIG.SEASON_START_YEAR, w.era);
+      UI.previewWorld = world;
+      const preview = w.preview || State.createPlayer({
+        firstName: w.firstName, lastName: w.lastName, nation: w.nation,
+        pos: w.pos, foot: w.foot, shirt: w.shirt, age: 17, caps: w.caps, draft: w.robbed
+      });
+      // mirrors the wizard's club gate: how big a badge will gamble on a teenager
+      const ratings = Object.values(world.clubs).map(c => c.rating);
+      const lo = Math.min.apply(null, ratings), hi = Math.max.apply(null, ratings);
+      const maxRating = Math.round(lo + (hi - lo) * U.clamp((State.potentialOverall(preview) - 55) / 40, 0, 1)) + 2;
+
+      let html = '';
+      if (w.clubId && world.clubs[w.clubId]) {
+        const c = world.clubs[w.clubId];
+        html += `<div class="item click" data-sp="keep"><div class="ic">${global.Crest.svg(c.name, 'crest-md')}</div><div class="tx">
+          <b>Sign for ${U.esc(c.name)}</b><span>Your pick from the list — rated ${c.rating}.</span></div></div>`;
+      }
+      D.START_PATHS.forEach(sp => {
+        const L = world.leagues.find(l => l.id === sp.league);
+        if (!L) return;
+        html += `<div class="item click" data-sp="${sp.league}"><div class="ic">${ico('club')}</div><div class="tx">
+          <b>${U.esc(L.name)} — ${U.esc(L.country)}</b><span>${U.esc(sp.blurb)}</span></div></div>`;
+      });
+
+      UI.modal({
+        title: 'Choose your starting path',
+        html: `<p class="muted">Four leagues, four ways up. Pick one and one of its smaller clubs
+          hands you a first contract — the rest is on you.</p><div class="list">${html}</div>`,
+        actions: [{ label: 'Back', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-sp]').forEach(el => el.onclick = () => {
+            const id = el.dataset.sp;
+            if (id !== 'keep') {
+              const club = Game.starterClubFor(world, id, maxRating);
+              if (!club) return;
+              w.clubId = club.id;
+            }
+            UI.closeModal();
+            Game.startCareer();
+          });
+        }
+      });
     },
 
     startCareer() {
@@ -9613,6 +10529,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         if (Engine.Press.buzz) Engine.Press.buzz(g);
         if (Engine.Press.world) Engine.Press.world(g);
         if (global.Social) global.Social.weekly(g);
+        if (global.Career && Career.weeklyFlagEffects) Career.weeklyFlagEffects(g);
 
         // stop for things that are new, not for a state you are already in —
         // otherwise one long injury halts the skip on every single match
@@ -10014,6 +10931,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       else Engine.Press.buzz(g);
       Engine.Press.world(g);
       if (global.Social) global.Social.weekly(g);
+      if (global.Career && Career.weeklyFlagEffects) Career.weeklyFlagEffects(g);
     },
 
     /* An off-field moment, presented like an on-pitch one: a card with the
@@ -10369,6 +11287,90 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       });
     },
 
+    /* ==================== LIVING WORLD ====================
+       Runs once per season rollover. The static data never changes — every
+       wrinkle lives on g.world so it saves with the career:
+         starAges     star name -> extra years on top of the data-file age
+         retiredStars names the press and the squad overlays stop mentioning
+         youngsters   home-grown kids who age, then break through as stars
+         club.drift   a ±6 nudge on top of baseRating that survives the reroll */
+    worldTurn(g) {
+      const W = g.world;
+      W.starAges = W.starAges || {};
+      W.retiredStars = W.retiredStars || [];
+      W.youngsters = W.youngsters || [];
+      g.worldMoves = g.worldMoves || {};
+
+      // --- the greats get older, and eventually they stop
+      const map = global.Eras.starMap(g.era, W);   // already aged + filtered
+      let retiredNow = 0;
+      Object.keys(map).forEach(cn => map[cn].forEach(s => {
+        const age = s[4] + 1;
+        W.starAges[s[0]] = (W.starAges[s[0]] || 0) + 1;
+        if (age >= 35 && (age >= 38 || U.chance((age - 34) * 0.25))) {
+          W.retiredStars.push(s[0]);
+          retiredNow++;
+          State.news(`${s[0]} announces he will hang up his boots at ${age} — end of an era at ${g.worldMoves[s[0]] || cn}`, 'info', null, 'exit');
+        }
+      }));
+      if (retiredNow) g._starMap = null;   // make the squad-overlay cache rebuild
+
+      // --- last year's kids get older; after ~4 seasons they become stars
+      W.youngsters.forEach(k => {
+        k.age++;
+        if (!k.star && k.age >= 20) {
+          k.star = true;
+          k.ovr = U.int(82, 88);
+          g._starMap = null;
+          State.news(`${k.name} is the real deal — the ${k.club} ${D.POSITIONS[k.pos].name} is already among the best young players in the world`, 'info', null, 'star');
+        }
+      });
+
+      // --- new kids arrive
+      for (let i = 0, n = U.int(1, 2); i < n; i++) {
+        const c = U.pick(Object.values(W.clubs));
+        const who = global.Names.person(c.country);
+        const kid = { name: who.name, nation: who.nation, club: c.name,
+                      pos: U.pick(Object.keys(D.POSITIONS)), age: U.int(16, 17),
+                      ovr: U.int(64, 72), star: false };
+        W.youngsters.push(kid);
+        State.news(`${kid.age}-year-old ${kid.name} scores on his debut for ${c.name} — remember the name`, 'info', null, 'academy');
+      }
+
+      // --- real transfers between the clubs you are not watching
+      const pool = [];
+      Object.keys(map).forEach(cn => map[cn].forEach(s => {
+        if (s[3] >= 84 && W.retiredStars.indexOf(s[0]) < 0)
+          pool.push({ name: s[0], ovr: s[3], from: g.worldMoves[s[0]] || cn });
+      }));
+      for (let i = 0, n = Math.min(U.int(3, 6), pool.length); i < n; i++) {
+        const mv = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        const from = Object.values(W.clubs).find(c => c.name === mv.from);
+        const dests = Object.values(W.clubs).filter(c => c.name !== mv.from && (!from || c.rating >= from.rating - 8));
+        if (!from || !dests.length) continue;
+        const dest = U.pick(dests);
+        g.worldMoves[mv.name] = dest.name;
+        from.drift = U.clamp((from.drift || 0) - 1, -6, 6);
+        dest.drift = U.clamp((dest.drift || 0) + 1, -6, 6);
+        from.rating = U.clamp(from.rating - 1, 55, 93);
+        dest.rating = U.clamp(dest.rating + 1, 55, 93);
+        State.news(`DONE DEAL: ${mv.name} leaves ${from.name} for ${dest.name} in a ${U.cash((U.int(30, 60) + mv.ovr) * 1000000)} move`, 'info', null, 'transfer');
+      }
+
+      // --- every league gets one story: money in, or trouble
+      W.leagues.forEach(L => {
+        const c = W.clubs[U.pick(L.clubs)];
+        if (!c) return;
+        const invest = U.chance(0.5);
+        c.drift = U.clamp((c.drift || 0) + (invest ? 2 : -2), -6, 6);
+        c.rating = U.clamp(c.rating + (invest ? 2 : -2), 55, 93);
+        State.news(invest
+          ? `New investment at ${c.name} — a wealthy backer promises a ${L.name} title challenge`
+          : `Crisis at ${c.name} — debts mount and the dressing room wants out`,
+          invest ? 'good' : 'bad', null, invest ? 'club' : 'manager');
+      });
+    },
+
     nextSeason() {
       const g = State.game, p = g.player;
       p.age++;
@@ -10380,11 +11382,15 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       p.injuries = [];
       g.weekActionsLeft = 1;
 
-      // club ratings drift a little
+      // club ratings drift a little, around a base that itself now moves
       Object.values(g.world.clubs).forEach(c => {
-        c.rating = U.clamp(Math.round(c.baseRating + U.gauss(0, 2)), 55, 93);
+        c.rating = U.clamp(Math.round(c.baseRating + (c.drift || 0) + U.gauss(0, 2)), 55, 93);
         c.form = [];
       });
+
+      // the rest of the world moves on too: stars age and retire, kids
+      // emerge, transfers happen, money comes and goes
+      Game.worldTurn(g);
 
       // a farewell season ends at the testimonial, before any ageing check
       if (p.farewell) {

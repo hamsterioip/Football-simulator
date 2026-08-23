@@ -148,6 +148,9 @@
     },
 
     /* ================= things that happen at a football club ================= */
+    // one career, one telling — these never come round twice
+    ONCE: new Set(['testimonial', 'hall_of_fame', 'old_club_return', 'dual_nation',
+                   'armband', 'intl_captain', 'shirt_number']),
     EVENTS: [
       { id: 'deadline_day', w: 1, icon: 'transfer', cat: 'Transfer', title: 'Deadline day, 11pm',
         text: 'A bid has landed with two hours of the window left. Your phone has not stopped. The club will not stand in your way if you want it.',
@@ -692,13 +695,160 @@
               return { tone: 'good', text: 'The old academy coach is there. He says he always knew. He absolutely did not, but it is a lovely evening.' }; } },
           { label: 'Send a video message', hint: 'The schedule is the schedule.', tag: 'Busy',
             run(g) { return { tone: 'neutral', text: 'Forty-five seconds, filmed in the boot room. They play it twice. It does the job.' }; } }
+        ]},
+      { id: 'statue_debate', w: 0.5, icon: 'legacy', cat: 'Club', title: 'The statue petition',
+        text: 'A petition for a statue of you outside the ground has fifty thousand signatures. The local paper is running a poll on the pose.',
+        options: [
+          { label: 'Embrace it', hint: 'Pick the pose. Point at something.', tag: 'Icon',
+            run(g) { const p = P(); State.addReputation(p, 4); p.morale = clamp(p.morale + 8);
+              State.news(`Statue petition for ${p.lastName} passes 50,000 signatures`, 'good');
+              return { tone: 'good', text: 'You suggest the overhead kick against the old enemy. The sculptor is commissioned before Christmas.' }; } },
+          { label: 'Deflect it humbly', hint: '"Statues are for when you are done."', tag: 'Humble',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 4); Career.bumpTeammates(g, 4);
+              return { tone: 'good', text: 'You tell them to build it when the boots are hung up. Somehow they love you even more for saying it.' }; } }
+        ]},
+      { id: 'record_chase', w: 0.6, icon: 'ball', cat: 'Club', title: 'Closing on the record',
+        text: 'You are a handful of goals from the club\'s all-time scoring record. Every interview now ends with the same question, and the man who holds it has started doing podcasts.',
+        options: [
+          { label: 'Talk about it', hint: 'Say you want it. Loudly.', tag: 'Bold',
+            run(g) { const p = P(); p.form = clamp(p.form + 6); State.addReputation(p, 2.5);
+              State.news(`"I am coming for it" — ${p.lastName} has the record in his sights`, 'info');
+              return { tone: 'neutral', text: '"I am coming for it." The record holder wishes you luck through gritted teeth on his podcast.' }; } },
+          { label: 'Avoid the noise', hint: 'One game at a time. Yawn.', tag: 'Professional',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 6); p.morale = clamp(p.morale + 3);
+              return { tone: 'good', text: 'You give the press nothing, week after week. The goals keep coming anyway, which is the loudest answer there is.' }; } }
+        ]},
+      { id: 'all_access', w: 0.5, icon: 'video', cat: 'Media', title: 'All access, all season',
+        text: 'A streaming service wants cameras embedded with you for the whole season — home, dressing room, the lot. The money is absurd and the editing is theirs.',
+        options: [
+          { label: 'Let them in', hint: 'Full access. Full exposure.', tag: 'Exposure',
+            run(g) { const p = P(); State.addReputation(p, 5); p.fitness = clamp(p.fitness - 6); p.managerTrust = clamp(p.managerTrust - 6);
+              State.news(`Cameras in: ${p.lastName} to front all-access documentary series`, 'info');
+              return { tone: 'neutral', text: 'The trailer alone does forty million views. Your manager watches episode one with his face in his hands.' }; } },
+          { label: 'Refuse', hint: 'Some doors stay closed.', tag: 'Private',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 6); p.morale = clamp(p.morale + 4);
+              return { tone: 'good', text: 'You tell them the dressing room is not content. The manager sends a bottle of wine to your house.' }; } }
+        ]},
+      { id: 'farewell_offer', w: 0.6, icon: 'transfer', cat: 'Transfer', title: 'One last payday',
+        text: 'A league where the pitches are pristine and the defending is optional wants you for a farewell season. The number has so many zeroes your agent read it twice.',
+        options: [
+          { label: 'Consider it seriously', hint: 'The biggest cheque you will ever see.', tag: 'Tempted',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust - 12); p.morale = clamp(p.morale - 6); State.addReputation(p, 1);
+              State.news(`${p.lastName} weighing up one last payday abroad`, 'bad');
+              return { tone: 'neutral', text: 'You ask for the week to think. The manager stops meeting your eye, and the dressing room goes quiet when you walk in.' }; } },
+          { label: 'Reject it out of hand', hint: 'You finish where it matters.', tag: 'Loyal',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 10); p.managerTrust = clamp(p.managerTrust + 8); State.addReputation(p, 2);
+              State.news(`"I am not finished here" — ${p.lastName} turns down the farewell payday`, 'good');
+              return { tone: 'good', text: '"I am not finished here." The quote is on a t-shirt by the weekend, and the terraces sing your name for ninety minutes.' }; } }
+        ]},
+      { id: 'coaching_badges', w: 0.6, icon: 'manager', cat: 'Club', title: 'The badges course',
+        text: 'The federation is running a coaching badges course for senior pros. Evenings and international breaks, two years of it, starting now.',
+        options: [
+          { label: 'Enrol and do it properly', hint: 'Tuesday nights with a tactics board.', tag: 'Future',
+            run(g) { const p = P(); Engine.Progress.addXp(p, 'passing', 4); p.fitness = clamp(p.fitness - 5); p.morale = clamp(p.morale + 4);
+              return { tone: 'good', text: 'You spend Tuesday nights moving counters around a whiteboard. You start seeing runs three passes before they happen.' }; } },
+          { label: 'Focus on playing', hint: 'Plenty of time for that later.', tag: 'Now',
+            run(g) { const p = P(); p.form = clamp(p.form + 5); p.fitness = clamp(p.fitness + 4);
+              return { tone: 'neutral', text: 'The badges can wait. Your legs cannot.' }; } }
+        ]},
+      { id: 'ownership_stake', w: 0.5, icon: 'contract', cat: 'Club', title: 'A seat near the boardroom',
+        text: 'A consortium circling the club wants your name attached — a future stake, an ambassador role, a voice upstairs. All they need is a handshake and a photograph.',
+        options: [
+          { label: 'Shake on it', hint: 'Your name above the door, one day.', tag: 'Business',
+            run(g) { const p = P(); State.addReputation(p, 4); p.morale = clamp(p.morale + 6);
+              State.news(`${p.lastName} linked with future stake in the club`, 'info');
+              return { tone: 'good', text: 'You sign nothing yet, but the photograph alone moves the share price. Football men start returning your calls.' }; } },
+          { label: 'Stay clear', hint: 'You play. That is all.', tag: 'Cautious',
+            run(g) { const p = P(); p.managerTrust = clamp(p.managerTrust + 6); p.form = clamp(p.form + 4);
+              return { tone: 'neutral', text: 'You have seen what boardrooms do to players who wander in early. The answer is no, politely, in writing.' }; } }
+        ]},
+      { id: 'century_caps', w: 0.5, once: true, icon: 'nation', cat: 'International', title: 'The hundredth cap is coming',
+        text: 'Ninety-something caps and counting. The federation is planning a ceremony for the hundredth — a presentation on the pitch, your family in the front row.',
+        options: [
+          { label: 'Let them make a fuss', hint: 'You earned every one of them.', tag: 'Proud',
+            run(g) { const p = P(); State.addReputation(p, 5); p.morale = clamp(p.morale + 10);
+              State.news(`Federation plans pitch ceremony as ${p.lastName} closes on 100 caps`, 'good');
+              return { tone: 'good', text: 'They will walk you out before kick-off and a whole country will stand. Your dad has already bought a new suit.' }; } },
+          { label: 'Keep it low-key', hint: 'Handshake, framed shirt, done.', tag: 'Modest',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 6); State.addReputation(p, 2);
+              return { tone: 'good', text: 'You ask for a handshake and a framed shirt in the tunnel. The federation pretends to be disappointed and is quietly relieved.' }; } }
+        ]},
+      { id: 'wonderkid_mentor', w: 0.6, icon: 'academy', cat: 'Dressing room', title: 'He is modelling his game on you',
+        text: 'The seventeen-year-old the academy will not stop talking about has told a fan channel he bases his whole game on yours. He means it — the haircut is yours too.',
+        options: [
+          { label: 'Take him under your wing', hint: 'Proper mentorship. All season.', tag: 'Mentor',
+            run(g) { const p = P(); const kid = global.Names.person(State.club(p.club).country).name;
+              Career.bumpTeammates(g, 6); p.managerTrust = clamp(p.managerTrust + 8); p.morale = clamp(p.morale + 5);
+              State.news(`${kid} learning from the best — ${p.lastName} takes the wonderkid under his wing`, 'good');
+              return { tone: 'good', text: `You move ${kid} onto your table at lunch and stay an hour after training with him every day. He will be a problem for defenders inside two years.` }; } },
+          { label: 'Keep a polite distance', hint: 'He has to earn it himself.', tag: 'Distant',
+            run(g) { const p = P(); p.form = clamp(p.form + 4);
+              return { tone: 'neutral', text: 'A nod in the corridor is all he gets for now. Nobody carried you, and it did you no harm.' }; } }
+        ]},
+      { id: 'legacy_brand', w: 0.5, icon: 'value', cat: 'Media', title: 'A boot deal for life',
+        text: 'The boot brand wants to sign you for life — your own line, your name on the box, royalties long after the boots are hung up. The first draft of the contract is forty pages.',
+        options: [
+          { label: 'Sign for life', hint: 'The boots outlive the career.', tag: 'Legacy',
+            run(g) { const p = P(); State.addReputation(p, 6); p.morale = clamp(p.morale + 8);
+              State.news(`${p.lastName} signs lifetime boot deal — his own line is coming`, 'good');
+              return { tone: 'good', text: 'Kids will be wearing your boot line when you are doing punditry in a bad suit. Your signature is now a logo.' }; } },
+          { label: 'Send it back with notes', hint: 'Forty pages of leverage.', tag: 'Shrewd',
+            run(g) { const p = P();
+              if (U.chance(0.5)) { State.addReputation(p, 8); p.morale = clamp(p.morale + 8);
+                return { tone: 'good', text: 'Your lawyer finds three clauses they hoped you would miss. The improved offer arrives inside a week, and it is obscene.' }; }
+              p.morale = clamp(p.morale - 4);
+              State.news(`${p.lastName}'s boot line shelved as lifetime deal talks collapse`, 'bad');
+              return { tone: 'bad', text: 'You ask for more and they walk to a younger winger instead. The line launches without your name on it.' }; } }
+        ]},
+      { id: 'rival_duel', w: 0.6, icon: 'star', cat: 'Media', title: 'Vellani has spoken',
+        text: 'Dario Vellani has told a podcast, at length, that he is the better player and it is "not particularly close". The clip has eight million views and counting.',
+        options: [
+          { label: 'Respond with class', hint: '"He is entitled to his opinion."', tag: 'Class',
+            run(g) { const p = P(); p.morale = clamp(p.morale + 4); State.addReputation(p, 3); p.form = clamp(p.form + 3);
+              State.news(`${p.lastName} on Vellani: "A wonderful player. I will see him in the spring"`, 'info');
+              return { tone: 'good', text: 'Short, calm, and it somehow makes him look worse. The spring fixture sells out in an hour anyway.' }; } },
+          { label: 'Respond with fire', hint: 'Give them the feud they want.', tag: 'Fire',
+            run(g) { const p = P(); p.form = clamp(p.form + 10); State.addReputation(p, 2); p.morale = clamp(p.morale - 3);
+              State.news(`${p.lastName} and Vellani trade barbs as the feud ignites`, 'bad');
+              return { tone: 'neutral', text: '"He can count my medals when I am done." The spring fixture is now the biggest game on the continent.' }; } }
+        ]},
+      { id: 'captain_succession', w: 0.5, once: true, icon: 'crown', cat: 'Dressing room', title: 'The armband, eventually',
+        text: 'The manager mentions, casually and very deliberately, that the armband might need a new arm next season. He is looking at you when he says it.',
+        options: [
+          { label: 'Campaign for it', hint: 'Make it impossible to give it to anyone else.', tag: 'Ambition',
+            run(g) { const p = P();
+              if (U.chance(0.65)) { p.captain = true; p.managerTrust = clamp(p.managerTrust + 10); State.addReputation(p, 3);
+                State.news(`${p.lastName} to take the armband next season`, 'good');
+                return { tone: 'good', text: 'He names you captain for next season in front of the whole squad. The current skipper shakes your hand first.' }; }
+              p.managerTrust = clamp(p.managerTrust - 8); p.morale = clamp(p.morale - 5);
+              return { tone: 'bad', text: 'You push too hard, too visibly. He gives it to the goalkeeper and never mentions your name again.' }; } },
+          { label: 'Back the current captain', hint: 'It is his until he says otherwise.', tag: 'Loyal',
+            run(g) { const p = P(); Career.bumpTeammates(g, 8); p.managerTrust = clamp(p.managerTrust + 5); p.morale = clamp(p.morale + 4);
+              return { tone: 'good', text: 'You tell him the armband is in the right place already. It gets back to the skipper, who never forgets it — and neither does the manager.' }; } }
+        ]},
+      { id: 'testimonial_planning', w: 0.5, once: true, icon: 'trophy', cat: 'Club', title: 'Planning the testimonial',
+        text: 'Three hundred appearances came and went, and the club wants to start planning your testimonial properly. Committee, date, opponents — the lot.',
+        options: [
+          { label: 'Make it a charity day', hint: 'Every penny to the foundation.', tag: 'Heart',
+            run(g) { const p = P(); State.addReputation(p, 5); p.morale = clamp(p.morale + 8);
+              State.news(`${p.lastName}'s testimonial to raise funds for the club foundation`, 'good');
+              return { tone: 'good', text: 'The whole gate goes to the foundation and the opponents are your old team-mates. It will be the best-attended friendly in the club\'s history.' }; } },
+          { label: 'Make it a spectacle', hint: 'Fireworks, legends, a live band.', tag: 'Showman',
+            run(g) { const p = P(); State.addReputation(p, 3); p.morale = clamp(p.morale + 5); p.form = clamp(p.form + 3);
+              return { tone: 'good', text: 'A legends XI, fireworks, and a band you have loved since you were twelve. The gate alone sets a club record, and they will talk about it for years — mostly about the band.' }; } }
         ]}
     ],
 
     rollEvent(g) {
       const p = g.player;
       if (!U.chance(0.45)) return null;
+      // event memory: an absolute tick so nothing repeats within ~a season,
+      // and one-shots can only ever happen once per career
+      g.eventHist = g.eventHist || {};
+      g.eventTick = (g.eventTick || 0) + 1;
       const pool = Career.EVENTS.filter(e => {
+        const last = g.eventHist[e.id];
+        if (last != null && (e.once || Career.ONCE.has(e.id) || g.eventTick - last < 30)) return false;
         if (e.id === 'loan_offer' && (p.managerTrust > 45 || p.season.apps > 8)) return false;
         if (e.id === 'armband' && p.captain) return false;
         if (e.id === 'contract_talks' && (!p.contract || p.contract.years > 2)) return false;
@@ -716,12 +866,48 @@
         if (e.id === 'intl_captain' && (p.intl.caps < 30 || p.intlCaptain || !p.intl.called || p.intl.retired)) return false;
         if (e.id === 'hall_of_fame' && (p.career.apps < 400 || p.hof)) return false;
         if (e.id === 'old_club_return' && p.career.apps < 150) return false;
+        // late-career events: for established superstars and veterans only
+        if (e.id === 'statue_debate' && (p.ovr < 84 || p.reputation < 65)) return false;
+        if (e.id === 'record_chase' && p.career.goals < 180) return false;
+        if (e.id === 'all_access' && p.reputation < 70) return false;
+        if (e.id === 'farewell_offer' && (p.age < 31 || p.ovr < 80)) return false;
+        if (e.id === 'coaching_badges' && p.age < 30) return false;
+        if (e.id === 'ownership_stake' && (p.reputation < 75 || p.age < 32)) return false;
+        if (e.id === 'century_caps' && (p.intl.caps < 90 || !p.intl.called || p.intl.retired)) return false;
+        if (e.id === 'wonderkid_mentor' && p.age < 29) return false;
+        if (e.id === 'legacy_brand' && p.reputation < 72) return false;
+        if (e.id === 'rival_duel' && p.ovr < 83) return false;
+        if (e.id === 'captain_succession' && (p.age < 28 || p.ovr < 80 || p.captain)) return false;
+        if (e.id === 'testimonial_planning' && (p.career.apps < 280 || p.age < 30)) return false;
         return true;
       });
       if (!pool.length) return null;
       const ev = U.weighted(pool.map(e => [e, e.w || 1]));
+      g.eventHist[ev.id] = g.eventTick;
       return { id: ev.id, title: ev.title, text: ev.text, icon: ev.icon,
                cat: ev.cat || 'Club', options: ev.options };
+    },
+
+    /* ================= the weekly bill for the flags you raised ================= */
+    weeklyFlagEffects(g) {
+      const p = g.player;
+      // wants out: the manager cools on him weekly, and once a season it leaks
+      if (p.agitated) {
+        p.managerTrust = clamp(p.managerTrust - 2);
+        if (!p.agitatedNoted) {
+          p.agitatedNoted = true;
+          State.news(`Dressing-room whispers: ${p.lastName} wants out`, 'bad');
+          State.addReputation(p, 1); // the vultures are circling
+        }
+      }
+      // a chip on the shoulder, converted to fuel exactly once
+      if (p.grudge && !p.grudgeFueled) {
+        p.grudgeFueled = true;
+        p.form = clamp(p.form + 4);
+      }
+      // promisedTrophy is settled in seasonUpkeep — nothing weekly
+      // the armband still feels good every single week
+      if (p.captain) p.morale = clamp(p.morale + 1);
     },
 
     /* ================= between seasons ================= */
@@ -739,9 +925,23 @@
       p.lastValue = val;
       notes.push(`Market value: ${U.cash(val)}${val > prev ? ' (up)' : val < prev ? ' (down)' : ''}.`);
       if (p.peakValue && val >= p.peakValue) notes.push('That is the highest you have ever been valued.');
+      // settle the trophy promise before anyone is allowed to forget it
+      if (p.promisedTrophy) {
+        const wonSomething = p.career.trophies.some(t => t.year === g.world.year + 1);
+        if (wonSomething) {
+          State.addReputation(p, 4); p.morale = clamp(p.morale + 6);
+          State.news(`${p.lastName} promised a trophy and delivered — the fans have not forgotten`, 'good');
+          notes.push('You promised a trophy and you delivered. They will never let you forget that either.');
+        } else {
+          State.addReputation(p, -4); p.morale = clamp(p.morale - 10);
+          State.news(`${p.lastName}'s trophy promise comes back to haunt him`, 'bad');
+          notes.push('The trophy promise came back to haunt you. The fans remember everything.');
+        }
+      }
       p.captain = p.captain && U.chance(0.8);
       p.agitated = false; p.grudge = false; p.derbyPromise = false;
       p.promisedTrophy = false; p.deadlineMove = false; p.marketTested = false;
+      p.grudgeFueled = false; p.agitatedNoted = false;
       return notes;
     },
 

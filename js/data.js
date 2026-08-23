@@ -106,6 +106,18 @@
     ]}
   ];
 
+  /* --- Starting paths -------------------------------------------------------
+     The four leagues offered as ways into the game at the end of the wizard —
+     the weakest leagues above by average club rating, so every path starts at
+     one of its smaller clubs. `league` is a LEAGUES id.
+  --------------------------------------------------------------------------- */
+  const START_PATHS = [
+    { league: 'NED', blurb: 'Technical, fearless with kids — the shop window of Europe.' },
+    { league: 'POR', blurb: 'A finishing school for forwards. The giants come shopping here first.' },
+    { league: 'ARG', blurb: 'Street football with the studs showing. Survive it and Europe calls.' },
+    { league: 'USA', blurb: 'A growing league, a softer landing, and a spotlight all your own.' }
+  ];
+
   /* --- Club identity ------------------------------------------------------
      Real club badges are trademarked, so the game draws its own crest for every
      club instead: each one's real colours and shirt pattern, rendered as a
@@ -1211,6 +1223,6 @@
     POSITIONS, ATTR_KEYS, ATTR_LABEL, DRAFT_ATTRS, DRAFT_ATTRS_GK,
     LEAGUES, CONTINENTAL, NATIONS, CLUB_KIT, REAL_STARS,
     ERAS, GOLDEN_STARS, GOLDEN_SPARE, CLASSIC_STARS, CLASSIC_RATINGS, NAMES, IMPORT_POOLS, FIRST_NAMES, LAST_NAMES,
-    TRAITS, TRAINING, LEGENDS, LEGENDS_GK, CONFIG
+    START_PATHS, TRAITS, TRAINING, LEGENDS, LEGENDS_GK, CONFIG
   };
 })(window);

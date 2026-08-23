@@ -9,6 +9,37 @@
   const ico = (n, c) => global.Icons.svg(n, c);
   const $ = id => document.getElementById(id);
 
+  /* Living world: the era data files are static, so everything that changes
+     about the wider game — stars ageing, retiring, home-grown kids breaking
+     through — is layered on here, at the one place the world reads its star
+     lists. Press rumours, squad overlays and the social feed all flow through
+     Eras.starMap, so filtering here hides a retired great from all of them.
+     The mutable bits live on g.world (starAges / retiredStars / youngsters)
+     so they serialise with the save. */
+  const staticStarMap = global.Eras.starMap;
+  global.Eras.starMap = function (eraId, world) {
+    const map = staticStarMap.call(global.Eras, eraId, world);
+    const g = State.game;
+    if (!g || !g.world) return map;
+    const off = g.world.starAges, retired = g.world.retiredStars, kids = g.world.youngsters;
+    if (!off && !retired && !kids) return map;
+    const out = {};
+    Object.keys(map).forEach(k => {
+      out[k] = (map[k] || [])
+        .filter(s => !retired || retired.indexOf(s[0]) < 0)
+        .map(s => {
+          const extra = (off && off[s[0]]) || 0;
+          if (!extra) return s;
+          const c = s.slice(); c[4] += extra; return c;
+        });
+    });
+    (kids || []).forEach(y => {
+      if (!y.star || (retired && retired.indexOf(y.name) >= 0)) return;
+      (out[y.club] = out[y.club] || []).push([y.name, y.nation, y.pos, y.ovr, y.age]);
+    });
+    return out;
+  };
+
   const Game = {
     match: null,
     timer: null,
@@ -53,6 +84,7 @@
     continueGame() {
       const g = State.load();
       if (!g) { UI.toast('No saved career found.', 'bad'); return; }
+      g._starMap = null;   // rebuild star lists through the living-world filter
       Engine.Squad.ensure(g);
       UI.show('game');
       UI.tab = 'home';
@@ -81,8 +113,67 @@
       }
       if (w.step === 3) return;            // the draft advances itself, pick by pick
       if (w.step < 4) { w.step++; UI.renderWizard(); return; }
-      if (!w.clubId) { UI.toast('Pick a club to start at.', 'bad'); return; }
-      Game.startCareer();
+      Game.startLeagueChoice();
+    },
+
+    /* ---------- starting path ----------
+       The last wizard screen lists every club that would take you; this is
+       the short, story version of that choice: four of the weakest leagues,
+       each a different way up. Picking one draws your first club at random
+       from that league's smallest sides. */
+    // the same gate the club list uses, scoped to one league's smallest clubs
+    starterClubFor(world, leagueId, maxRating) {
+      const league = world.leagues.find(l => l.id === leagueId);
+      if (!league) return null;
+      const clubs = league.clubs.map(id => world.clubs[id]).sort((a, b) => a.rating - b.rating);
+      const eligible = clubs.filter(c => c.rating <= maxRating);
+      return U.pick((eligible.length ? eligible : clubs).slice(0, 3));
+    },
+
+    startLeagueChoice() {
+      const w = UI.wizard;
+      const world = UI.previewWorld || State.buildWorld(D.CONFIG.SEASON_START_YEAR, w.era);
+      UI.previewWorld = world;
+      const preview = w.preview || State.createPlayer({
+        firstName: w.firstName, lastName: w.lastName, nation: w.nation,
+        pos: w.pos, foot: w.foot, shirt: w.shirt, age: 17, caps: w.caps, draft: w.robbed
+      });
+      // mirrors the wizard's club gate: how big a badge will gamble on a teenager
+      const ratings = Object.values(world.clubs).map(c => c.rating);
+      const lo = Math.min.apply(null, ratings), hi = Math.max.apply(null, ratings);
+      const maxRating = Math.round(lo + (hi - lo) * U.clamp((State.potentialOverall(preview) - 55) / 40, 0, 1)) + 2;
+
+      let html = '';
+      if (w.clubId && world.clubs[w.clubId]) {
+        const c = world.clubs[w.clubId];
+        html += `<div class="item click" data-sp="keep"><div class="ic">${global.Crest.svg(c.name, 'crest-md')}</div><div class="tx">
+          <b>Sign for ${U.esc(c.name)}</b><span>Your pick from the list — rated ${c.rating}.</span></div></div>`;
+      }
+      D.START_PATHS.forEach(sp => {
+        const L = world.leagues.find(l => l.id === sp.league);
+        if (!L) return;
+        html += `<div class="item click" data-sp="${sp.league}"><div class="ic">${ico('club')}</div><div class="tx">
+          <b>${U.esc(L.name)} — ${U.esc(L.country)}</b><span>${U.esc(sp.blurb)}</span></div></div>`;
+      });
+
+      UI.modal({
+        title: 'Choose your starting path',
+        html: `<p class="muted">Four leagues, four ways up. Pick one and one of its smaller clubs
+          hands you a first contract — the rest is on you.</p><div class="list">${html}</div>`,
+        actions: [{ label: 'Back', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-sp]').forEach(el => el.onclick = () => {
+            const id = el.dataset.sp;
+            if (id !== 'keep') {
+              const club = Game.starterClubFor(world, id, maxRating);
+              if (!club) return;
+              w.clubId = club.id;
+            }
+            UI.closeModal();
+            Game.startCareer();
+          });
+        }
+      });
     },
 
     startCareer() {
@@ -524,6 +615,7 @@
         if (Engine.Press.buzz) Engine.Press.buzz(g);
         if (Engine.Press.world) Engine.Press.world(g);
         if (global.Social) global.Social.weekly(g);
+        if (global.Career && Career.weeklyFlagEffects) Career.weeklyFlagEffects(g);
 
         // stop for things that are new, not for a state you are already in —
         // otherwise one long injury halts the skip on every single match
@@ -925,6 +1017,7 @@
       else Engine.Press.buzz(g);
       Engine.Press.world(g);
       if (global.Social) global.Social.weekly(g);
+      if (global.Career && Career.weeklyFlagEffects) Career.weeklyFlagEffects(g);
     },
 
     /* An off-field moment, presented like an on-pitch one: a card with the
@@ -1280,6 +1373,90 @@
       });
     },
 
+    /* ==================== LIVING WORLD ====================
+       Runs once per season rollover. The static data never changes — every
+       wrinkle lives on g.world so it saves with the career:
+         starAges     star name -> extra years on top of the data-file age
+         retiredStars names the press and the squad overlays stop mentioning
+         youngsters   home-grown kids who age, then break through as stars
+         club.drift   a ±6 nudge on top of baseRating that survives the reroll */
+    worldTurn(g) {
+      const W = g.world;
+      W.starAges = W.starAges || {};
+      W.retiredStars = W.retiredStars || [];
+      W.youngsters = W.youngsters || [];
+      g.worldMoves = g.worldMoves || {};
+
+      // --- the greats get older, and eventually they stop
+      const map = global.Eras.starMap(g.era, W);   // already aged + filtered
+      let retiredNow = 0;
+      Object.keys(map).forEach(cn => map[cn].forEach(s => {
+        const age = s[4] + 1;
+        W.starAges[s[0]] = (W.starAges[s[0]] || 0) + 1;
+        if (age >= 35 && (age >= 38 || U.chance((age - 34) * 0.25))) {
+          W.retiredStars.push(s[0]);
+          retiredNow++;
+          State.news(`${s[0]} announces he will hang up his boots at ${age} — end of an era at ${g.worldMoves[s[0]] || cn}`, 'info', null, 'exit');
+        }
+      }));
+      if (retiredNow) g._starMap = null;   // make the squad-overlay cache rebuild
+
+      // --- last year's kids get older; after ~4 seasons they become stars
+      W.youngsters.forEach(k => {
+        k.age++;
+        if (!k.star && k.age >= 20) {
+          k.star = true;
+          k.ovr = U.int(82, 88);
+          g._starMap = null;
+          State.news(`${k.name} is the real deal — the ${k.club} ${D.POSITIONS[k.pos].name} is already among the best young players in the world`, 'info', null, 'star');
+        }
+      });
+
+      // --- new kids arrive
+      for (let i = 0, n = U.int(1, 2); i < n; i++) {
+        const c = U.pick(Object.values(W.clubs));
+        const who = global.Names.person(c.country);
+        const kid = { name: who.name, nation: who.nation, club: c.name,
+                      pos: U.pick(Object.keys(D.POSITIONS)), age: U.int(16, 17),
+                      ovr: U.int(64, 72), star: false };
+        W.youngsters.push(kid);
+        State.news(`${kid.age}-year-old ${kid.name} scores on his debut for ${c.name} — remember the name`, 'info', null, 'academy');
+      }
+
+      // --- real transfers between the clubs you are not watching
+      const pool = [];
+      Object.keys(map).forEach(cn => map[cn].forEach(s => {
+        if (s[3] >= 84 && W.retiredStars.indexOf(s[0]) < 0)
+          pool.push({ name: s[0], ovr: s[3], from: g.worldMoves[s[0]] || cn });
+      }));
+      for (let i = 0, n = Math.min(U.int(3, 6), pool.length); i < n; i++) {
+        const mv = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        const from = Object.values(W.clubs).find(c => c.name === mv.from);
+        const dests = Object.values(W.clubs).filter(c => c.name !== mv.from && (!from || c.rating >= from.rating - 8));
+        if (!from || !dests.length) continue;
+        const dest = U.pick(dests);
+        g.worldMoves[mv.name] = dest.name;
+        from.drift = U.clamp((from.drift || 0) - 1, -6, 6);
+        dest.drift = U.clamp((dest.drift || 0) + 1, -6, 6);
+        from.rating = U.clamp(from.rating - 1, 55, 93);
+        dest.rating = U.clamp(dest.rating + 1, 55, 93);
+        State.news(`DONE DEAL: ${mv.name} leaves ${from.name} for ${dest.name} in a ${U.cash((U.int(30, 60) + mv.ovr) * 1000000)} move`, 'info', null, 'transfer');
+      }
+
+      // --- every league gets one story: money in, or trouble
+      W.leagues.forEach(L => {
+        const c = W.clubs[U.pick(L.clubs)];
+        if (!c) return;
+        const invest = U.chance(0.5);
+        c.drift = U.clamp((c.drift || 0) + (invest ? 2 : -2), -6, 6);
+        c.rating = U.clamp(c.rating + (invest ? 2 : -2), 55, 93);
+        State.news(invest
+          ? `New investment at ${c.name} — a wealthy backer promises a ${L.name} title challenge`
+          : `Crisis at ${c.name} — debts mount and the dressing room wants out`,
+          invest ? 'good' : 'bad', null, invest ? 'club' : 'manager');
+      });
+    },
+
     nextSeason() {
       const g = State.game, p = g.player;
       p.age++;
@@ -1291,11 +1468,15 @@
       p.injuries = [];
       g.weekActionsLeft = 1;
 
-      // club ratings drift a little
+      // club ratings drift a little, around a base that itself now moves
       Object.values(g.world.clubs).forEach(c => {
-        c.rating = U.clamp(Math.round(c.baseRating + U.gauss(0, 2)), 55, 93);
+        c.rating = U.clamp(Math.round(c.baseRating + (c.drift || 0) + U.gauss(0, 2)), 55, 93);
         c.form = [];
       });
+
+      // the rest of the world moves on too: stars age and retire, kids
+      // emerge, transfers happen, money comes and goes
+      Game.worldTurn(g);
 
       // a farewell season ends at the testimonial, before any ageing check
       if (p.farewell) {
