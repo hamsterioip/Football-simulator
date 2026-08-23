@@ -66,6 +66,7 @@
         firstName: opts.firstName, lastName: opts.lastName,
         nation: opts.nation, pos, foot: opts.foot || 'Right',
         shirt: opts.shirt || 10,
+        celebration: 'slide',
         age: opts.age || 17,
         height: U.int(pos === 'GK' ? 185 : 168, pos === 'GK' ? 199 : 194),
         attrs, caps,

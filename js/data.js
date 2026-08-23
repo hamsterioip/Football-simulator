@@ -1212,9 +1212,13 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.3.2';
+  const VERSION = '1.4';
   const BUILD = '23 August 2026';
   const CHANGELOG = [
+    { v: '1.4', when: '23 Aug', items: [
+      'Nine celebrations to choose from — knee slide, the leap, arms wide, shush them, heart hands, kiss the badge, ice cold, get mobbed, or a different one every time',
+      'Pick yours on the Player tab: tap one and it plays in the preview before you commit'
+    ] },
     { v: '1.3.2', when: '23 Aug', items: [
       'Every script and stylesheet is now stamped with the version, so a new release can never be served out of a stale browser cache'
     ] },

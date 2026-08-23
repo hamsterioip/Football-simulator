@@ -699,6 +699,25 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   .ts-pos{flex-basis:20px}
 }
 
+/* ---------- choosing a celebration ---------- */
+.cel-current{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;
+  cursor:pointer;font-family:inherit;color:var(--txt);transition:.15s}
+.cel-current:hover,.cel-current:focus{border-color:rgba(42,230,126,.45);outline:none}
+.cel-ic{flex:0 0 34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:rgba(42,230,126,.13);color:var(--green)}
+.cel-ic .ic{width:18px;height:18px}
+.cel-tx{flex:1;min-width:0}
+.cel-tx b{display:block;font-size:14px}
+.cel-tx span{display:block;font-size:11.5px;color:var(--dim);line-height:1.35;margin-top:2px}
+.cel-go{color:var(--dim);display:flex}
+.cel-preview{border-radius:12px;overflow:hidden;margin-bottom:8px}
+.cel-note{text-align:center;font-size:12px;margin:0 0 10px}
+.cel-list{max-height:none}
+.cel-opt .cel-tick{opacity:0;color:var(--green);display:flex;align-items:center}
+.cel-opt.on{border-color:rgba(42,230,126,.5);background:rgba(42,230,126,.08)}
+.cel-opt.on .cel-tick{opacity:1}
+
 /* ---------- the goalmouth ---------- */
 .goal-view{width:100%;height:auto;display:block;border-radius:14px;overflow:hidden;
   background:#050b12;border:1px solid var(--line);
@@ -779,6 +798,27 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .pg-sc-head{fill:#e8b98d}
 .pg-sc-hair{fill:#2b1d13}
 .goal-view.is-party .pg-flash{animation-duration:1.1s}
+
+/* team-mates piling in */
+.pg-mates{pointer-events:none}
+.pg-mate{opacity:0}
+.pg-m-sh{fill:rgba(0,0,0,.42)}
+.pg-m-kit{fill:#cfd8e6}
+.pg-m-legs{fill:#0e2033}
+.pg-m-arm{fill:#cfd8e6}
+.pg-m-head{fill:#e8b98d}
+
+/* props, shown only by the routine that needs them */
+.pg-sc-props > *{opacity:0}
+.prop-heart{fill:#ff5a6a}
+.prop-hush{fill:#e8b98d}
+.prop-crest{fill:rgba(42,230,126,.85);stroke:rgba(255,255,255,.6);stroke-width:.7}
+.pg-sc-props.prop-heart .prop-heart{opacity:1;animation:heartbeat 1.1s ease-in-out infinite}
+.pg-sc-props.prop-shush .prop-hush{opacity:1}
+.pg-sc-props.prop-badge .prop-crest{opacity:1;animation:crestglint .9s ease-out}
+@keyframes heartbeat{0%,100%{transform:scale(1)}45%{transform:scale(1.18)}}
+@keyframes crestglint{0%{filter:brightness(2.4)}100%{filter:brightness(1)}}
+.prop-heart{transform-origin:0 -55px}
 
 /* the six targets */
 .pz{cursor:pointer}

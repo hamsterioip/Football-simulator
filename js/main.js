@@ -386,9 +386,46 @@
         case 'save': State.save(); return UI.toast('Career saved.', 'good');
         case 'newsView': UI.newsView = arg; return UI.render();
         case 'socialPost': return Game.socialPost();
+        case 'celebrations': return Game.celebrationMenu();
         case 'matchLength': return Game.matchLengthMenu();
         case 'quit': return Game.quit();
       }
+    },
+
+    /* Pick what you do when one goes in. Tapping a routine plays it in the
+       preview above, so you can see it before you commit to it. */
+    celebrationMenu() {
+      const g = State.game, p = g.player;
+      const list = global.Pitch.CELEBRATIONS;
+      UI.modal({
+        title: 'Celebration',
+        html: `<div class="cel-preview">${global.Pitch.view({ aim: false })}</div>
+          <p class="muted cel-note" id="cel-note">Tap one to watch it.</p>
+          <div class="list cel-list">${list.map(c => `
+            <div class="item click cel-opt${c.id === (p.celebration || 'slide') ? ' on' : ''}" data-cel="${c.id}">
+              <div class="ic">${ico(c.icon)}</div>
+              <div class="tx"><b>${U.esc(c.name)}</b><span>${U.esc(c.hint)}</span></div>
+              <div class="cel-tick">${ico('ok')}</div>
+            </div>`).join('')}</div>`,
+        actions: [{ label: 'Done', cls: 'btn-ghost' }],
+        onRender(mEl) {
+          const root = mEl.querySelector('.goal-view');
+          const note = mEl.querySelector('#cel-note');
+          if (root) global.Pitch.reset(root);
+          mEl.querySelectorAll('[data-cel]').forEach(el => el.onclick = () => {
+            const id = el.dataset.cel;
+            p.celebration = id;
+            mEl.querySelectorAll('.cel-opt').forEach(o => o.classList.toggle('on', o.dataset.cel === id));
+            const c = global.Pitch.celebrationById(id);
+            if (note) note.textContent = c.name + ' — yours now.';
+            if (root) {
+              global.Pitch.reset(root);
+              global.Pitch.celebrate(root, { style: id, side: 'left' }, () => {});
+            }
+            State.save();
+          });
+        }
+      });
     },
 
     /* What changed in this build, and the ones before it. */
@@ -873,8 +910,8 @@
         });
         if (fx.goal) UI.toast('GOAL!', 'gold');
         if (how === 'goal') {
-          global.Pitch.celebrate(root, { side: zone.slice(-1) === 'R' ? 'right' : 'left' },
-            () => setTimeout(after, 300));
+          global.Pitch.celebrate(root, { style: g.player.celebration || 'slide',
+            side: zone.slice(-1) === 'R' ? 'right' : 'left' }, () => setTimeout(after, 300));
         } else setTimeout(after, 700);
       });
     },
@@ -989,7 +1026,8 @@
               // the kick that wins a shootout deserves the full celebration
               if (how === 'goal' && Game.shootoutDecided(s) && s.us > s.them) {
                 UI.verdict('WE HAVE WON IT', 'goal');
-                global.Pitch.celebrate(root, { side: zone.slice(-1) === 'R' ? 'right' : 'left' },
+                global.Pitch.celebrate(root, { style: g.player.celebration || 'slide',
+                  side: zone.slice(-1) === 'R' ? 'right' : 'left' },
                   () => setTimeout(() => Game.shootoutNext(), 400));
               } else setTimeout(() => Game.shootoutNext(), 900);
             });

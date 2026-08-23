@@ -600,6 +600,16 @@
           Overall ceiling: <b>${State.potentialOverall(p)}</b>.</div>
       </div>`;
 
+      const cel = global.Pitch.celebrationById(p.celebration || 'slide');
+      html += `<div class="card"><h3>${ico('celebrate')} Celebration</h3>
+        <button class="cel-current" data-act="celebrations">
+          <div class="cel-ic">${ico(cel.icon)}</div>
+          <div class="cel-tx"><b>${esc(cel.name)}</b><span>${esc(cel.hint)}</span></div>
+          <div class="cel-go">${ico('next')}</div>
+        </button>
+        <p class="dim" style="margin:8px 0 0">This is what you do when a penalty goes in. Pick another one any time.</p>
+      </div>`;
+
       if (p.draft && p.draft.length) {
         html += `<div class="card"><h3>What you stole</h3><div class="list">` +
           p.draft.map(r => `<div class="item tight-item"><div class="ic">${ico(r.attr)}</div>

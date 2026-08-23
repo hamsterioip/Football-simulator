@@ -257,6 +257,28 @@
               h11 q1.5 0 1.5 1.5 v4 q0 2.5 -3 3.5 l-13 4 q-3 .9 -4 -1.6 l-1 -2.6 q-.8 -2.2 1.6 -3 l6.9 -2.4 Z"/>
           </g>
 
+          <!-- team-mates, for the celebrations that need a crowd -->
+          <g class="pg-mates">
+            <g class="pg-mate"><ellipse class="pg-m-sh" cy="1" rx="10" ry="2.6"/>
+              <path class="pg-m-legs" d="M-7 -13 h14 v9 q0 4 -3.2 4 h-2.4 q-2.2 0 -2.2 -2.8 v-5.6 h-1.9 v5.6 q0 2.8 -2.2 2.8 h-2.4 q-3.2 0 -3.2 -4 Z"/>
+              <path class="pg-m-kit" d="M-8.5 -32 q8.5 -4 17 0 l2.2 19 q-10.7 3.8 -21.4 0 Z"/>
+              <rect class="pg-m-arm" x="-22" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(-42 -8 -31)"/>
+              <rect class="pg-m-arm" x="8" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(42 8 -31)"/>
+              <circle class="pg-m-head" cx="0" cy="-37" r="5.6"/></g>
+            <g class="pg-mate"><ellipse class="pg-m-sh" cy="1" rx="10" ry="2.6"/>
+              <path class="pg-m-legs" d="M-7 -13 h14 v9 q0 4 -3.2 4 h-2.4 q-2.2 0 -2.2 -2.8 v-5.6 h-1.9 v5.6 q0 2.8 -2.2 2.8 h-2.4 q-3.2 0 -3.2 -4 Z"/>
+              <path class="pg-m-kit" d="M-8.5 -32 q8.5 -4 17 0 l2.2 19 q-10.7 3.8 -21.4 0 Z"/>
+              <rect class="pg-m-arm" x="-22" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(-42 -8 -31)"/>
+              <rect class="pg-m-arm" x="8" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(42 8 -31)"/>
+              <circle class="pg-m-head" cx="0" cy="-37" r="5.6"/></g>
+            <g class="pg-mate"><ellipse class="pg-m-sh" cy="1" rx="10" ry="2.6"/>
+              <path class="pg-m-legs" d="M-7 -13 h14 v9 q0 4 -3.2 4 h-2.4 q-2.2 0 -2.2 -2.8 v-5.6 h-1.9 v5.6 q0 2.8 -2.2 2.8 h-2.4 q-3.2 0 -3.2 -4 Z"/>
+              <path class="pg-m-kit" d="M-8.5 -32 q8.5 -4 17 0 l2.2 19 q-10.7 3.8 -21.4 0 Z"/>
+              <rect class="pg-m-arm" x="-22" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(-42 -8 -31)"/>
+              <rect class="pg-m-arm" x="8" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(42 8 -31)"/>
+              <circle class="pg-m-head" cx="0" cy="-37" r="5.6"/></g>
+          </g>
+
           <!-- the scorer, for when it goes in -->
           <g class="pg-scorer">
             <ellipse class="pg-sc-shadow" cx="0" cy="2" rx="14" ry="3.4"/>
@@ -269,6 +291,12 @@
               <g class="pg-sc-arm-r"><rect x="9" y="-37.5" width="17" height="6.5" rx="3.2"/></g>
               <circle class="pg-sc-head" cx="0" cy="-45" r="6.6"/>
               <path class="pg-sc-hair" d="M-6.6 -47.6 a6.6 6.6 0 0 1 13.2 0 q-6.6 -3.6 -13.2 0 Z"/>
+              <g class="pg-sc-props">
+                <path class="prop-heart" d="M0 -60.5 c-2.6 -3.4 -7.4 -2.2 -7.4 1.8 0 3.4 4.2 6.4 7.4 8.8
+                  3.2 -2.4 7.4 -5.4 7.4 -8.8 0 -4 -4.8 -5.2 -7.4 -1.8 Z"/>
+                <rect class="prop-hush" x="-1.6" y="-49" width="3.2" height="7" rx="1.6"/>
+                <circle class="prop-crest" cx="-3.4" cy="-31" r="3"/>
+              </g>
             </g>
           </g>
           <g class="pg-burst">
@@ -295,7 +323,7 @@
                    '.pg-ring', '.pg-wash', '.pg-net', '.pg-stand', '.pg-post-l', '.pg-post-r']
         .map(q).filter(Boolean);
       all.forEach(el => el.getAnimations().forEach(a => a.cancel()));
-      root.querySelectorAll('.pg-gh, .pg-bit, .pg-arm-l, .pg-arm-r, .pg-keeper-body, .pg-kshadow, .pg-scorer, .pg-sc-body, .pg-sc-arm-l, .pg-sc-arm-r')
+      root.querySelectorAll('.pg-gh, .pg-bit, .pg-arm-l, .pg-arm-r, .pg-keeper-body, .pg-kshadow, .pg-scorer, .pg-sc-body, .pg-sc-arm-l, .pg-sc-arm-r, .pg-mate')
         .forEach(el => el.getAnimations().forEach(a => a.cancel()));
 
       const keeper = q('.pg-keeper'), ball = q('.pg-ball'), boot = q('.pg-boot');
@@ -317,6 +345,9 @@
       const sc = q('.pg-scorer');
       if (sc) { sc.style.opacity = '0'; sc.style.transform = place(SPOT.x, H + 40); }
       const conf = q('.pg-confetti'); if (conf) { conf.innerHTML = ''; }
+      root.querySelectorAll('.pg-mate').forEach(m => { m.style.opacity = '0'; m.style.transform = ''; });
+      const props = q('.pg-sc-props'); if (props) props.setAttribute('class', 'pg-sc-props');
+      root.classList.remove('is-party');
       root.classList.remove('is-goal', 'is-saved', 'is-missed', 'is-live');
       const t = q('.pg-targets'); if (t) t.style.display = '';
 
@@ -614,79 +645,75 @@
       };
     },
 
-    /* He scored. Now let him enjoy it: a run to the corner, arms out, a knee
-       slide, ticker tape and a stand that has lost its mind. */
+    /* Everything he might do when it goes in. Each routine returns how long
+       it needs; the shared bits — ticker tape, the crowd, the camera — are the
+       same whichever one you have picked. */
+    CELEBRATIONS: [
+      { id: 'slide',   name: 'Knee slide',    icon: 'celebrate', hint: 'Away to the corner and down on the knees. The classic.' },
+      { id: 'leap',    name: 'The leap',      icon: 'up',        hint: 'Sprint, jump, spin, land facing the crowd.' },
+      { id: 'wings',   name: 'Arms wide',     icon: 'away',      hint: 'Off round the pitch like an aeroplane.' },
+      { id: 'shush',   name: 'Shush them',    icon: 'no',        hint: 'Finger to the lips, straight at the home end. Not for the faint-hearted.' },
+      { id: 'heart',   name: 'Heart hands',   icon: 'morale',    hint: 'Hands into a heart, held up to somebody who matters.' },
+      { id: 'badge',   name: 'Kiss the badge',icon: 'club',      hint: 'Both hands to the crest, then point at the fans.' },
+      { id: 'ice',     name: 'Ice cold',      icon: 'fitness',   hint: 'Arms folded. Not a flicker. Let everyone else lose it.' },
+      { id: 'mobbed',  name: 'Get mobbed',    icon: 'squad',     hint: 'Stand still and let the whole team bury you.' },
+      { id: 'random',  name: 'Whatever comes','icon': 'flair',   hint: 'A different one every time. Never plan a celebration.' }
+    ],
+
+    celebrationById(id) {
+      return Pitch.CELEBRATIONS.find(c => c.id === id) || Pitch.CELEBRATIONS[0];
+    },
+
+    /* He scored. opts.style picks the routine, opts.side which way he runs. */
     celebrate(root, opts, done) {
       opts = opts || {};
       const q = s => root && root.querySelector(s);
       const sc = q('.pg-scorer'), body = q('.pg-sc-body'), conf = q('.pg-confetti');
       if (!sc) { if (done) done(); return; }
+
+      let style = opts.style || 'slide';
+      if (style === 'random') {
+        const pool = Pitch.CELEBRATIONS.filter(c => c.id !== 'random');
+        style = pool[Math.floor(Math.random() * pool.length)].id;
+      }
+      const toLeft = opts.side !== 'right';
+      const dir = toLeft ? -1 : 1;
+      const armL = q('.pg-sc-arm-l'), armR = q('.pg-sc-arm-r');
+      const shadow = q('.pg-sc-shadow');
+      const props = q('.pg-sc-props');
+
       if (reduced()) {
         sc.style.opacity = '1';
-        sc.style.transform = place(88, 178, 0, 1);
+        sc.style.transform = place(style === 'ice' || style === 'heart' || style === 'shush' || style === 'badge'
+          ? SPOT.x : (toLeft ? 74 : W - 74), 182, 0, 1);
         if (done) done();
         return;
       }
 
-      const toLeft = opts.side !== 'right';
-      const endX = toLeft ? 74 : W - 74;
-      const midX = SPOT.x + (endX - SPOT.x) * .55;
+      if (props) props.setAttribute('class', 'pg-sc-props prop-' + style);
+      sc.style.opacity = '1';
 
-      // ticker tape, thrown once
+      /* ---- ticker tape and the noise, whichever routine it is ---- */
       if (conf) {
         const bits = [];
         for (let i = 0; i < 44; i++) {
           const x = -6 + Math.random() * (W + 12);
-          const y = -10 - Math.random() * 70;
+          const y = -6 - Math.random() * 46;
           const c = ['#2ae67e', '#ffffff', '#ffc94d', '#5aa8ff', '#ff7a92'][i % 5];
           bits.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(3 + Math.random() * 2.5).toFixed(1)}"
             height="${(6 + Math.random() * 5).toFixed(1)}" rx="1.2" fill="${c}" opacity=".95"/>`);
         }
         conf.innerHTML = bits.join('');
-        Array.prototype.forEach.call(conf.children, (bit, i) => {
+        Array.prototype.forEach.call(conf.children, bit => {
           const drift = (Math.random() - .5) * 50;
           bit.animate([
             { transform: 'translate(0,0) rotate(0deg)', opacity: .95 },
             { transform: `translate(${drift * .5}px, ${(H + 80) * .5}px) rotate(${180 + Math.random() * 180}deg)`, offset: .55 },
             { transform: `translate(${drift}px, ${H + 90}px) rotate(${360 + Math.random() * 360}deg)`, opacity: .6 }
-          ], { duration: 1700 + Math.random() * 900, delay: Math.random() * 260, easing: 'cubic-bezier(.35,.15,.7,1)', fill: 'forwards' });
+          ], { duration: 1600 + Math.random() * 900, delay: Math.random() * 260, easing: 'cubic-bezier(.35,.15,.7,1)', fill: 'forwards' });
         });
       }
 
-      sc.style.opacity = '1';
-      // in from below, wheeling away, then down on the knees
-      sc.animate([
-        { transform: place(SPOT.x + (toLeft ? 14 : -14), H + 46, 0, .8), offset: 0 },
-        { transform: place(midX, 196, 0, .95), offset: .38 },
-        { transform: place(endX + (toLeft ? 10 : -10), 184, 0, 1), offset: .72 },
-        { transform: place(endX, 182, 0, 1), offset: 1 }
-      ], { duration: 900, easing: 'cubic-bezier(.25,.7,.35,1)', fill: 'forwards' });
-
-      if (body) body.animate([
-        { transform: 'rotate(0deg) scaleY(1)' },
-        { transform: `rotate(${toLeft ? -6 : 6}deg) scaleY(1.02)`, offset: .4 },
-        { transform: `rotate(${toLeft ? -16 : 16}deg) scaleY(.9)`, offset: .78 },   // the slide
-        { transform: `rotate(${toLeft ? -13 : 13}deg) scaleY(.92)` }
-      ], { duration: 900, easing: 'cubic-bezier(.25,.7,.35,1)', fill: 'forwards' });
-
-      // arms come up and stay there
-      [['.pg-sc-arm-l', -1], ['.pg-sc-arm-r', 1]].forEach(([sel, dir]) => {
-        const arm = q(sel);
-        if (arm) arm.animate([
-          { transform: 'rotate(0deg)' },
-          { transform: `rotate(${dir * 12}deg)`, offset: .35 },
-          { transform: `rotate(${dir * -34}deg)` }
-        ], { duration: 900, easing: 'ease-out', fill: 'forwards' });
-      });
-
-      // the ground he is sliding across
-      const shadow = q('.pg-sc-shadow');
-      if (shadow) shadow.animate([
-        { transform: 'scale(.8,1)', opacity: .35 },
-        { transform: 'scale(1.5,.8)', opacity: .28 }
-      ], { duration: 900, fill: 'forwards' });
-
-      // the stand goes up, and every camera in the ground goes off
       const stand = q('.pg-stand');
       if (stand) stand.animate([
         { transform: 'translateY(0)' }, { transform: 'translateY(-3px)', offset: .2 },
@@ -696,7 +723,6 @@
       ], { duration: 1600, easing: 'ease-out' });
       root.classList.add('is-party');
 
-      // and the keeper does not enjoy it one bit
       const kb = q('.pg-keeper-body');
       if (kb) kb.animate([
         { transform: kb.style.transform || 'none' },
@@ -704,14 +730,138 @@
         { transform: 'translateY(9px) scaleY(.86)' }
       ], { duration: 900, delay: 120, easing: 'ease-out', fill: 'forwards' });
 
+      const arms = (frames, opt) => {
+        if (armL) armL.animate(frames.map(f => ({ transform: `rotate(${f[0]}deg)`, offset: f[2] })), opt);
+        if (armR) armR.animate(frames.map(f => ({ transform: `rotate(${f[1]}deg)`, offset: f[2] })), opt);
+      };
+      const ease = 'cubic-bezier(.25,.7,.35,1)';
+
+      /* ---- the routines ---- */
+      let dur = 1250, camTo = 1.06;
+
+      if (style === 'slide') {
+        const endX = toLeft ? 74 : W - 74, midX = SPOT.x + (endX - SPOT.x) * .55;
+        sc.animate([
+          { transform: place(SPOT.x - dir * 14, H + 46, 0, .8) },
+          { transform: place(midX, 196, 0, .95), offset: .38 },
+          { transform: place(endX - dir * -10, 184, 0, 1), offset: .72 },
+          { transform: place(endX, 182, 0, 1) }
+        ], { duration: 900, easing: ease, fill: 'forwards' });
+        if (body) body.animate([
+          { transform: 'rotate(0deg) scaleY(1)' },
+          { transform: `rotate(${dir * 6}deg) scaleY(1.02)`, offset: .4 },
+          { transform: `rotate(${dir * 16}deg) scaleY(.9)`, offset: .78 },
+          { transform: `rotate(${dir * 13}deg) scaleY(.92)` }
+        ], { duration: 900, easing: ease, fill: 'forwards' });
+        arms([[0, 0, 0], [-12, 12, .35], [34, -34, 1]], { duration: 900, easing: 'ease-out', fill: 'forwards' });
+        if (shadow) shadow.animate([{ transform: 'scale(.8,1)', opacity: .35 },
+          { transform: 'scale(1.5,.8)', opacity: .28 }], { duration: 900, fill: 'forwards' });
+
+      } else if (style === 'leap') {
+        const endX = toLeft ? 96 : W - 96;
+        sc.animate([
+          { transform: place(SPOT.x - dir * 10, H + 46, 0, .8) },
+          { transform: place(SPOT.x + (endX - SPOT.x) * .55, 198, 0, .95), offset: .34 },
+          { transform: place(endX, 150, 360, 1.05), offset: .72 },      // up and round
+          { transform: place(endX, 188, 360, 1), offset: .9 },
+          { transform: place(endX, 184, 360, 1) }
+        ], { duration: 1150, easing: 'cubic-bezier(.3,.65,.3,1)', fill: 'forwards' });
+        arms([[0, 0, 0], [-40, 40, .5], [26, -26, .78], [8, -8, 1]],
+          { duration: 1150, easing: 'ease-out', fill: 'forwards' });
+        if (shadow) shadow.animate([
+          { transform: 'scale(1)', opacity: .4 },
+          { transform: 'scale(.45)', opacity: .12, offset: .72 },
+          { transform: 'scale(1.05)', opacity: .38 }
+        ], { duration: 1150, fill: 'forwards' });
+        dur = 1450; camTo = 1.08;
+
+      } else if (style === 'wings') {
+        const endX = toLeft ? 58 : W - 58;
+        sc.animate([
+          { transform: place(SPOT.x - dir * 12, H + 44, 0, .78) },
+          { transform: place(SPOT.x + (endX - SPOT.x) * .4, 192, 0, .9), offset: .3 },
+          { transform: place(SPOT.x + (endX - SPOT.x) * .78, 176, 0, .97), offset: .62 },
+          { transform: place(endX, 186, 0, 1) }
+        ], { duration: 1200, easing: 'linear', fill: 'forwards' });
+        if (body) body.animate([
+          { transform: 'rotate(0deg)' },
+          { transform: `rotate(${dir * 12}deg)`, offset: .45 },        // banking
+          { transform: `rotate(${dir * 9}deg)` }
+        ], { duration: 1200, easing: 'ease-in-out', fill: 'forwards' });
+        arms([[0, 0, 0], [-72, 72, .3], [-76, 76, 1]], { duration: 700, easing: 'ease-out', fill: 'forwards' });
+        dur = 1400;
+
+      } else if (style === 'shush') {
+        sc.animate([
+          { transform: place(SPOT.x - dir * 16, H + 44, 0, .8) },
+          { transform: place(SPOT.x - dir * 26, 196, 0, 1), offset: .5 },
+          { transform: place(SPOT.x - dir * 30, 200, 0, 1.06) }        // walks at the camera
+        ], { duration: 1100, easing: 'ease-out', fill: 'forwards' });
+        arms([[0, 0, 0], [-30, 4, .35], [-96, 6, .62], [-96, 6, 1]],
+          { duration: 1100, easing: 'ease-out', fill: 'forwards' });
+        dur = 1400; camTo = 1.1;
+
+      } else if (style === 'heart') {
+        sc.animate([
+          { transform: place(SPOT.x - dir * 8, H + 44, 0, .82) },
+          { transform: place(SPOT.x - dir * 20, 198, 0, 1), offset: .45 },
+          { transform: place(SPOT.x - dir * 22, 196, 0, 1) }
+        ], { duration: 900, easing: 'ease-out', fill: 'forwards' });
+        arms([[0, 0, 0], [-40, 40, .4], [-104, 104, .72], [-100, 100, 1]],
+          { duration: 1000, easing: 'cubic-bezier(.3,1.4,.5,1)', fill: 'forwards' });
+        dur = 1500;
+
+      } else if (style === 'badge') {
+        sc.animate([
+          { transform: place(SPOT.x - dir * 10, H + 44, 0, .82) },
+          { transform: place(SPOT.x - dir * 24, 198, 0, 1), offset: .45 },
+          { transform: place(SPOT.x - dir * 26, 196, 0, 1) }
+        ], { duration: 900, easing: 'ease-out', fill: 'forwards' });
+        // hands to the chest, then one arm flung out at the crowd
+        arms([[0, 0, 0], [-58, 58, .35], [-58, 58, .58], [-58, -104, 1]],
+          { duration: 1150, easing: 'ease-out', fill: 'forwards' });
+        dur = 1450;
+
+      } else if (style === 'ice') {
+        sc.animate([
+          { transform: place(SPOT.x - dir * 12, H + 44, 0, .82) },
+          { transform: place(SPOT.x - dir * 24, 196, 0, 1), offset: .5 },
+          { transform: place(SPOT.x - dir * 24, 196, 0, 1) }
+        ], { duration: 800, easing: 'ease-out', fill: 'forwards' });
+        arms([[0, 0, 0], [-58, 58, .45], [-62, 62, 1]],
+          { duration: 800, easing: 'ease-out', fill: 'forwards' });    // folded
+        dur = 1500; camTo = 1.12;                                       // slow push in
+
+      } else if (style === 'mobbed') {
+        sc.animate([
+          { transform: place(SPOT.x - dir * 10, H + 44, 0, .82) },
+          { transform: place(SPOT.x - dir * 18, 190, 0, 1), offset: .4 },
+          { transform: place(SPOT.x - dir * 18, 192, 0, .98), offset: .78 },
+          { transform: place(SPOT.x - dir * 18, 191, 0, .99) }
+        ], { duration: 1000, easing: 'ease-out', fill: 'forwards' });
+        arms([[0, 0, 0], [-46, 46, .4], [-34, 34, 1]], { duration: 900, easing: 'ease-out', fill: 'forwards' });
+        // team-mates pile in from both sides
+        root.querySelectorAll('.pg-mate').forEach((mate, i) => {
+          const from = i % 2 ? 1 : -1;
+          mate.style.opacity = '1';
+          mate.animate([
+            { transform: place(SPOT.x + from * 190, 200, 0, .74), opacity: 0 },
+            { transform: place(SPOT.x + from * 190, 200, 0, .78), opacity: 1, offset: .12 },
+            { transform: place(SPOT.x - dir * 18 + from * (26 + i * 9), 191, 0, .9), offset: .72 },
+            { transform: place(SPOT.x - dir * 18 + from * (22 + i * 9), 193, 0, .92) }
+          ], { duration: 1100, delay: 180 + i * 120, easing: 'cubic-bezier(.3,.7,.35,1)', fill: 'forwards' });
+        });
+        dur = 1650;
+      }
+
       const cam = q('.pg-cam');
       if (cam) cam.animate([
         { transform: about(160, 150, 0, 1.01) },
-        { transform: about(160, 150, 0, 1.06), offset: .35 },
-        { transform: about(160, 150, 0, 1.03) }
-      ], { duration: 1200, easing: 'ease-out', fill: 'forwards' });
+        { transform: about(160, 150, 0, camTo), offset: .4 },
+        { transform: about(160, 150, 0, camTo - .03) }
+      ], { duration: dur, easing: 'ease-out', fill: 'forwards' });
 
-      setTimeout(() => { if (done) done(); }, 1250);
+      setTimeout(() => { if (done) done(); }, dur);
     },
 
     // wire the six targets up; cb gets the zone key
