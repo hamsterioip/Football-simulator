@@ -26,6 +26,25 @@ function guard(src, file) {
   return src;
 }
 
+/* ---------- cache busting ----------
+   index.html loads sixteen separate files. Browsers (and GitHub Pages) hold on
+   to them, so a fresh deploy can be served from a stale cache and look exactly
+   like the old one. Stamping every URL with the version means a release always
+   fetches new files. */
+const VERSION = (read('js/data.js').match(/const VERSION = '([^']+)'/) || [])[1];
+if (!VERSION) throw new Error('could not read VERSION out of js/data.js');
+
+function stampAssets(html) {
+  return html
+    .replace(/(<script src="js\/[^"?]+)(\?v=[^"]*)?"/g, `$1?v=${VERSION}"`)
+    .replace(/(<link rel="stylesheet" href="css\/[^"?]+)(\?v=[^"]*)?"/g, `$1?v=${VERSION}"`);
+}
+{
+  const before = read('index.html');
+  const after = stampAssets(before);
+  if (after !== before) fs.writeFileSync(path.join(ROOT, 'index.html'), after);
+}
+
 const styles = CSS.map(f => `/* ${f} */\n` + read(f)).join('\n');
 const scripts = JS.map(f => `<script>\n/* ${f} */\n` + guard(read(f), f) + '\n</script>').join('\n');
 
@@ -79,5 +98,6 @@ fs.mkdirSync(path.join(ROOT, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'dist/artifact.html'), embedded);
 
 const kb = n => (n / 1024).toFixed(0) + 'KB';
+console.log('v' + VERSION);
 console.log('play.html          ' + kb(standalone.length));
 console.log('dist/artifact.html ' + kb(embedded.length));
