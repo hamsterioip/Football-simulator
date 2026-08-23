@@ -1212,9 +1212,13 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.4';
+  const VERSION = '1.5';
   const BUILD = '23 August 2026';
   const CHANGELOG = [
+    { v: '1.5', when: '23 Aug', items: [
+      'Heart of the team: play every week, rate well and decide games and the side starts leaning on you — then the weeks you are missing actually cost them, and sometimes they run themselves into the ground for you instead',
+      'Titles: twenty-two nicknames the timeline gives you off what you have actually done, from The Iceman to Cheat Code to Cult Hero. Wear whichever one you like under your name'
+    ] },
     { v: '1.4', when: '23 Aug', items: [
       'Nine celebrations to choose from — knee slide, the leap, arms wide, shush them, heart hands, kiss the badge, ice cold, get mobbed, or a different one every time',
       'Pick yours on the Player tab: tap one and it plays in the preview before you commit'

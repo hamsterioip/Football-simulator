@@ -387,9 +387,48 @@
         case 'newsView': UI.newsView = arg; return UI.render();
         case 'socialPost': return Game.socialPost();
         case 'celebrations': return Game.celebrationMenu();
+        case 'titles': return Game.titleMenu();
         case 'matchLength': return Game.matchLengthMenu();
         case 'quit': return Game.quit();
       }
+    },
+
+    /* The names the timeline has given you. Wear whichever one you like. */
+    titleMenu() {
+      const g = State.game, p = g.player, St = global.Status;
+      const have = p.titles || [];
+      const mine = St.TITLES.filter(t => have.indexOf(t.id) >= 0);
+      const locked = St.TITLES.filter(t => have.indexOf(t.id) < 0);
+      UI.modal({
+        title: 'What they call you',
+        html: (mine.length
+            ? `<p class="muted">Tap one to wear it under your name.</p>
+               <div class="list">${mine.map(t => `
+                 <div class="item click cel-opt${t.id === p.title ? ' on' : ''}" data-title="${t.id}">
+                   <div class="ic">${ico('star')}</div>
+                   <div class="tx"><b>${U.esc(t.name)}</b><span>Coined by ${U.esc(t.by)}</span></div>
+                   <div class="cel-tick">${ico('ok')}</div></div>`).join('')}
+                 <div class="item click cel-opt${p.title ? '' : ' on'}" data-title="">
+                   <div class="ic">${ico('no')}</div>
+                   <div class="tx"><b>No name</b><span>Just your name. Let the football talk.</span></div>
+                   <div class="cel-tick">${ico('ok')}</div></div>
+               </div>`
+            : `<p class="muted">Nobody has come up with anything yet. Keep playing.</p>`)
+          + `<div class="section-title">Still out there</div>
+             <div class="list">${locked.map(t => `
+               <div class="item locked-title"><div class="ic">${ico('star')}</div>
+                 <div class="tx"><b>${U.esc(t.name)}</b><span>${U.esc(t.hint)}</span></div></div>`).join('')}</div>`,
+        actions: [{ label: 'Done', cls: 'btn-ghost' }],
+        onRender(mEl) {
+          mEl.querySelectorAll('[data-title]').forEach(el => el.onclick = () => {
+            p.title = el.dataset.title || null;
+            mEl.querySelectorAll('.cel-opt').forEach(o =>
+              o.classList.toggle('on', (o.dataset.title || '') === (p.title || '')));
+            State.save();
+            UI.render();
+          });
+        }
+      });
     },
 
     /* Pick what you do when one goes in. Tapping a routine plays it in the
@@ -898,6 +937,9 @@
       const fx = Scenarios.resolve(scn, index);
       const how = fx.how || (fx.goal ? 'goal' : 'saved');
       const dive = Game.keeperGuess(zone, how);
+      g.player.penTaken = (g.player.penTaken || 0) + 1;
+      if (how === 'goal') g.player.penScored = (g.player.penScored || 0) + 1;
+      else g.player.penMissed = (g.player.penMissed || 0) + 1;
       UI.verdict('', '');
       global.Pitch.kick(root, zone, dive, how, () => {
         UI.verdict(how === 'goal' ? 'GOAL' : how === 'saved' ? 'SAVED' : 'MISSED', how);

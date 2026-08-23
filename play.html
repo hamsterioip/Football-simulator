@@ -714,6 +714,31 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   .ts-pos{flex-basis:20px}
 }
 
+/* ---------- heart of the team ---------- */
+.hud-title{font-size:10px;letter-spacing:.8px;text-transform:uppercase;font-weight:800;
+  color:var(--gold);margin-top:2px;display:flex;align-items:center;gap:4px}
+.hud-title .ic{width:11px;height:11px;color:#ff5a6a}
+.heart-card.on{border-color:rgba(255,90,106,.35);
+  background:linear-gradient(180deg,rgba(255,90,106,.07),transparent 45%)}
+.heart-card h3 .ic{color:#ff5a6a}
+.heart-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.heart-num{font:900 34px/1 'Barlow Condensed',system-ui,sans-serif;flex:0 0 auto}
+.heart-card.on .heart-num{color:#ff5a6a;text-shadow:0 0 20px rgba(255,90,106,.45)}
+.heart-say{font-size:12.5px;color:var(--muted);line-height:1.4}
+.heart-bar{position:relative;height:7px;border-radius:4px;background:rgba(255,255,255,.07);overflow:visible}
+.heart-bar i{display:block;height:100%;border-radius:4px;
+  background:linear-gradient(90deg,#7d8ba3,#ff5a6a);transition:width .4s}
+.heart-mark{position:absolute;top:-3px;width:2px;height:13px;background:rgba(255,255,255,.5);border-radius:1px}
+.heart-parts{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.hp{display:grid;grid-template-columns:1fr 62px auto;align-items:center;gap:8px;font-size:11.5px}
+.hp-l{color:var(--txt)}
+.hp-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden}
+.hp-bar i{display:block;height:100%;background:var(--green);border-radius:2px}
+.hp-n{color:var(--dim);font-size:10.5px;white-space:nowrap}
+.heart-note{margin:11px 0 0;font-size:11.5px;line-height:1.45}
+.locked-title{opacity:.5}
+.locked-title .tx b{color:var(--muted)}
+
 /* ---------- choosing a celebration ---------- */
 .cel-current{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
   background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;
@@ -2278,9 +2303,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.4';
+  const VERSION = '1.5';
   const BUILD = '23 August 2026';
   const CHANGELOG = [
+    { v: '1.5', when: '23 Aug', items: [
+      'Heart of the team: play every week, rate well and decide games and the side starts leaning on you — then the weeks you are missing actually cost them, and sometimes they run themselves into the ground for you instead',
+      'Titles: twenty-two nicknames the timeline gives you off what you have actually done, from The Iceman to Cheat Code to Cult Hero. Wear whichever one you like under your name'
+    ] },
     { v: '1.4', when: '23 Aug', items: [
       'Nine celebrations to choose from — knee slide, the leap, arms wide, shush them, heart hands, kiss the badge, ice cold, get mobbed, or a different one every time',
       'Pick yours on the Player tab: tap one and it plays in the preview before you commit'
@@ -7451,7 +7480,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
       g.lastLineup = role;
       const baseStr = intl ? Squad.nationStrength(g, myNation) : Squad.teamStrength(g);
-      const myStr = baseStr + (isHome ? 2.5 : 0) + (role === 'start' ? 0 : -1.5);
+      let myStr = baseStr + (isHome ? 2.5 : 0) + (role === 'start' ? 0 : -1.5);
+      // a side that leans on you feels it on the weeks you are not there
+      let absent = null;
+      if (!intl && global.Status) {
+        absent = global.Status.absence(g, { role });
+        if (absent) myStr += absent.swing;
+      }
       const oppStr = opp.rating + (isHome ? 0 : 2.5) + (fixture.comp === 'intl' ? 0 : 0);
 
       const m = {
@@ -7466,7 +7501,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
                  card: null, minutes: 0, saves: 0 },
         interactiveLeft: (role === 'start' || role === 'bench') ? Match.interactiveCap(g) : 0,
         usedScenarios: [], finished: false, offAt: null, penaltyPending: false,
-        teamBoost: 0, soloBoost: false, shootout: null, injuredDuring: false
+        teamBoost: 0, soloBoost: false, shootout: null, injuredDuring: false,
+        absent
       };
 
       if (role === 'suspended' || role === 'injured' || role === 'out') {
@@ -7748,6 +7784,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           m.penaltyPending = false;
           const taker = Match.isPenaltyTaker(g) && m.role !== 'out' && !m.sentOff;
           const scored = U.chance(taker ? 0.78 : 0.76);
+          if (taker) {
+            g.player.penTaken = (g.player.penTaken || 0) + 1;
+            if (scored) g.player.penScored = (g.player.penScored || 0) + 1;
+            else g.player.penMissed = (g.player.penMissed || 0) + 1;
+          }
           if (scored) {
             m.us++;
             if (taker) { m.stats.goals++; g.player.season.goals++; g.player.career.goals++; m.stats.rating += 1.2; }
@@ -7877,6 +7918,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         State.addReputation(p, repGain);
         Press.matchHeadline(g, m);
         Press.afterMatch(g, m);
+        if (global.Status) { global.Status.checkHeart(g); global.Status.checkTitles(g); }
         Press.monthly(g, m);
         if (global.Social) global.Social.afterMatch(g, m, true);
         // injury from fatigue
@@ -7891,6 +7933,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         p.fitness = U.clamp(p.fitness + 12, 0, 100);
         p.form = U.clamp(p.form - 2, 0, 100);
         if (m.role === 'out') p.morale = U.clamp(p.morale - 3, 0, 100);
+        if (m.absent) {
+          State.news(m.absent.line, m.absent.rally ? 'good' : 'bad', null,
+            m.absent.rally ? 'squad' : 'manager');
+          if (global.Social) global.Social.absent(g, m.absent.rally);
+          // they proved a point, or they proved yours
+          p.morale = U.clamp(p.morale + (m.absent.rally ? -2 : 3), 0, 100);
+        }
         if (global.Social) global.Social.afterMatch(g, m, false);
       }
 
@@ -8276,6 +8325,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         State.news(`${p.lastName} named ${a}`, 'good');
       });
       Press.seasonHeadline(g, results);
+      if (global.Status) { global.Status.checkHeart(g); global.Status.checkTitles(g); }
       if (global.Social) global.Social.season(g, results);
 
       // development, then re-take the peaks so they include this summer's growth
@@ -9595,6 +9645,245 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
 </script>
 <script>
+/* js/status.js */
+/* ==========================================================================
+   status.js — what you mean to the team, and what people call you.
+
+   Two things live here.
+
+   HEART OF THE TEAM — a standing you earn by carrying a side: playing every
+   week, rating well, and being responsible for a real share of the goals. Once
+   you have it, the weeks you are missing actually cost them. Sometimes they
+   fall apart without you; sometimes they dig in and play for you. Either way
+   the absence is felt, which is the whole point of being the heart of a team.
+
+   TITLES — the names the timeline gives you. Nobody chooses their own nickname
+   in football, they earn one; here you earn them off what you have actually
+   done, and then pick which one you want under your name.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  const HEART_ON = 70;      // earn it here
+  const HEART_OFF = 52;     // lose it below here
+
+  /* ---------------- heart of the team ---------------- */
+
+  /* Your share of what the team does going forward. Not just goals — a holding
+     midfielder who plays every week and rates 7.4 is a talisman too. */
+  function involvement(g) {
+    const p = g.player, U = global.U;
+    const inv = (p.season.goals || 0) + (p.season.assists || 0) * 0.8;
+    // roughly what a league side scores across a season at this level
+    const club = global.State.club(p.club);
+    const expected = Math.max(28, Math.round((club.rating - 52) * 1.5));
+    return U.clamp(inv / expected, 0, 1);
+  }
+
+  /* 0-100. Shown as a bar, so it has to move for reasons you can feel. */
+  function heartScore(g) {
+    const p = g.player, U = global.U, State = global.State;
+    if (!p.club) return 0;
+    const D = global.DATA;
+    const group = p.pos === 'GK' ? 'GK' : (D.POSITIONS[p.pos] || {}).group;
+
+    const rating = State.seasonRating(p) || 0;
+    const apps = p.season.apps || 0;
+    const played = U.clamp(apps / 22, 0, 1);                       // availability
+    const form = U.clamp((rating - 6.3) / 1.7, 0, 1);              // how well
+    const share = group === 'GK' || group === 'DEF'
+      ? U.clamp((p.season.cleanSheets || 0) / 10, 0, 1)            // defenders keep them out
+      : involvement(g);                                            // the rest put them in
+    const trust = U.clamp((p.managerTrust - 45) / 45, 0, 1);
+    const standing = U.clamp((p.reputation - 15) / 55, 0, 1);
+    const armband = p.captain ? 1 : 0;
+
+    return Math.round(
+      played * 30 + form * 26 + share * 22 + trust * 10 + standing * 8 + armband * 4
+    );
+  }
+
+  /* The parts, for the card that explains why the number is what it is. */
+  function heartParts(g) {
+    const p = g.player, U = global.U, State = global.State, D = global.DATA;
+    const group = p.pos === 'GK' ? 'GK' : (D.POSITIONS[p.pos] || {}).group;
+    const rating = State.seasonRating(p) || 0;
+    return [
+      { label: 'Always available', v: U.clamp((p.season.apps || 0) / 22, 0, 1),
+        note: (p.season.apps || 0) + ' apps this season' },
+      { label: 'Performing', v: U.clamp((rating - 6.3) / 1.7, 0, 1),
+        note: rating ? rating.toFixed(2) + ' average rating' : 'no rating yet' },
+      { label: group === 'GK' || group === 'DEF' ? 'Keeping them out' : 'Decisive',
+        v: group === 'GK' || group === 'DEF'
+          ? U.clamp((p.season.cleanSheets || 0) / 10, 0, 1) : involvement(g),
+        note: group === 'GK' || group === 'DEF'
+          ? (p.season.cleanSheets || 0) + ' clean sheets'
+          : (p.season.goals || 0) + ' goals, ' + (p.season.assists || 0) + ' assists' },
+      { label: 'The manager trusts you', v: U.clamp((p.managerTrust - 45) / 45, 0, 1),
+        note: Math.round(p.managerTrust) + '/100' },
+      { label: 'They sing your name', v: U.clamp((p.reputation - 15) / 55, 0, 1),
+        note: 'reputation ' + Math.round(p.reputation) }
+    ];
+  }
+
+  /* Called after every match and at season end. Announces both directions. */
+  function checkHeart(g) {
+    const p = g.player, State = global.State;
+    const score = heartScore(g);
+    p.heartScore = score;
+    const club = State.club(p.club);
+    if (!p.heart && score >= HEART_ON && (p.season.apps || 0) >= 12) {
+      p.heart = { since: g.world.year, club: club.name };
+      State.news(`${p.lastName} has become the heartbeat of this ${club.name} side`, 'good', null, 'morale');
+      State.log('You are the heart of this team now. They feel it when you are not there.', 'good');
+      if (global.Social) global.Social.heart(g, true);
+      return 'earned';
+    }
+    // you do not stop being the heart of a team in the second week of August —
+    // the standing only comes under review once the season is properly under way
+    if (p.heart && score < HEART_OFF && (p.season.apps || 0) >= 10) {
+      p.heart = null;
+      State.news(`${club.name} are learning to live without leaning on ${p.lastName}`, 'info', null, 'manager');
+      if (global.Social) global.Social.heart(g, false);
+      return 'lost';
+    }
+    return null;
+  }
+
+  /* What happens to them on a week you are not playing. Returns the swing to
+     apply to team strength, and a line to print. */
+  function absence(g, m) {
+    const p = g.player, U = global.U, State = global.State;
+    if (!p.heart) return null;
+    if (m.role === 'start') return null;
+
+    const squad = global.Engine.Squad.ensure(g);
+    const rel = squad.reduce((a, s) => a + (s.rel || 50), 0) / squad.length;
+    const club = State.club(p.club);
+    // a tight dressing room with something to prove rallies; a fragile one folds
+    const rallyChance = U.clamp(0.16 + (rel - 50) * 0.008 + (club.morale - 65) * 0.004, 0.08, 0.55);
+    const rally = U.chance(rallyChance);
+    const why = m.role === 'injured' ? 'without their injured talisman'
+      : m.role === 'suspended' ? 'with their suspended talisman in the stand'
+      : 'with their best player only on the bench';
+
+    if (rally) {
+      return { swing: 3.2, rally: true,
+        line: `${club.name} play for ${p.lastName} tonight — everyone a yard sharper ${why}.` };
+    }
+    return { swing: -5.5, rally: false,
+      line: `${club.name} look lost ${why}. Nobody else takes the game by the scruff.` };
+  }
+
+  /* ---------------- titles ---------------- */
+
+  /* Each has a test against what you have actually done. `by` is the account
+     that would coin it, which is what makes them feel like nicknames rather
+     than achievements. */
+  const TITLES = [
+    { id: 'iceman', name: 'The Iceman', by: 'the timeline',
+      hint: 'Ten penalties. Not one of them missed.',
+      test: p => (p.penScored || 0) >= 10 && (p.penMissed || 0) === 0 },
+    { id: 'cheatcode', name: 'Cheat Code', by: 'every rival fan, bitterly',
+      hint: 'A 90 overall. People have stopped pretending it is fair.',
+      test: p => p.ovr >= 90 },
+    { id: 'machine', name: 'The Machine', by: 'the stats accounts',
+      hint: 'Forty appearances in a season. He does not stop.',
+      test: p => (p.season.apps || 0) >= 40 || (p.career.apps || 0) >= 450 },
+    { id: 'wall', name: 'The Wall', by: 'the home end',
+      hint: 'Fifteen clean sheets. Nothing gets through.',
+      test: (p, g) => (p.season.cleanSheets || 0) >= 15 || (p.career.cleanSheets || 0) >= 90 },
+    { id: 'goldenboy', name: 'Golden Boy', by: 'the back pages',
+      hint: 'Twenty goals before your twenty-first birthday.',
+      test: p => p.age <= 21 && (p.career.goals || 0) >= 20 },
+    { id: 'assassin', name: 'The Assassin', by: 'a fan channel',
+      hint: 'A hundred goals, and none of them by accident.',
+      test: p => (p.career.goals || 0) >= 100 },
+    { id: 'general', name: 'The General', by: 'your manager, in a presser',
+      hint: 'The armband, and a manager who trusts you with everything.',
+      test: p => p.captain && p.managerTrust >= 78 },
+    { id: 'metronome', name: 'The Metronome', by: 'a tactics account',
+      hint: 'Passing at 85, and the whole thing goes through you.',
+      test: p => (p.attrs.passing || 0) >= 85 && (p.career.assists || 0) >= 50 },
+    { id: 'silk', name: 'Silk', by: 'the compilation channels',
+      hint: 'Flair at 88. They cut the highlights to music.',
+      test: p => (p.attrs.flair || 0) >= 88 },
+    { id: 'engine', name: 'The Engine', by: 'your own supporters',
+      hint: 'Physical at 85 and you have never asked to come off.',
+      test: p => (p.attrs.physical || 0) >= 85 && (p.career.apps || 0) >= 150 },
+    { id: 'bigmatch', name: 'The Big-Match Player', by: 'a pundit who was wrong about you',
+      hint: 'Thirty caps and a habit of turning up when it counts.',
+      test: p => (p.intl.caps || 0) >= 30 && (p.career.motm || 0) >= 25 },
+    { id: 'oneclub', name: 'One-Club Man', by: 'everyone, with respect',
+      hint: 'Three hundred games. One badge. Nothing else needed saying.',
+      test: p => (p.career.clubs || []).length === 1 && (p.career.apps || 0) >= 300 },
+    { id: 'nomad', name: 'The Nomad', by: 'a transfer account',
+      hint: 'Five clubs. A passport with some stamps in it.',
+      test: p => (p.career.clubs || []).length >= 5 },
+    { id: 'hoover', name: 'Trophy Hoover', by: 'rival fans, through their teeth',
+      hint: 'Twelve trophies. You collect them like receipts.',
+      test: p => (p.career.trophies || []).length >= 12 },
+    { id: 'culthero', name: 'Cult Hero', by: 'the block behind the goal',
+      hint: 'Adored well past what the rating says you should be.',
+      test: p => p.reputation >= 55 && p.ovr <= 80 },
+    { id: 'glass', name: 'Glass Cannon', by: 'a fan channel, affectionately',
+      hint: 'Unplayable. When fit. Which is the problem.',
+      test: p => (p.injuryCount || 0) >= 6 && p.ovr >= 82 },
+    { id: 'latebloom', name: 'The Late Bloomer', by: 'a podcast, apologetically',
+      hint: 'Past thirty and better than you have ever been.',
+      test: p => p.age >= 31 && p.ovr >= (p.peakOvr || 0) },
+    { id: 'talisman', name: 'The Talisman', by: 'the club itself',
+      hint: 'The heart of this team, and everybody knows it.',
+      test: p => !!p.heart },
+    { id: 'worldbeater', name: 'World Beater', by: 'the whole internet',
+      hint: 'World Player of the Year. Argument over.',
+      test: p => (p.achievements || []).some(a => /world player of the year/i.test(a.name)) },
+    { id: 'setpiece', name: 'Set-Piece Sniper', by: 'a highlights account',
+      hint: 'Shooting at 86 and a dead ball that behaves itself.',
+      test: p => (p.attrs.shooting || 0) >= 86 && (p.career.goals || 0) >= 60 },
+    { id: 'kid', name: 'The Kid', by: 'commentators who will not let it go',
+      hint: 'Nineteen, in the first team, and already the best thing about it.',
+      test: p => p.age <= 19 && p.ovr >= 72 },
+    { id: 'unplayable', name: 'Unplayable', by: 'the defender who marked you',
+      hint: 'An average rating of 8. For a whole season.',
+      test: (p, g) => (global.State.seasonRating(p) || 0) >= 8 && (p.season.apps || 0) >= 15 }
+  ];
+
+  function earned(p, g) {
+    return TITLES.filter(t => {
+      try { return !!t.test(p, g); } catch (e) { return false; }
+    });
+  }
+
+  /* New ones get announced. The player picks which to wear. */
+  function checkTitles(g) {
+    const p = g.player, State = global.State;
+    p.titles = p.titles || [];
+    const fresh = [];
+    earned(p, g).forEach(t => {
+      if (p.titles.indexOf(t.id) < 0) { p.titles.push(t.id); fresh.push(t); }
+    });
+    fresh.forEach(t => {
+      State.news(`They have started calling ${p.lastName} "${t.name}"`, 'good', null, 'star');
+      if (global.Social) global.Social.title(g, t);
+    });
+    if (fresh.length && !p.title) p.title = fresh[0].id;
+    return fresh;
+  }
+
+  const Status = {
+    HEART_ON, HEART_OFF, TITLES,
+    heartScore, heartParts, checkHeart, absence,
+    earned, checkTitles,
+    titleById(id) { return TITLES.find(t => t.id === id) || null; },
+    activeTitle(p) { return p && p.title ? Status.titleById(p.title) : null; }
+  };
+
+  global.Status = Status;
+})(window);
+
+</script>
+<script>
 /* js/social.js */
 /* ==========================================================================
    social.js — the timeline.
@@ -10012,6 +10301,41 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     { k: 'pundit', tone: 'good', t: c => `You will hear people argue about where ${c.last} ranks. Ignore them. Just be glad you got to watch him.` }
   ];
 
+  /* Becoming — or ceasing to be — the one they lean on. */
+  const HEART_ON_POOL = [
+    { k: 'fantv', tone: 'good', t: c => `Say it out loud: ${c.last} IS this football club right now. Take him out of the eleven and I do not know what we are.` },
+    { k: 'journo', tone: 'good', t: c => `${c.clubName} have become a ${c.last} team. That is a compliment and a warning in the same sentence.` },
+    { k: 'stats', tone: 'info', t: c => `${c.last} has been involved in a huge share of everything ${c.clubName} have done this season. There is no plan B.` },
+    { k: 'fan', tone: 'good', t: c => `Please do not get injured. I am asking nicely. 🙏` },
+    { k: 'pundit', tone: 'info', t: c => `Every good side has one player the whole thing runs through. At ${c.clubName} it is ${c.last}, and it is not close.` }
+  ];
+  const HEART_OFF_POOL = [
+    { k: 'pundit', tone: 'info', t: c => `${c.clubName} are less dependent on ${c.last} than they were. Healthier, in the long run.` },
+    { k: 'fan', tone: 'info', t: c => `Bit worrying that we are not looking for ${c.last} every time we get the ball any more.` },
+    { k: 'fantv', tone: 'bad', t: c => `Whatever ${c.last} was last season, he is not that at the minute. Somebody has to say it.` }
+  ];
+  const ABSENT_POOL = {
+    struggle: [
+      { k: 'fantv', tone: 'bad', t: c => `No ${c.last}, no ideas. That is twice now. We are a one-man team and tonight proved it.` },
+      { k: 'fan', tone: 'bad', t: c => `Watching us without ${c.last} is like watching a band whose singer has flu.` },
+      { k: 'stats', tone: 'info', t: c => `${c.clubName} with ${c.last}: a different team. Without him: this.` },
+      { k: 'rival', tone: 'hot', t: c => `Take ${c.last} out of that side and there is genuinely nothing there. Nothing.` }
+    ],
+    rally: [
+      { k: 'fan', tone: 'good', t: c => `Every single one of them ran an extra yard for ${c.last} tonight. Loved that.` },
+      { k: 'journo', tone: 'good', t: c => `${c.clubName} were without ${c.last} and answered the only way that shuts anybody up.` },
+      { k: 'fantv', tone: 'good', t: c => `That is a squad. No ${c.last}, no excuses, no problem.` },
+      { k: 'pundit', tone: 'good', t: c => `Sides that win things can do it without their best player once in a while. That was one of those nights.` }
+    ]
+  };
+  const TITLE_POOL = [
+    { k: 'fantv', tone: 'hot', t: c => `Right, it is official. From now on he is ${c.title}. I am not taking questions.` },
+    { k: 'fan', tone: 'good', t: c => `${c.title}. THAT is the name. Put it on the back of the shirt.` },
+    { k: 'journo', tone: 'info', t: c => `They have taken to calling ${c.name} "${c.title}". Nicknames stick when they are earned, and that one is.` },
+    { k: 'rival', tone: 'hot', t: c => `"${c.title}"? Behave. He has had six good weeks.` },
+    { k: 'stats', tone: 'info', t: c => `Trending: ${c.title}. Because of course it is.` }
+  ];
+
   /* What you can post yourself, and how the room takes it. */
   const YOUR_POSTS = {
     humble: { t: c => `Not about me. The lads were unbelievable today and the travelling support were even better. On to the next one. 💙`,
@@ -10175,6 +10499,26 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       if (kind === 'joined') g.feedFolk = null;
       fire(g, pool, c, { heat: 2.2, tags: ['#' + tag(c.clubName)] });
       if (global.U.chance(0.6)) fire(g, pool, c, { heat: 1.6 });
+    },
+
+    /* becoming the one they lean on, or ceasing to be */
+    heart(g, gained) {
+      const c = ctx(g);
+      fire(g, gained ? HEART_ON_POOL : HEART_OFF_POOL, c,
+        { heat: gained ? 2.4 : 1.4, tags: gained ? ['#HeartOf' + tag(c.clubName)] : [] });
+    },
+
+    /* a week they had to do it without you */
+    absent(g, rally) {
+      const c = ctx(g);
+      fire(g, rally ? ABSENT_POOL.rally : ABSENT_POOL.struggle, c, { heat: 1.6 });
+    },
+
+    /* the internet has decided what to call you */
+    title(g, t) {
+      const c = ctx(g, { title: t.name });
+      fire(g, TITLE_POOL, c, { heat: 2.6, tags: ['#' + String(t.name).replace(/\W/g, '')] });
+      if (global.U.chance(0.6)) fire(g, TITLE_POOL, c, { heat: 1.8 });
     },
 
     /* the last day */
@@ -10579,6 +10923,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           <div class="hud-id">
             <div class="hud-name">${esc(p.firstName)} ${esc(p.lastName)}</div>
             <div class="hud-meta">${flag(p.nation, 'sm')} ${p.pos} · ${p.age}y</div>
+            ${(() => { const t = global.Status && global.Status.activeTitle(p);
+              return t ? `<div class="hud-title">${p.heart ? ico('morale') : ''} ${esc(t.name)}</div>` : ''; })()}
           </div>
           <div class="hud-club">${crest(club.name, 'crest-md')}</div>
           <div class="hud-ovr" id="hud-ovr"><b>${p.ovr}</b><span>OVR</span></div>
@@ -10856,6 +11202,42 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         <div class="dim">The marker on each bar is the ceiling you stole in the draft.
           Overall ceiling: <b>${State.potentialOverall(p)}</b>.</div>
       </div>`;
+
+      const St = global.Status;
+      if (St) {
+        const score = St.heartScore(g);
+        const has = !!p.heart;
+        html += `<div class="card heart-card${has ? ' on' : ''}">
+          <h3>${ico('morale')} Heart of the team</h3>
+          <div class="heart-top">
+            <div class="heart-num">${score}</div>
+            <div class="heart-say">${has
+              ? `This is your team. They feel it on the weeks you are not in it.`
+              : score >= St.HEART_ON - 12
+                ? `Close. Keep playing every week and keep the numbers up.`
+                : `Not yet. A side leans on somebody who plays every week and decides games.`}</div>
+          </div>
+          <div class="heart-bar"><i style="width:${Math.min(100, score)}%"></i>
+            <span class="heart-mark" style="left:${St.HEART_ON}%"></span></div>
+          <div class="heart-parts">${St.heartParts(g).map(pt => `
+            <div class="hp"><span class="hp-l">${esc(pt.label)}</span>
+              <span class="hp-bar"><i style="width:${Math.round(pt.v * 100)}%"></i></span>
+              <span class="hp-n">${esc(pt.note)}</span></div>`).join('')}</div>
+          ${has ? `<p class="dim heart-note">Earned ${p.heart.since}/${(p.heart.since + 1) % 100} at ${esc(p.heart.club)}.
+            Miss a match and they either fall apart or run themselves into the ground for you.</p>` : ''}
+        </div>`;
+
+        const active = St.activeTitle(p);
+        const got = (p.titles || []).length;
+        html += `<div class="card"><h3>${ico('star')} What they call you</h3>
+          <button class="cel-current" data-act="titles">
+            <div class="cel-ic">${ico('star')}</div>
+            <div class="cel-tx"><b>${active ? esc(active.name) : 'No name yet'}</b>
+              <span>${active ? esc('Coined by ' + active.by) : 'Do something worth naming and the timeline will name it.'}</span></div>
+            <div class="cel-go">${got ? `<span class="pill">${got}</span>` : ''}${ico('next')}</div>
+          </button>
+        </div>`;
+      }
 
       const cel = global.Pitch.celebrationById(p.celebration || 'slide');
       html += `<div class="card"><h3>${ico('celebrate')} Celebration</h3>
@@ -11794,9 +12176,48 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         case 'newsView': UI.newsView = arg; return UI.render();
         case 'socialPost': return Game.socialPost();
         case 'celebrations': return Game.celebrationMenu();
+        case 'titles': return Game.titleMenu();
         case 'matchLength': return Game.matchLengthMenu();
         case 'quit': return Game.quit();
       }
+    },
+
+    /* The names the timeline has given you. Wear whichever one you like. */
+    titleMenu() {
+      const g = State.game, p = g.player, St = global.Status;
+      const have = p.titles || [];
+      const mine = St.TITLES.filter(t => have.indexOf(t.id) >= 0);
+      const locked = St.TITLES.filter(t => have.indexOf(t.id) < 0);
+      UI.modal({
+        title: 'What they call you',
+        html: (mine.length
+            ? `<p class="muted">Tap one to wear it under your name.</p>
+               <div class="list">${mine.map(t => `
+                 <div class="item click cel-opt${t.id === p.title ? ' on' : ''}" data-title="${t.id}">
+                   <div class="ic">${ico('star')}</div>
+                   <div class="tx"><b>${U.esc(t.name)}</b><span>Coined by ${U.esc(t.by)}</span></div>
+                   <div class="cel-tick">${ico('ok')}</div></div>`).join('')}
+                 <div class="item click cel-opt${p.title ? '' : ' on'}" data-title="">
+                   <div class="ic">${ico('no')}</div>
+                   <div class="tx"><b>No name</b><span>Just your name. Let the football talk.</span></div>
+                   <div class="cel-tick">${ico('ok')}</div></div>
+               </div>`
+            : `<p class="muted">Nobody has come up with anything yet. Keep playing.</p>`)
+          + `<div class="section-title">Still out there</div>
+             <div class="list">${locked.map(t => `
+               <div class="item locked-title"><div class="ic">${ico('star')}</div>
+                 <div class="tx"><b>${U.esc(t.name)}</b><span>${U.esc(t.hint)}</span></div></div>`).join('')}</div>`,
+        actions: [{ label: 'Done', cls: 'btn-ghost' }],
+        onRender(mEl) {
+          mEl.querySelectorAll('[data-title]').forEach(el => el.onclick = () => {
+            p.title = el.dataset.title || null;
+            mEl.querySelectorAll('.cel-opt').forEach(o =>
+              o.classList.toggle('on', (o.dataset.title || '') === (p.title || '')));
+            State.save();
+            UI.render();
+          });
+        }
+      });
     },
 
     /* Pick what you do when one goes in. Tapping a routine plays it in the
@@ -12305,6 +12726,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       const fx = Scenarios.resolve(scn, index);
       const how = fx.how || (fx.goal ? 'goal' : 'saved');
       const dive = Game.keeperGuess(zone, how);
+      g.player.penTaken = (g.player.penTaken || 0) + 1;
+      if (how === 'goal') g.player.penScored = (g.player.penScored || 0) + 1;
+      else g.player.penMissed = (g.player.penMissed || 0) + 1;
       UI.verdict('', '');
       global.Pitch.kick(root, zone, dive, how, () => {
         UI.verdict(how === 'goal' ? 'GOAL' : how === 'saved' ? 'SAVED' : 'MISSED', how);

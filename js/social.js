@@ -414,6 +414,41 @@
     { k: 'pundit', tone: 'good', t: c => `You will hear people argue about where ${c.last} ranks. Ignore them. Just be glad you got to watch him.` }
   ];
 
+  /* Becoming — or ceasing to be — the one they lean on. */
+  const HEART_ON_POOL = [
+    { k: 'fantv', tone: 'good', t: c => `Say it out loud: ${c.last} IS this football club right now. Take him out of the eleven and I do not know what we are.` },
+    { k: 'journo', tone: 'good', t: c => `${c.clubName} have become a ${c.last} team. That is a compliment and a warning in the same sentence.` },
+    { k: 'stats', tone: 'info', t: c => `${c.last} has been involved in a huge share of everything ${c.clubName} have done this season. There is no plan B.` },
+    { k: 'fan', tone: 'good', t: c => `Please do not get injured. I am asking nicely. 🙏` },
+    { k: 'pundit', tone: 'info', t: c => `Every good side has one player the whole thing runs through. At ${c.clubName} it is ${c.last}, and it is not close.` }
+  ];
+  const HEART_OFF_POOL = [
+    { k: 'pundit', tone: 'info', t: c => `${c.clubName} are less dependent on ${c.last} than they were. Healthier, in the long run.` },
+    { k: 'fan', tone: 'info', t: c => `Bit worrying that we are not looking for ${c.last} every time we get the ball any more.` },
+    { k: 'fantv', tone: 'bad', t: c => `Whatever ${c.last} was last season, he is not that at the minute. Somebody has to say it.` }
+  ];
+  const ABSENT_POOL = {
+    struggle: [
+      { k: 'fantv', tone: 'bad', t: c => `No ${c.last}, no ideas. That is twice now. We are a one-man team and tonight proved it.` },
+      { k: 'fan', tone: 'bad', t: c => `Watching us without ${c.last} is like watching a band whose singer has flu.` },
+      { k: 'stats', tone: 'info', t: c => `${c.clubName} with ${c.last}: a different team. Without him: this.` },
+      { k: 'rival', tone: 'hot', t: c => `Take ${c.last} out of that side and there is genuinely nothing there. Nothing.` }
+    ],
+    rally: [
+      { k: 'fan', tone: 'good', t: c => `Every single one of them ran an extra yard for ${c.last} tonight. Loved that.` },
+      { k: 'journo', tone: 'good', t: c => `${c.clubName} were without ${c.last} and answered the only way that shuts anybody up.` },
+      { k: 'fantv', tone: 'good', t: c => `That is a squad. No ${c.last}, no excuses, no problem.` },
+      { k: 'pundit', tone: 'good', t: c => `Sides that win things can do it without their best player once in a while. That was one of those nights.` }
+    ]
+  };
+  const TITLE_POOL = [
+    { k: 'fantv', tone: 'hot', t: c => `Right, it is official. From now on he is ${c.title}. I am not taking questions.` },
+    { k: 'fan', tone: 'good', t: c => `${c.title}. THAT is the name. Put it on the back of the shirt.` },
+    { k: 'journo', tone: 'info', t: c => `They have taken to calling ${c.name} "${c.title}". Nicknames stick when they are earned, and that one is.` },
+    { k: 'rival', tone: 'hot', t: c => `"${c.title}"? Behave. He has had six good weeks.` },
+    { k: 'stats', tone: 'info', t: c => `Trending: ${c.title}. Because of course it is.` }
+  ];
+
   /* What you can post yourself, and how the room takes it. */
   const YOUR_POSTS = {
     humble: { t: c => `Not about me. The lads were unbelievable today and the travelling support were even better. On to the next one. 💙`,
@@ -577,6 +612,26 @@
       if (kind === 'joined') g.feedFolk = null;
       fire(g, pool, c, { heat: 2.2, tags: ['#' + tag(c.clubName)] });
       if (global.U.chance(0.6)) fire(g, pool, c, { heat: 1.6 });
+    },
+
+    /* becoming the one they lean on, or ceasing to be */
+    heart(g, gained) {
+      const c = ctx(g);
+      fire(g, gained ? HEART_ON_POOL : HEART_OFF_POOL, c,
+        { heat: gained ? 2.4 : 1.4, tags: gained ? ['#HeartOf' + tag(c.clubName)] : [] });
+    },
+
+    /* a week they had to do it without you */
+    absent(g, rally) {
+      const c = ctx(g);
+      fire(g, rally ? ABSENT_POOL.rally : ABSENT_POOL.struggle, c, { heat: 1.6 });
+    },
+
+    /* the internet has decided what to call you */
+    title(g, t) {
+      const c = ctx(g, { title: t.name });
+      fire(g, TITLE_POOL, c, { heat: 2.6, tags: ['#' + String(t.name).replace(/\W/g, '')] });
+      if (global.U.chance(0.6)) fire(g, TITLE_POOL, c, { heat: 1.8 });
     },
 
     /* the last day */

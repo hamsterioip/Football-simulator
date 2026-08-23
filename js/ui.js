@@ -322,6 +322,8 @@
           <div class="hud-id">
             <div class="hud-name">${esc(p.firstName)} ${esc(p.lastName)}</div>
             <div class="hud-meta">${flag(p.nation, 'sm')} ${p.pos} · ${p.age}y</div>
+            ${(() => { const t = global.Status && global.Status.activeTitle(p);
+              return t ? `<div class="hud-title">${p.heart ? ico('morale') : ''} ${esc(t.name)}</div>` : ''; })()}
           </div>
           <div class="hud-club">${crest(club.name, 'crest-md')}</div>
           <div class="hud-ovr" id="hud-ovr"><b>${p.ovr}</b><span>OVR</span></div>
@@ -599,6 +601,42 @@
         <div class="dim">The marker on each bar is the ceiling you stole in the draft.
           Overall ceiling: <b>${State.potentialOverall(p)}</b>.</div>
       </div>`;
+
+      const St = global.Status;
+      if (St) {
+        const score = St.heartScore(g);
+        const has = !!p.heart;
+        html += `<div class="card heart-card${has ? ' on' : ''}">
+          <h3>${ico('morale')} Heart of the team</h3>
+          <div class="heart-top">
+            <div class="heart-num">${score}</div>
+            <div class="heart-say">${has
+              ? `This is your team. They feel it on the weeks you are not in it.`
+              : score >= St.HEART_ON - 12
+                ? `Close. Keep playing every week and keep the numbers up.`
+                : `Not yet. A side leans on somebody who plays every week and decides games.`}</div>
+          </div>
+          <div class="heart-bar"><i style="width:${Math.min(100, score)}%"></i>
+            <span class="heart-mark" style="left:${St.HEART_ON}%"></span></div>
+          <div class="heart-parts">${St.heartParts(g).map(pt => `
+            <div class="hp"><span class="hp-l">${esc(pt.label)}</span>
+              <span class="hp-bar"><i style="width:${Math.round(pt.v * 100)}%"></i></span>
+              <span class="hp-n">${esc(pt.note)}</span></div>`).join('')}</div>
+          ${has ? `<p class="dim heart-note">Earned ${p.heart.since}/${(p.heart.since + 1) % 100} at ${esc(p.heart.club)}.
+            Miss a match and they either fall apart or run themselves into the ground for you.</p>` : ''}
+        </div>`;
+
+        const active = St.activeTitle(p);
+        const got = (p.titles || []).length;
+        html += `<div class="card"><h3>${ico('star')} What they call you</h3>
+          <button class="cel-current" data-act="titles">
+            <div class="cel-ic">${ico('star')}</div>
+            <div class="cel-tx"><b>${active ? esc(active.name) : 'No name yet'}</b>
+              <span>${active ? esc('Coined by ' + active.by) : 'Do something worth naming and the timeline will name it.'}</span></div>
+            <div class="cel-go">${got ? `<span class="pill">${got}</span>` : ''}${ico('next')}</div>
+          </button>
+        </div>`;
+      }
 
       const cel = global.Pitch.celebrationById(p.celebration || 'slide');
       html += `<div class="card"><h3>${ico('celebrate')} Celebration</h3>

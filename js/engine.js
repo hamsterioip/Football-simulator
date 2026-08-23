@@ -295,7 +295,13 @@
 
       g.lastLineup = role;
       const baseStr = intl ? Squad.nationStrength(g, myNation) : Squad.teamStrength(g);
-      const myStr = baseStr + (isHome ? 2.5 : 0) + (role === 'start' ? 0 : -1.5);
+      let myStr = baseStr + (isHome ? 2.5 : 0) + (role === 'start' ? 0 : -1.5);
+      // a side that leans on you feels it on the weeks you are not there
+      let absent = null;
+      if (!intl && global.Status) {
+        absent = global.Status.absence(g, { role });
+        if (absent) myStr += absent.swing;
+      }
       const oppStr = opp.rating + (isHome ? 0 : 2.5) + (fixture.comp === 'intl' ? 0 : 0);
 
       const m = {
@@ -310,7 +316,8 @@
                  card: null, minutes: 0, saves: 0 },
         interactiveLeft: (role === 'start' || role === 'bench') ? Match.interactiveCap(g) : 0,
         usedScenarios: [], finished: false, offAt: null, penaltyPending: false,
-        teamBoost: 0, soloBoost: false, shootout: null, injuredDuring: false
+        teamBoost: 0, soloBoost: false, shootout: null, injuredDuring: false,
+        absent
       };
 
       if (role === 'suspended' || role === 'injured' || role === 'out') {
@@ -592,6 +599,11 @@
           m.penaltyPending = false;
           const taker = Match.isPenaltyTaker(g) && m.role !== 'out' && !m.sentOff;
           const scored = U.chance(taker ? 0.78 : 0.76);
+          if (taker) {
+            g.player.penTaken = (g.player.penTaken || 0) + 1;
+            if (scored) g.player.penScored = (g.player.penScored || 0) + 1;
+            else g.player.penMissed = (g.player.penMissed || 0) + 1;
+          }
           if (scored) {
             m.us++;
             if (taker) { m.stats.goals++; g.player.season.goals++; g.player.career.goals++; m.stats.rating += 1.2; }
@@ -721,6 +733,7 @@
         State.addReputation(p, repGain);
         Press.matchHeadline(g, m);
         Press.afterMatch(g, m);
+        if (global.Status) { global.Status.checkHeart(g); global.Status.checkTitles(g); }
         Press.monthly(g, m);
         if (global.Social) global.Social.afterMatch(g, m, true);
         // injury from fatigue
@@ -735,6 +748,13 @@
         p.fitness = U.clamp(p.fitness + 12, 0, 100);
         p.form = U.clamp(p.form - 2, 0, 100);
         if (m.role === 'out') p.morale = U.clamp(p.morale - 3, 0, 100);
+        if (m.absent) {
+          State.news(m.absent.line, m.absent.rally ? 'good' : 'bad', null,
+            m.absent.rally ? 'squad' : 'manager');
+          if (global.Social) global.Social.absent(g, m.absent.rally);
+          // they proved a point, or they proved yours
+          p.morale = U.clamp(p.morale + (m.absent.rally ? -2 : 3), 0, 100);
+        }
         if (global.Social) global.Social.afterMatch(g, m, false);
       }
 
@@ -1120,6 +1140,7 @@
         State.news(`${p.lastName} named ${a}`, 'good');
       });
       Press.seasonHeadline(g, results);
+      if (global.Status) { global.Status.checkHeart(g); global.Status.checkTitles(g); }
       if (global.Social) global.Social.season(g, results);
 
       // development, then re-take the peaks so they include this summer's growth
