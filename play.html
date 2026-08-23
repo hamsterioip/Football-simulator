@@ -160,6 +160,32 @@ button,.choice,.item.click,.opt,.club,.tabbar button{touch-action:manipulation;u
 .start-feats span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);
   background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .start-feats .ic{color:var(--green)}
+.start-feats .feat-new{background:rgba(42,230,126,.12);border-color:rgba(42,230,126,.4);color:var(--green)}
+.start-feats .feat-new::after{content:'NEW';font-size:8.5px;font-weight:900;letter-spacing:.6px;
+  background:var(--green);color:#06210f;border-radius:4px;padding:1px 4px;margin-left:2px}
+
+/* the build stamp: always says which version you are looking at */
+.start-ver{display:inline-flex;align-items:center;gap:7px;margin:20px auto 0;
+  background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:999px;
+  padding:6px 13px;font:600 11.5px/1 inherit;font-family:inherit;color:var(--dim);
+  cursor:pointer;transition:.15s}
+.start-ver:hover,.start-ver:focus{color:var(--txt);border-color:rgba(42,230,126,.45);
+  background:rgba(42,230,126,.09);outline:none}
+.ver-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:0 0 7px;
+  box-shadow:0 0 0 3px rgba(42,230,126,.18);animation:verpulse 2.4s ease-in-out infinite}
+@keyframes verpulse{0%,100%{box-shadow:0 0 0 3px rgba(42,230,126,.18)}
+  50%{box-shadow:0 0 0 6px rgba(42,230,126,.05)}}
+.ver-more{color:var(--green);font-weight:800;border-left:1px solid var(--line);padding-left:8px}
+
+/* the changelog */
+.rel{margin-top:14px}
+.rel-h{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px}
+.rel-h span{color:var(--dim);font-size:11px}
+.rel-h em{font-style:normal;font-size:9.5px;font-weight:900;letter-spacing:.6px;
+  background:var(--green);color:#06210f;border-radius:4px;padding:2px 6px}
+.rel.old{opacity:.65}
+.rel-list{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:5px}
+.rel-list li{font-size:12.5px;color:var(--muted);line-height:1.45}
 
 /* ---------- create ---------- */
 .create-wrap{margin:0 auto;width:100%;max-width:720px;padding:22px 20px 24px;
@@ -890,7 +916,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       <span><svg class="ic"><use href="#i-transfer"/></svg> Transfers</span>
       <span><svg class="ic"><use href="#i-trophy"/></svg> Trophies</span>
       <span><svg class="ic"><use href="#i-nation"/></svg> International football</span>
+      <span class="feat-new"><svg class="ic"><use href="#i-squad"/></svg> Team sheets</span>
+      <span class="feat-new"><svg class="ic"><use href="#i-trophy"/></svg> Trophy lifts</span>
     </div>
+    <button class="start-ver" id="btn-ver" type="button">
+      <span class="ver-dot"></span><span id="ver-text">v—</span>
+      <span class="ver-more">What's new</span>
+    </button>
   </div>
   <div class="start-marquee bottom" aria-hidden="true"><div class="mq-track rev" id="mq-bot"></div></div>
 </div>
@@ -2197,7 +2229,30 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       attrs: { pace: 78, gk: 89, passing: 88, dribbling: 70, defending: 74, physical: 80, flair: 72, weakFoot: 92 } }
   ];
 
+  /* Bump VERSION and add a CHANGELOG entry with every release — the start
+     screen shows it, so you can always tell which build you are looking at. */
+  const VERSION = '1.3';
+  const BUILD = '23 August 2026';
+  const CHANGELOG = [
+    { v: '1.3', when: '23 Aug', items: [
+      'Rebuilt penalties: a floodlit goalmouth in perspective, a boot that swings in and strikes, a keeper who springs, and netting that bulges where the ball hits it',
+      'Score one and the scorer wheels away — knee slide, ticker tape, and a stand that will not sit down',
+      'Win a cup and the team lifts it: the captain hoists the real trophy, confetti everywhere',
+      'International matches are played by your country, not your club — England line up with Pickford, Rice, Bellingham and Kane',
+      'Every match opens on both team sheets: their eleven against yours, rated player by player'
+    ] },
+    { v: '1.2', when: '22 Aug', items: [
+      'The Feed: fans, rival fans, reporters and pundits arguing about you, with replies',
+      'Trophy cabinet organised by competition, with the real cups',
+      'Real club badges throughout, and the matchday night theme'
+    ] },
+    { v: '1.1', when: '21 Aug', items: [
+      'Playable eras, the time skip, and the secret settings panel'
+    ] }
+  ];
+
   const CONFIG = {
+    VERSION, BUILD, CHANGELOG,
     SEASON_START_YEAR: 2026,
     LEAGUE_SIZE: 12,
     RETIRE_MIN_AGE: 28,
@@ -11122,6 +11177,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       $('create-next').onclick = () => Game.wizardNext();
       $('modal-back').onclick = e => { if (e.target === $('modal-back')) { /* click-off does nothing */ } };
       $('btn-continue').disabled = !State.hasSave();
+      // the build stamp, so it is obvious which version you are playing
+      const vt = document.getElementById('ver-text');
+      if (vt) vt.textContent = 'v' + D.CONFIG.VERSION + ' · ' + D.CONFIG.BUILD;
+      const vb = document.getElementById('btn-ver');
+      if (vb) vb.onclick = () => Game.whatsNew();
       Game.startMarquee();
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') UI.closeModal();
@@ -11452,6 +11512,20 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         case 'matchLength': return Game.matchLengthMenu();
         case 'quit': return Game.quit();
       }
+    },
+
+    /* What changed in this build, and the ones before it. */
+    whatsNew() {
+      const log = D.CONFIG.CHANGELOG || [];
+      UI.modal({
+        title: 'What\'s new',
+        html: `<p class="muted">You are playing <b>v${U.esc(D.CONFIG.VERSION)}</b>, built ${U.esc(D.CONFIG.BUILD)}.</p>` +
+          log.map((rel, i) => `<div class="rel${i ? ' old' : ''}">
+            <div class="rel-h"><b>v${U.esc(rel.v)}</b><span>${U.esc(rel.when)}</span>${i ? '' : '<em>this build</em>'}</div>
+            <ul class="rel-list">${rel.items.map(t => `<li>${U.esc(t)}</li>`).join('')}</ul>
+          </div>`).join(''),
+        actions: [{ label: 'Close', cls: 'btn-ghost' }]
+      });
     },
 
     /* Your own account. One post a week, and the room answers back. */

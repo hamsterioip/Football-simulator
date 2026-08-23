@@ -145,6 +145,32 @@ button,.choice,.item.click,.opt,.club,.tabbar button{touch-action:manipulation;u
 .start-feats span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);
   background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .start-feats .ic{color:var(--green)}
+.start-feats .feat-new{background:rgba(42,230,126,.12);border-color:rgba(42,230,126,.4);color:var(--green)}
+.start-feats .feat-new::after{content:'NEW';font-size:8.5px;font-weight:900;letter-spacing:.6px;
+  background:var(--green);color:#06210f;border-radius:4px;padding:1px 4px;margin-left:2px}
+
+/* the build stamp: always says which version you are looking at */
+.start-ver{display:inline-flex;align-items:center;gap:7px;margin:20px auto 0;
+  background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:999px;
+  padding:6px 13px;font:600 11.5px/1 inherit;font-family:inherit;color:var(--dim);
+  cursor:pointer;transition:.15s}
+.start-ver:hover,.start-ver:focus{color:var(--txt);border-color:rgba(42,230,126,.45);
+  background:rgba(42,230,126,.09);outline:none}
+.ver-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:0 0 7px;
+  box-shadow:0 0 0 3px rgba(42,230,126,.18);animation:verpulse 2.4s ease-in-out infinite}
+@keyframes verpulse{0%,100%{box-shadow:0 0 0 3px rgba(42,230,126,.18)}
+  50%{box-shadow:0 0 0 6px rgba(42,230,126,.05)}}
+.ver-more{color:var(--green);font-weight:800;border-left:1px solid var(--line);padding-left:8px}
+
+/* the changelog */
+.rel{margin-top:14px}
+.rel-h{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px}
+.rel-h span{color:var(--dim);font-size:11px}
+.rel-h em{font-style:normal;font-size:9.5px;font-weight:900;letter-spacing:.6px;
+  background:var(--green);color:#06210f;border-radius:4px;padding:2px 6px}
+.rel.old{opacity:.65}
+.rel-list{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:5px}
+.rel-list li{font-size:12.5px;color:var(--muted);line-height:1.45}
 
 /* ---------- create ---------- */
 .create-wrap{margin:0 auto;width:100%;max-width:720px;padding:22px 20px 24px;

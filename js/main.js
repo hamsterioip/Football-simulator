@@ -54,6 +54,11 @@
       $('create-next').onclick = () => Game.wizardNext();
       $('modal-back').onclick = e => { if (e.target === $('modal-back')) { /* click-off does nothing */ } };
       $('btn-continue').disabled = !State.hasSave();
+      // the build stamp, so it is obvious which version you are playing
+      const vt = document.getElementById('ver-text');
+      if (vt) vt.textContent = 'v' + D.CONFIG.VERSION + ' · ' + D.CONFIG.BUILD;
+      const vb = document.getElementById('btn-ver');
+      if (vb) vb.onclick = () => Game.whatsNew();
       Game.startMarquee();
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') UI.closeModal();
@@ -384,6 +389,20 @@
         case 'matchLength': return Game.matchLengthMenu();
         case 'quit': return Game.quit();
       }
+    },
+
+    /* What changed in this build, and the ones before it. */
+    whatsNew() {
+      const log = D.CONFIG.CHANGELOG || [];
+      UI.modal({
+        title: 'What\'s new',
+        html: `<p class="muted">You are playing <b>v${U.esc(D.CONFIG.VERSION)}</b>, built ${U.esc(D.CONFIG.BUILD)}.</p>` +
+          log.map((rel, i) => `<div class="rel${i ? ' old' : ''}">
+            <div class="rel-h"><b>v${U.esc(rel.v)}</b><span>${U.esc(rel.when)}</span>${i ? '' : '<em>this build</em>'}</div>
+            <ul class="rel-list">${rel.items.map(t => `<li>${U.esc(t)}</li>`).join('')}</ul>
+          </div>`).join(''),
+        actions: [{ label: 'Close', cls: 'btn-ghost' }]
+      });
     },
 
     /* Your own account. One post a week, and the room answers back. */

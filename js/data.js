@@ -1210,7 +1210,30 @@
       attrs: { pace: 78, gk: 89, passing: 88, dribbling: 70, defending: 74, physical: 80, flair: 72, weakFoot: 92 } }
   ];
 
+  /* Bump VERSION and add a CHANGELOG entry with every release — the start
+     screen shows it, so you can always tell which build you are looking at. */
+  const VERSION = '1.3';
+  const BUILD = '23 August 2026';
+  const CHANGELOG = [
+    { v: '1.3', when: '23 Aug', items: [
+      'Rebuilt penalties: a floodlit goalmouth in perspective, a boot that swings in and strikes, a keeper who springs, and netting that bulges where the ball hits it',
+      'Score one and the scorer wheels away — knee slide, ticker tape, and a stand that will not sit down',
+      'Win a cup and the team lifts it: the captain hoists the real trophy, confetti everywhere',
+      'International matches are played by your country, not your club — England line up with Pickford, Rice, Bellingham and Kane',
+      'Every match opens on both team sheets: their eleven against yours, rated player by player'
+    ] },
+    { v: '1.2', when: '22 Aug', items: [
+      'The Feed: fans, rival fans, reporters and pundits arguing about you, with replies',
+      'Trophy cabinet organised by competition, with the real cups',
+      'Real club badges throughout, and the matchday night theme'
+    ] },
+    { v: '1.1', when: '21 Aug', items: [
+      'Playable eras, the time skip, and the secret settings panel'
+    ] }
+  ];
+
   const CONFIG = {
+    VERSION, BUILD, CHANGELOG,
     SEASON_START_YEAR: 2026,
     LEAGUE_SIZE: 12,
     RETIRE_MIN_AGE: 28,
