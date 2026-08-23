@@ -1212,9 +1212,12 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.3';
+  const VERSION = '1.3.1';
   const BUILD = '23 August 2026';
   const CHANGELOG = [
+    { v: '1.3.1', when: '23 Aug', items: [
+      'First build published by GitHub Actions — if you can read this version number, the deploy is working'
+    ] },
     { v: '1.3', when: '23 Aug', items: [
       'Rebuilt penalties: a floodlit goalmouth in perspective, a boot that swings in and strikes, a keeper who springs, and netting that bulges where the ball hits it',
       'Score one and the scorer wheels away — knee slide, ticker tape, and a stand that will not sit down',

@@ -1,10 +1,12 @@
 # Publishes the game to GitHub Pages.
 #
-# The job is skipped while the repository is private, because GitHub Pages for
-# private repositories needs a paid plan. Make the repository public and the
-# next push (or a manual run from the Actions tab) puts the game online at
-# https://<owner>.github.io/<repo>/ — no repository settings to visit, since
-# configure-pages enables Pages through the API on the first run.
+# Every push to the default branch redeploys https://<owner>.github.io/<repo>/,
+# and the Actions tab has a Run workflow button for a manual redeploy.
+#
+# This needs Settings -> Pages -> Build and deployment -> Source set to
+# "GitHub Actions". On "Deploy from a branch" the github-pages environment
+# refuses deployments from here and the job dies in a couple of seconds with
+# no step logs at all, which is a confusing way to find out.
 name: Deploy to GitHub Pages
 
 on:
@@ -23,7 +25,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
