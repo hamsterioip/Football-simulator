@@ -880,7 +880,7 @@
           UI.renderKeeperCall(r.scenario, (i, root) => Game.keeperCall(r.scenario, i, root, () => Game.runMatch()));
           return;
         }
-        UI.renderScenario(r.scenario, i => Game.choose(r.scenario, i));
+        UI.renderScenario(r.scenario, (i, root) => Game.choose(r.scenario, i, root));
         return;
       }
       if (r.type === 'shootout') { Game.startShootout(); return; }
@@ -946,7 +946,8 @@
       });
     },
 
-    choose(scn, index) {
+    choose(scn, index, root, next) {
+      next = next || (() => Game.runMatch());
       const g = State.game, m = Game.match;
       const opt = scn.options[index];
       const fx = Scenarios.resolve(scn, index);
@@ -959,7 +960,14 @@
         if (o === 'injury') UI.toast('You are injured', 'bad');
       });
       if (fx.goal) UI.toast('GOAL!', 'gold');
-      UI.renderMatchButtons([{ label: 'Play on ▶', onClick: () => Game.runMatch() }]);
+      // picking the signature celebration plays it out on the goal view
+      const signature = scn.id === 'celebration' && opt.label === 'Signature celebration' && root;
+      const playOn = () => UI.renderMatchButtons([{ label: 'Play on ▶', onClick: next }]);
+      if (signature) {
+        $('match-action').querySelectorAll('.choice').forEach(c => c.disabled = true);
+        global.Pitch.celebrate(root, { style: g.player.celebration || 'slide',
+          side: U.chance(0.5) ? 'left' : 'right' }, () => setTimeout(playOn, 250));
+      } else playOn();
     },
 
     simRest() {
@@ -1358,8 +1366,7 @@
           UI.renderKeeperCall(r.scenario, (i, root) => Game.keeperCall(r.scenario, i, root, () => Game.runMatchIntl()));
           return;
         }
-        UI.renderScenario(r.scenario, i => { Game.choose(r.scenario, i);
-          UI.renderMatchButtons([{ label: 'Play on ▶', onClick: () => Game.runMatchIntl() }]); });
+        UI.renderScenario(r.scenario, (i, root) => Game.choose(r.scenario, i, root, () => Game.runMatchIntl()));
         return;
       }
       if (r.type === 'shootout') { Game.startShootout(); return; }
