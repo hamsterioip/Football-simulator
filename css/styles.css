@@ -603,34 +603,104 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .rob-chip .ic{width:13px;height:13px}
 
 /* ---------- the goalmouth ---------- */
-.goal-view{width:100%;height:auto;display:block;border-radius:12px;
-  background:linear-gradient(180deg,#0a1c14,#0d2a1e);border:1px solid var(--line)}
-.pg-sky{fill:#0a1a12}
-.pg-box{fill:none;stroke:rgba(255,255,255,.22);stroke-width:1.5}
-.pg-net line{stroke:rgba(255,255,255,.17);stroke-width:.7}
-.pg-frame rect{fill:#f2f6ff}
-.pg-head{fill:#f0c9a0}
+.goal-view{width:100%;height:auto;display:block;border-radius:14px;overflow:hidden;
+  background:#050b12;border:1px solid var(--line);
+  box-shadow:0 10px 30px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.03) inset}
+.pg-cam{transform-origin:160px 150px;will-change:transform}
+
+/* stand, floodlights, hoarding */
+.pg-flash{fill:#fff;opacity:0;animation:pgflash 4.6s infinite}
+@keyframes pgflash{0%,94%{opacity:0}96%{opacity:.95}100%{opacity:0}}
+.pg-hoard{fill:#0d1a26;stroke:rgba(255,255,255,.06)}
+.pg-hoard-lip{fill:rgba(42,230,126,.32)}
+.pg-stand{will-change:transform;opacity:.62}
+
+/* grass */
+.pg-stripes path{fill:rgba(255,255,255,.035)}
+.pg-lines path{fill:none;stroke:rgba(255,255,255,.34);stroke-width:1.4;stroke-linecap:round}
+.pg-spot{fill:rgba(255,255,255,.75)}
+
+/* the goal: depth first, then the mouth */
+.pg-inside{fill:rgba(3,10,8,.72)}
+.pg-inside-dark{fill:rgba(2,7,6,.85)}
+.pg-netdepth{fill:url(#pg-meshd)}
+.pg-netback{fill:url(#pg-meshd)}
+.pg-net rect{fill:url(#pg-mesh)}
+.pg-net{transform-origin:160px 106px;will-change:transform}
+.pg-frame rect{filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+
+/* keeper */
+.pg-keeper{will-change:transform}
+.pg-keeper-body{transform-origin:0 -12px}
+.pg-kshadow{transform-origin:0 0}
+.pg-kshadow{fill:rgba(0,0,0,.45)}
 .pg-kit{fill:#2ae67e}
-.pg-arm{fill:#2ae67e}
-.pg-leg{fill:#123}
-.pg-shadow{fill:rgba(0,0,0,.35)}
-.pg-ball-o{fill:#fff;stroke:#0b1220;stroke-width:1}
+.pg-kit-trim{fill:rgba(255,255,255,.5)}
+.pg-sleeve{fill:#2ae67e}
+.pg-glove{fill:#ffe07a;stroke:rgba(0,0,0,.3);stroke-width:.6}
+.pg-num{fill:rgba(255,255,255,.85);font:800 9px 'Barlow Condensed',system-ui,sans-serif}
+.pg-head{fill:#e8b98d}
+.pg-hair{fill:#2b1d13}
+.pg-leg{fill:#0e2033}
+.pg-arm-l{transform-origin:-9px -30px}
+.pg-arm-r{transform-origin:9px -30px}
+
+/* ball, its shadow and its trail */
+.pg-ball{will-change:transform}
+.pg-ball-in{transform-origin:0 0}
+.pg-netpush{fill:url(#pg-mesh)}
+.pg-ball-o{fill:#fff;stroke:rgba(6,12,20,.85);stroke-width:.9}
 .pg-ball-p{fill:#0b1220}
-.pg-keeper,.pg-ball{will-change:transform}
-.pz rect{fill:rgba(255,255,255,.05);stroke:rgba(255,255,255,.28);stroke-width:1;
-  stroke-dasharray:4 4;cursor:pointer;transition:.12s}
-.pz-dot{fill:rgba(255,255,255,.35);pointer-events:none;transition:.12s}
-.pz:hover rect,.pz:focus rect{fill:rgba(42,230,126,.22);stroke:var(--green);stroke-dasharray:none}
-.pz:hover .pz-dot,.pz:focus .pz-dot{fill:var(--green);r:5}
+.pg-ball-s{stroke:#0b1220;stroke-width:1.1;fill:none;stroke-linecap:round}
+.pg-shadow{fill:rgba(0,0,0,.5)}
+.pg-gh{fill:#fff;opacity:0}
+
+/* the boot that strikes it */
+.pg-boot{opacity:0}
+.pg-thigh,.pg-shin{fill:#132842}
+.pg-sock{fill:#0b1a2c}
+.pg-cleat{fill:#f5f7fb;stroke:rgba(0,0,0,.3);stroke-width:.6}
+
+/* contact and result */
+.pg-ring{stroke:rgba(255,255,255,.8);stroke-width:1.4;opacity:0}
+.pg-bit{fill:rgba(150,220,180,.8);opacity:0}
+.pg-wash{color:var(--green);pointer-events:none}
+.goal-view.is-saved .pg-wash,.goal-view.is-missed .pg-wash{color:var(--red)}
+.goal-view.is-goal .pg-net rect{fill:url(#pg-mesh);filter:drop-shadow(0 0 4px rgba(42,230,126,.7))}
+.goal-view.is-saved .pg-glove{fill:#fff;filter:drop-shadow(0 0 5px rgba(255,255,255,.9))}
+
+/* the six targets */
+.pz{cursor:pointer}
+.pz rect{fill:transparent;stroke:transparent;stroke-width:1;transition:.14s}
+.pz-ring{fill:none;stroke:rgba(255,255,255,.3);stroke-width:1.2;transition:.14s}
+.pz-dot{fill:rgba(255,255,255,.5);transition:.14s}
+.pz-cross{stroke:rgba(255,255,255,.35);stroke-width:1.2;stroke-linecap:round;opacity:0;transition:.14s}
+.pz-mark{transform-box:view-box}
+.pz:hover rect,.pz:focus rect,.pz:active rect{fill:rgba(42,230,126,.10);stroke:rgba(42,230,126,.45)}
+.pz:hover .pz-ring,.pz:focus .pz-ring{stroke:var(--green);stroke-width:1.8}
+.pz:hover .pz-dot,.pz:focus .pz-dot{fill:var(--green)}
+.pz:hover .pz-cross,.pz:focus .pz-cross{stroke:var(--green);opacity:1}
 .pz:focus{outline:none}
-.goal-view.is-goal .pg-net line{stroke:rgba(42,230,126,.5)}
-.goal-view.is-saved .pg-kit,.goal-view.is-saved .pg-arm{fill:#ffd977}
+.goal-view.is-live .pg-targets{pointer-events:none}
+@media (prefers-reduced-motion: no-preference){
+  .pz-ring{animation:pzpulse 2.4s ease-in-out infinite}
+  .pz:nth-of-type(2n) .pz-ring{animation-delay:.4s}
+  .pz:nth-of-type(3n) .pz-ring{animation-delay:.8s}
+}
+@keyframes pzpulse{0%,100%{opacity:.55;r:7.5}50%{opacity:1;r:9}}
+
 .goal-wrap{margin-bottom:10px}
 .goal-hint{font-size:12.5px;color:var(--muted);text-align:center;margin:8px 0 0}
-.goal-verdict{text-align:center;font-weight:800;font-size:16px;margin-top:9px;min-height:20px}
-.goal-verdict.goal{color:var(--green)}
-.goal-verdict.saved,.goal-verdict.missed{color:var(--red)}
-@media (max-height:720px){ .goal-view{max-height:34vh} }
+.goal-verdict{text-align:center;font-weight:800;font-size:20px;letter-spacing:1.5px;
+  margin-top:9px;min-height:24px;font-family:'Barlow Condensed',system-ui,sans-serif;text-transform:uppercase}
+.goal-verdict.goal{color:var(--green);text-shadow:0 0 18px rgba(42,230,126,.55)}
+.goal-verdict.saved,.goal-verdict.missed{color:var(--red);text-shadow:0 0 18px rgba(255,90,106,.4)}
+.goal-verdict:not(:empty){animation:verdictpop .32s cubic-bezier(.2,1.4,.4,1)}
+@keyframes verdictpop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+/* on a short screen shrink the whole card, not just its height — an SVG
+   with a capped height would letterbox itself inside a full-width box */
+@media (max-height:760px){ .goal-wrap{max-width:calc(34vh * 1.524);margin-left:auto;margin-right:auto} }
+@media (max-height:640px){ .goal-wrap{max-width:calc(30vh * 1.524)} }
 
 /* ---------- skipping ahead ---------- */
 .skip-line{display:flex;align-items:flex-start;gap:9px;font-size:14px;color:var(--txt);line-height:1.45}
