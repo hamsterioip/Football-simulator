@@ -8,6 +8,9 @@
   const esc = U.esc;
   const ico = (name, cls, label) => global.Icons.svg(name, cls, label);
   const flag = (country, cls) => global.Icons.flag(country, cls);
+  // goalkeeper first, then back to front, so a team sheet reads like a team sheet
+  const POS_RANK = { GK: 0, RB: 1, CB: 2, LB: 3, CDM: 4, CM: 5, CAM: 6, RW: 7, LW: 8, ST: 9 };
+  const POS_ORDER = pos => (POS_RANK[pos] == null ? 5 : POS_RANK[pos]);
   const crest = (clubName, cls) => global.Crest.svg(clubName, cls);
 
   const UI = {
@@ -951,9 +954,9 @@
       $('scoreboard').innerHTML = `
         <div class="sb-comp">${esc(m.compLabel || 'Match')}</div>
         <div class="sb-main">
-          <div class="sb-team">${global.Crest.svg(homeName, 'crest-md')}${esc(homeName)}</div>
+          <div class="sb-team">${UI.teamBadge(homeName, !!m.intl, 'crest-md')}${esc(homeName)}</div>
           <div class="sb-score">${homeScore} – ${awayScore}</div>
-          <div class="sb-team">${global.Crest.svg(awayName, 'crest-md')}${esc(awayName)}</div>
+          <div class="sb-team">${UI.teamBadge(awayName, !!m.intl, 'crest-md')}${esc(awayName)}</div>
         </div>
         <div class="sb-min">${m.finished ? 'Full time' : m.minute + "'"}</div>
         <div class="sb-you">${chips.join('')}</div>`;
@@ -1021,6 +1024,98 @@
       if (el) { el.textContent = text; el.className = 'goal-verdict ' + (kind || ''); }
       const hint = document.querySelector('.goal-hint');
       if (hint && text) hint.style.display = 'none';
+    },
+
+    /* A club badge, or a flag when the team is a country. */
+    teamBadge(name, nation, cls) {
+      return nation ? flag(name, cls || 'crest-md') : global.Crest.svg(name, cls || 'crest-md');
+    },
+
+    /* Both team sheets, side by side: who is playing, how good they are, and
+       how the two elevens compare line by line. */
+    renderTeamSheet(m, buttons) {
+      const g = State.game, p = g.player;
+      const Sq = Engine.Squad;
+      const mine = Sq.forMatch(g, m), theirs = Sq.opponent(g, m);
+      const us = Sq.lines(mine), them = Sq.lines(theirs);
+      const meRow = { shirt: p.shirt, pos: p.pos, name: p.firstName + ' ' + p.lastName,
+                      ovr: p.ovr, you: true, captain: p.captain };
+      // you take a starting place in the eleven the game says you are in
+      const others = mine.slice(0, m.role === 'start' ? 10 : 11).map(sq =>
+        sq.shirt === p.shirt ? Object.assign({}, sq, { shirt: sq.shirt + 20 }) : sq);
+      const myXI = (m.role === 'start' ? [meRow].concat(others) : others)
+        .sort((a, b) => POS_ORDER(a.pos) - POS_ORDER(b.pos));
+      const theirXI = theirs.slice(0, 11).sort((a, b) => POS_ORDER(a.pos) - POS_ORDER(b.pos));
+
+      const club = State.club(p.club);
+      const myForm = m.intl ? '' : (club.form || []).slice(-5).join('');
+      const oppClub = m.fixture && m.fixture.oppId ? State.club(m.fixture.oppId) : null;
+      const oppForm = oppClub ? (oppClub.form || []).slice(-5).join('') : '';
+
+      const col = (name, isNation, lines, xi, form, side) => `
+        <div class="ts-col ts-${side}">
+          <div class="ts-badge">${UI.teamBadge(name, isNation, 'crest-lg')}</div>
+          <div class="ts-name">${esc(name)}</div>
+          <div class="ts-ovr">${lines.ovr}</div>
+          ${form ? `<div class="ts-form">${form.split('').map(r =>
+            `<span class="fm fm-${r}">${r}</span>`).join('')}</div>` : '<div class="ts-form"></div>'}
+          <div class="ts-xi">${xi.map(s => `
+            <div class="ts-p${s.you ? ' you' : ''}">
+              <span class="ts-sh">${s.shirt || ''}</span>
+              <span class="ts-pos">${esc(s.pos)}</span>
+              <span class="ts-n">${esc(UI.shortName(s.name))}${s.captain ? ' <b class="ts-c">C</b>' : ''}</span>
+              <span class="ts-o ${s.ovr >= 85 ? 'hi' : s.ovr >= 75 ? 'mid' : ''}">${s.ovr}</span>
+            </div>`).join('')}</div>
+        </div>`;
+
+      const bar = (label, a, b) => {
+        const total = Math.max(a + b, 1);
+        return `<div class="ts-cmp">
+          <span class="ts-v ${a >= b ? 'win' : ''}">${a}</span>
+          <div class="ts-bar ${a >= b ? 'lead' : ''}"><i style="width:${(a / total * 100).toFixed(1)}%"></i></div>
+          <span class="ts-lab">${label}</span>
+          <div class="ts-bar rev ${b > a ? 'lead' : ''}"><i style="width:${(b / total * 100).toFixed(1)}%"></i></div>
+          <span class="ts-v ${b > a ? 'win' : ''}">${b}</span>
+        </div>`;
+      };
+
+      // odds straight from the two elevens, so they agree with the sheet above
+      // (and so they work for internationals, which have no club fixture)
+      const diff = (us.ovr - them.ovr) + (m.isHome ? 2.5 : -2.5);
+      const la = U.clamp(1.35 + diff * 0.045, 0.25, 4), lb = U.clamp(1.35 - diff * 0.045, 0.25, 4);
+      let w = 0, d = 0; const N = 600;
+      for (let i = 0; i < N; i++) { const a = U.poisson(la), b = U.poisson(lb);
+        if (a > b) w++; else if (a === b) d++; }
+      const odds = { win: Math.round(w / N * 100), draw: Math.round(d / N * 100),
+                     lose: Math.max(0, 100 - Math.round(w / N * 100) - Math.round(d / N * 100)) };
+      $('match-action').innerHTML = `<div class="teamsheet">
+        <div class="ts-comp">${ico(m.intl ? 'nation' : 'stadium')} ${esc(m.compLabel || 'Match')}
+          <span class="dim">· ${m.isHome ? 'Home' : 'Away'}</span></div>
+        <div class="ts-cols">
+          ${col(m.myName, !!m.intl, us, myXI, myForm, 'me')}
+          <div class="ts-v-sep"><span>V</span></div>
+          ${col(m.oppName, !!m.intl, them, theirXI, oppForm, 'them')}
+        </div>
+        <div class="ts-cmps">
+          ${bar('Attack', us.att, them.att)}
+          ${bar('Midfield', us.mid, them.mid)}
+          ${bar('Defence', us.def, them.def)}
+        </div>
+        ${`<div class="ts-odds">
+          <span><b>${odds.win}%</b> win</span><span><b>${odds.draw}%</b> draw</span><span><b>${odds.lose}%</b> lose</span>
+        </div>`}
+        <div class="row ts-actions">${buttons.map((b, i) =>
+          `<button class="btn ${b.cls || 'btn-primary'} grow" data-tsb="${i}">${b.label}</button>`).join('')}</div>
+      </div>`;
+      $('match-action').querySelectorAll('[data-tsb]').forEach(b => {
+        b.onclick = () => buttons[+b.dataset.tsb].onClick();
+      });
+    },
+
+    shortName(name) {
+      const parts = String(name).trim().split(/\s+/);
+      if (parts.length === 1) return parts[0];
+      return parts[0][0] + '. ' + parts.slice(1).join(' ');
     },
 
     renderMatchButtons(buttons) {

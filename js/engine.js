@@ -22,9 +22,12 @@
         const starter = i < 11;
         let ovr = Math.round(U.clamp(R + (starter ? U.gauss(1, 3.5) : U.gauss(-7, 4)), 40, 96));
         if (golden) ovr = Math.round(U.clamp(Math.max(ovr, R - 3) + U.gauss(2, 2.5), 78, 95));
+        // no two squad-mates share a surname either — it reads badly on a team sheet
+        const last = n => n.split(' ').slice(-1)[0];
         let who = global.Names.person(club.country);
-        for (let t = 0; t < 8 && seen.has(who.name); t++) who = global.Names.person(club.country);
-        seen.add(who.name);
+        for (let t = 0; t < 10 && (seen.has(who.name) || seen.has(last(who.name))); t++)
+          who = global.Names.person(club.country);
+        seen.add(who.name); seen.add(last(who.name));
         return {
           id: U.id(),
           name: who.name, nation: who.nation,
@@ -73,11 +76,102 @@
       }
       return g.squad;
     },
+    /* A national team: players of that nationality — the real internationals
+       first, wherever they play their club football, then generated squad
+       members to fill it out. Nothing to do with anybody's club badge. */
+    nationalXI(g, nationName, exclude) {
+      const nat = D.NATIONS.find(n => n.name === nationName) || { name: nationName, rating: 74 };
+      const R = nat.rating;
+      const shape = FORMATION.concat(['GK', 'CB', 'CM', 'CM', 'RW', 'ST', 'LB']);
+      const seen = new Set(exclude ? [exclude] : []);
+      const squad = shape.map((pos, i) => {
+        const starter = i < 11;
+        const ovr = Math.round(U.clamp(R + (starter ? U.gauss(0, 3) : U.gauss(-6, 3.5)), 55, 96));
+        let name = global.Names.pick(nationName);
+        for (let t = 0; t < 8 && seen.has(name); t++) name = global.Names.pick(nationName);
+        seen.add(name);
+        return { id: U.id(), name, nation: nationName, pos, ovr,
+                 age: U.int(19, 34), shirt: i + 1, goals: 0, assists: 0, apps: 0, rel: 55 };
+      });
+
+      // the real players of that country, pulled out of every club in the world
+      const map = global.Eras.starMap(g.era, g.world);
+      const countrymen = [];
+      Object.keys(map).forEach(cn => (map[cn] || []).forEach(st => {
+        if (st[1] === nationName && !seen.has(st[0])) { countrymen.push(st); seen.add(st[0]); }
+      }));
+      countrymen.sort((a, b) => b[3] - a[3]);
+      const used = new Set();
+      countrymen.slice(0, 16).forEach(st => {
+        const [name, nation, pos, ovr, age] = st;
+        let idx = squad.findIndex((sq, i) => i < 11 && !used.has(i) && sq.pos === pos);
+        if (idx < 0) idx = squad.findIndex((sq, i) => !used.has(i) && sq.pos === pos);
+        if (idx < 0) return;
+        used.add(idx);
+        const sq = squad[idx];
+        sq.name = name; sq.ovr = ovr; sq.age = age; sq.star = true;
+      });
+
+      const cap = squad.slice().sort((a, b) => (b.ovr + b.age) - (a.ovr + a.age))[0];
+      if (cap) cap.captain = true;
+      return squad;
+    },
+
+    /* Your country's squad, cached until the nation or the season changes. */
+    national(g) {
+      const p = g.player;
+      const key = p.nation + '|' + g.world.year + '|' + g.era;
+      if (g.natSquad && g.natKey === key) return g.natSquad;
+      g.natSquad = Squad.nationalXI(g, p.nation, p.firstName + ' ' + p.lastName);
+      g.natKey = key;
+      return g.natSquad;
+    },
+
+    /* Whichever shirt you are wearing today. */
+    forMatch(g, m) {
+      return (m && m.comp === 'intl') ? Squad.national(g) : Squad.ensure(g);
+    },
+
+    /* The other lot: an XI for whoever you are playing, cached on the match. */
+    opponent(g, m) {
+      if (m._oppSquad) return m._oppSquad;
+      let squad;
+      if (m.comp === 'intl') {
+        squad = Squad.nationalXI(g, m.oppName);
+      } else if (m.fixture && m.fixture.oppId) {
+        squad = Squad.generate(State.club(m.fixture.oppId));
+      } else {
+        squad = Squad.generate({ name: m.oppName, rating: m.oppRating || 72, country: null });
+      }
+      squad.forEach((sq, i) => sq.shirt = i + 1);
+      m._oppSquad = squad;
+      return squad;
+    },
+
+    /* Attack / midfield / defence averages, for the pre-match comparison. */
+    lines(squad) {
+      const G = { ATT: [], MID: [], DEF: [] };
+      squad.slice(0, 11).forEach(s => {
+        const grp = s.pos === 'GK' ? 'DEF' : (D.POSITIONS[s.pos] || {}).group || 'MID';
+        (G[grp] || G.MID).push(s.ovr);
+      });
+      const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : 0;
+      return { att: avg(G.ATT), mid: avg(G.MID), def: avg(G.DEF),
+               ovr: avg(squad.slice(0, 11).map(s => s.ovr)) };
+    },
+
     rivalFor(g) {
       const p = g.player, sq = Squad.ensure(g);
       const same = sq.filter(s => s.pos === p.pos);
       if (!same.length) return null;
       return same.sort((a, b) => b.ovr - a.ovr)[0];
+    },
+    nationStrength(g, nat) {
+      const p = g.player;
+      let s = nat.rating;
+      if (g.lastLineup !== 'bench') s += (p.ovr - nat.rating) * 0.10;
+      if (State.hasTrait(p, 'leader')) s += 2;
+      return s;
     },
     teamStrength(g) {
       const club = State.club(g.player.club);
@@ -188,7 +282,9 @@
 
     create(g, fixture) {
       const p = g.player;
+      const intl = fixture.comp === 'intl';
       const myClub = State.club(p.club);
+      const myNation = D.NATIONS.find(n => n.name === p.nation) || { name: p.nation, rating: 75 };
       const opp = fixture.oppId ? State.club(fixture.oppId) : { name: fixture.oppName, rating: fixture.oppRating || 70, flag: '' };
       const isHome = fixture.home;
 
@@ -198,12 +294,14 @@
       else if (!U.chance(Match.startingChance(g))) role = U.chance(0.62) ? 'bench' : 'out';
 
       g.lastLineup = role;
-      const myStr = Squad.teamStrength(g) + (isHome ? 2.5 : 0) + (role === 'start' ? 0 : -1.5);
+      const baseStr = intl ? Squad.nationStrength(g, myNation) : Squad.teamStrength(g);
+      const myStr = baseStr + (isHome ? 2.5 : 0) + (role === 'start' ? 0 : -1.5);
       const oppStr = opp.rating + (isHome ? 0 : 2.5) + (fixture.comp === 'intl' ? 0 : 0);
 
       const m = {
-        fixture, oppName: opp.name, oppCountry: opp.country || '', oppRating: opp.rating,
-        myName: myClub.name, myCountry: myClub.country,
+        fixture, oppName: opp.name, oppCountry: intl ? opp.name : (opp.country || ''), oppRating: opp.rating,
+        myName: intl ? p.nation : myClub.name, myCountry: intl ? p.nation : myClub.country,
+        intl,
         isHome, comp: fixture.comp, compLabel: fixture.label,
         role, minute: 0, us: 0, them: 0,
         myStr, oppStr,
@@ -584,7 +682,8 @@
           m.stats.rating += 0.5; p.season.cleanSheets++; p.career.cleanSheets++;
         }
         // dressing-room chemistry nudges your rating a touch either way
-        const squadRel = Squad.ensure(g).reduce((a, s) => a + s.rel, 0) / Squad.ensure(g).length;
+        const inTeam = Squad.forMatch(g, m);
+        const squadRel = inTeam.reduce((a, s) => a + s.rel, 0) / inTeam.length;
         if (squadRel >= 65) m.stats.rating += 0.1;
         else if (squadRel <= 35) m.stats.rating -= 0.1;
         if (p.captain) m.stats.rating += 0.05;

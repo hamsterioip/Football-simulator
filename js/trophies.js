@@ -150,6 +150,8 @@
 
   const Trophies = {
     SHELVES, classify,
+    GOLD,                                   // the shared gold gradients
+    body(art) { return ART[art] || ART.medal; },
 
     svg(art, cls) {
       const body = ART[art] || ART.medal;
@@ -215,6 +217,223 @@
       return { shelves, total: all.length };
     }
   };
+
+
+  /* ==========================================================================
+     THE LIFT — you won it, so somebody has to get it above their head.
+
+     A night in a stadium: the team in a huddle on the podium, the captain
+     hoisting whatever you just won, ticker tape, flashbulbs and a stand that
+     will not sit down. Same drawn trophies as the cabinet.
+     ========================================================================== */
+  const LW = 320, LH = 220;
+
+  function lrnd(seed) {
+    let s = seed;
+    return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  }
+
+  const LIFT_CROWD = (() => {
+    const rnd = lrnd(5150501);
+    const tones = ['#1b2b45', '#22364f', '#37414f', '#14202f', '#404a5c', '#d8dee9', '#1f7a4d', '#2c1f3a'];
+    let out = '';
+    for (let row = 0; row < 16; row++) {
+      const y = 2 + row * 4.1;
+      const jitter = row % 2 ? 1.7 : 0;
+      for (let x = -2; x < LW + 4; x += 3.3) {
+        out += `<rect x="${(x + jitter).toFixed(1)}" y="${y.toFixed(1)}" width="2.2" height="2.9" rx="1"
+          fill="${tones[Math.floor(rnd() * tones.length)]}" opacity="${(0.3 + rnd() * 0.6).toFixed(2)}"/>`;
+      }
+    }
+    return out;
+  })();
+
+  /* one team-mate, seen from behind, arms up */
+  function mate(x, y, scale, kit, trim, flip) {
+    return `<g class="lf-mate" transform="translate(${x} ${y}) scale(${(flip ? -scale : scale).toFixed(2)} ${scale})">
+      <ellipse cx="0" cy="1" rx="11" ry="2.8" fill="rgba(0,0,0,.4)"/>
+      <path d="M-7 -13 h14 v9 q0 4 -3.2 4 h-2.4 q-2.2 0 -2.2 -2.8 v-5.6 h-1.9 v5.6 q0 2.8 -2.2 2.8 h-2.4 q-3.2 0 -3.2 -4 Z" fill="#0e2033"/>
+      <path d="M-8 -31 q8 -4 16 0 l2.1 18 q-10.1 3.6 -20.2 0 Z" fill="${kit}"/>
+      <path d="M-8 -31 q8 -4 16 0 l.5 3.9 q-8.5 -3 -17 0 Z" fill="${trim}"/>
+      <rect x="-21" y="-36" width="14" height="5.4" rx="2.7" fill="${kit}" transform="rotate(-38 -8 -30)"/>
+      <rect x="7" y="-36" width="14" height="5.4" rx="2.7" fill="${kit}" transform="rotate(38 8 -30)"/>
+      <circle cx="0" cy="-36" r="5.4" fill="#e8b98d"/>
+      <path d="M-5.4 -38.2 a5.4 5.4 0 0 1 10.8 0 q-5.4 -3 -10.8 0 Z" fill="#2b1d13"/>
+    </g>`;
+  }
+
+  Trophies.LIFT_W = LW;
+  Trophies.LIFT_H = LH;
+
+  /* The scene. `name` picks the trophy; `kit`/`trim` colour the shirts. */
+  Trophies.liftScene = function (name, kit, trim) {
+    const art = classify(name).art;
+    kit = kit || '#2ae67e'; trim = trim || 'rgba(255,255,255,.55)';
+    const mates = [
+      mate(58, 196, .78, kit, trim, false), mate(96, 202, .88, kit, trim, true),
+      mate(226, 202, .88, kit, trim, false), mate(264, 196, .78, kit, trim, true),
+      mate(134, 208, .95, kit, trim, true), mate(190, 208, .95, kit, trim, false)
+    ].join('');
+    return `<svg class="lift-view" viewBox="0 0 ${LW} ${LH}" role="img" aria-label="Lifting the ${esc(name)}">
+      <defs>
+        <linearGradient id="lf-night" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#050b12"/><stop offset="1" stop-color="#0a1a24"/>
+        </linearGradient>
+        <linearGradient id="lf-grass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#04231596"/><stop offset="1" stop-color="#0d5334"/>
+        </linearGradient>
+        <radialGradient id="lf-glow" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="rgba(255,220,140,.85)"/>
+          <stop offset=".55" stop-color="rgba(255,201,77,.22)"/>
+          <stop offset="1" stop-color="rgba(255,201,77,0)"/>
+        </radialGradient>
+        <radialGradient id="lf-beam" cx=".5" cy="0" r="1">
+          <stop offset="0" stop-color="rgba(220,255,235,.20)"/>
+          <stop offset="1" stop-color="rgba(220,255,235,0)"/>
+        </radialGradient>
+        ${Trophies.GOLD}
+      </defs>
+      <g class="lf-cam">
+        <rect width="${LW}" height="${LH}" fill="url(#lf-night)"/>
+        <g class="lf-stand">${LIFT_CROWD}</g>
+        <g class="lf-flashes"></g>
+        <path d="M-10 0 L80 0 L160 150 L-40 150 Z" fill="url(#lf-beam)"/>
+        <path d="M${LW - 80} 0 L${LW + 10} 0 L${LW + 40} 150 L${LW - 160} 150 Z" fill="url(#lf-beam)"/>
+        <rect x="-4" y="66" width="${LW + 8}" height="10" rx="2" fill="#0d1a26"/>
+        <rect x="-4" y="74" width="${LW + 8}" height="2" fill="rgba(255,201,77,.4)"/>
+        <rect x="0" y="76" width="${LW}" height="${LH - 76}" fill="url(#lf-grass)"/>
+
+        <circle class="lf-glow" cx="160" cy="176" r="72" fill="url(#lf-glow)" opacity="0"/>
+
+        <g class="lf-mates">${mates}</g>
+
+        <!-- the captain, and what he is holding up -->
+        <g class="lf-hero" transform="translate(160 214)">
+          <ellipse cx="0" cy="1" rx="15" ry="3.6" fill="rgba(0,0,0,.45)"/>
+          <path d="M-9 -17 h18 v12 q0 5 -4 5 h-3 q-2.8 0 -2.8 -3.5 v-7 h-2.4 v7 q0 3.5 -2.8 3.5 h-3 q-4 0 -4 -5 Z" fill="#0e2033"/>
+          <path d="M-10.5 -40 q10.5 -5 21 0 l2.7 23 q-13.2 4.6 -26.4 0 Z" fill="${kit}"/>
+          <path d="M-10.5 -40 q10.5 -5 21 0 l.7 5 q-11.2 -4 -22.4 0 Z" fill="${trim}"/>
+          <g class="lf-arm-l"><rect x="-24" y="-47" width="15" height="6" rx="3" fill="${kit}"/></g>
+          <g class="lf-arm-r"><rect x="9" y="-47" width="15" height="6" rx="3" fill="${kit}"/></g>
+          <circle cx="0" cy="-47" r="7" fill="#e8b98d"/>
+          <path d="M-7 -49.6 a7 7 0 0 1 14 0 q-7 -3.8 -14 0 Z" fill="#2b1d13"/>
+        </g>
+        <g class="lf-trophy" style="transform:translate(160px,190px) scale(.75)">
+          <g class="lf-trophy-in">
+            <g transform="translate(-20.4 -54.4) scale(.85)">${Trophies.body(art)}</g>
+          </g>
+        </g>
+
+        <g class="lf-tape"></g>
+      </g>
+    </svg>`;
+  };
+
+  /* Run it. Returns nothing; calls done when the party is under way. */
+  Trophies.playLift = function (root, done) {
+    if (!root) { if (done) done(); return; }
+    const q = s => root.querySelector(s);
+    const reduce = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hero = q('.lf-hero'), trophy = q('.lf-trophy'), glow = q('.lf-glow');
+    const tape = q('.lf-tape'), flashes = q('.lf-flashes');
+
+    // flashbulbs all around the ground
+    if (flashes) {
+      let f = '';
+      const rnd = lrnd(90210);
+      for (let i = 0; i < 22; i++)
+        f += `<circle class="lf-flash" cx="${(6 + rnd() * (LW - 12)).toFixed(1)}"
+          cy="${(4 + rnd() * 60).toFixed(1)}" r="1.7" style="animation-delay:${(rnd() * 2.4).toFixed(2)}s"/>`;
+      flashes.innerHTML = f;
+    }
+
+    if (reduce) {
+      if (trophy) trophy.style.transform = 'translate(160px, 150px)';
+      if (glow) glow.style.opacity = '1';
+      if (done) done();
+      return;
+    }
+
+    // ticker tape, endlessly
+    if (tape) {
+      let t = '';
+      const rnd = lrnd(31337);
+      const cols = ['#2ae67e', '#ffffff', '#ffc94d', '#5aa8ff', '#ff7a92'];
+      for (let i = 0; i < 54; i++)
+        t += `<rect x="${(-6 + rnd() * (LW + 12)).toFixed(1)}" y="${(-14 - rnd() * 90).toFixed(1)}"
+          width="${(3 + rnd() * 3).toFixed(1)}" height="${(6 + rnd() * 6).toFixed(1)}" rx="1.2"
+          fill="${cols[i % cols.length]}" opacity=".95"/>`;
+      tape.innerHTML = t;
+      Array.prototype.forEach.call(tape.children, (bit, i) => {
+        const drift = (Math.random() - .5) * 60;
+        bit.animate([
+          { transform: 'translate(0,0) rotate(0deg)' },
+          { transform: `translate(${drift}px, ${LH + 120}px) rotate(${360 + Math.random() * 540}deg)` }
+        ], { duration: 2600 + Math.random() * 1800, delay: Math.random() * 1600,
+             iterations: Infinity, easing: 'linear' });
+      });
+    }
+
+    // he crouches, then drives it up over his head
+    if (hero) hero.animate([
+      { transform: 'translate(160px, 218px) scale(.98)' },
+      { transform: 'translate(160px, 220px) scale(.96)', offset: .18 },
+      { transform: 'translate(160px, 212px) scale(1.01)', offset: .55 },
+      { transform: 'translate(160px, 214px) scale(1)' }
+    ], { duration: 1100, easing: 'cubic-bezier(.3,.7,.35,1)', fill: 'forwards' });
+
+    ['.lf-arm-l', '.lf-arm-r'].forEach((sel, i) => {
+      const arm = q(sel);
+      if (arm) arm.animate([
+        { transform: 'rotate(0deg)' },
+        { transform: `rotate(${i ? -14 : 14}deg)`, offset: .18 },
+        { transform: `rotate(${i ? -52 : 52}deg)` }
+      ], { duration: 1100, easing: 'cubic-bezier(.3,.7,.35,1)', fill: 'forwards' });
+    });
+
+    if (trophy) {
+      trophy.animate([
+        { transform: 'translate(160px, 190px) scale(.75)', opacity: .9 },
+        { transform: 'translate(160px, 196px) scale(.76)', opacity: 1, offset: .18 },
+        { transform: 'translate(160px, 143px) scale(1.06)', offset: .62 },
+        { transform: 'translate(160px, 153px) scale(1)', offset: .82 },
+        { transform: 'translate(160px, 150px) scale(1.01)' }
+      ], { duration: 1200, easing: 'cubic-bezier(.25,.8,.3,1)', fill: 'forwards' });
+      const inner = q('.lf-trophy-in');
+      if (inner) inner.animate([
+        { transform: 'rotate(-4deg)' }, { transform: 'rotate(4deg)' }
+      ], { duration: 2600, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out' });
+    }
+
+    if (glow) glow.animate([
+      { opacity: 0, transform: 'translate(0,0) scale(.4)' },
+      { opacity: .85, transform: 'translate(0,-48px) scale(1)', offset: .7 },
+      { opacity: .7, transform: 'translate(0,-52px) scale(1.03)' }
+    ], { duration: 1300, easing: 'ease-out', fill: 'forwards' });
+
+    // the mates bounce, out of time with each other, like real people
+    root.querySelectorAll('.lf-mate').forEach((el, i) => {
+      el.animate([
+        { transform: el.getAttribute('transform') + ' translate(0,0)' },
+        { transform: el.getAttribute('transform') + ' translate(0,-5px)' },
+        { transform: el.getAttribute('transform') + ' translate(0,0)' }
+      ], { duration: 620 + i * 55, iterations: Infinity, easing: 'ease-in-out', delay: i * 90 });
+    });
+
+    const stand = q('.lf-stand');
+    if (stand) stand.animate([
+      { transform: 'translateY(0)' }, { transform: 'translateY(-2.5px)' }, { transform: 'translateY(0)' }
+    ], { duration: 760, iterations: Infinity, easing: 'ease-in-out' });
+
+    const cam = q('.lf-cam');
+    if (cam) cam.animate([
+      { transform: 'scale(1.06)' }, { transform: 'scale(1)' }
+    ], { duration: 1400, easing: 'ease-out', fill: 'forwards' });
+
+    setTimeout(() => { if (done) done(); }, 1300);
+  };
+
+  function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
   global.Trophies = Trophies;
 })(window);

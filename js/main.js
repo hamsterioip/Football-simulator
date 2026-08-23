@@ -412,6 +412,36 @@
       });
     },
 
+    /* You won something. Somebody lifts it. */
+    trophyLift(name, subtitle, then) {
+      const g = State.game;
+      const club = State.club(g.player.club);
+      const kit = global.Crest.accent(club.name) || '#2ae67e';
+      const trim = global.Crest.accent2(club.name) || 'rgba(255,255,255,.55)';
+      UI.modal({
+        html: `<div class="lift-title">${U.esc(subtitle || 'Champions')}</div>
+          <div class="lift-wrap">${global.Trophies.liftScene(name, kit, trim)}</div>
+          <div class="lift-name">${U.esc(name)}</div>
+          <div class="lift-sub">${U.esc(g.player.firstName + ' ' + g.player.lastName)} — a winner.</div>`,
+        actions: [{ label: 'Get the medal', onClick: () => { if (then) then(); } }],
+        onRender(mEl) {
+          const root = mEl.querySelector('.lift-view');
+          global.Trophies.playLift(root, () => {});
+        }
+      });
+    },
+
+    /* Did this match just win us something? */
+    trophyFromMatch(m) {
+      const g = State.game;
+      if (m.comp === 'cup' && g.cup && g.cup.won && !g.cup.lifted) { g.cup.lifted = true; return g.cup.name; }
+      if (m.comp === 'cont' && g.cont && g.cont.won && !g.cont.lifted) { g.cont.lifted = true; return g.cont.name; }
+      if (m.comp === 'intl' && g.intlTournament && g.intlTournament.won && !g.intlTournament.lifted) {
+        g.intlTournament.lifted = true; return g.intlTournament.name;
+      }
+      return null;
+    },
+
     simpleResult(res) {
       if (!res) return;
       UI.modal({ title: res.title || '', text: res.text, actions: [{ label: 'OK' }] });
@@ -723,6 +753,35 @@
       UI.show('match');
       $('match-feed').innerHTML = '';
       UI.renderScoreboard(m);
+      const news = m.role === 'start' ? 'Team news: you start.'
+        : m.role === 'bench' ? 'Team news: you are among the substitutes.'
+        : m.role === 'injured' ? 'Team news: you are injured and not involved.'
+        : m.role === 'suspended' ? 'Team news: you are suspended.'
+        : 'Team news: you have not made the squad.';
+      UI.pushEvent(news, 'neutral', null, true);
+      if (f.star) UI.pushEvent(`Watch out for ${f.star.name} (${f.star.ovr}).`, 'neutral', null, true);
+      Game.teamSheet(true);
+    },
+
+    /* Both team sheets before kick-off — and again from the touchline button
+       at any point during the match. */
+    teamSheet(preMatch) {
+      const g = State.game, m = Game.match;
+      if (!m) return;
+      const buttons = preMatch
+        ? [{ label: '▶ Kick off', onClick: () => Game.kickOff() },
+           { label: '⏩ Quick sim', cls: 'btn-ghost', onClick: () => {
+             Engine.Match.simRest(g, m);
+             if (m.needsShootout) { Game.autoShootout(m); }
+             Engine.Match.settle(g, m);
+             Game.matchSummary(m, true);
+           } }]
+        : [{ label: 'Back to the match', onClick: () => Game.resumeFromSheet() }];
+      UI.renderTeamSheet(m, buttons);
+    },
+
+    kickOff() {
+      const m = Game.match;
       const intro = m.role === 'start' ? 'You are in the starting eleven.'
         : m.role === 'bench' ? 'You start on the bench. Stay ready.'
         : m.role === 'injured' ? 'You watch from the stands in a club tracksuit.'
@@ -732,13 +791,27 @@
       Game.runMatch();
     },
 
+    /* Put the match back the way the team sheet found it. */
+    resumeFromSheet() {
+      const g = State.game, m = Game.match;
+      if (Game.sheetResume) { const fn = Game.sheetResume; Game.sheetResume = null; fn(); return; }
+      Game.runMatch();
+    },
+
     runMatch() {
       const g = State.game, m = Game.match;
       const r = Engine.Match.step(g, m);
       UI.renderScoreboard(m);
       if (r.type === 'commentary') {
         UI.pushEvent(r.entry.text, r.entry.tone, r.entry.minute);
-        UI.renderMatchButtons([{ label: '⏩ Sim to the end', cls: 'btn-ghost', onClick: () => Game.simRest() }]);
+        UI.renderMatchButtons([
+          { label: '⏩ Sim to the end', cls: 'btn-ghost', onClick: () => Game.simRest() },
+          { label: '👥 Team sheets', cls: 'btn-ghost', onClick: () => {
+            clearTimeout(Game.timer);
+            Game.sheetResume = () => Game.runMatch();
+            Game.teamSheet(false);
+          } }
+        ]);
         Game.timer = setTimeout(() => Game.runMatch(), 850);
         return;
       }
@@ -780,7 +853,10 @@
           if (o === 'red') UI.toast('SENT OFF', 'bad');
         });
         if (fx.goal) UI.toast('GOAL!', 'gold');
-        setTimeout(after, 700);
+        if (how === 'goal') {
+          global.Pitch.celebrate(root, { side: zone.slice(-1) === 'R' ? 'right' : 'left' },
+            () => setTimeout(after, 300));
+        } else setTimeout(after, 700);
       });
     },
 
@@ -891,7 +967,12 @@
               UI.verdict(how === 'goal' ? 'SCORED' : how === 'saved' ? 'SAVED' : 'MISSED', how);
               UI.pushEvent(`${kick.options[i].label} → ${fx.text}`, fx.tone, null, true);
               Game.shootoutScore();
-              setTimeout(() => Game.shootoutNext(), 900);
+              // the kick that wins a shootout deserves the full celebration
+              if (how === 'goal' && Game.shootoutDecided(s) && s.us > s.them) {
+                UI.verdict('WE HAVE WON IT', 'goal');
+                global.Pitch.celebrate(root, { side: zone.slice(-1) === 'R' ? 'right' : 'left' },
+                  () => setTimeout(() => Game.shootoutNext(), 400));
+              } else setTimeout(() => Game.shootoutNext(), 900);
             });
           });
           return;
@@ -1009,6 +1090,13 @@
 
     afterMatch(m) {
       const g = State.game, p = g.player;
+
+      // a final just won: lift it before anything else happens
+      const won = Game.trophyFromMatch(m);
+      if (won) {
+        return Game.trophyLift(won, m.comp === 'intl' ? 'World champions' : 'Cup winners',
+          () => { m._lifted = true; Game.afterMatch(m); });
+      }
 
       if (m.comp === 'intl') {
         // move the stats from club season to international record
@@ -1173,8 +1261,19 @@
       UI.show('match');
       $('match-feed').innerHTML = '';
       UI.renderScoreboard(m);
-      UI.pushEvent('The anthems are sung. Here we go.', 'neutral', 0, true);
-      Game.runMatchIntl();
+      UI.renderTeamSheet(m, [
+        { label: '▶ Kick off', onClick: () => {
+          UI.pushEvent('The anthems are sung. Here we go.', 'neutral', 0, true);
+          Game.runMatchIntl();
+        } },
+        { label: '⏩ Quick sim', cls: 'btn-ghost', onClick: () => {
+          Engine.Match.simRest(g, m);
+          if (m.needsShootout) Game.autoShootout(m);
+          Engine.Match.settle(g, m);
+          Game.intlRecord(m);
+          Game.matchSummary(m, true);
+        } }
+      ]);
     },
 
     runMatchIntl() {
@@ -1259,6 +1358,19 @@
     endSeason() {
       const g = State.game, p = g.player;
       const results = Engine.Awards.end(g);
+      const club = State.club(p.club);
+
+      // a league title is decided by the table, not by one match — lift it here
+      if (results.pos === 1 && g._titleLifted !== g.world.year) {
+        g._titleLifted = g.world.year;
+        const title = State.league(club.league).name + ' Title';
+        return Game.trophyLift(title, 'Champions', () => Game.endSeasonReview(results));
+      }
+      return Game.endSeasonReview(results);
+    },
+
+    endSeasonReview(results) {
+      const g = State.game, p = g.player;
       const club = State.club(p.club);
 
       let html = `<div class="stat-grid">

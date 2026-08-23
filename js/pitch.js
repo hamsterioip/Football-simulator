@@ -257,6 +257,20 @@
               h11 q1.5 0 1.5 1.5 v4 q0 2.5 -3 3.5 l-13 4 q-3 .9 -4 -1.6 l-1 -2.6 q-.8 -2.2 1.6 -3 l6.9 -2.4 Z"/>
           </g>
 
+          <!-- the scorer, for when it goes in -->
+          <g class="pg-scorer">
+            <ellipse class="pg-sc-shadow" cx="0" cy="2" rx="14" ry="3.4"/>
+            <g class="pg-sc-body">
+              <path class="pg-sc-legs" d="M-9 -16 h18 v11 q0 5 -4 5 h-3 q-2.8 0 -2.8 -3.4 v-7 h-2.4 v7
+                q0 3.4 -2.8 3.4 h-3 q-4 0 -4 -5 Z"/>
+              <path class="pg-sc-kit" d="M-10 -38 q10 -5 20 0 l2.6 22 q-12.6 4.4 -25.2 0 Z"/>
+              <path class="pg-sc-trim" d="M-10 -38 q10 -5 20 0 l.7 4.8 q-10.7 -3.8 -21.4 0 Z"/>
+              <g class="pg-sc-arm-l"><rect x="-26" y="-37.5" width="17" height="6.5" rx="3.2"/></g>
+              <g class="pg-sc-arm-r"><rect x="9" y="-37.5" width="17" height="6.5" rx="3.2"/></g>
+              <circle class="pg-sc-head" cx="0" cy="-45" r="6.6"/>
+              <path class="pg-sc-hair" d="M-6.6 -47.6 a6.6 6.6 0 0 1 13.2 0 q-6.6 -3.6 -13.2 0 Z"/>
+            </g>
+          </g>
           <g class="pg-burst">
             <circle class="pg-ring" r="6" fill="none"/>
             <g class="pg-bits">
@@ -267,6 +281,7 @@
           </g>
 
           <g class="pg-targets">${targets}</g>
+          <g class="pg-confetti"></g>
           <rect class="pg-wash" x="0" y="0" width="${W}" height="${H}" fill="url(#pg-washg)" opacity="0"/>
         </g>
       </svg>`;
@@ -280,7 +295,7 @@
                    '.pg-ring', '.pg-wash', '.pg-net', '.pg-stand', '.pg-post-l', '.pg-post-r']
         .map(q).filter(Boolean);
       all.forEach(el => el.getAnimations().forEach(a => a.cancel()));
-      root.querySelectorAll('.pg-gh, .pg-bit, .pg-arm-l, .pg-arm-r, .pg-keeper-body, .pg-kshadow')
+      root.querySelectorAll('.pg-gh, .pg-bit, .pg-arm-l, .pg-arm-r, .pg-keeper-body, .pg-kshadow, .pg-scorer, .pg-sc-body, .pg-sc-arm-l, .pg-sc-arm-r')
         .forEach(el => el.getAnimations().forEach(a => a.cancel()));
 
       const keeper = q('.pg-keeper'), ball = q('.pg-ball'), boot = q('.pg-boot');
@@ -299,6 +314,9 @@
       root.querySelectorAll('.pg-gh').forEach(g => g.style.opacity = '0');
       root.querySelectorAll('.pg-bit').forEach(g => g.style.opacity = '0');
       const cam = q('.pg-cam'); if (cam) cam.style.transform = '';
+      const sc = q('.pg-scorer');
+      if (sc) { sc.style.opacity = '0'; sc.style.transform = place(SPOT.x, H + 40); }
+      const conf = q('.pg-confetti'); if (conf) { conf.innerHTML = ''; }
       root.classList.remove('is-goal', 'is-saved', 'is-missed', 'is-live');
       const t = q('.pg-targets'); if (t) t.style.display = '';
 
@@ -594,6 +612,106 @@
 
         setTimeout(() => { if (done) done(); }, result === 'goal' ? 400 : 360);
       };
+    },
+
+    /* He scored. Now let him enjoy it: a run to the corner, arms out, a knee
+       slide, ticker tape and a stand that has lost its mind. */
+    celebrate(root, opts, done) {
+      opts = opts || {};
+      const q = s => root && root.querySelector(s);
+      const sc = q('.pg-scorer'), body = q('.pg-sc-body'), conf = q('.pg-confetti');
+      if (!sc) { if (done) done(); return; }
+      if (reduced()) {
+        sc.style.opacity = '1';
+        sc.style.transform = place(88, 178, 0, 1);
+        if (done) done();
+        return;
+      }
+
+      const toLeft = opts.side !== 'right';
+      const endX = toLeft ? 74 : W - 74;
+      const midX = SPOT.x + (endX - SPOT.x) * .55;
+
+      // ticker tape, thrown once
+      if (conf) {
+        const bits = [];
+        for (let i = 0; i < 44; i++) {
+          const x = -6 + Math.random() * (W + 12);
+          const y = -10 - Math.random() * 70;
+          const c = ['#2ae67e', '#ffffff', '#ffc94d', '#5aa8ff', '#ff7a92'][i % 5];
+          bits.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(3 + Math.random() * 2.5).toFixed(1)}"
+            height="${(6 + Math.random() * 5).toFixed(1)}" rx="1.2" fill="${c}" opacity=".95"/>`);
+        }
+        conf.innerHTML = bits.join('');
+        Array.prototype.forEach.call(conf.children, (bit, i) => {
+          const drift = (Math.random() - .5) * 50;
+          bit.animate([
+            { transform: 'translate(0,0) rotate(0deg)', opacity: .95 },
+            { transform: `translate(${drift * .5}px, ${(H + 80) * .5}px) rotate(${180 + Math.random() * 180}deg)`, offset: .55 },
+            { transform: `translate(${drift}px, ${H + 90}px) rotate(${360 + Math.random() * 360}deg)`, opacity: .6 }
+          ], { duration: 1700 + Math.random() * 900, delay: Math.random() * 260, easing: 'cubic-bezier(.35,.15,.7,1)', fill: 'forwards' });
+        });
+      }
+
+      sc.style.opacity = '1';
+      // in from below, wheeling away, then down on the knees
+      sc.animate([
+        { transform: place(SPOT.x + (toLeft ? 14 : -14), H + 46, 0, .8), offset: 0 },
+        { transform: place(midX, 196, 0, .95), offset: .38 },
+        { transform: place(endX + (toLeft ? 10 : -10), 184, 0, 1), offset: .72 },
+        { transform: place(endX, 182, 0, 1), offset: 1 }
+      ], { duration: 900, easing: 'cubic-bezier(.25,.7,.35,1)', fill: 'forwards' });
+
+      if (body) body.animate([
+        { transform: 'rotate(0deg) scaleY(1)' },
+        { transform: `rotate(${toLeft ? -6 : 6}deg) scaleY(1.02)`, offset: .4 },
+        { transform: `rotate(${toLeft ? -16 : 16}deg) scaleY(.9)`, offset: .78 },   // the slide
+        { transform: `rotate(${toLeft ? -13 : 13}deg) scaleY(.92)` }
+      ], { duration: 900, easing: 'cubic-bezier(.25,.7,.35,1)', fill: 'forwards' });
+
+      // arms come up and stay there
+      [['.pg-sc-arm-l', -1], ['.pg-sc-arm-r', 1]].forEach(([sel, dir]) => {
+        const arm = q(sel);
+        if (arm) arm.animate([
+          { transform: 'rotate(0deg)' },
+          { transform: `rotate(${dir * 12}deg)`, offset: .35 },
+          { transform: `rotate(${dir * -34}deg)` }
+        ], { duration: 900, easing: 'ease-out', fill: 'forwards' });
+      });
+
+      // the ground he is sliding across
+      const shadow = q('.pg-sc-shadow');
+      if (shadow) shadow.animate([
+        { transform: 'scale(.8,1)', opacity: .35 },
+        { transform: 'scale(1.5,.8)', opacity: .28 }
+      ], { duration: 900, fill: 'forwards' });
+
+      // the stand goes up, and every camera in the ground goes off
+      const stand = q('.pg-stand');
+      if (stand) stand.animate([
+        { transform: 'translateY(0)' }, { transform: 'translateY(-3px)', offset: .2 },
+        { transform: 'translateY(0)', offset: .42 }, { transform: 'translateY(-2px)', offset: .62 },
+        { transform: 'translateY(0)', offset: .8 }, { transform: 'translateY(-1px)', offset: .9 },
+        { transform: 'translateY(0)' }
+      ], { duration: 1600, easing: 'ease-out' });
+      root.classList.add('is-party');
+
+      // and the keeper does not enjoy it one bit
+      const kb = q('.pg-keeper-body');
+      if (kb) kb.animate([
+        { transform: kb.style.transform || 'none' },
+        { transform: 'translateY(6px) scaleY(.9)', offset: .5 },
+        { transform: 'translateY(9px) scaleY(.86)' }
+      ], { duration: 900, delay: 120, easing: 'ease-out', fill: 'forwards' });
+
+      const cam = q('.pg-cam');
+      if (cam) cam.animate([
+        { transform: about(160, 150, 0, 1.01) },
+        { transform: about(160, 150, 0, 1.06), offset: .35 },
+        { transform: about(160, 150, 0, 1.03) }
+      ], { duration: 1200, easing: 'ease-out', fill: 'forwards' });
+
+      setTimeout(() => { if (done) done(); }, 1250);
     },
 
     // wire the six targets up; cb gets the zone key

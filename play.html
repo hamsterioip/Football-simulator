@@ -617,6 +617,77 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   color:var(--green);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:600;margin:4px 4px 0 0}
 .rob-chip .ic{width:13px;height:13px}
 
+/* ---------- lifting the trophy ---------- */
+.lift-view{width:100%;height:auto;display:block;border-radius:14px;overflow:hidden;
+  background:#050b12;border:1px solid var(--line);
+  box-shadow:0 12px 34px rgba(0,0,0,.55)}
+.lf-cam{transform-origin:160px 130px}
+.lf-flash{fill:#fff;opacity:0;animation:pgflash 2.6s infinite}
+.lf-stand{opacity:.68}
+.lf-arm-l{transform-origin:-9px -44px}
+.lf-arm-r{transform-origin:9px -44px}
+.lf-trophy{filter:drop-shadow(0 0 14px rgba(255,201,77,.75))}
+.lf-trophy .t-base{fill:#241a0c}
+.lift-wrap{margin:2px 0 12px}
+.lift-title{text-align:center;font-family:'Barlow Condensed',system-ui,sans-serif;
+  text-transform:uppercase;letter-spacing:2px;font-weight:800;font-size:13px;
+  color:var(--gold);margin-bottom:8px}
+.lift-name{text-align:center;font-family:'Barlow Condensed',system-ui,sans-serif;
+  font-size:26px;font-weight:900;line-height:1.05;margin-top:10px;text-transform:uppercase;
+  text-shadow:0 0 24px rgba(255,201,77,.5)}
+.lift-sub{text-align:center;color:var(--muted);font-size:13px;margin-top:4px}
+
+/* ---------- pre-match team sheets ---------- */
+.teamsheet{padding:2px 0}
+.ts-comp{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+  font-weight:800;text-align:center;margin-bottom:10px;display:flex;align-items:center;
+  justify-content:center;gap:6px}
+.ts-comp .ic{width:14px;height:14px;color:var(--green)}
+.ts-cols{display:grid;grid-template-columns:1fr 26px 1fr;gap:4px;align-items:start}
+.ts-col{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 6px;text-align:center}
+.ts-me{border-color:rgba(42,230,126,.35)}
+.ts-badge{height:38px;display:flex;align-items:center;justify-content:center}
+.ts-badge .crest,.ts-badge svg{width:34px;height:34px}
+.ts-name{font-size:12px;font-weight:800;margin-top:5px;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-ovr{font-size:22px;font-weight:900;line-height:1;margin-top:3px;
+  font-family:'Barlow Condensed',system-ui,sans-serif}
+.ts-me .ts-ovr{color:var(--green)}
+.ts-form{display:flex;gap:2px;justify-content:center;height:14px;margin-top:4px}
+.fm{width:12px;height:12px;border-radius:3px;font-size:8px;font-weight:900;line-height:12px;color:#0b1220}
+.fm-W{background:var(--green)}.fm-D{background:#7d8ba3}.fm-L{background:var(--red)}
+.ts-xi{margin-top:8px;display:flex;flex-direction:column;gap:1px;text-align:left}
+.ts-p{display:flex;align-items:center;gap:4px;font-size:11px;padding:2.5px 3px;border-radius:5px}
+.ts-p:nth-child(2n){background:rgba(255,255,255,.03)}
+.ts-p.you{background:rgba(42,230,126,.14);box-shadow:inset 0 0 0 1px rgba(42,230,126,.3)}
+.ts-sh{flex:0 0 14px;text-align:right;color:var(--dim);font-variant-numeric:tabular-nums;font-size:10px}
+.ts-pos{flex:0 0 26px;font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.3px}
+.ts-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-c{font-size:8px;color:var(--gold);vertical-align:super}
+.ts-o{flex:0 0 20px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted)}
+.ts-o.mid{color:var(--txt)}.ts-o.hi{color:var(--gold)}
+.ts-v-sep{display:flex;align-items:center;justify-content:center;padding-top:56px;
+  font:900 13px 'Barlow Condensed',system-ui,sans-serif;color:var(--dim)}
+
+.ts-cmps{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.ts-cmp{display:grid;grid-template-columns:24px 1fr 62px 1fr 24px;align-items:center;gap:5px}
+.ts-v{font-size:12px;font-weight:800;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.ts-v.win{color:var(--green)}
+.ts-lab{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);
+  font-weight:800;text-align:center}
+.ts-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;
+  display:flex;justify-content:flex-end}
+.ts-bar i{display:block;height:100%;background:rgba(255,255,255,.22);border-radius:3px}
+.ts-bar.lead i{background:var(--green)}
+.ts-bar.rev{justify-content:flex-start}
+.ts-odds{display:flex;justify-content:space-around;margin-top:11px;font-size:11px;color:var(--dim)}
+.ts-odds b{color:var(--txt);font-size:13px}
+.ts-actions{margin-top:12px}
+@media (max-width:340px){
+  .ts-p{font-size:10px}
+  .ts-pos{flex-basis:20px}
+}
+
 /* ---------- the goalmouth ---------- */
 .goal-view{width:100%;height:auto;display:block;border-radius:14px;overflow:hidden;
   background:#050b12;border:1px solid var(--line);
@@ -683,6 +754,20 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .goal-view.is-saved .pg-wash,.goal-view.is-missed .pg-wash{color:var(--red)}
 .goal-view.is-goal .pg-net rect{fill:url(#pg-mesh);filter:drop-shadow(0 0 4px rgba(42,230,126,.7))}
 .goal-view.is-saved .pg-glove{fill:#fff;filter:drop-shadow(0 0 5px rgba(255,255,255,.9))}
+
+/* the celebration */
+.pg-scorer{opacity:0;will-change:transform}
+.pg-sc-body{transform-origin:0 -10px}
+.pg-sc-shadow{fill:rgba(0,0,0,.45);transform-origin:0 0}
+.pg-sc-kit{fill:#f2f6ff}
+.pg-sc-trim{fill:rgba(42,230,126,.55)}
+.pg-sc-legs{fill:#0e2033}
+.pg-sc-arm-l rect,.pg-sc-arm-r rect{fill:#f2f6ff}
+.pg-sc-arm-l{transform-origin:-9px -34px}
+.pg-sc-arm-r{transform-origin:9px -34px}
+.pg-sc-head{fill:#e8b98d}
+.pg-sc-hair{fill:#2b1d13}
+.goal-view.is-party .pg-flash{animation-duration:1.1s}
 
 /* the six targets */
 .pz{cursor:pointer}
@@ -2670,6 +2755,20 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
               h11 q1.5 0 1.5 1.5 v4 q0 2.5 -3 3.5 l-13 4 q-3 .9 -4 -1.6 l-1 -2.6 q-.8 -2.2 1.6 -3 l6.9 -2.4 Z"/>
           </g>
 
+          <!-- the scorer, for when it goes in -->
+          <g class="pg-scorer">
+            <ellipse class="pg-sc-shadow" cx="0" cy="2" rx="14" ry="3.4"/>
+            <g class="pg-sc-body">
+              <path class="pg-sc-legs" d="M-9 -16 h18 v11 q0 5 -4 5 h-3 q-2.8 0 -2.8 -3.4 v-7 h-2.4 v7
+                q0 3.4 -2.8 3.4 h-3 q-4 0 -4 -5 Z"/>
+              <path class="pg-sc-kit" d="M-10 -38 q10 -5 20 0 l2.6 22 q-12.6 4.4 -25.2 0 Z"/>
+              <path class="pg-sc-trim" d="M-10 -38 q10 -5 20 0 l.7 4.8 q-10.7 -3.8 -21.4 0 Z"/>
+              <g class="pg-sc-arm-l"><rect x="-26" y="-37.5" width="17" height="6.5" rx="3.2"/></g>
+              <g class="pg-sc-arm-r"><rect x="9" y="-37.5" width="17" height="6.5" rx="3.2"/></g>
+              <circle class="pg-sc-head" cx="0" cy="-45" r="6.6"/>
+              <path class="pg-sc-hair" d="M-6.6 -47.6 a6.6 6.6 0 0 1 13.2 0 q-6.6 -3.6 -13.2 0 Z"/>
+            </g>
+          </g>
           <g class="pg-burst">
             <circle class="pg-ring" r="6" fill="none"/>
             <g class="pg-bits">
@@ -2680,6 +2779,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           </g>
 
           <g class="pg-targets">${targets}</g>
+          <g class="pg-confetti"></g>
           <rect class="pg-wash" x="0" y="0" width="${W}" height="${H}" fill="url(#pg-washg)" opacity="0"/>
         </g>
       </svg>`;
@@ -2693,7 +2793,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
                    '.pg-ring', '.pg-wash', '.pg-net', '.pg-stand', '.pg-post-l', '.pg-post-r']
         .map(q).filter(Boolean);
       all.forEach(el => el.getAnimations().forEach(a => a.cancel()));
-      root.querySelectorAll('.pg-gh, .pg-bit, .pg-arm-l, .pg-arm-r, .pg-keeper-body, .pg-kshadow')
+      root.querySelectorAll('.pg-gh, .pg-bit, .pg-arm-l, .pg-arm-r, .pg-keeper-body, .pg-kshadow, .pg-scorer, .pg-sc-body, .pg-sc-arm-l, .pg-sc-arm-r')
         .forEach(el => el.getAnimations().forEach(a => a.cancel()));
 
       const keeper = q('.pg-keeper'), ball = q('.pg-ball'), boot = q('.pg-boot');
@@ -2712,6 +2812,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       root.querySelectorAll('.pg-gh').forEach(g => g.style.opacity = '0');
       root.querySelectorAll('.pg-bit').forEach(g => g.style.opacity = '0');
       const cam = q('.pg-cam'); if (cam) cam.style.transform = '';
+      const sc = q('.pg-scorer');
+      if (sc) { sc.style.opacity = '0'; sc.style.transform = place(SPOT.x, H + 40); }
+      const conf = q('.pg-confetti'); if (conf) { conf.innerHTML = ''; }
       root.classList.remove('is-goal', 'is-saved', 'is-missed', 'is-live');
       const t = q('.pg-targets'); if (t) t.style.display = '';
 
@@ -3009,6 +3112,106 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       };
     },
 
+    /* He scored. Now let him enjoy it: a run to the corner, arms out, a knee
+       slide, ticker tape and a stand that has lost its mind. */
+    celebrate(root, opts, done) {
+      opts = opts || {};
+      const q = s => root && root.querySelector(s);
+      const sc = q('.pg-scorer'), body = q('.pg-sc-body'), conf = q('.pg-confetti');
+      if (!sc) { if (done) done(); return; }
+      if (reduced()) {
+        sc.style.opacity = '1';
+        sc.style.transform = place(88, 178, 0, 1);
+        if (done) done();
+        return;
+      }
+
+      const toLeft = opts.side !== 'right';
+      const endX = toLeft ? 74 : W - 74;
+      const midX = SPOT.x + (endX - SPOT.x) * .55;
+
+      // ticker tape, thrown once
+      if (conf) {
+        const bits = [];
+        for (let i = 0; i < 44; i++) {
+          const x = -6 + Math.random() * (W + 12);
+          const y = -10 - Math.random() * 70;
+          const c = ['#2ae67e', '#ffffff', '#ffc94d', '#5aa8ff', '#ff7a92'][i % 5];
+          bits.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(3 + Math.random() * 2.5).toFixed(1)}"
+            height="${(6 + Math.random() * 5).toFixed(1)}" rx="1.2" fill="${c}" opacity=".95"/>`);
+        }
+        conf.innerHTML = bits.join('');
+        Array.prototype.forEach.call(conf.children, (bit, i) => {
+          const drift = (Math.random() - .5) * 50;
+          bit.animate([
+            { transform: 'translate(0,0) rotate(0deg)', opacity: .95 },
+            { transform: `translate(${drift * .5}px, ${(H + 80) * .5}px) rotate(${180 + Math.random() * 180}deg)`, offset: .55 },
+            { transform: `translate(${drift}px, ${H + 90}px) rotate(${360 + Math.random() * 360}deg)`, opacity: .6 }
+          ], { duration: 1700 + Math.random() * 900, delay: Math.random() * 260, easing: 'cubic-bezier(.35,.15,.7,1)', fill: 'forwards' });
+        });
+      }
+
+      sc.style.opacity = '1';
+      // in from below, wheeling away, then down on the knees
+      sc.animate([
+        { transform: place(SPOT.x + (toLeft ? 14 : -14), H + 46, 0, .8), offset: 0 },
+        { transform: place(midX, 196, 0, .95), offset: .38 },
+        { transform: place(endX + (toLeft ? 10 : -10), 184, 0, 1), offset: .72 },
+        { transform: place(endX, 182, 0, 1), offset: 1 }
+      ], { duration: 900, easing: 'cubic-bezier(.25,.7,.35,1)', fill: 'forwards' });
+
+      if (body) body.animate([
+        { transform: 'rotate(0deg) scaleY(1)' },
+        { transform: `rotate(${toLeft ? -6 : 6}deg) scaleY(1.02)`, offset: .4 },
+        { transform: `rotate(${toLeft ? -16 : 16}deg) scaleY(.9)`, offset: .78 },   // the slide
+        { transform: `rotate(${toLeft ? -13 : 13}deg) scaleY(.92)` }
+      ], { duration: 900, easing: 'cubic-bezier(.25,.7,.35,1)', fill: 'forwards' });
+
+      // arms come up and stay there
+      [['.pg-sc-arm-l', -1], ['.pg-sc-arm-r', 1]].forEach(([sel, dir]) => {
+        const arm = q(sel);
+        if (arm) arm.animate([
+          { transform: 'rotate(0deg)' },
+          { transform: `rotate(${dir * 12}deg)`, offset: .35 },
+          { transform: `rotate(${dir * -34}deg)` }
+        ], { duration: 900, easing: 'ease-out', fill: 'forwards' });
+      });
+
+      // the ground he is sliding across
+      const shadow = q('.pg-sc-shadow');
+      if (shadow) shadow.animate([
+        { transform: 'scale(.8,1)', opacity: .35 },
+        { transform: 'scale(1.5,.8)', opacity: .28 }
+      ], { duration: 900, fill: 'forwards' });
+
+      // the stand goes up, and every camera in the ground goes off
+      const stand = q('.pg-stand');
+      if (stand) stand.animate([
+        { transform: 'translateY(0)' }, { transform: 'translateY(-3px)', offset: .2 },
+        { transform: 'translateY(0)', offset: .42 }, { transform: 'translateY(-2px)', offset: .62 },
+        { transform: 'translateY(0)', offset: .8 }, { transform: 'translateY(-1px)', offset: .9 },
+        { transform: 'translateY(0)' }
+      ], { duration: 1600, easing: 'ease-out' });
+      root.classList.add('is-party');
+
+      // and the keeper does not enjoy it one bit
+      const kb = q('.pg-keeper-body');
+      if (kb) kb.animate([
+        { transform: kb.style.transform || 'none' },
+        { transform: 'translateY(6px) scaleY(.9)', offset: .5 },
+        { transform: 'translateY(9px) scaleY(.86)' }
+      ], { duration: 900, delay: 120, easing: 'ease-out', fill: 'forwards' });
+
+      const cam = q('.pg-cam');
+      if (cam) cam.animate([
+        { transform: about(160, 150, 0, 1.01) },
+        { transform: about(160, 150, 0, 1.06), offset: .35 },
+        { transform: about(160, 150, 0, 1.03) }
+      ], { duration: 1200, easing: 'ease-out', fill: 'forwards' });
+
+      setTimeout(() => { if (done) done(); }, 1250);
+    },
+
     // wire the six targets up; cb gets the zone key
     onAim(root, cb) {
       root.querySelectorAll('.pz').forEach(g => {
@@ -3177,6 +3380,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   const Trophies = {
     SHELVES, classify,
+    GOLD,                                   // the shared gold gradients
+    body(art) { return ART[art] || ART.medal; },
 
     svg(art, cls) {
       const body = ART[art] || ART.medal;
@@ -3242,6 +3447,223 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       return { shelves, total: all.length };
     }
   };
+
+
+  /* ==========================================================================
+     THE LIFT — you won it, so somebody has to get it above their head.
+
+     A night in a stadium: the team in a huddle on the podium, the captain
+     hoisting whatever you just won, ticker tape, flashbulbs and a stand that
+     will not sit down. Same drawn trophies as the cabinet.
+     ========================================================================== */
+  const LW = 320, LH = 220;
+
+  function lrnd(seed) {
+    let s = seed;
+    return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  }
+
+  const LIFT_CROWD = (() => {
+    const rnd = lrnd(5150501);
+    const tones = ['#1b2b45', '#22364f', '#37414f', '#14202f', '#404a5c', '#d8dee9', '#1f7a4d', '#2c1f3a'];
+    let out = '';
+    for (let row = 0; row < 16; row++) {
+      const y = 2 + row * 4.1;
+      const jitter = row % 2 ? 1.7 : 0;
+      for (let x = -2; x < LW + 4; x += 3.3) {
+        out += `<rect x="${(x + jitter).toFixed(1)}" y="${y.toFixed(1)}" width="2.2" height="2.9" rx="1"
+          fill="${tones[Math.floor(rnd() * tones.length)]}" opacity="${(0.3 + rnd() * 0.6).toFixed(2)}"/>`;
+      }
+    }
+    return out;
+  })();
+
+  /* one team-mate, seen from behind, arms up */
+  function mate(x, y, scale, kit, trim, flip) {
+    return `<g class="lf-mate" transform="translate(${x} ${y}) scale(${(flip ? -scale : scale).toFixed(2)} ${scale})">
+      <ellipse cx="0" cy="1" rx="11" ry="2.8" fill="rgba(0,0,0,.4)"/>
+      <path d="M-7 -13 h14 v9 q0 4 -3.2 4 h-2.4 q-2.2 0 -2.2 -2.8 v-5.6 h-1.9 v5.6 q0 2.8 -2.2 2.8 h-2.4 q-3.2 0 -3.2 -4 Z" fill="#0e2033"/>
+      <path d="M-8 -31 q8 -4 16 0 l2.1 18 q-10.1 3.6 -20.2 0 Z" fill="${kit}"/>
+      <path d="M-8 -31 q8 -4 16 0 l.5 3.9 q-8.5 -3 -17 0 Z" fill="${trim}"/>
+      <rect x="-21" y="-36" width="14" height="5.4" rx="2.7" fill="${kit}" transform="rotate(-38 -8 -30)"/>
+      <rect x="7" y="-36" width="14" height="5.4" rx="2.7" fill="${kit}" transform="rotate(38 8 -30)"/>
+      <circle cx="0" cy="-36" r="5.4" fill="#e8b98d"/>
+      <path d="M-5.4 -38.2 a5.4 5.4 0 0 1 10.8 0 q-5.4 -3 -10.8 0 Z" fill="#2b1d13"/>
+    </g>`;
+  }
+
+  Trophies.LIFT_W = LW;
+  Trophies.LIFT_H = LH;
+
+  /* The scene. `name` picks the trophy; `kit`/`trim` colour the shirts. */
+  Trophies.liftScene = function (name, kit, trim) {
+    const art = classify(name).art;
+    kit = kit || '#2ae67e'; trim = trim || 'rgba(255,255,255,.55)';
+    const mates = [
+      mate(58, 196, .78, kit, trim, false), mate(96, 202, .88, kit, trim, true),
+      mate(226, 202, .88, kit, trim, false), mate(264, 196, .78, kit, trim, true),
+      mate(134, 208, .95, kit, trim, true), mate(190, 208, .95, kit, trim, false)
+    ].join('');
+    return `<svg class="lift-view" viewBox="0 0 ${LW} ${LH}" role="img" aria-label="Lifting the ${esc(name)}">
+      <defs>
+        <linearGradient id="lf-night" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#050b12"/><stop offset="1" stop-color="#0a1a24"/>
+        </linearGradient>
+        <linearGradient id="lf-grass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#04231596"/><stop offset="1" stop-color="#0d5334"/>
+        </linearGradient>
+        <radialGradient id="lf-glow" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="rgba(255,220,140,.85)"/>
+          <stop offset=".55" stop-color="rgba(255,201,77,.22)"/>
+          <stop offset="1" stop-color="rgba(255,201,77,0)"/>
+        </radialGradient>
+        <radialGradient id="lf-beam" cx=".5" cy="0" r="1">
+          <stop offset="0" stop-color="rgba(220,255,235,.20)"/>
+          <stop offset="1" stop-color="rgba(220,255,235,0)"/>
+        </radialGradient>
+        ${Trophies.GOLD}
+      </defs>
+      <g class="lf-cam">
+        <rect width="${LW}" height="${LH}" fill="url(#lf-night)"/>
+        <g class="lf-stand">${LIFT_CROWD}</g>
+        <g class="lf-flashes"></g>
+        <path d="M-10 0 L80 0 L160 150 L-40 150 Z" fill="url(#lf-beam)"/>
+        <path d="M${LW - 80} 0 L${LW + 10} 0 L${LW + 40} 150 L${LW - 160} 150 Z" fill="url(#lf-beam)"/>
+        <rect x="-4" y="66" width="${LW + 8}" height="10" rx="2" fill="#0d1a26"/>
+        <rect x="-4" y="74" width="${LW + 8}" height="2" fill="rgba(255,201,77,.4)"/>
+        <rect x="0" y="76" width="${LW}" height="${LH - 76}" fill="url(#lf-grass)"/>
+
+        <circle class="lf-glow" cx="160" cy="176" r="72" fill="url(#lf-glow)" opacity="0"/>
+
+        <g class="lf-mates">${mates}</g>
+
+        <!-- the captain, and what he is holding up -->
+        <g class="lf-hero" transform="translate(160 214)">
+          <ellipse cx="0" cy="1" rx="15" ry="3.6" fill="rgba(0,0,0,.45)"/>
+          <path d="M-9 -17 h18 v12 q0 5 -4 5 h-3 q-2.8 0 -2.8 -3.5 v-7 h-2.4 v7 q0 3.5 -2.8 3.5 h-3 q-4 0 -4 -5 Z" fill="#0e2033"/>
+          <path d="M-10.5 -40 q10.5 -5 21 0 l2.7 23 q-13.2 4.6 -26.4 0 Z" fill="${kit}"/>
+          <path d="M-10.5 -40 q10.5 -5 21 0 l.7 5 q-11.2 -4 -22.4 0 Z" fill="${trim}"/>
+          <g class="lf-arm-l"><rect x="-24" y="-47" width="15" height="6" rx="3" fill="${kit}"/></g>
+          <g class="lf-arm-r"><rect x="9" y="-47" width="15" height="6" rx="3" fill="${kit}"/></g>
+          <circle cx="0" cy="-47" r="7" fill="#e8b98d"/>
+          <path d="M-7 -49.6 a7 7 0 0 1 14 0 q-7 -3.8 -14 0 Z" fill="#2b1d13"/>
+        </g>
+        <g class="lf-trophy" style="transform:translate(160px,190px) scale(.75)">
+          <g class="lf-trophy-in">
+            <g transform="translate(-20.4 -54.4) scale(.85)">${Trophies.body(art)}</g>
+          </g>
+        </g>
+
+        <g class="lf-tape"></g>
+      </g>
+    </svg>`;
+  };
+
+  /* Run it. Returns nothing; calls done when the party is under way. */
+  Trophies.playLift = function (root, done) {
+    if (!root) { if (done) done(); return; }
+    const q = s => root.querySelector(s);
+    const reduce = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hero = q('.lf-hero'), trophy = q('.lf-trophy'), glow = q('.lf-glow');
+    const tape = q('.lf-tape'), flashes = q('.lf-flashes');
+
+    // flashbulbs all around the ground
+    if (flashes) {
+      let f = '';
+      const rnd = lrnd(90210);
+      for (let i = 0; i < 22; i++)
+        f += `<circle class="lf-flash" cx="${(6 + rnd() * (LW - 12)).toFixed(1)}"
+          cy="${(4 + rnd() * 60).toFixed(1)}" r="1.7" style="animation-delay:${(rnd() * 2.4).toFixed(2)}s"/>`;
+      flashes.innerHTML = f;
+    }
+
+    if (reduce) {
+      if (trophy) trophy.style.transform = 'translate(160px, 150px)';
+      if (glow) glow.style.opacity = '1';
+      if (done) done();
+      return;
+    }
+
+    // ticker tape, endlessly
+    if (tape) {
+      let t = '';
+      const rnd = lrnd(31337);
+      const cols = ['#2ae67e', '#ffffff', '#ffc94d', '#5aa8ff', '#ff7a92'];
+      for (let i = 0; i < 54; i++)
+        t += `<rect x="${(-6 + rnd() * (LW + 12)).toFixed(1)}" y="${(-14 - rnd() * 90).toFixed(1)}"
+          width="${(3 + rnd() * 3).toFixed(1)}" height="${(6 + rnd() * 6).toFixed(1)}" rx="1.2"
+          fill="${cols[i % cols.length]}" opacity=".95"/>`;
+      tape.innerHTML = t;
+      Array.prototype.forEach.call(tape.children, (bit, i) => {
+        const drift = (Math.random() - .5) * 60;
+        bit.animate([
+          { transform: 'translate(0,0) rotate(0deg)' },
+          { transform: `translate(${drift}px, ${LH + 120}px) rotate(${360 + Math.random() * 540}deg)` }
+        ], { duration: 2600 + Math.random() * 1800, delay: Math.random() * 1600,
+             iterations: Infinity, easing: 'linear' });
+      });
+    }
+
+    // he crouches, then drives it up over his head
+    if (hero) hero.animate([
+      { transform: 'translate(160px, 218px) scale(.98)' },
+      { transform: 'translate(160px, 220px) scale(.96)', offset: .18 },
+      { transform: 'translate(160px, 212px) scale(1.01)', offset: .55 },
+      { transform: 'translate(160px, 214px) scale(1)' }
+    ], { duration: 1100, easing: 'cubic-bezier(.3,.7,.35,1)', fill: 'forwards' });
+
+    ['.lf-arm-l', '.lf-arm-r'].forEach((sel, i) => {
+      const arm = q(sel);
+      if (arm) arm.animate([
+        { transform: 'rotate(0deg)' },
+        { transform: `rotate(${i ? -14 : 14}deg)`, offset: .18 },
+        { transform: `rotate(${i ? -52 : 52}deg)` }
+      ], { duration: 1100, easing: 'cubic-bezier(.3,.7,.35,1)', fill: 'forwards' });
+    });
+
+    if (trophy) {
+      trophy.animate([
+        { transform: 'translate(160px, 190px) scale(.75)', opacity: .9 },
+        { transform: 'translate(160px, 196px) scale(.76)', opacity: 1, offset: .18 },
+        { transform: 'translate(160px, 143px) scale(1.06)', offset: .62 },
+        { transform: 'translate(160px, 153px) scale(1)', offset: .82 },
+        { transform: 'translate(160px, 150px) scale(1.01)' }
+      ], { duration: 1200, easing: 'cubic-bezier(.25,.8,.3,1)', fill: 'forwards' });
+      const inner = q('.lf-trophy-in');
+      if (inner) inner.animate([
+        { transform: 'rotate(-4deg)' }, { transform: 'rotate(4deg)' }
+      ], { duration: 2600, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out' });
+    }
+
+    if (glow) glow.animate([
+      { opacity: 0, transform: 'translate(0,0) scale(.4)' },
+      { opacity: .85, transform: 'translate(0,-48px) scale(1)', offset: .7 },
+      { opacity: .7, transform: 'translate(0,-52px) scale(1.03)' }
+    ], { duration: 1300, easing: 'ease-out', fill: 'forwards' });
+
+    // the mates bounce, out of time with each other, like real people
+    root.querySelectorAll('.lf-mate').forEach((el, i) => {
+      el.animate([
+        { transform: el.getAttribute('transform') + ' translate(0,0)' },
+        { transform: el.getAttribute('transform') + ' translate(0,-5px)' },
+        { transform: el.getAttribute('transform') + ' translate(0,0)' }
+      ], { duration: 620 + i * 55, iterations: Infinity, easing: 'ease-in-out', delay: i * 90 });
+    });
+
+    const stand = q('.lf-stand');
+    if (stand) stand.animate([
+      { transform: 'translateY(0)' }, { transform: 'translateY(-2.5px)' }, { transform: 'translateY(0)' }
+    ], { duration: 760, iterations: Infinity, easing: 'ease-in-out' });
+
+    const cam = q('.lf-cam');
+    if (cam) cam.animate([
+      { transform: 'scale(1.06)' }, { transform: 'scale(1)' }
+    ], { duration: 1400, easing: 'ease-out', fill: 'forwards' });
+
+    setTimeout(() => { if (done) done(); }, 1300);
+  };
+
+  function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
   global.Trophies = Trophies;
 })(window);
@@ -6432,9 +6854,12 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         const starter = i < 11;
         let ovr = Math.round(U.clamp(R + (starter ? U.gauss(1, 3.5) : U.gauss(-7, 4)), 40, 96));
         if (golden) ovr = Math.round(U.clamp(Math.max(ovr, R - 3) + U.gauss(2, 2.5), 78, 95));
+        // no two squad-mates share a surname either — it reads badly on a team sheet
+        const last = n => n.split(' ').slice(-1)[0];
         let who = global.Names.person(club.country);
-        for (let t = 0; t < 8 && seen.has(who.name); t++) who = global.Names.person(club.country);
-        seen.add(who.name);
+        for (let t = 0; t < 10 && (seen.has(who.name) || seen.has(last(who.name))); t++)
+          who = global.Names.person(club.country);
+        seen.add(who.name); seen.add(last(who.name));
         return {
           id: U.id(),
           name: who.name, nation: who.nation,
@@ -6483,11 +6908,102 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       }
       return g.squad;
     },
+    /* A national team: players of that nationality — the real internationals
+       first, wherever they play their club football, then generated squad
+       members to fill it out. Nothing to do with anybody's club badge. */
+    nationalXI(g, nationName, exclude) {
+      const nat = D.NATIONS.find(n => n.name === nationName) || { name: nationName, rating: 74 };
+      const R = nat.rating;
+      const shape = FORMATION.concat(['GK', 'CB', 'CM', 'CM', 'RW', 'ST', 'LB']);
+      const seen = new Set(exclude ? [exclude] : []);
+      const squad = shape.map((pos, i) => {
+        const starter = i < 11;
+        const ovr = Math.round(U.clamp(R + (starter ? U.gauss(0, 3) : U.gauss(-6, 3.5)), 55, 96));
+        let name = global.Names.pick(nationName);
+        for (let t = 0; t < 8 && seen.has(name); t++) name = global.Names.pick(nationName);
+        seen.add(name);
+        return { id: U.id(), name, nation: nationName, pos, ovr,
+                 age: U.int(19, 34), shirt: i + 1, goals: 0, assists: 0, apps: 0, rel: 55 };
+      });
+
+      // the real players of that country, pulled out of every club in the world
+      const map = global.Eras.starMap(g.era, g.world);
+      const countrymen = [];
+      Object.keys(map).forEach(cn => (map[cn] || []).forEach(st => {
+        if (st[1] === nationName && !seen.has(st[0])) { countrymen.push(st); seen.add(st[0]); }
+      }));
+      countrymen.sort((a, b) => b[3] - a[3]);
+      const used = new Set();
+      countrymen.slice(0, 16).forEach(st => {
+        const [name, nation, pos, ovr, age] = st;
+        let idx = squad.findIndex((sq, i) => i < 11 && !used.has(i) && sq.pos === pos);
+        if (idx < 0) idx = squad.findIndex((sq, i) => !used.has(i) && sq.pos === pos);
+        if (idx < 0) return;
+        used.add(idx);
+        const sq = squad[idx];
+        sq.name = name; sq.ovr = ovr; sq.age = age; sq.star = true;
+      });
+
+      const cap = squad.slice().sort((a, b) => (b.ovr + b.age) - (a.ovr + a.age))[0];
+      if (cap) cap.captain = true;
+      return squad;
+    },
+
+    /* Your country's squad, cached until the nation or the season changes. */
+    national(g) {
+      const p = g.player;
+      const key = p.nation + '|' + g.world.year + '|' + g.era;
+      if (g.natSquad && g.natKey === key) return g.natSquad;
+      g.natSquad = Squad.nationalXI(g, p.nation, p.firstName + ' ' + p.lastName);
+      g.natKey = key;
+      return g.natSquad;
+    },
+
+    /* Whichever shirt you are wearing today. */
+    forMatch(g, m) {
+      return (m && m.comp === 'intl') ? Squad.national(g) : Squad.ensure(g);
+    },
+
+    /* The other lot: an XI for whoever you are playing, cached on the match. */
+    opponent(g, m) {
+      if (m._oppSquad) return m._oppSquad;
+      let squad;
+      if (m.comp === 'intl') {
+        squad = Squad.nationalXI(g, m.oppName);
+      } else if (m.fixture && m.fixture.oppId) {
+        squad = Squad.generate(State.club(m.fixture.oppId));
+      } else {
+        squad = Squad.generate({ name: m.oppName, rating: m.oppRating || 72, country: null });
+      }
+      squad.forEach((sq, i) => sq.shirt = i + 1);
+      m._oppSquad = squad;
+      return squad;
+    },
+
+    /* Attack / midfield / defence averages, for the pre-match comparison. */
+    lines(squad) {
+      const G = { ATT: [], MID: [], DEF: [] };
+      squad.slice(0, 11).forEach(s => {
+        const grp = s.pos === 'GK' ? 'DEF' : (D.POSITIONS[s.pos] || {}).group || 'MID';
+        (G[grp] || G.MID).push(s.ovr);
+      });
+      const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : 0;
+      return { att: avg(G.ATT), mid: avg(G.MID), def: avg(G.DEF),
+               ovr: avg(squad.slice(0, 11).map(s => s.ovr)) };
+    },
+
     rivalFor(g) {
       const p = g.player, sq = Squad.ensure(g);
       const same = sq.filter(s => s.pos === p.pos);
       if (!same.length) return null;
       return same.sort((a, b) => b.ovr - a.ovr)[0];
+    },
+    nationStrength(g, nat) {
+      const p = g.player;
+      let s = nat.rating;
+      if (g.lastLineup !== 'bench') s += (p.ovr - nat.rating) * 0.10;
+      if (State.hasTrait(p, 'leader')) s += 2;
+      return s;
     },
     teamStrength(g) {
       const club = State.club(g.player.club);
@@ -6598,7 +7114,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     create(g, fixture) {
       const p = g.player;
+      const intl = fixture.comp === 'intl';
       const myClub = State.club(p.club);
+      const myNation = D.NATIONS.find(n => n.name === p.nation) || { name: p.nation, rating: 75 };
       const opp = fixture.oppId ? State.club(fixture.oppId) : { name: fixture.oppName, rating: fixture.oppRating || 70, flag: '' };
       const isHome = fixture.home;
 
@@ -6608,12 +7126,14 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       else if (!U.chance(Match.startingChance(g))) role = U.chance(0.62) ? 'bench' : 'out';
 
       g.lastLineup = role;
-      const myStr = Squad.teamStrength(g) + (isHome ? 2.5 : 0) + (role === 'start' ? 0 : -1.5);
+      const baseStr = intl ? Squad.nationStrength(g, myNation) : Squad.teamStrength(g);
+      const myStr = baseStr + (isHome ? 2.5 : 0) + (role === 'start' ? 0 : -1.5);
       const oppStr = opp.rating + (isHome ? 0 : 2.5) + (fixture.comp === 'intl' ? 0 : 0);
 
       const m = {
-        fixture, oppName: opp.name, oppCountry: opp.country || '', oppRating: opp.rating,
-        myName: myClub.name, myCountry: myClub.country,
+        fixture, oppName: opp.name, oppCountry: intl ? opp.name : (opp.country || ''), oppRating: opp.rating,
+        myName: intl ? p.nation : myClub.name, myCountry: intl ? p.nation : myClub.country,
+        intl,
         isHome, comp: fixture.comp, compLabel: fixture.label,
         role, minute: 0, us: 0, them: 0,
         myStr, oppStr,
@@ -6994,7 +7514,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           m.stats.rating += 0.5; p.season.cleanSheets++; p.career.cleanSheets++;
         }
         // dressing-room chemistry nudges your rating a touch either way
-        const squadRel = Squad.ensure(g).reduce((a, s) => a + s.rel, 0) / Squad.ensure(g).length;
+        const inTeam = Squad.forMatch(g, m);
+        const squadRel = inTeam.reduce((a, s) => a + s.rel, 0) / inTeam.length;
         if (squadRel >= 65) m.stats.rating += 0.1;
         else if (squadRel <= 35) m.stats.rating -= 0.1;
         if (p.captain) m.stats.rating += 0.05;
@@ -9420,6 +9941,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   const esc = U.esc;
   const ico = (name, cls, label) => global.Icons.svg(name, cls, label);
   const flag = (country, cls) => global.Icons.flag(country, cls);
+  // goalkeeper first, then back to front, so a team sheet reads like a team sheet
+  const POS_RANK = { GK: 0, RB: 1, CB: 2, LB: 3, CDM: 4, CM: 5, CAM: 6, RW: 7, LW: 8, ST: 9 };
+  const POS_ORDER = pos => (POS_RANK[pos] == null ? 5 : POS_RANK[pos]);
   const crest = (clubName, cls) => global.Crest.svg(clubName, cls);
 
   const UI = {
@@ -10363,9 +10887,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       $('scoreboard').innerHTML = `
         <div class="sb-comp">${esc(m.compLabel || 'Match')}</div>
         <div class="sb-main">
-          <div class="sb-team">${global.Crest.svg(homeName, 'crest-md')}${esc(homeName)}</div>
+          <div class="sb-team">${UI.teamBadge(homeName, !!m.intl, 'crest-md')}${esc(homeName)}</div>
           <div class="sb-score">${homeScore} – ${awayScore}</div>
-          <div class="sb-team">${global.Crest.svg(awayName, 'crest-md')}${esc(awayName)}</div>
+          <div class="sb-team">${UI.teamBadge(awayName, !!m.intl, 'crest-md')}${esc(awayName)}</div>
         </div>
         <div class="sb-min">${m.finished ? 'Full time' : m.minute + "'"}</div>
         <div class="sb-you">${chips.join('')}</div>`;
@@ -10433,6 +10957,98 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       if (el) { el.textContent = text; el.className = 'goal-verdict ' + (kind || ''); }
       const hint = document.querySelector('.goal-hint');
       if (hint && text) hint.style.display = 'none';
+    },
+
+    /* A club badge, or a flag when the team is a country. */
+    teamBadge(name, nation, cls) {
+      return nation ? flag(name, cls || 'crest-md') : global.Crest.svg(name, cls || 'crest-md');
+    },
+
+    /* Both team sheets, side by side: who is playing, how good they are, and
+       how the two elevens compare line by line. */
+    renderTeamSheet(m, buttons) {
+      const g = State.game, p = g.player;
+      const Sq = Engine.Squad;
+      const mine = Sq.forMatch(g, m), theirs = Sq.opponent(g, m);
+      const us = Sq.lines(mine), them = Sq.lines(theirs);
+      const meRow = { shirt: p.shirt, pos: p.pos, name: p.firstName + ' ' + p.lastName,
+                      ovr: p.ovr, you: true, captain: p.captain };
+      // you take a starting place in the eleven the game says you are in
+      const others = mine.slice(0, m.role === 'start' ? 10 : 11).map(sq =>
+        sq.shirt === p.shirt ? Object.assign({}, sq, { shirt: sq.shirt + 20 }) : sq);
+      const myXI = (m.role === 'start' ? [meRow].concat(others) : others)
+        .sort((a, b) => POS_ORDER(a.pos) - POS_ORDER(b.pos));
+      const theirXI = theirs.slice(0, 11).sort((a, b) => POS_ORDER(a.pos) - POS_ORDER(b.pos));
+
+      const club = State.club(p.club);
+      const myForm = m.intl ? '' : (club.form || []).slice(-5).join('');
+      const oppClub = m.fixture && m.fixture.oppId ? State.club(m.fixture.oppId) : null;
+      const oppForm = oppClub ? (oppClub.form || []).slice(-5).join('') : '';
+
+      const col = (name, isNation, lines, xi, form, side) => `
+        <div class="ts-col ts-${side}">
+          <div class="ts-badge">${UI.teamBadge(name, isNation, 'crest-lg')}</div>
+          <div class="ts-name">${esc(name)}</div>
+          <div class="ts-ovr">${lines.ovr}</div>
+          ${form ? `<div class="ts-form">${form.split('').map(r =>
+            `<span class="fm fm-${r}">${r}</span>`).join('')}</div>` : '<div class="ts-form"></div>'}
+          <div class="ts-xi">${xi.map(s => `
+            <div class="ts-p${s.you ? ' you' : ''}">
+              <span class="ts-sh">${s.shirt || ''}</span>
+              <span class="ts-pos">${esc(s.pos)}</span>
+              <span class="ts-n">${esc(UI.shortName(s.name))}${s.captain ? ' <b class="ts-c">C</b>' : ''}</span>
+              <span class="ts-o ${s.ovr >= 85 ? 'hi' : s.ovr >= 75 ? 'mid' : ''}">${s.ovr}</span>
+            </div>`).join('')}</div>
+        </div>`;
+
+      const bar = (label, a, b) => {
+        const total = Math.max(a + b, 1);
+        return `<div class="ts-cmp">
+          <span class="ts-v ${a >= b ? 'win' : ''}">${a}</span>
+          <div class="ts-bar ${a >= b ? 'lead' : ''}"><i style="width:${(a / total * 100).toFixed(1)}%"></i></div>
+          <span class="ts-lab">${label}</span>
+          <div class="ts-bar rev ${b > a ? 'lead' : ''}"><i style="width:${(b / total * 100).toFixed(1)}%"></i></div>
+          <span class="ts-v ${b > a ? 'win' : ''}">${b}</span>
+        </div>`;
+      };
+
+      // odds straight from the two elevens, so they agree with the sheet above
+      // (and so they work for internationals, which have no club fixture)
+      const diff = (us.ovr - them.ovr) + (m.isHome ? 2.5 : -2.5);
+      const la = U.clamp(1.35 + diff * 0.045, 0.25, 4), lb = U.clamp(1.35 - diff * 0.045, 0.25, 4);
+      let w = 0, d = 0; const N = 600;
+      for (let i = 0; i < N; i++) { const a = U.poisson(la), b = U.poisson(lb);
+        if (a > b) w++; else if (a === b) d++; }
+      const odds = { win: Math.round(w / N * 100), draw: Math.round(d / N * 100),
+                     lose: Math.max(0, 100 - Math.round(w / N * 100) - Math.round(d / N * 100)) };
+      $('match-action').innerHTML = `<div class="teamsheet">
+        <div class="ts-comp">${ico(m.intl ? 'nation' : 'stadium')} ${esc(m.compLabel || 'Match')}
+          <span class="dim">· ${m.isHome ? 'Home' : 'Away'}</span></div>
+        <div class="ts-cols">
+          ${col(m.myName, !!m.intl, us, myXI, myForm, 'me')}
+          <div class="ts-v-sep"><span>V</span></div>
+          ${col(m.oppName, !!m.intl, them, theirXI, oppForm, 'them')}
+        </div>
+        <div class="ts-cmps">
+          ${bar('Attack', us.att, them.att)}
+          ${bar('Midfield', us.mid, them.mid)}
+          ${bar('Defence', us.def, them.def)}
+        </div>
+        ${`<div class="ts-odds">
+          <span><b>${odds.win}%</b> win</span><span><b>${odds.draw}%</b> draw</span><span><b>${odds.lose}%</b> lose</span>
+        </div>`}
+        <div class="row ts-actions">${buttons.map((b, i) =>
+          `<button class="btn ${b.cls || 'btn-primary'} grow" data-tsb="${i}">${b.label}</button>`).join('')}</div>
+      </div>`;
+      $('match-action').querySelectorAll('[data-tsb]').forEach(b => {
+        b.onclick = () => buttons[+b.dataset.tsb].onClick();
+      });
+    },
+
+    shortName(name) {
+      const parts = String(name).trim().split(/\s+/);
+      if (parts.length === 1) return parts[0];
+      return parts[0][0] + '. ' + parts.slice(1).join(' ');
     },
 
     renderMatchButtons(buttons) {
@@ -10864,6 +11480,36 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       });
     },
 
+    /* You won something. Somebody lifts it. */
+    trophyLift(name, subtitle, then) {
+      const g = State.game;
+      const club = State.club(g.player.club);
+      const kit = global.Crest.accent(club.name) || '#2ae67e';
+      const trim = global.Crest.accent2(club.name) || 'rgba(255,255,255,.55)';
+      UI.modal({
+        html: `<div class="lift-title">${U.esc(subtitle || 'Champions')}</div>
+          <div class="lift-wrap">${global.Trophies.liftScene(name, kit, trim)}</div>
+          <div class="lift-name">${U.esc(name)}</div>
+          <div class="lift-sub">${U.esc(g.player.firstName + ' ' + g.player.lastName)} — a winner.</div>`,
+        actions: [{ label: 'Get the medal', onClick: () => { if (then) then(); } }],
+        onRender(mEl) {
+          const root = mEl.querySelector('.lift-view');
+          global.Trophies.playLift(root, () => {});
+        }
+      });
+    },
+
+    /* Did this match just win us something? */
+    trophyFromMatch(m) {
+      const g = State.game;
+      if (m.comp === 'cup' && g.cup && g.cup.won && !g.cup.lifted) { g.cup.lifted = true; return g.cup.name; }
+      if (m.comp === 'cont' && g.cont && g.cont.won && !g.cont.lifted) { g.cont.lifted = true; return g.cont.name; }
+      if (m.comp === 'intl' && g.intlTournament && g.intlTournament.won && !g.intlTournament.lifted) {
+        g.intlTournament.lifted = true; return g.intlTournament.name;
+      }
+      return null;
+    },
+
     simpleResult(res) {
       if (!res) return;
       UI.modal({ title: res.title || '', text: res.text, actions: [{ label: 'OK' }] });
@@ -11175,6 +11821,35 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       UI.show('match');
       $('match-feed').innerHTML = '';
       UI.renderScoreboard(m);
+      const news = m.role === 'start' ? 'Team news: you start.'
+        : m.role === 'bench' ? 'Team news: you are among the substitutes.'
+        : m.role === 'injured' ? 'Team news: you are injured and not involved.'
+        : m.role === 'suspended' ? 'Team news: you are suspended.'
+        : 'Team news: you have not made the squad.';
+      UI.pushEvent(news, 'neutral', null, true);
+      if (f.star) UI.pushEvent(`Watch out for ${f.star.name} (${f.star.ovr}).`, 'neutral', null, true);
+      Game.teamSheet(true);
+    },
+
+    /* Both team sheets before kick-off — and again from the touchline button
+       at any point during the match. */
+    teamSheet(preMatch) {
+      const g = State.game, m = Game.match;
+      if (!m) return;
+      const buttons = preMatch
+        ? [{ label: '▶ Kick off', onClick: () => Game.kickOff() },
+           { label: '⏩ Quick sim', cls: 'btn-ghost', onClick: () => {
+             Engine.Match.simRest(g, m);
+             if (m.needsShootout) { Game.autoShootout(m); }
+             Engine.Match.settle(g, m);
+             Game.matchSummary(m, true);
+           } }]
+        : [{ label: 'Back to the match', onClick: () => Game.resumeFromSheet() }];
+      UI.renderTeamSheet(m, buttons);
+    },
+
+    kickOff() {
+      const m = Game.match;
       const intro = m.role === 'start' ? 'You are in the starting eleven.'
         : m.role === 'bench' ? 'You start on the bench. Stay ready.'
         : m.role === 'injured' ? 'You watch from the stands in a club tracksuit.'
@@ -11184,13 +11859,27 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       Game.runMatch();
     },
 
+    /* Put the match back the way the team sheet found it. */
+    resumeFromSheet() {
+      const g = State.game, m = Game.match;
+      if (Game.sheetResume) { const fn = Game.sheetResume; Game.sheetResume = null; fn(); return; }
+      Game.runMatch();
+    },
+
     runMatch() {
       const g = State.game, m = Game.match;
       const r = Engine.Match.step(g, m);
       UI.renderScoreboard(m);
       if (r.type === 'commentary') {
         UI.pushEvent(r.entry.text, r.entry.tone, r.entry.minute);
-        UI.renderMatchButtons([{ label: '⏩ Sim to the end', cls: 'btn-ghost', onClick: () => Game.simRest() }]);
+        UI.renderMatchButtons([
+          { label: '⏩ Sim to the end', cls: 'btn-ghost', onClick: () => Game.simRest() },
+          { label: '👥 Team sheets', cls: 'btn-ghost', onClick: () => {
+            clearTimeout(Game.timer);
+            Game.sheetResume = () => Game.runMatch();
+            Game.teamSheet(false);
+          } }
+        ]);
         Game.timer = setTimeout(() => Game.runMatch(), 850);
         return;
       }
@@ -11232,7 +11921,10 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           if (o === 'red') UI.toast('SENT OFF', 'bad');
         });
         if (fx.goal) UI.toast('GOAL!', 'gold');
-        setTimeout(after, 700);
+        if (how === 'goal') {
+          global.Pitch.celebrate(root, { side: zone.slice(-1) === 'R' ? 'right' : 'left' },
+            () => setTimeout(after, 300));
+        } else setTimeout(after, 700);
       });
     },
 
@@ -11343,7 +12035,12 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
               UI.verdict(how === 'goal' ? 'SCORED' : how === 'saved' ? 'SAVED' : 'MISSED', how);
               UI.pushEvent(`${kick.options[i].label} → ${fx.text}`, fx.tone, null, true);
               Game.shootoutScore();
-              setTimeout(() => Game.shootoutNext(), 900);
+              // the kick that wins a shootout deserves the full celebration
+              if (how === 'goal' && Game.shootoutDecided(s) && s.us > s.them) {
+                UI.verdict('WE HAVE WON IT', 'goal');
+                global.Pitch.celebrate(root, { side: zone.slice(-1) === 'R' ? 'right' : 'left' },
+                  () => setTimeout(() => Game.shootoutNext(), 400));
+              } else setTimeout(() => Game.shootoutNext(), 900);
             });
           });
           return;
@@ -11461,6 +12158,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     afterMatch(m) {
       const g = State.game, p = g.player;
+
+      // a final just won: lift it before anything else happens
+      const won = Game.trophyFromMatch(m);
+      if (won) {
+        return Game.trophyLift(won, m.comp === 'intl' ? 'World champions' : 'Cup winners',
+          () => { m._lifted = true; Game.afterMatch(m); });
+      }
 
       if (m.comp === 'intl') {
         // move the stats from club season to international record
@@ -11625,8 +12329,19 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       UI.show('match');
       $('match-feed').innerHTML = '';
       UI.renderScoreboard(m);
-      UI.pushEvent('The anthems are sung. Here we go.', 'neutral', 0, true);
-      Game.runMatchIntl();
+      UI.renderTeamSheet(m, [
+        { label: '▶ Kick off', onClick: () => {
+          UI.pushEvent('The anthems are sung. Here we go.', 'neutral', 0, true);
+          Game.runMatchIntl();
+        } },
+        { label: '⏩ Quick sim', cls: 'btn-ghost', onClick: () => {
+          Engine.Match.simRest(g, m);
+          if (m.needsShootout) Game.autoShootout(m);
+          Engine.Match.settle(g, m);
+          Game.intlRecord(m);
+          Game.matchSummary(m, true);
+        } }
+      ]);
     },
 
     runMatchIntl() {
@@ -11711,6 +12426,19 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     endSeason() {
       const g = State.game, p = g.player;
       const results = Engine.Awards.end(g);
+      const club = State.club(p.club);
+
+      // a league title is decided by the table, not by one match — lift it here
+      if (results.pos === 1 && g._titleLifted !== g.world.year) {
+        g._titleLifted = g.world.year;
+        const title = State.league(club.league).name + ' Title';
+        return Game.trophyLift(title, 'Champions', () => Game.endSeasonReview(results));
+      }
+      return Game.endSeasonReview(results);
+    },
+
+    endSeasonReview(results) {
+      const g = State.game, p = g.player;
       const club = State.club(p.club);
 
       let html = `<div class="stat-grid">
