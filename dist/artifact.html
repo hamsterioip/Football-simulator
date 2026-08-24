@@ -842,6 +842,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .pg-flag-pole{fill:#e8edf5}
 .pg-flag-cloth{fill:#ff5a3c;stroke:rgba(0,0,0,.28);stroke-width:.5;transform-origin:1px -24px}
 .pg-flag-top{fill:#ffd94d}
+.pg-tbit{fill:#1c7a4a}
 
 /* props, shown only by the routine that needs them */
 .pg-sc-props > *{opacity:0}
@@ -2682,6 +2683,10 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   function place(x, y, rot, scale) {
     return `translate(${x}px, ${y}px) rotate(${rot || 0}deg) scale(${scale == null ? 1 : scale})`;
   }
+  /* camera: put scene point (px,py) at the middle of the frame, zoomed s */
+  function focus(px, py, s) {
+    return `translate(${(160 - px * s).toFixed(1)}px, ${(105 - py * s).toFixed(1)}px) scale(${s})`;
+  }
 
   /* ---------- the crowd, generated once and kept stable ---------- */
   function seeded(seed) {
@@ -2712,6 +2717,43 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       out += `<circle class="pg-flash" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.5"
         style="animation-delay:${(rnd() * 4).toFixed(2)}s"/>`;
     }
+    return out;
+  })();
+
+  /* the corner scene's crowd: two close tiers over a walkway, plus its flashes */
+  const CROWD2 = (() => {
+    const rnd = seeded(91517);
+    const tones = ['#1b2b45', '#22364f', '#2c1f3a', '#37414f', '#14202f', '#404a5c', '#d8dee9', '#1f7a4d'];
+    let out = '';
+    for (let row = 0; row < 10; row++) {
+      const tier = row < 4 ? 0 : 1;                    // four rows up top, six below
+      const y = (tier ? 56 : 4) + (tier ? row - 4 : row) * 10.6;
+      const jitter = row % 2 ? 2.2 : 0;
+      for (let x = -4; x < W + 6; x += 4.6) {
+        const c = tones[Math.floor(rnd() * tones.length)];
+        const o = 0.4 + rnd() * 0.55;
+        out += `<rect x="${(x + jitter).toFixed(1)}" y="${y.toFixed(1)}" width="3.4" height="7" rx="1.5" fill="${c}" opacity="${o.toFixed(2)}"/>`;
+      }
+    }
+    return out;
+  })();
+
+  const FLASHES2 = (() => {
+    const rnd = seeded(41209);
+    let out = '';
+    for (let i = 0; i < 22; i++) {
+      const x = 6 + rnd() * (W - 12), y = 4 + rnd() * 82;
+      out += `<circle class="pg-flash" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6"
+        style="animation-delay:${(rnd() * 3).toFixed(2)}s"/>`;
+    }
+    return out;
+  })();
+
+  /* side-on mown bands for the corner scene's grass */
+  const BANDS = (() => {
+    let out = '';
+    for (let i = 0; i < 8; i += 2)
+      out += `<rect x="0" y="${108 + i * 13}" width="${W}" height="13" fill="rgba(255,255,255,.03)"/>`;
     return out;
   })();
 
@@ -2944,6 +2986,114 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           <g class="pg-targets">${targets}</g>
           <g class="pg-confetti"></g>
           <rect class="pg-wash" x="0" y="0" width="${W}" height="${H}" fill="url(#pg-washg)" opacity="0"/>
+        </g>
+      </svg>`;
+    },
+
+    /* The corner, close up: two tiers of crowd right on top of the flag,
+       hoardings, the corner arc — and nobody else. This is where the
+       celebrations happen; there is no goal and no keeper here. */
+    cornerView(opts) {
+      opts = opts || {};
+      const toLeft = opts.side !== 'right';
+      const d = toLeft ? 1 : -1;                        // the pitch runs this way from the flag
+      const cx = toLeft ? 34 : W - 34;                  // the corner point
+      const defs = `
+        <linearGradient id="pc-nightg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#04090f"/><stop offset="1" stop-color="#0a141d"/>
+        </linearGradient>
+        <linearGradient id="pc-grassg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#0d5a37"/><stop offset=".55" stop-color="#0f6b40"/>
+          <stop offset="1" stop-color="#0a4529"/>
+        </linearGradient>
+        <radialGradient id="pc-lamp" cx=".5" cy="0" r="1">
+          <stop offset="0" stop-color="rgba(200,255,228,.20)"/>
+          <stop offset="1" stop-color="rgba(190,255,220,0)"/>
+        </radialGradient>
+        <radialGradient id="pc-washg" cx=".5" cy=".52" r=".62">
+          <stop offset="0" stop-color="currentColor" stop-opacity=".55"/>
+          <stop offset="1" stop-color="currentColor" stop-opacity="0"/>
+        </radialGradient>`;
+
+      return `<svg class="goal-view cel-corner" viewBox="0 0 ${W} ${H}" role="img" aria-label="The corner flag">
+        <defs>${defs}</defs>
+        <g class="pg-cam">
+
+          <rect x="0" y="0" width="${W}" height="${H}" fill="url(#pc-nightg)"/>
+          <g class="pg-stand">${CROWD2}</g>
+          <rect x="0" y="49.5" width="${W}" height="4" fill="#0a141d"/>
+          <rect x="0" y="52.8" width="${W}" height="1" fill="rgba(226,240,255,.14)"/>
+          <g class="pg-flashes">${FLASHES2}</g>
+          <path d="M-10 0 L70 0 L150 130 L-30 130 Z" fill="url(#pc-lamp)"/>
+          <path d="M${W - 70} 0 L${W + 10} 0 L${W + 30} 130 L${W - 150} 130 Z" fill="url(#pc-lamp)"/>
+          <rect class="pg-hoard" x="-4" y="96" width="${W + 8}" height="12" rx="2"/>
+          <rect class="pg-hoard-lip" x="-4" y="106" width="${W + 8}" height="2"/>
+
+          <rect x="0" y="108" width="${W}" height="${H - 108}" fill="url(#pc-grassg)"/>
+          <g>${BANDS}</g>
+          <g class="pg-lines">
+            <path d="M${cx} 194 H${toLeft ? W + 4 : -4}"/>
+            <path d="M${cx} 194 L${cx + d * 7} 110"/>
+            <path d="M${cx + d * 26} 194 A26 26 0 0 ${toLeft ? 0 : 1} ${cx + d * 6.6} 168.4"/>
+          </g>
+
+          <g class="pg-flag" style="opacity:1" transform="translate(${cx} 194)">
+            <ellipse class="pg-flag-sh" cx="0" cy="1" rx="5" ry="1.5"/>
+            <rect class="pg-flag-pole" x="-1.1" y="-38" width="2.2" height="39" rx="1.1"/>
+            <path class="pg-flag-cloth" d="M1.1 -38 h16 l-3.4 5.6 l3.4 5.6 h-16 Z"/>
+            <circle class="pg-flag-top" cx="0" cy="-38.6" r="1.9"/>
+          </g>
+
+          <g class="pg-turf" opacity="0">
+            <rect class="pg-tbit" x="-2" y="-2" width="4.5" height="2.6" rx="1"/>
+            <rect class="pg-tbit" x="-2" y="-2" width="3.6" height="2.2" rx="1"/>
+            <rect class="pg-tbit" x="-2" y="-2" width="4" height="2.4" rx="1"/>
+            <rect class="pg-tbit" x="-2" y="-2" width="3.2" height="2" rx="1"/>
+          </g>
+
+          <g class="pg-mates">
+            <g class="pg-mate" opacity="0"><ellipse class="pg-m-sh" cy="1" rx="10" ry="2.6"/>
+              <path class="pg-m-legs" d="M-7 -13 h14 v9 q0 4 -3.2 4 h-2.4 q-2.2 0 -2.2 -2.8 v-5.6 h-1.9 v5.6 q0 2.8 -2.2 2.8 h-2.4 q-3.2 0 -3.2 -4 Z"/>
+              <path class="pg-m-kit" d="M-8.5 -32 q8.5 -4 17 0 l2.2 19 q-10.7 3.8 -21.4 0 Z"/>
+              <rect class="pg-m-arm" x="-22" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(-42 -8 -31)"/>
+              <rect class="pg-m-arm" x="8" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(42 8 -31)"/>
+              <circle class="pg-m-head" cx="0" cy="-37" r="5.6"/></g>
+            <g class="pg-mate" opacity="0"><ellipse class="pg-m-sh" cy="1" rx="10" ry="2.6"/>
+              <path class="pg-m-legs" d="M-7 -13 h14 v9 q0 4 -3.2 4 h-2.4 q-2.2 0 -2.2 -2.8 v-5.6 h-1.9 v5.6 q0 2.8 -2.2 2.8 h-2.4 q-3.2 0 -3.2 -4 Z"/>
+              <path class="pg-m-kit" d="M-8.5 -32 q8.5 -4 17 0 l2.2 19 q-10.7 3.8 -21.4 0 Z"/>
+              <rect class="pg-m-arm" x="-22" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(-42 -8 -31)"/>
+              <rect class="pg-m-arm" x="8" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(42 8 -31)"/>
+              <circle class="pg-m-head" cx="0" cy="-37" r="5.6"/></g>
+            <g class="pg-mate" opacity="0"><ellipse class="pg-m-sh" cy="1" rx="10" ry="2.6"/>
+              <path class="pg-m-legs" d="M-7 -13 h14 v9 q0 4 -3.2 4 h-2.4 q-2.2 0 -2.2 -2.8 v-5.6 h-1.9 v5.6 q0 2.8 -2.2 2.8 h-2.4 q-3.2 0 -3.2 -4 Z"/>
+              <path class="pg-m-kit" d="M-8.5 -32 q8.5 -4 17 0 l2.2 19 q-10.7 3.8 -21.4 0 Z"/>
+              <rect class="pg-m-arm" x="-22" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(-42 -8 -31)"/>
+              <rect class="pg-m-arm" x="8" y="-38" width="14" height="5.6" rx="2.8" transform="rotate(42 8 -31)"/>
+              <circle class="pg-m-head" cx="0" cy="-37" r="5.6"/></g>
+          </g>
+
+          <g class="pg-scorer" opacity="0">
+            <ellipse class="pg-sc-shadow" cx="0" cy="2" rx="14" ry="3.4"/>
+            <g class="pg-sc-body">
+              <path class="pg-sc-legs" d="M-9 -16 h18 v11 q0 5 -4 5 h-3 q-2.8 0 -2.8 -3.4 v-7 h-2.4 v7
+                q0 3.4 -2.8 3.4 h-3 q-4 0 -4 -5 Z"/>
+              <path class="pg-sc-kit" d="M-10 -38 q10 -5 20 0 l2.6 22 q-12.6 4.4 -25.2 0 Z"/>
+              <path class="pg-sc-trim" d="M-10 -38 q10 -5 20 0 l.7 4.8 q-10.7 -3.8 -21.4 0 Z"/>
+              <g class="pg-sc-arm-l"><rect x="-26" y="-37.5" width="17" height="6.5" rx="3.2"/></g>
+              <g class="pg-sc-arm-r"><rect x="9" y="-37.5" width="17" height="6.5" rx="3.2"/></g>
+              <circle class="pg-sc-head" cx="0" cy="-45" r="6.6"/>
+              <path class="pg-sc-hair" d="M-6.6 -47.6 a6.6 6.6 0 0 1 13.2 0 q-6.6 -3.6 -13.2 0 Z"/>
+              <g class="pg-sc-props">
+                <path class="prop-heart" d="M0 -60.5 c-2.6 -3.4 -7.4 -2.2 -7.4 1.8 0 3.4 4.2 6.4 7.4 8.8
+                  3.2 -2.4 7.4 -5.4 7.4 -8.8 0 -4 -4.8 -5.2 -7.4 -1.8 Z"/>
+                <rect class="prop-hush" x="-1.6" y="-49" width="3.2" height="7" rx="1.6"/>
+                <circle class="prop-crest" cx="-3.4" cy="-31" r="3"/>
+              </g>
+            </g>
+          </g>
+
+          <g class="pg-confetti"></g>
+          <rect class="pg-wash" x="0" y="0" width="${W}" height="${H}" fill="url(#pc-washg)" opacity="0"/>
         </g>
       </svg>`;
     },
@@ -3300,40 +3450,53 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       return Pitch.CELEBRATIONS.find(c => c.id === id) || Pitch.CELEBRATIONS[0];
     },
 
-    /* He scored. opts.style picks the routine, opts.side which way he runs. */
+    /* He scored. The goal scene is swapped for the corner — two tiers of
+       crowd right on top of the flag, no goal, no keeper — and the picked
+       routine plays out big. opts.style picks the routine, opts.side the corner. */
     celebrate(root, opts, done) {
       opts = opts || {};
-      const q = s => root && root.querySelector(s);
-      const sc = q('.pg-scorer'), body = q('.pg-sc-body'), conf = q('.pg-confetti');
-      if (!sc) { if (done) done(); return; }
-
       let style = opts.style || 'slide';
       if (style === 'random') {
         const pool = Pitch.CELEBRATIONS.filter(c => c.id !== 'random');
         style = pool[Math.floor(Math.random() * pool.length)].id;
       }
       const toLeft = opts.side !== 'right';
-      const dir = toLeft ? -1 : 1;
+      const d = toLeft ? 1 : -1;                          // the pitch lies this way from the flag
+      const wrap = root && root.parentNode;
+      if (wrap) {
+        wrap.innerHTML = Pitch.cornerView({ side: opts.side });
+        root = wrap.querySelector('.goal-view');
+      }
+      const q = s => root && root.querySelector(s);
+      const sc = q('.pg-scorer'), body = q('.pg-sc-body'), conf = q('.pg-confetti');
+      if (!sc) { if (done) done(); return; }
+
+      const cx = toLeft ? 34 : W - 34;                    // the flag's feet
+      const at = { x: cx + d * 30, y: 192 };              // where he pulls up
+      const look = { x: at.x + d * 6, y: 150 };           // the point the camera centres on
+      const S = 1.3;                                      // his size in this scene
       const armL = q('.pg-sc-arm-l'), armR = q('.pg-sc-arm-r');
       const shadow = q('.pg-sc-shadow');
       const props = q('.pg-sc-props');
       const flag = q('.pg-flag');
-      // the corner he makes for, and the flag waiting there
-      const corner = { x: toLeft ? 58 : W - 58, y: 190 };
-      const flagAt = { x: toLeft ? 32 : W - 32, y: 192 };
-      const camFocus = corner.y - 26;
+      const cam = q('.pg-cam');
 
       if (reduced()) {
         sc.style.opacity = '1';
-        sc.style.transform = place(corner.x, corner.y, 0, 1.05);
-        if (flag) { flag.style.opacity = '1'; flag.style.transform = place(flagAt.x, flagAt.y); }
-        const camr = q('.pg-cam'); if (camr) camr.style.transform = about(corner.x, camFocus, 0, 1.22);
+        sc.style.transform = place(at.x, at.y, 0, S);
+        if (cam) cam.style.transform = focus(look.x, look.y, 1.14);
         if (done) done();
         return;
       }
 
       if (props) props.setAttribute('class', 'pg-sc-props prop-' + style);
       sc.style.opacity = '1';
+      root.classList.add('is-party');
+
+      // the scene lands with a camera-flash wash
+      const wash = q('.pg-wash');
+      if (wash) wash.animate([{ opacity: .55 }, { opacity: 0 }],
+        { duration: 420, easing: 'ease-out', fill: 'forwards' });
 
       /* ---- ticker tape and the noise, whichever routine it is ---- */
       if (conf) {
@@ -3363,14 +3526,35 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         { transform: 'translateY(0)', offset: .8 }, { transform: 'translateY(-1px)', offset: .9 },
         { transform: 'translateY(0)' }
       ], { duration: 1600, easing: 'ease-out' });
-      root.classList.add('is-party');
 
-      const kb = q('.pg-keeper-body');
-      if (kb) kb.animate([
-        { transform: kb.style.transform || 'none' },
-        { transform: 'translateY(6px) scaleY(.9)', offset: .5 },
-        { transform: 'translateY(9px) scaleY(.86)' }
-      ], { duration: 900, delay: 120, easing: 'ease-out', fill: 'forwards' });
+      const cloth = q('.pg-flag-cloth');
+      if (cloth) cloth.animate([
+        { transform: 'rotate(0deg)' }, { transform: 'rotate(7deg)' },
+        { transform: 'rotate(-4deg)' }, { transform: 'rotate(0deg)' }
+      ], { duration: 640, iterations: Infinity, easing: 'ease-in-out' });
+
+      const flagWobble = delay => {
+        if (flag) flag.animate([
+          { transform: place(cx, 194, 0) },
+          { transform: place(cx, 194, -d * 12), offset: .28 },
+          { transform: place(cx, 194, d * 7), offset: .55 },
+          { transform: place(cx, 194, -d * 3), offset: .78 },
+          { transform: place(cx, 194, 0) }
+        ], { duration: 700, delay, easing: 'ease-out', fill: 'forwards' });
+      };
+
+      const turf = q('.pg-turf');
+      const turfOut = delay => {
+        if (!turf) return;
+        turf.style.opacity = '1';
+        Array.prototype.forEach.call(turf.children, (b, i) => {
+          b.animate([
+            { transform: place(cx + d * 4, 194, 0, 1), opacity: 1 },
+            { transform: place(cx - d * (10 + i * 8), 184 - (i % 2) * 7, -d * 50, 1), offset: .5 },
+            { transform: place(cx - d * (20 + i * 11), 199, -d * 110, .9), opacity: 0 }
+          ], { duration: 540, delay: delay + i * 34, easing: 'ease-out', fill: 'forwards' });
+        });
+      };
 
       const arms = (frames, opt) => {
         if (armL) armL.animate(frames.map(f => ({ transform: `rotate(${f[0]}deg)`, offset: f[2] })), opt);
@@ -3378,174 +3562,155 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       };
       const ease = 'cubic-bezier(.25,.7,.35,1)';
 
-      /* ---- the corner flag, planted and fluttering where he is heading ---- */
-      if (flag) {
-        flag.style.opacity = '1';
-        flag.style.transform = place(flagAt.x, flagAt.y);
-        const cloth = q('.pg-flag-cloth');
-        if (cloth) cloth.animate([
-          { transform: 'rotate(0deg)' }, { transform: 'rotate(7deg)' },
-          { transform: 'rotate(-4deg)' }, { transform: 'rotate(0deg)' }
-        ], { duration: 640, iterations: Infinity, easing: 'ease-in-out' });
-      }
-      const flagWobble = delay => {
-        if (flag) flag.animate([
-          { transform: place(flagAt.x, flagAt.y, 0) },
-          { transform: place(flagAt.x, flagAt.y, dir * 11), offset: .28 },
-          { transform: place(flagAt.x, flagAt.y, -dir * 7), offset: .55 },
-          { transform: place(flagAt.x, flagAt.y, dir * 3), offset: .78 },
-          { transform: place(flagAt.x, flagAt.y, 0) }
-        ], { duration: 720, delay, easing: 'ease-out', fill: 'forwards' });
-      };
-
-      /* ---- phase one: the sprint to the corner, camera swings with him ---- */
-      const RUN = 720;
-      const midX = SPOT.x + (corner.x - SPOT.x) * .55;
+      /* ---- phase one: he arrives at a sprint, camera swinging with him ---- */
+      const RUN = 780;
       sc.animate([
-        { transform: place(SPOT.x - dir * 18, H + 44, 0, .8) },
-        { transform: place(midX, 204, dir * 4, .93), offset: .45 },
-        { transform: place(corner.x - dir * 30, corner.y + 7, dir * 2, 1.02), offset: .8 },
-        { transform: place(corner.x, corner.y, 0, 1.06) }
+        { transform: place(at.x + d * 300, 208, 0, S * .8) },
+        { transform: place(at.x + d * 140, 199, -d * 4, S * .93), offset: .46 },
+        { transform: place(at.x + d * 44, 195, -d * 2, S * 1.02), offset: .82 },
+        { transform: place(at.x, at.y, 0, S) }
       ], { duration: RUN, easing: ease, fill: 'forwards' });
-      if (body) body.animate([                        // leaning into the sprint
+      if (body) body.animate([                        // leaning into it
         { transform: 'rotate(0deg)' },
-        { transform: `rotate(${dir * 10}deg)`, offset: .35 },
-        { transform: `rotate(${dir * 7}deg)`, offset: .8 },
+        { transform: `rotate(${-d * 10}deg)`, offset: .35 },
+        { transform: `rotate(${-d * 7}deg)`, offset: .8 },
         { transform: 'rotate(0deg)' }
       ], { duration: RUN, easing: ease, fill: 'forwards' });
-      arms([[0, 0, 0], [-32, 32, .3], [26, -26, .62], [-14, 14, 1]],
+      arms([[0, 0, 0], [-34, 34, .3], [28, -28, .62], [-14, 14, 1]],
         { duration: RUN, easing: 'ease-in-out', fill: 'forwards' });   // pumping
       if (shadow) shadow.animate([
-        { transform: 'scale(.85,1)', opacity: .36 },
+        { transform: 'scale(.8,1)', opacity: .36 },
         { transform: 'scale(1.1,1)', opacity: .34 }
       ], { duration: RUN, fill: 'forwards' });
-
-      const cam = q('.pg-cam');
       if (cam) cam.animate([
-        { transform: about(160, 150, 0, 1.01) },
-        { transform: about(corner.x, camFocus, 0, 1.2) }
+        { transform: focus(at.x + d * 110, 150, .95) },
+        { transform: focus(look.x, look.y, 1.12) }
       ], { duration: RUN + 140, easing: 'cubic-bezier(.3,.6,.3,1)', fill: 'forwards' });
 
-      /* ---- phase two: the routine, at the flag ---- */
-      let dur = RUN + 800, camTo = 1.26;
+      /* ---- phase two: the routine, big at the flag ---- */
+      let dur = RUN + 800, camTo = 1.22;
       const rOpt = extra => Object.assign({ delay: RUN, easing: 'ease-out', fill: 'forwards' }, extra || {});
 
       if (style === 'slide') {
-        // drops to his knees and skids past the flag
+        // drops to his knees and skids into the flag, turf flying
         sc.animate([
-          { transform: place(corner.x, corner.y, 0, 1.06) },
-          { transform: place(corner.x + dir * 14, corner.y + 3, 0, 1.06), offset: .55 },
-          { transform: place(corner.x + dir * 20, corner.y + 4, 0, 1.05) }
-        ], rOpt({ duration: 620, easing: ease }));
+          { transform: place(at.x, at.y, 0, S) },
+          { transform: place(at.x - d * 8, at.y + 4, 0, S), offset: .55 },
+          { transform: place(at.x - d * 12, at.y + 6, 0, S * .99) }
+        ], rOpt({ duration: 640, easing: ease }));
         if (body) body.animate([
           { transform: 'rotate(0deg) scaleY(1)' },
-          { transform: `rotate(${dir * 8}deg) scaleY(1.02)`, offset: .3 },
-          { transform: `rotate(${dir * 20}deg) scaleY(.88)`, offset: .72 },
-          { transform: `rotate(${dir * 16}deg) scaleY(.91)` }
-        ], rOpt({ duration: 620, easing: ease }));
-        arms([[-14, 14, 0], [-10, 10, .3], [36, -36, 1]], rOpt({ duration: 620 }));
+          { transform: `rotate(${d * 9}deg) scaleY(.97)`, offset: .3 },
+          { transform: `rotate(${d * 21}deg) scaleY(.84)`, offset: .72 },
+          { transform: `rotate(${d * 17}deg) scaleY(.87)` }
+        ], rOpt({ duration: 640, easing: ease }));
+        arms([[-14, 14, 0], [-16, 16, .3], [-44, 44, 1]], rOpt({ duration: 640 }));
         if (shadow) shadow.animate([{ transform: 'scale(1.1,1)', opacity: .34 },
-          { transform: 'scale(1.6,.75)', opacity: .26 }], rOpt({ duration: 620 }));
-        flagWobble(RUN + 240);
-        dur = RUN + 760; camTo = 1.28;
+          { transform: 'scale(1.7,.72)', opacity: .26 }], rOpt({ duration: 640 }));
+        turfOut(RUN + 200);
+        flagWobble(RUN + 260);
+        dur = RUN + 820; camTo = 1.26;
 
       } else if (style === 'leap') {
         sc.animate([
-          { transform: place(corner.x, corner.y, 0, 1.06) },
-          { transform: place(corner.x, corner.y - 38, 360, 1.12), offset: .5 },   // up and round
-          { transform: place(corner.x, corner.y + 2, 360, 1.06), offset: .82 },
-          { transform: place(corner.x, corner.y, 360, 1.06) }
-        ], rOpt({ duration: 820, easing: 'cubic-bezier(.3,.65,.3,1)' }));
-        arms([[-14, 14, 0], [-44, 44, .35], [26, -26, .7], [8, -8, 1]], rOpt({ duration: 820 }));
+          { transform: place(at.x, at.y, 0, S) },
+          { transform: place(at.x, at.y + 4, 0, S * .97), offset: .16 },              // loads the legs
+          { transform: place(at.x - d * 6, at.y - 46, 360, S * 1.12), offset: .58 },  // up and round
+          { transform: place(at.x - d * 8, at.y + 4, 360, S), offset: .86 },
+          { transform: place(at.x - d * 8, at.y, 360, S) }
+        ], rOpt({ duration: 920, easing: 'cubic-bezier(.3,.65,.3,1)' }));
+        arms([[-14, 14, 0], [-20, 20, .16], [-48, 48, .5], [22, -22, .84], [6, -6, 1]], rOpt({ duration: 920 }));
         if (shadow) shadow.animate([
           { transform: 'scale(1.05)', opacity: .36 },
-          { transform: 'scale(.5)', opacity: .12, offset: .5 },
-          { transform: 'scale(1.15)', opacity: .36 }
-        ], rOpt({ duration: 820 }));
-        flagWobble(RUN + 500);
-        dur = RUN + 950; camTo = 1.3;
+          { transform: 'scale(.5)', opacity: .12, offset: .58 },
+          { transform: 'scale(1.2)', opacity: .36 }
+        ], rOpt({ duration: 920 }));
+        flagWobble(RUN + 560);
+        dur = RUN + 1080; camTo = 1.27;
 
       } else if (style === 'wings') {
-        const loop = dir * 30;                           // banks round the flag
+        // the aeroplane, banking a full lap round the flag
         sc.animate([
-          { transform: place(corner.x, corner.y, 0, 1.06) },
-          { transform: place(corner.x + loop * .5, corner.y - 8, 0, 1.08), offset: .4 },
-          { transform: place(corner.x + loop, corner.y + 1, 0, 1.06), offset: .8 },
-          { transform: place(corner.x + loop * .9, corner.y + 2, 0, 1.06) }
-        ], rOpt({ duration: 900, easing: 'linear' }));
+          { transform: place(at.x, at.y, 0, S) },
+          { transform: place(cx + d * 6, at.y - 6, -d * 5, S * 1.03), offset: .38 },
+          { transform: place(cx - d * 16, at.y + 2, -d * 2, S), offset: .76 },
+          { transform: place(cx - d * 12, at.y + 3, 0, S) }
+        ], rOpt({ duration: 950, easing: 'linear' }));
         if (body) body.animate([
           { transform: 'rotate(0deg)' },
-          { transform: `rotate(${-dir * 13}deg)`, offset: .45 },
-          { transform: `rotate(${-dir * 9}deg)` }
-        ], rOpt({ duration: 900, easing: 'ease-in-out' }));
-        arms([[-14, 14, 0], [-72, 72, .25], [-78, 78, 1]], rOpt({ duration: 900 }));
+          { transform: `rotate(${d * 13}deg)`, offset: .45 },
+          { transform: `rotate(${d * 9}deg)` }
+        ], rOpt({ duration: 950, easing: 'ease-in-out' }));
+        arms([[-14, 14, 0], [-74, 74, .25], [-80, 80, 1]], rOpt({ duration: 950 }));
         flagWobble(RUN + 420);
-        dur = RUN + 1020;
+        dur = RUN + 1080;
 
       } else if (style === 'shush') {
         sc.animate([
-          { transform: place(corner.x, corner.y, 0, 1.06) },
-          { transform: place(corner.x, corner.y + 8, 0, 1.16), offset: .6 },   // right at the lens
-          { transform: place(corner.x, corner.y + 10, 0, 1.2) }
-        ], rOpt({ duration: 900 }));
-        arms([[-14, 14, 0], [-30, 4, .35], [-96, 6, .62], [-96, 6, 1]], rOpt({ duration: 900 }));
-        dur = RUN + 1050; camTo = 1.34;
+          { transform: place(at.x, at.y, 0, S) },
+          { transform: place(at.x, at.y + 12, 0, S * 1.3), offset: .55 },   // right into the lens
+          { transform: place(at.x, at.y + 15, 0, S * 1.42) }
+        ], rOpt({ duration: 950 }));
+        arms([[-14, 14, 0], [-30, 4, .35], [-96, 6, .62], [-96, 6, 1]], rOpt({ duration: 950 }));
+        if (shadow) shadow.animate([{ transform: 'scale(1.1,1)', opacity: .34 },
+          { transform: 'scale(1.35,1)', opacity: .3 }], rOpt({ duration: 950 }));
+        dur = RUN + 1100; camTo = 1.3;
 
       } else if (style === 'heart') {
         sc.animate([
-          { transform: place(corner.x, corner.y, 0, 1.06) },
-          { transform: place(corner.x, corner.y - 6, 0, 1.07), offset: .5 },   // the little hop
-          { transform: place(corner.x, corner.y, 0, 1.07) }
-        ], rOpt({ duration: 700 }));
+          { transform: place(at.x, at.y, 0, S) },
+          { transform: place(at.x, at.y - 8, 0, S * 1.03), offset: .5 },   // the little hop
+          { transform: place(at.x, at.y, 0, S * 1.03) }
+        ], rOpt({ duration: 720 }));
         arms([[-14, 14, 0], [-40, 40, .35], [-104, 104, .68], [-100, 100, 1]],
-          rOpt({ duration: 900, easing: 'cubic-bezier(.3,1.4,.5,1)' }));
-        dur = RUN + 1050; camTo = 1.3;
+          rOpt({ duration: 920, easing: 'cubic-bezier(.3,1.4,.5,1)' }));
+        dur = RUN + 1080; camTo = 1.28;
 
       } else if (style === 'badge') {
         sc.animate([
-          { transform: place(corner.x, corner.y, 0, 1.06) },
-          { transform: place(corner.x, corner.y + 1, 0, 1.07) }
+          { transform: place(at.x, at.y, 0, S) },
+          { transform: place(at.x, at.y + 1, 0, S * 1.02) }
         ], rOpt({ duration: 500 }));
         // hands to the crest, then one arm flung out at the crowd
         arms([[-14, 14, 0], [-58, 58, .35], [-58, 58, .58], [-58, -104, 1]], rOpt({ duration: 1000 }));
-        dur = RUN + 1050; camTo = 1.3;
+        dur = RUN + 1080; camTo = 1.28;
 
       } else if (style === 'ice') {
         sc.animate([
-          { transform: place(corner.x, corner.y, 0, 1.06) },
-          { transform: place(corner.x, corner.y, 0, 1.06) }
+          { transform: place(at.x, at.y, 0, S) },
+          { transform: place(at.x, at.y, 0, S) }
         ], rOpt({ duration: 500 }));
         arms([[-14, 14, 0], [-58, 58, .5], [-62, 62, 1]], rOpt({ duration: 700 }));   // folded
-        dur = RUN + 1100; camTo = 1.36;                       // slow push while he does nothing
+        dur = RUN + 1150; camTo = 1.34;                        // slow push while he does nothing
 
       } else if (style === 'mobbed') {
         sc.animate([
-          { transform: place(corner.x, corner.y, 0, 1.06) },
-          { transform: place(corner.x, corner.y + 2, 0, 1.04), offset: .7 },
-          { transform: place(corner.x, corner.y + 1, 0, 1.05) }
+          { transform: place(at.x, at.y, 0, S) },
+          { transform: place(at.x, at.y + 2, 0, S * .97), offset: .7 },
+          { transform: place(at.x, at.y + 1, 0, S * .98) }
         ], rOpt({ duration: 900 }));
         arms([[-14, 14, 0], [-46, 46, .4], [-34, 34, 1]], rOpt({ duration: 900 }));
-        // team-mates pile in from both sides of the frame
+        // two off the pitch, one coming round the flag
         root.querySelectorAll('.pg-mate').forEach((mate, i) => {
-          const from = i % 2 ? 1 : -1;
+          const from = i === 2 ? -d : d;
           mate.style.opacity = '1';
           mate.animate([
-            { transform: place(corner.x + from * 190, 202, 0, .74), opacity: 0 },
-            { transform: place(corner.x + from * 190, 202, 0, .78), opacity: 1, offset: .12 },
-            { transform: place(corner.x + from * (26 + i * 9), corner.y + 1, 0, .94), offset: .72 },
-            { transform: place(corner.x + from * (22 + i * 9), corner.y + 3, 0, .96) }
-          ], { duration: 1000, delay: RUN + 160 + i * 120, easing: 'cubic-bezier(.3,.7,.35,1)', fill: 'forwards' });
+            { transform: place(at.x + from * (150 + i * 40), 204, 0, S * .6), opacity: 0 },
+            { transform: place(at.x + from * (150 + i * 40), 204, 0, S * .66), opacity: 1, offset: .12 },
+            { transform: place(at.x + from * (18 + i * 10), at.y + 1, 0, S * .86), offset: .72 },
+            { transform: place(at.x + from * (15 + i * 10), at.y + 3, 0, S * .88) }
+          ], { duration: 1000, delay: RUN + 160 + i * 130, easing: 'cubic-bezier(.3,.7,.35,1)', fill: 'forwards' });
         });
-        flagWobble(RUN + 700);
-        dur = RUN + 1250; camTo = 1.24;
+        flagWobble(RUN + 720);
+        dur = RUN + 1300; camTo = 1.2;
       }
 
       // camera: settles on him at the flag, then a slow punch in
       if (cam) cam.animate([
-        { transform: about(corner.x, camFocus, 0, 1.2) },
-        { transform: about(corner.x, camFocus, 0, camTo), offset: .45 },
-        { transform: about(corner.x, camFocus, 0, camTo - .02) }
-      ], { duration: dur - RUN + 200, delay: RUN, easing: 'ease-out', fill: 'forwards' });
+        { transform: focus(look.x, look.y, 1.12) },
+        { transform: focus(look.x, look.y, camTo), offset: .5 },
+        { transform: focus(look.x, look.y, camTo - .02) }
+      ], { duration: dur - RUN + 220, delay: RUN, easing: 'ease-out', fill: 'forwards' });
 
       setTimeout(() => { if (done) done(); }, dur);
     },
@@ -11612,12 +11777,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       $('match-action').innerHTML = `<div class="scn">
         <div class="scn-h"><div class="art">${ico(scn.art || 'ball')}</div><b>${esc(scn.title)}</b></div>
         <div class="scn-sub">${esc(scn.sub || '')}</div>
-        ${cel ? `<div class="goal-wrap cel-view">${global.Pitch.view({ aim: false })}</div>` : ''}
+        ${cel ? `<div class="goal-wrap cel-view">${global.Pitch.cornerView()}</div>` : ''}
         <div class="choices${scn.options.length >= 5 ? ' cols' : ''}">${scn.options.map((o, i) => `<button class="choice" data-ci="${i}">
           <div class="cb"><b>${esc(o.label)}</b><span>${esc(o.hint || '')}</span></div>
           ${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}</button>`).join('')}</div></div>`;
       const root = cel ? $('match-action').querySelector('.goal-view') : null;
-      if (root) global.Pitch.reset(root);
       $('match-action').querySelectorAll('[data-ci]').forEach(b => {
         b.onclick = () => onChoose(+b.dataset.ci, root);
       });
@@ -12232,10 +12396,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
             mEl.querySelectorAll('.cel-opt').forEach(o => o.classList.toggle('on', o.dataset.cel === id));
             const c = global.Pitch.celebrationById(id);
             if (note) note.textContent = c.name + ' — yours now.';
-            if (root) {
-              global.Pitch.reset(root);
-              global.Pitch.celebrate(root, { style: id, side: 'left' }, () => {});
-            }
+            // celebrate() swaps in the corner scene, so re-query every tap
+            const cur = mEl.querySelector('.goal-view');
+            if (cur) global.Pitch.celebrate(cur, { style: id, side: 'left' }, () => {});
             State.save();
           });
         }

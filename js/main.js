@@ -457,10 +457,9 @@
             mEl.querySelectorAll('.cel-opt').forEach(o => o.classList.toggle('on', o.dataset.cel === id));
             const c = global.Pitch.celebrationById(id);
             if (note) note.textContent = c.name + ' — yours now.';
-            if (root) {
-              global.Pitch.reset(root);
-              global.Pitch.celebrate(root, { style: id, side: 'left' }, () => {});
-            }
+            // celebrate() swaps in the corner scene, so re-query every tap
+            const cur = mEl.querySelector('.goal-view');
+            if (cur) global.Pitch.celebrate(cur, { style: id, side: 'left' }, () => {});
             State.save();
           });
         }
