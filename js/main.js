@@ -198,8 +198,8 @@
 
       UI.modal({
         title: 'Choose your starting path',
-        html: `<p class="muted">Four leagues, four ways up. Pick one and one of its smaller clubs
-          hands you a first contract — the rest is on you.</p><div class="list">${html}</div>`,
+        html: `<p class="muted">Seven leagues, seven ways up. Pick one and one of its smaller
+          clubs hands you a first contract — the rest is on you.</p><div class="list">${html}</div>`,
         actions: [{ label: 'Back', cls: 'btn-ghost' }],
         onRender(m) {
           m.querySelectorAll('[data-sp]').forEach(el => el.onclick = () => {
@@ -439,7 +439,7 @@
             const L = world.leagues.find(x => x.id === id) || State.league(id);
             const cap = Game._mgrCeiling || 99;
             const open = Object.values(world.clubs).filter(c => c.league === id && c.rating <= cap).length;
-            return `<div class="item click" data-lg="${id}"><div class="ic">${ico('nation')}</div>
+            return `<div class="item click" data-lg="${id}"><div class="ic">${global.Icons.flag(L.country)}</div>
               <div class="tx"><b>${U.esc(L.name)}</b><span>${U.esc(L.country)}${
                 Game._mgrCeiling ? ' · ' + (open ? open + ' club' + (open === 1 ? '' : 's') + ' would have you'
                                                 : 'nobody here wants you') : ''}</span></div></div>`;
@@ -567,7 +567,8 @@
       const r = global.Manager.seasonReview(g);
       const club = State.club(g.mgr.club);
       State.save();
-      UI.modal({
+
+      const meetTheBoard = () => UI.modal({
         title: r.champion ? 'CHAMPIONS' : r.met ? 'Target met' : 'Season over',
         html: `<div class="stat-grid">
             <div class="stat"><b>${U.ordinal(r.pos)}</b><span>Finish</span></div>
@@ -584,8 +585,14 @@
           UI.toast('Transfer window is open.', 'good');
         } }]
       });
+
+      // Lift it first, then go and see them. There is only one modal, so the
+      // trophy used to open on top of the review and take the button that
+      // starts your next season with it.
       if (r.champion) {
-        setTimeout(() => Game.trophyLift(State.league(club.league).name + ' Title', 'Champions', () => {}), 60);
+        Game.trophyLift(State.league(club.league).name + ' Title', 'Champions', meetTheBoard);
+      } else {
+        meetTheBoard();
       }
     },
 
@@ -870,17 +877,23 @@
       });
     },
 
-    /* You won something. Somebody lifts it. */
+    /* You won something. Somebody lifts it. Works from either seat: in a career
+       it is your club and your name under the cup, in Manager Mode it is the
+       club you manage — a manager game has no g.player at all, which is why
+       winning the league used to throw here instead of showing the trophy. */
     trophyLift(name, subtitle, then) {
       const g = State.game;
-      const club = State.club(g.player.club);
+      const mgr = g.mode === 'manager';
+      const club = State.club(mgr ? g.mgr.club : g.player.club);
       const kit = global.Crest.accent(club.name) || '#2ae67e';
       const trim = global.Crest.accent2(club.name) || 'rgba(255,255,255,.55)';
+      const who = mgr ? `${club.name} — your team.`
+        : `${g.player.firstName} ${g.player.lastName} — a winner.`;
       UI.modal({
         html: `<div class="lift-title">${U.esc(subtitle || 'Champions')}</div>
           <div class="lift-wrap">${global.Trophies.liftScene(name, kit, trim)}</div>
           <div class="lift-name">${U.esc(name)}</div>
-          <div class="lift-sub">${U.esc(g.player.firstName + ' ' + g.player.lastName)} — a winner.</div>`,
+          <div class="lift-sub">${U.esc(who)}</div>`,
         actions: [{ label: 'Get the medal', onClick: () => { if (then) then(); } }],
         onRender(mEl) {
           const root = mEl.querySelector('.lift-view');

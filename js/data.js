@@ -103,6 +103,42 @@
       ['Inter Miami', 76, 3], ['LAFC', 74, 3], ['LA Galaxy', 73, 3], ['Seattle Sounders', 72, 3],
       ['Atlanta United', 71, 2], ['Columbus Crew', 71, 2], ['NY Red Bulls', 70, 2], ['Philadelphia Union', 69, 2],
       ['Portland Timbers', 68, 2], ['Austin FC', 66, 1], ['Nashville SC', 66, 1], ['Chicago Fire', 65, 1]
+    ]},
+    { id: 'TUR', name: 'Süper Lig', country: 'Turkey', tier: 3, cup: 'Türkiye Kupası',
+      cont: 'UCL', clubs: [
+      ['Galatasaray', 80, 5], ['Fenerbahçe', 79, 5], ['Beşiktaş', 76, 4], ['Trabzonspor', 74, 4],
+      ['Başakşehir', 70, 2], ['Samsunspor', 68, 1], ['Konyaspor', 66, 1], ['Alanyaspor', 65, 1],
+      ['Antalyaspor', 65, 1], ['Kayserispor', 64, 1], ['Gaziantep', 63, 1], ['Rizespor', 62, 1]
+    ]},
+    { id: 'SCO', name: 'Scottish Premiership', country: 'Scotland', tier: 2, cup: 'Scottish Cup',
+      cont: 'UCL', clubs: [
+      ['Celtic', 76, 5], ['Rangers', 74, 5], ['Hearts', 68, 3], ['Aberdeen', 67, 3],
+      ['Hibernian', 66, 2], ['Dundee United', 64, 2], ['Motherwell', 63, 2], ['Kilmarnock', 62, 1],
+      ['St Mirren', 62, 1], ['Dundee', 61, 1], ['Ross County', 60, 1], ['St Johnstone', 59, 1]
+    ]},
+    { id: 'BEL', name: 'Belgian Pro League', country: 'Belgium', tier: 2, cup: 'Beker van België',
+      cont: 'UCL', clubs: [
+      ['Club Brugge', 74, 4], ['Anderlecht', 72, 5], ['Union SG', 72, 2], ['Genk', 71, 3],
+      ['Gent', 69, 3], ['Antwerp', 69, 2], ['Standard Liège', 67, 3], ['Cercle Brugge', 65, 1],
+      ['Mechelen', 64, 1], ['Charleroi', 63, 1], ['OH Leuven', 62, 1], ['Westerlo', 61, 1]
+    ]},
+    { id: 'MEX', name: 'Liga MX', country: 'Mexico', tier: 3, cup: 'Copa MX',
+      cont: 'CCL', clubs: [
+      ['América', 75, 5], ['Monterrey', 74, 4], ['Tigres UANL', 74, 4], ['Cruz Azul', 73, 4],
+      ['Guadalajara', 72, 5], ['Toluca', 71, 3], ['Pumas UNAM', 70, 4], ['Pachuca', 70, 3],
+      ['León', 69, 3], ['Santos Laguna', 68, 2], ['Atlas', 67, 2], ['Necaxa', 65, 1]
+    ]},
+    { id: 'SAU', name: 'Saudi Pro League', country: 'Saudi Arabia', tier: 3, cup: 'King\u2019s Cup',
+      cont: 'AFC', clubs: [
+      ['Al Hilal', 79, 5], ['Al Nassr', 78, 4], ['Al Ittihad', 77, 4], ['Al Ahli', 76, 3],
+      ['Al Qadsiah', 71, 2], ['Al Shabab', 70, 2], ['Al Ettifaq', 69, 2], ['Al Taawoun', 67, 1],
+      ['Al Fateh', 66, 1], ['Al Khaleej', 65, 1], ['Damac', 64, 1], ['Al Riyadh', 63, 1]
+    ]},
+    { id: 'JPN', name: 'J1 League', country: 'Japan', tier: 2, cup: 'Emperor\u2019s Cup',
+      cont: 'AFC', clubs: [
+      ['Kawasaki Frontale', 70, 4], ['Vissel Kobe', 70, 3], ['Urawa Reds', 69, 4], ['Yokohama F. Marinos', 69, 4],
+      ['Kashima Antlers', 68, 4], ['Sanfrecce Hiroshima', 68, 3], ['Gamba Osaka', 67, 3], ['FC Tokyo', 66, 2],
+      ['Cerezo Osaka', 66, 2], ['Nagoya Grampus', 65, 2], ['Kashiwa Reysol', 63, 1], ['Avispa Fukuoka', 62, 1]
     ]}
   ];
 
@@ -115,7 +151,10 @@
     { league: 'NED', blurb: 'Technical, fearless with kids — the shop window of Europe.' },
     { league: 'POR', blurb: 'A finishing school for forwards. The giants come shopping here first.' },
     { league: 'ARG', blurb: 'Street football with the studs showing. Survive it and Europe calls.' },
-    { league: 'USA', blurb: 'A growing league, a softer landing, and a spotlight all your own.' }
+    { league: 'USA', blurb: 'A growing league, a softer landing, and a spotlight all your own.' },
+    { league: 'SCO', blurb: 'Cold nights, full houses, and two clubs that expect to win everything.' },
+    { league: 'BEL', blurb: 'Small league, sharp scouts. Half of Europe watches it for a reason.' },
+    { league: 'JPN', blurb: 'Immaculate football, patient crowds, and a long way from the noise.' }
   ];
 
   /* --- Club identity ------------------------------------------------------
@@ -194,13 +233,56 @@
     'Atlanta United': ['#80000A', '#000000', 'stripes'], 'Columbus Crew': ['#FEDD00', '#000000', 'plain'],
     'NY Red Bulls': ['#FFFFFF', '#E4032E', 'plain'], 'Philadelphia Union': ['#071B2C', '#B49759', 'plain'],
     'Portland Timbers': ['#00482B', '#D69A00', 'plain'], 'Austin FC': ['#00B140', '#000000', 'plain'],
-    'Nashville SC': ['#ECE83A', '#1D1D1B', 'plain'], 'Chicago Fire': ['#141B4D', '#EF3E42', 'plain']
+    'Nashville SC': ['#ECE83A', '#1D1D1B', 'plain'], 'Chicago Fire': ['#141B4D', '#EF3E42', 'plain'],
+    // Turkey
+    'Galatasaray': ['#A90432', '#FCB421', 'halves'], 'Fenerbahçe': ['#FFED00', '#00306A', 'stripes'],
+    'Beşiktaş': ['#000000', '#FFFFFF', 'stripes'], 'Trabzonspor': ['#5E1B33', '#89CFF0', 'stripes'],
+    'Başakşehir': ['#F26522', '#0A2240', 'plain'], 'Samsunspor': ['#E30613', '#FFFFFF', 'stripes'],
+    'Konyaspor': ['#00A650', '#FFFFFF', 'stripes'], 'Alanyaspor': ['#F58220', '#00954C', 'stripes'],
+    'Antalyaspor': ['#E4032E', '#FFFFFF', 'stripes'], 'Kayserispor': ['#FFD100', '#E4032E', 'stripes'],
+    'Gaziantep': ['#E4032E', '#000000', 'plain'], 'Rizespor': ['#00954C', '#0057B8', 'stripes'],
+    // Scotland
+    'Celtic': ['#018749', '#FFFFFF', 'hoops'], 'Rangers': ['#1B458F', '#E4032E', 'plain'],
+    'Hearts': ['#8C2633', '#FFFFFF', 'plain'], 'Aberdeen': ['#E4032E', '#FFFFFF', 'plain'],
+    'Hibernian': ['#00854A', '#FFFFFF', 'sleeve'], 'Dundee United': ['#F76900', '#000000', 'plain'],
+    'Motherwell': ['#FFC72C', '#8C2633', 'plain'], 'Kilmarnock': ['#0057B8', '#FFFFFF', 'stripes'],
+    'St Mirren': ['#000000', '#FFFFFF', 'stripes'], 'Dundee': ['#00205B', '#FFFFFF', 'plain'],
+    'Ross County': ['#003DA5', '#FFFFFF', 'plain'], 'St Johnstone': ['#00539B', '#FFFFFF', 'plain'],
+    // Belgium
+    'Club Brugge': ['#005BAA', '#000000', 'stripes'], 'Anderlecht': ['#4D2E86', '#FFFFFF', 'plain'],
+    'Union SG': ['#FFEB00', '#00417B', 'halves'], 'Genk': ['#005BAA', '#FFFFFF', 'stripes'],
+    'Gent': ['#005BAA', '#FFFFFF', 'stripes'], 'Antwerp': ['#E4032E', '#FFFFFF', 'plain'],
+    'Standard Liège': ['#E4032E', '#FFFFFF', 'plain'], 'Cercle Brugge': ['#00854A', '#000000', 'stripes'],
+    'Mechelen': ['#FFD100', '#E4032E', 'stripes'], 'Charleroi': ['#000000', '#FFFFFF', 'stripes'],
+    'OH Leuven': ['#FFFFFF', '#0057B8', 'plain'], 'Westerlo': ['#FFD100', '#00205B', 'plain'],
+    // Mexico
+    'América': ['#FFD100', '#00285E', 'plain'], 'Monterrey': ['#003DA5', '#FFFFFF', 'stripes'],
+    'Tigres UANL': ['#F4A100', '#00285E', 'plain'], 'Cruz Azul': ['#003DA5', '#FFFFFF', 'plain'],
+    'Guadalajara': ['#E4032E', '#FFFFFF', 'stripes'], 'Toluca': ['#E4032E', '#FFFFFF', 'stripes'],
+    'Pumas UNAM': ['#00285E', '#FFB81C', 'halves'], 'Pachuca': ['#0057B8', '#FFFFFF', 'stripes'],
+    'León': ['#00854A', '#FFFFFF', 'plain'], 'Santos Laguna': ['#00A650', '#FFFFFF', 'plain'],
+    'Atlas': ['#E4032E', '#000000', 'sash'], 'Necaxa': ['#E4032E', '#FFFFFF', 'stripes'],
+    // Saudi Arabia
+    'Al Hilal': ['#0B4EA2', '#FFFFFF', 'plain'], 'Al Nassr': ['#FFD100', '#0B4EA2', 'stripes'],
+    'Al Ittihad': ['#000000', '#FFD100', 'stripes'], 'Al Ahli': ['#00854A', '#FFFFFF', 'stripes'],
+    'Al Qadsiah': ['#FFD100', '#0057B8', 'plain'], 'Al Shabab': ['#FFFFFF', '#000000', 'plain'],
+    'Al Ettifaq': ['#00854A', '#FFFFFF', 'halves'], 'Al Taawoun': ['#FFD100', '#0B4EA2', 'plain'],
+    'Al Fateh': ['#0057B8', '#FFFFFF', 'stripes'], 'Al Khaleej': ['#E4032E', '#FFFFFF', 'plain'],
+    'Damac': ['#00A650', '#FFFFFF', 'plain'], 'Al Riyadh': ['#FFFFFF', '#0B4EA2', 'stripes'],
+    // Japan
+    'Kawasaki Frontale': ['#00A6D6', '#000000', 'stripes'], 'Vissel Kobe': ['#8C1D40', '#FFFFFF', 'plain'],
+    'Urawa Reds': ['#E4032E', '#000000', 'plain'], 'Yokohama F. Marinos': ['#003DA5', '#E4032E', 'plain'],
+    'Kashima Antlers': ['#8C1D40', '#000080', 'plain'], 'Sanfrecce Hiroshima': ['#5C2D91', '#FFFFFF', 'plain'],
+    'Gamba Osaka': ['#003DA5', '#000000', 'stripes'], 'FC Tokyo': ['#003DA5', '#E4032E', 'stripes'],
+    'Cerezo Osaka': ['#E4007F', '#000000', 'plain'], 'Nagoya Grampus': ['#E4032E', '#FFD100', 'plain'],
+    'Kashiwa Reysol': ['#FFD100', '#000000', 'plain'], 'Avispa Fukuoka': ['#003DA5', '#FFD100', 'plain']
   };
 
   const CONTINENTAL = {
     UCL: { name: 'Champions League', short: 'UCL', region: 'Europe' },
     LIB: { name: 'Copa Libertadores', short: 'Libertadores', region: 'South America' },
-    CCL: { name: 'CONCACAF Champions Cup', short: 'CONCACAF CC', region: 'North America' }
+    CCL: { name: 'CONCACAF Champions Cup', short: 'CONCACAF CC', region: 'North America' },
+    AFC: { name: 'AFC Champions League Elite', short: 'AFC CL', region: 'Asia' }
   };
 
   // --- Nations (for the player + international tournaments) ----------------
@@ -234,7 +316,8 @@
     { name: 'Canada',      rating: 74 },
     { name: 'Ireland',     rating: 72 },
     { name: 'Scotland',    rating: 73 },
-    { name: 'Ghana',       rating: 75 }
+    { name: 'Ghana',       rating: 75 },
+    { name: 'Saudi Arabia', rating: 71 }
   ];
 
   /* --- Real stars -----------------------------------------------------------
@@ -621,6 +704,154 @@
     'Chicago Fire': [
       ['Hugo Cuypers', 'Belgium', 'ST', 77, 28], ['Philip Zinckernagel', 'Denmark', 'LW', 76, 30],
       ['Chris Brady', 'USA', 'GK', 74, 21]
+    ],
+    // Turkey
+    'Galatasaray': [
+      ['Victor Osimhen', 'Nigeria', 'ST', 88, 27], ['Mauro Icardi', 'Argentina', 'ST', 83, 33],
+      ['Lucas Torreira', 'Uruguay', 'CDM', 82, 30], ['Davinson Sánchez', 'Colombia', 'CB', 81, 30],
+      ['Fernando Muslera', 'Uruguay', 'GK', 79, 40]
+    ],
+    'Fenerbahçe': [
+      ['Youssef En-Nesyri', 'Morocco', 'ST', 83, 29], ['Dominik Livaković', 'Croatia', 'GK', 82, 31],
+      ['Sofyan Amrabat', 'Morocco', 'CDM', 81, 30], ['İrfan Can Kahveci', 'Turkey', 'CAM', 79, 31],
+      ['Sebastian Szymański', 'Poland', 'CAM', 80, 27]
+    ],
+    'Beşiktaş': [
+      ['Rafa Silva', 'Portugal', 'LW', 82, 33], ['Gedson Fernandes', 'Portugal', 'CM', 78, 27],
+      ['Ernest Muçi', 'Albania', 'CAM', 76, 25], ['Mert Günok', 'Turkey', 'GK', 77, 37]
+    ],
+    'Trabzonspor': [
+      ['Anthony Nwakaeme', 'Nigeria', 'LW', 76, 37], ['Uğurcan Çakır', 'Turkey', 'GK', 80, 30],
+      ['Edin Višća', 'Bosnia', 'RW', 76, 36]
+    ],
+    'Başakşehir': [
+      ['Deniz Türüç', 'Turkey', 'CAM', 74, 33], ['Amine Harit', 'Morocco', 'CAM', 76, 29]
+    ],
+    // Scotland
+    'Celtic': [
+      ['Callum McGregor', 'Scotland', 'CM', 79, 32], ['Daizen Maeda', 'Japan', 'LW', 78, 28],
+      ['Cameron Carter-Vickers', 'USA', 'CB', 78, 28], ['Reo Hatate', 'Japan', 'CM', 77, 28],
+      ['Kasper Schmeichel', 'Denmark', 'GK', 76, 39]
+    ],
+    'Rangers': [
+      ['James Tavernier', 'England', 'RB', 77, 34], ['Nicolas Raskin', 'Belgium', 'CM', 76, 25],
+      ['Cyriel Dessers', 'Nigeria', 'ST', 76, 31], ['Connor Barron', 'Scotland', 'CM', 73, 23]
+    ],
+    'Hearts': [
+      ['Lawrence Shankland', 'Scotland', 'ST', 76, 30], ['Craig Gordon', 'Scotland', 'GK', 72, 43]
+    ],
+    'Aberdeen': [
+      ['Graeme Shinnie', 'Scotland', 'CM', 72, 34], ['Kevin Nisbet', 'Scotland', 'ST', 72, 29]
+    ],
+    'Hibernian': [
+      ['Martin Boyle', 'Australia', 'RW', 73, 33], ['Rocky Bushiri', 'Belgium', 'CB', 70, 26]
+    ],
+    // Belgium
+    'Club Brugge': [
+      ['Hans Vanaken', 'Belgium', 'CAM', 80, 34], ['Simon Mignolet', 'Belgium', 'GK', 79, 38],
+      ['Brandon Mechele', 'Belgium', 'CB', 76, 33], ['Christos Tzolis', 'Greece', 'LW', 78, 24]
+    ],
+    'Anderlecht': [
+      ['Jan Vertonghen', 'Belgium', 'CB', 76, 39], ['Kasper Dolberg', 'Denmark', 'ST', 77, 28],
+      ['Mario Stroeykens', 'Belgium', 'CAM', 74, 22]
+    ],
+    'Union SG': [
+      ['Promise David', 'Canada', 'ST', 77, 25], ['Kevin Mac Allister', 'Argentina', 'CB', 75, 27]
+    ],
+    'Genk': [
+      ['Bilal El Khannouss', 'Morocco', 'CAM', 78, 22], ['Tolu Arokodare', 'Nigeria', 'ST', 76, 25]
+    ],
+    'Gent': [
+      ['Tarik Tissoudali', 'Morocco', 'ST', 75, 33], ['Sven Kums', 'Belgium', 'CM', 72, 38]
+    ],
+    // Mexico
+    'América': [
+      ['Henry Martín', 'Mexico', 'ST', 79, 33], ['Álvaro Fidalgo', 'Spain', 'CM', 79, 28],
+      ['Luis Malagón', 'Mexico', 'GK', 78, 29], ['Israel Reyes', 'Mexico', 'CB', 75, 25]
+    ],
+    'Monterrey': [
+      ['Sergio Ramos', 'Spain', 'CB', 80, 40], ['Óliver Torres', 'Spain', 'CM', 77, 31],
+      ['Germán Berterame', 'Argentina', 'ST', 77, 27], ['Esteban Andrada', 'Argentina', 'GK', 76, 35]
+    ],
+    'Tigres UANL': [
+      ['André-Pierre Gignac', 'France', 'ST', 78, 40], ['Nahuel Guzmán', 'Argentina', 'GK', 77, 40],
+      ['Juan Brunetta', 'Argentina', 'CAM', 77, 28]
+    ],
+    'Cruz Azul': [
+      ['Ignacio Rivero', 'Uruguay', 'CM', 75, 32], ['Kevin Mier', 'Colombia', 'GK', 75, 25],
+      ['Willer Ditta', 'Colombia', 'CB', 74, 28]
+    ],
+    'Guadalajara': [
+      ['Fernando Beltrán', 'Mexico', 'CM', 76, 27], ['Roberto Alvarado', 'Mexico', 'LW', 77, 27],
+      ['Raúl Rangel', 'Mexico', 'GK', 74, 26]
+    ],
+    'Toluca': [
+      ['Alexis Vega', 'Mexico', 'LW', 78, 28], ['Paulinho', 'Portugal', 'ST', 78, 33]
+    ],
+    'Pumas UNAM': [
+      ['Guillermo Martínez', 'Mexico', 'ST', 73, 30]
+    ],
+    'Pachuca': [
+      ['Salomón Rondón', 'Venezuela', 'ST', 76, 36], ['Elías Montiel', 'Mexico', 'CM', 73, 21]
+    ],
+    // Saudi Arabia
+    'Al Hilal': [
+      ['Aleksandar Mitrović', 'Serbia', 'ST', 85, 31], ['Rúben Neves', 'Portugal', 'CDM', 85, 29],
+      ['Kalidou Koulibaly', 'Senegal', 'CB', 83, 35], ['Sergej Milinković-Savić', 'Serbia', 'CM', 85, 31],
+      ['Yassine Bounou', 'Morocco', 'GK', 83, 35], ['Salem Al-Dawsari', 'Saudi Arabia', 'LW', 81, 34]
+    ],
+    'Al Nassr': [
+      ['Cristiano Ronaldo', 'Portugal', 'ST', 86, 41], ['Sadio Mané', 'Senegal', 'LW', 83, 34],
+      ['Marcelo Brozović', 'Croatia', 'CDM', 84, 33], ['Aymeric Laporte', 'Spain', 'CB', 83, 32],
+      ['Bento', 'Brazil', 'GK', 81, 27]
+    ],
+    'Al Ittihad': [
+      ['Karim Benzema', 'France', 'ST', 84, 38], ['N\u2019Golo Kanté', 'France', 'CDM', 84, 35],
+      ['Fabinho', 'Brazil', 'CDM', 81, 32], ['Moussa Diaby', 'France', 'RW', 83, 26],
+      ['Houssem Aouar', 'Algeria', 'CAM', 79, 27]
+    ],
+    'Al Ahli': [
+      ['Riyad Mahrez', 'Algeria', 'RW', 83, 35], ['Roberto Firmino', 'Brazil', 'ST', 81, 34],
+      ['Édouard Mendy', 'Senegal', 'GK', 82, 34], ['Ivan Toney', 'England', 'ST', 82, 30],
+      ['Franck Kessié', 'Ivory Coast', 'CM', 81, 29]
+    ],
+    'Al Shabab': [
+      ['Yannick Carrasco', 'Belgium', 'LW', 80, 32]
+    ],
+    'Al Ettifaq': [
+      ['Georginio Wijnaldum', 'Netherlands', 'CM', 78, 35], ['Moussa Dembélé', 'France', 'ST', 76, 30]
+    ],
+    'Al Qadsiah': [
+      ['Nacho Fernández', 'Spain', 'CB', 79, 36], ['Gaston Álvarez', 'Uruguay', 'CB', 75, 26]
+    ],
+    // Japan
+    'Kawasaki Frontale': [
+      ['Akihiro Ienaga', 'Japan', 'CAM', 74, 39], ['Yuto Ozeki', 'Japan', 'CM', 72, 23]
+    ],
+    'Vissel Kobe': [
+      ['Yuya Osako', 'Japan', 'ST', 77, 36], ['Daiju Sasaki', 'Japan', 'CM', 73, 31],
+      ['Hotaru Yamaguchi', 'Japan', 'CDM', 74, 35]
+    ],
+    'Urawa Reds': [
+      ['Shusaku Nishikawa', 'Japan', 'GK', 74, 39], ['Sho Sasaki', 'Japan', 'RB', 72, 36]
+    ],
+    'Yokohama F. Marinos': [
+      ['Kota Mizunuma', 'Japan', 'RW', 73, 36], ['Ryuta Koike', 'Japan', 'RB', 73, 30]
+    ],
+    'Kashima Antlers': [
+      ['Yuma Suzuki', 'Japan', 'ST', 75, 29], ['Koki Machida', 'Japan', 'CB', 74, 28]
+    ],
+    'Sanfrecce Hiroshima': [
+      ['Tsukasa Shiotani', 'Japan', 'CB', 73, 37], ['Makoto Mitsuta', 'Japan', 'CAM', 73, 25]
+    ],
+    'Gamba Osaka': [
+      ['Hiroki Fujiharu', 'Japan', 'LB', 71, 37], ['Shinya Nakano', 'Japan', 'CM', 72, 25]
+    ],
+    'FC Tokyo': [
+      ['Kuryu Matsuki', 'Japan', 'CM', 74, 23]
+    ],
+    'Cerezo Osaka': [
+      ['Hiroshi Kiyotake', 'Japan', 'CAM', 73, 36], ['Kim Jin-hyeon', 'South Korea', 'GK', 73, 38]
     ]
   };
 
@@ -1035,42 +1266,44 @@
                    last:  ['Ribeiro','Nascimento','Andrade','Cavalcanti','Bittencourt','Moraes','Siqueira','Vasconcelos','Guimarães','Teles','Correia','Aparecido','Rezende','Bastos','Furtado','Macedo','Prado','Barcellos','Amorim','Queiroz'] },
     USA:         { first: ['Tyler','Brandon','Christian','Weston','Gio','Cade','Jackson','Ethan','Cole','Owen','Malik','Diego','Ryan','Trevor','Kobe','Paxten','Auston','Bryce','Devin','Julian'],
                    last:  ['Hutchinson','Delgado','Whitaker','Sandoval','Bradley','Ferguson','Nakamura','Okonkwo','Vasquez','Sheffield','Aaronson','Reyna','Turner','Zimmerman','Musah','Cardoso','Wolff','Pomykal','Sargent','Ledezma'] },
-    Belgium:     { first: ['Arthur','Lois','Charles','Romeo','Senne','Maarten','Wout','Zeno','Amadou','Jérémy'],
-                   last:  ['Vermeulen','Dendoncker','Verstraete','Lukebakio','Openda','Bakayoko','De Ketelaere','Vranckx','Theate','Castagne'] },
-    Croatia:     { first: ['Luka','Marko','Ivan','Josip','Mateo','Ante','Duje','Petar','Nikola','Borna'],
-                   last:  ['Modrić','Kovačević','Perišić','Vlašić','Sučić','Baturina','Šutalo','Erlić','Juranović','Pašalić'] },
-    Serbia:      { first: ['Nikola','Dušan','Aleksa','Filip','Miloš','Strahinja','Lazar','Veljko','Uroš','Petar'],
-                   last:  ['Jovanović','Milinković','Pavlović','Kostić','Mitrović','Vlahović','Ilić','Gudelj','Stanković','Radonjić'] },
-    Poland:      { first: ['Jakub','Piotr','Kacper','Bartosz','Michał','Sebastian','Nicola','Damian','Krzysztof','Mateusz'],
-                   last:  ['Kowalczyk','Zieliński','Bednarek','Szymański','Frankowski','Kiwior','Zalewski','Cash','Skorupski','Buksa'] },
-    Turkey:      { first: ['Emre','Kerem','Arda','Yusuf','Mert','Baris','Kaan','Orkun','Ferdi','Cengiz'],
-                   last:  ['Yılmaz','Aktürkoğlu','Demiral','Kabak','Ayhan','Kökçü','Çalhanoğlu','Bardakçı','Müldür','Akgün'] },
-    Nigeria:     { first: ['Chidi','Emeka','Kelechi','Ademola','Samuel','Victor','Joe','Alex','Tunde','Ola'],
-                   last:  ['Okafor','Adeyemi','Balogun','Nwankwo','Chukwueze','Osimhen','Aribo','Ndidi','Iheanacho','Bassey'] },
-    Senegal:     { first: ['Ismaïla','Cheikh','Pape','Moussa','Idrissa','Nicolas','Abdou','Iliman','Boulaye','Habib'],
-                   last:  ['Diallo','Ndiaye','Sarr','Gueye','Mendy','Cissé','Diatta','Jakobs','Ciss','Faye'] },
-    Ghana:       { first: ['Kwame','Kofi','Mohammed','Jordan','Elisha','Fatawu','Ernest','Baba','Alidu','Osman'],
-                   last:  ['Mensah','Boateng','Owusu','Partey','Ayew','Kudus','Nuamah','Salisu','Bukari','Semenyo'] },
-    Morocco:     { first: ['Youssef','Achraf','Sofyan','Hakim','Bilal','Amine','Nayef','Azzedine','Ilias','Anass'],
-                   last:  ['El Amrani','Benhaddou','Ouahabi','Chibani','Mazraoui','Zaroury','Amrabat','Aguerd','Saïss','Boufal'] },
-    Japan:       { first: ['Kaoru','Takefusa','Daichi','Ritsu','Ao','Wataru','Hidemasa','Junya','Reo','Koki'],
-                   last:  ['Tanaka','Nakamura','Sugawara','Hashioka','Morita','Kubota','Ito','Endo','Kamada','Machida'] },
-    Norway:      { first: ['Erling','Martin','Sander','Kristian','Ola','Fredrik','Jens','Antonio','Morten','Oscar'],
-                   last:  ['Berge','Nordtveit','Solbakken','Hovland','Ryerson','Aursnes','Strand','Bobb','Thorsby','Sørloth'] },
-    Sweden:      { first: ['Alexander','Viktor','Emil','Dejan','Anthony','Gustav','Hugo','Jesper','Isaac','Linus'],
-                   last:  ['Lindqvist','Bergström','Forsberg','Kulusevski','Elanga','Svensson','Larsson','Karlström','Ekdal','Holm'] },
-    Uruguay:     { first: ['Federico','Manuel','Facundo','Darwin','Nicolás','Rodrigo','Maximiliano','Agustín','Brian','Sebastián'],
-                   last:  ['Valverde','Ugarte','Pellistri','Núñez','De la Cruz','Bentancur','Araújo','Cáceres','Rodríguez','Olivera'] },
-    Colombia:    { first: ['Luis','Jhon','Rafael','Yerry','Daniel','Jorge','Kevin','Johan','Richard','Nelson'],
-                   last:  ['Córdoba','Arias','Lerma','Sinisterra','Muñoz','Borré','Uribe','Mosquera','Ospina','Carrascal'] },
-    Mexico:      { first: ['Santiago','Hirving','Edson','César','Orbelín','Luis','Jorge','Israel','Roberto','Julián'],
-                   last:  ['Giménez','Álvarez','Montes','Sánchez','Pineda','Vásquez','Antuna','Reyes','Alvarado','Araujo'] },
-    Ireland:     { first: ['Evan','Josh','Nathan','Séamus','Finn','Adam','Chiedozie','Dara','Killian','Mikey'],
-                   last:  ["O'Brien","Ferguson","Collins","Doherty","Ogbene","Cullen","Molumby","Idah","Coleman","Egan"] },
-    Scotland:    { first: ['Callum','Scott','Kieran','Lewis','Ryan','Billy','Andy','Aaron','Grant','Ben'],
-                   last:  ['McTominay','Robertson','Gilmour','Ferguson','Christie','Armstrong','McGregor','Hickey','Hanley','Doig'] },
-    Denmark:     { first: ['Rasmus','Mikkel','Christian','Jonas','Andreas','Victor','Pierre','Joakim','Anders','Mads'],
-                   last:  ['Højlund','Damsgaard','Kristensen','Skov','Wind','Nelsson','Dolberg','Bruun','Vestergaard','Poulsen'] }
+    Belgium:     { first: ['Arthur','Lois','Charles','Romeo','Senne','Maarten','Wout','Zeno','Amadou','Jérémy','Thibaut','Youri','Leandro','Dodi','Koen','Aster','Mandela','Bryan','Timothy','Matte'],
+                   last:  ['Vermeulen','Dendoncker','Verstraete','Lukebakio','Openda','Bakayoko','De Ketelaere','Vranckx','Theate','Castagne','Meunier','Trossard','Faes','Debast','Onana','Praet','Doku','Carrasco','Batshuayi','Tielemans'] },
+    Croatia:     { first: ['Luka','Marko','Ivan','Josip','Mateo','Ante','Duje','Petar','Nikola','Borna','Domagoj','Roko','Lovro','Bruno','Toma','Filip','Karlo','Jakov','Fran','Dario'],
+                   last:  ['Modrić','Kovačević','Perišić','Vlašić','Sučić','Baturina','Šutalo','Erlić','Juranović','Pašalić','Gvardiol','Kramarić','Majer','Stanišić','Ivanušec','Moro','Vušković','Brekalo','Livaja','Barišić'] },
+    Serbia:      { first: ['Nikola','Dušan','Aleksa','Filip','Miloš','Strahinja','Lazar','Veljko','Uroš','Petar','Sasa','Bogdan','Andrija','Marko','Ivan','Vanja','Srdjan','Ognjen','Mihailo','Jovan'],
+                   last:  ['Jovanović','Milinković','Pavlović','Kostić','Mitrović','Vlahović','Ilić','Gudelj','Stanković','Radonjić','Tadić','Lukić','Živković','Maksimović','Babić','Samardžić','Terzić','Mladenović','Erakovic','Katai'] },
+    Poland:      { first: ['Jakub','Piotr','Kacper','Bartosz','Michał','Sebastian','Nicola','Damian','Krzysztof','Mateusz','Adam','Robert','Karol','Przemysław','Taras','Paweł','Tomasz','Jan','Dominik','Patryk'],
+                   last:  ['Kowalczyk','Zieliński','Bednarek','Szymański','Frankowski','Kiwior','Zalewski','Cash','Skorupski','Buksa','Lewandowski','Milik','Świderski','Bereszyński','Grosicki','Moder','Wójcik','Salamon','Marchwiński','Urbański'] },
+    Turkey:      { first: ['Emre','Kerem','Arda','Yusuf','Mert','Baris','Kaan','Orkun','Ferdi','Cengiz','Hakan','Zeki','Altay','Salih','Semih','Berat','İsmail','Ozan','Enes','Deniz'],
+                   last:  ['Yılmaz','Aktürkoğlu','Demiral','Kabak','Ayhan','Kökçü','Çalhanoğlu','Bardakçı','Müldür','Akgün','Söyüncü','Tufan','Ünder','Özcan','Kılıçsoy','Yüksek','Yazıcı','Kaplan','Ayaz','Türüç'] },
+    Nigeria:     { first: ['Chidi','Emeka','Kelechi','Ademola','Samuel','Victor','Joe','Alex','Tunde','Ola','Wilfred','Frank','Bright','Terem','Calvin','Sadiq','Umar','Moses','Semi','Raphael'],
+                   last:  ['Okafor','Adeyemi','Balogun','Nwankwo','Chukwueze','Osimhen','Aribo','Ndidi','Iheanacho','Bassey','Awoniyi','Onyeka','Aina','Simon','Ekong','Dessers','Musa','Etebo','Ajayi','Lookman'] },
+    Senegal:     { first: ['Ismaïla','Cheikh','Pape','Moussa','Idrissa','Nicolas','Abdou','Iliman','Boulaye','Habib','Krépin','Formose','Lamine','Seny','Mamadou','Youssouf','Assane','Ibrahima','Alfred','Pathé'],
+                   last:  ['Diallo','Ndiaye','Sarr','Gueye','Mendy','Cissé','Diatta','Jakobs','Ciss','Faye','Koulibaly','Camara','Diédhiou','Baldé','Seck','Niakhaté','Traoré','Jackson','Sabaly','Dieng'] },
+    Ghana:       { first: ['Kwame','Kofi','Mohammed','Jordan','Elisha','Fatawu','Ernest','Baba','Alidu','Osman','Antoine','Daniel','Gideon','Abdul','Joseph','Emmanuel','Isaac','Kamaldeen','Braydon','Forson'],
+                   last:  ['Mensah','Boateng','Owusu','Partey','Ayew','Kudus','Nuamah','Salisu','Bukari','Semenyo','Aidoo','Amartey','Lamptey','Sulemana','Opoku','Djiku','Yeboah','Odoi','Baidoo','Asamoah'] },
+    Morocco:     { first: ['Youssef','Achraf','Sofyan','Hakim','Bilal','Amine','Nayef','Azzedine','Ilias','Anass','Yassine','Romain','Selim','Abde','Zakaria','Walid','Adam','Oussama','Reda','Chadi'],
+                   last:  ['El Amrani','Benhaddou','Ouahabi','Chibani','Mazraoui','Zaroury','Amrabat','Aguerd','Saïss','Boufal','Bounou','Hakimi','Amallah','Ounahi','Ziyech','Cheddira','Masina','Attiat','Regragui','Belhanda'] },
+    Japan:       { first: ['Kaoru','Takefusa','Daichi','Ritsu','Ao','Wataru','Hidemasa','Junya','Reo','Koki','Takumi','Hiroki','Yukinari','Ayase','Shuto','Kyogo','Daizen','Takehiro','Genki','Yuki'],
+                   last:  ['Tanaka','Nakamura','Sugawara','Hashioka','Morita','Kubota','Ito','Endo','Kamada','Machida','Minamino','Sakai','Doan','Furuhashi','Maeda','Tomiyasu','Haraguchi','Suzuki','Asano','Yamane'] },
+    Norway:      { first: ['Erling','Martin','Sander','Kristian','Ola','Fredrik','Jens','Antonio','Morten','Oscar','Julian','Leo','Andreas','Patrick','Marcus','Emil','Håkon','Even','Bård','Sivert'],
+                   last:  ['Berge','Nordtveit','Solbakken','Hovland','Ryerson','Aursnes','Strand','Bobb','Thorsby','Sørloth','Ødegaard','Skjelbred','Ellingsen','Berg','Hauge','Larsen','Evjen','Haaland','Ostigard','Pedersen'] },
+    Sweden:      { first: ['Alexander','Viktor','Emil','Dejan','Anthony','Gustav','Hugo','Jesper','Isaac','Linus','Robin','Filip','Ken','Mattias','Daniel','Yasin','Roony','Jens','Amin','Elias'],
+                   last:  ['Lindqvist','Bergström','Forsberg','Kulusevski','Elanga','Svensson','Larsson','Karlström','Ekdal','Holm','Olsen','Helander','Sema','Bergvall','Gyokeres','Nilsson','Ayari','Cajuste','Danielson','Andersson'] },
+    Uruguay:     { first: ['Federico','Manuel','Facundo','Darwin','Nicolás','Rodrigo','Maximiliano','Agustín','Brian','Sebastián','Ronald','Giorgian','Mathías','Matías','José','Luis','Emiliano','Santiago','Cristian','Diego'],
+                   last:  ['Valverde','Ugarte','Pellistri','Núñez','De la Cruz','Bentancur','Araújo','Cáceres','Rodríguez','Olivera','Cavani','Vecino','Torreira','Viña','Coates','Nández','Bueno','Piquerez','Rossi','Suárez'] },
+    Colombia:    { first: ['Luis','Jhon','Rafael','Yerry','Daniel','Jorge','Kevin','Johan','Richard','Nelson','James','Juan','Santiago','Wilmar','Andrés','Miguel','Cristian','Deiver','Gustavo','Sebastián'],
+                   last:  ['Córdoba','Arias','Lerma','Sinisterra','Muñoz','Borré','Uribe','Mosquera','Ospina','Carrascal','Rodríguez','Cuadrado','Quintero','Machado','Barrios','Ángulo','Zapata','Villa','Ríos','Cassierra'] },
+    Mexico:      { first: ['Santiago','Hirving','Edson','César','Orbelín','Luis','Jorge','Israel','Roberto','Julián','Guillermo','Diego','Erick','Uriel','Carlos','Raúl','Gerardo','Johan','Marcelo','Alexis'],
+                   last:  ['Giménez','Álvarez','Montes','Sánchez','Pineda','Vásquez','Antuna','Reyes','Alvarado','Araujo','Ochoa','Lainez','Gutiérrez','Rodríguez','Jiménez','Beltrán','Arteaga','Malagón','Flores','Chávez'] },
+    Ireland:     { first: ['Evan','Josh','Nathan','Séamus','Finn','Adam','Chiedozie','Dara','Killian','Mikey','Matt','Jason','Shane','Andrew','Will','Jake','Robbie','Callum','Ryan','Troy'],
+                   last:  ["O'Brien","Ferguson","Collins",'Coleman',"Ogbene","Cullen","Molumby","Idah",'Scales',"Egan",'Doherty','Knight','Duffy','Omobamidele','Smallbone','Brady','Kelleher','Bazunu','Manning','Parrott'] },
+    Scotland:    { first: ['Callum','Scott','Kieran','Lewis','Ryan','Billy','Andy','Aaron','Grant','Ben','Che','John','Stuart','Anthony','Greg','Liam','Jack','Nathan','Connor','Tommy'],
+                   last:  ['McTominay','Robertson','Gilmour','Ferguson','Christie','Armstrong','McGregor','Hickey','Hanley','Doig','Adams','Souttar','Findlay','Ralston','McKenna','Cooper','Gordon','Shankland','Barron','Conway'] },
+    'Saudi Arabia': { first: ['Salem','Firas','Abdullah','Saleh','Nasser','Yasser','Mohammed','Hattan','Ali','Turki','Faisal','Sultan','Ziyad','Khalid','Ayman','Marwan','Riyadh','Saud','Anas','Majed'],
+                      last:  ['Al-Dawsari','Al-Shehri','Al-Buraikan','Al-Owais','Al-Ghannam','Al-Malki','Al-Najei','Al-Hassan','Al-Amri','Al-Faraj','Al-Bulaihi','Al-Yami','Al-Khaibari','Al-Juwayr','Al-Tambakti','Al-Sulaiheem','Al-Muwallad','Al-Ghamdi','Al-Otaibi','Al-Harbi'] },
+    Denmark:     { first: ['Rasmus','Mikkel','Christian','Jonas','Andreas','Victor','Pierre','Joakim','Anders','Mads','Simon','Yussuf','Jesper','Thomas','Alexander','Morten','Nicolai','Oliver','Gustav','Emil'],
+                   last:  ['Højlund','Damsgaard','Kristensen','Skov','Wind','Nelsson','Dolberg','Bruun','Vestergaard','Poulsen','Kjaer','Schmeichel','Bah','Jensen','Kristiansen','Andersen','Hjulmand','Maehle','Olsen','Frederiksen'] }
   };
 
   // where a club's players tend to come from: mostly local, some imports
@@ -1084,7 +1317,13 @@
     Portugal: ['Brazil','Spain','Ghana','Senegal','Uruguay','Nigeria'],
     Argentina: ['Uruguay','Colombia','Brazil','Mexico'],
     Brazil:  ['Argentina','Uruguay','Colombia','Portugal'],
-    USA:     ['Mexico','Colombia','England','Japan','Ghana','Brazil']
+    USA:     ['Mexico','Colombia','England','Japan','Ghana','Brazil'],
+    Turkey:  ['Brazil','Nigeria','Senegal','Germany','Morocco','Serbia','Ghana'],
+    Scotland: ['England','Ireland','Japan','Nigeria','Denmark','Australia'],
+    Belgium: ['Netherlands','France','Morocco','Nigeria','Denmark','Japan','Ghana'],
+    Mexico:  ['Argentina','Colombia','Uruguay','Brazil','USA','Spain'],
+    'Saudi Arabia': ['Brazil','Portugal','Senegal','Morocco','Serbia','Croatia','France','Nigeria'],
+    Japan:   ['Brazil','South Korea','Australia','Nigeria','Spain','Denmark']
   };
 
   // fallback pools used when nothing else applies
@@ -1212,9 +1451,17 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.7';
+  const VERSION = '1.8';
   const BUILD = '28 August 2026';
   const CHANGELOG = [
+    { v: '1.8', when: '28 Aug', items: [
+      'Six new leagues: the S\u00fcper Lig, the Scottish Premiership, the Belgian Pro League, Liga MX, the Saudi Pro League and the J1 League — 192 clubs across sixteen divisions, all of them manageable',
+      'Asia gets its own continental cup, so Saudi and Japanese clubs have something to play for beyond the league',
+      'Three new ways to start a career: Scotland, Belgium and Japan, on top of the four that were there',
+      'Over a hundred more real players, in the new leagues and the old ones — 432 of them now, every one with the right flag',
+      'Every squad in the game has more names to draw on: eighteen countries had only ten surnames each, which is fewer than a squad needs, so two team-mates called Ferguson turned up more often than they should have. All the pools are twice the size, and the generator now guarantees no two team-mates share a name',
+      'Fixed: winning the league as a manager crashed the game instead of showing you the trophy. Now you lift it, then you go and see the board'
+    ] },
     { v: '1.7', when: '28 Aug', items: [
       'The squad is a line-up now, not a list: your eleven drawn on the grass in the club\u2019s colours, shirt numbers on their backs, names and ratings under their feet. Tap a shirt and tap another to swap them — bench or starter, either way',
       'Anyone out of position wears a red mark, and the shape tells you the rest: no left winger, two number tens, five at the back and nobody in front of them',

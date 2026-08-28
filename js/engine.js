@@ -11,6 +11,35 @@
      ========================================================================== */
   const FORMATION = ['GK', 'RB', 'CB', 'CB', 'LB', 'CDM', 'CM', 'CAM', 'RW', 'LW', 'ST'];
 
+  /* The surname is everything after the given name, so 'Kees van Dijken' and
+     'Ties van Dijken' collide the way they should — taking only the last word
+     made them 'Dijken' here but left 'van Dijken' looking free in the pool. */
+  const surnameOf = n => {
+    const p = String(n).trim().split(/\s+/);
+    return p.length > 1 ? p.slice(1).join(' ') : p[0];
+  };
+
+  /* A name nobody in this squad is using. Tries the nation you want first, so
+     a Japanese squad does not quietly fill up with Norwegians, then any pool
+     at all — a small country's twenty surnames genuinely run out before an
+     eighteen-man squad does. Returns null only if every pool is exhausted,
+     which cannot happen at these squad sizes. */
+  function freeName(seen, preferred) {
+    const pools = Object.keys(D.NAMES);
+    const order = (preferred && D.NAMES[preferred] ? [preferred] : [])
+      .concat(U.shuffle(pools.filter(n => n !== preferred)));
+    for (let a = 0; a < order.length; a++) {
+      const nation = order[a], pool = D.NAMES[nation];
+      for (let b = 0; b < pool.last.length; b++) {
+        if (seen.has(pool.last[b])) continue;
+        const name = U.pick(pool.first) + ' ' + pool.last[b];
+        if (seen.has(name)) continue;
+        return { name, nation };
+      }
+    }
+    return null;
+  }
+
   const Squad = {
     generate(club) {
       const R = club.rating;
@@ -23,10 +52,15 @@
         let ovr = Math.round(U.clamp(R + (starter ? U.gauss(1, 3.5) : U.gauss(-7, 4)), 40, 96));
         if (golden) ovr = Math.round(U.clamp(Math.max(ovr, R - 3) + U.gauss(2, 2.5), 78, 95));
         // no two squad-mates share a surname either — it reads badly on a team sheet
-        const last = n => n.split(' ').slice(-1)[0];
+        const last = surnameOf;
+        const clash = w => seen.has(w.name) || seen.has(last(w.name));
         let who = global.Names.person(club.country);
-        for (let t = 0; t < 10 && (seen.has(who.name) || seen.has(last(who.name))); t++)
-          who = global.Names.person(club.country);
+        for (let t = 0; t < 24 && clash(who); t++) who = global.Names.person(club.country);
+        // A small country's pool can genuinely run dry — eighteen distinct
+        // surnames out of twenty is a coin-flip away from failing — so if
+        // rerolling has not found one, go and look for a surname nobody here
+        // is using rather than shipping two Fergusons in the same back four.
+        if (clash(who)) who = freeName(seen, who.nation) || who;
         seen.add(who.name); seen.add(last(who.name));
         return {
           id: U.id(),
@@ -38,6 +72,27 @@
         };
       });
       Squad.overlayStars(squad, club);
+      // the overlay writes real names in over generated ones and can reintroduce
+      // a clash it knows nothing about, so the last word on it is here
+      Squad.dedupe(squad);
+      return squad;
+    },
+
+    /* Nobody shares a name or a surname with a team-mate. Real players keep
+       theirs; the generated ones move out of the way. */
+    dedupe(squad) {
+      const seen = new Set();
+      squad.forEach(s => { if (s.star) { seen.add(s.name); seen.add(surnameOf(s.name)); } });
+      squad.forEach(s => {
+        if (s.star) return;
+        if (!seen.has(s.name) && !seen.has(surnameOf(s.name))) {
+          seen.add(s.name); seen.add(surnameOf(s.name));
+          return;
+        }
+        const who = freeName(seen, s.nation);
+        if (who) { s.name = who.name; s.nation = who.nation; }
+        seen.add(s.name); seen.add(surnameOf(s.name));
+      });
       return squad;
     },
     // swap the club's real headline players into the generated squad, taking

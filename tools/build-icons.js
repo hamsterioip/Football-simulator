@@ -68,6 +68,7 @@ const FLAGS = {
   'South Korea': 'kr', 'Norway': 'no', 'Sweden': 'se', 'Poland': 'pl',
   'Serbia': 'rs', 'Turkey': 'tr', 'Australia': 'au', 'Canada': 'ca',
   'Ireland': 'ie', 'Ghana': 'gh',
+  'Saudi Arabia': 'sa', 'Qatar': 'qa', 'UAE': 'ae', 'Bolivia': 'bo',
   // extra nations needed by the real star players
   'Denmark': 'dk', 'Wales': 'gb-wls', 'Egypt': 'eg', 'Algeria': 'dz',
   'Georgia': 'ge', 'Ecuador': 'ec', 'Slovenia': 'si', 'Switzerland': 'ch',

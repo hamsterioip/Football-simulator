@@ -178,7 +178,7 @@
     shortName(name) {
       const parts = String(name || '').trim().split(/\s+/);
       const last = parts[parts.length - 1];
-      return last.length > 10 ? last.slice(0, 9) + '.' : last;
+      return last.length > 13 ? last.slice(0, 12) + '.' : last;
     },
 
     pitchSvg() {
@@ -212,7 +212,11 @@
       const [c1, c2] = kit;
       const oop = s.pos !== slotPos;
       const ink = MUI.readable(c1);
-      const name = esc(MUI.shortName(s.name));
+      const short = MUI.shortName(s.name);
+      // a long surname shrinks to fit rather than getting chopped into an
+      // abbreviation nobody can read
+      const size = short.length > 12 ? 6.8 : short.length > 10 ? 7.3 : short.length > 8 ? 8 : 9;
+      const name = esc(short);
       const cls = 'lu-man' + (picked ? ' picked' : '') + (oop ? ' oop' : '');
       // scaled a touch under 1 so a holding midfielder still fits cleanly
       // between the back four and the men ahead of him
@@ -228,8 +232,8 @@
             fill="${ink}" font-family="Inter,Helvetica,Arial,sans-serif">${s.shirt || ''}</text>
         </g>
         <g class="lu-plate" transform="translate(0 20)">
-          <rect x="-26" y="0" width="52" height="23" rx="5" fill="rgba(6,12,10,.80)"/>
-          <text x="0" y="9.5" text-anchor="middle" font-size="9" font-weight="700"
+          <rect x="-28" y="0" width="56" height="23" rx="5" fill="rgba(6,12,10,.80)"/>
+          <text x="0" y="9.5" text-anchor="middle" font-size="${size}" font-weight="700"
             fill="#eef4f2" font-family="Inter,Helvetica,Arial,sans-serif">${name}</text>
           <text x="0" y="19" text-anchor="middle" font-size="8.5" font-weight="800"
             fill="${s.ovr >= 82 ? '#ffc94d' : s.ovr >= 72 ? '#eef4f2' : '#93a5ab'}"
