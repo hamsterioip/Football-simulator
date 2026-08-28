@@ -749,6 +749,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .res-L .res-b,.res-b.res-L{background:var(--red);color:#2a0a0e}
 .res-D .res-b{background:#7d8ba3;color:#0b1220}
 .res-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* transfer lines are sentences, not labels — let them wrap */
+.res-n.wrap{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.32;padding:2px 0}
 
 .sq-row,.mk-row{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:8px;
   font-size:12.5px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
@@ -762,6 +764,24 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .sq-meta{font-size:10px;color:var(--dim);white-space:nowrap}
 .sq-o{flex:0 0 24px;text-align:right;font-weight:800;color:var(--muted)}
 .sq-o.mid{color:var(--txt)}.sq-o.hi{color:var(--gold)}
+/* ---------- the line-up on grass ---------- */
+.lineup{margin:2px 0 10px;border-radius:12px;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 6px 18px rgba(0,0,0,.35)}
+.lu-svg{display:block;width:100%;height:auto}
+.lu-man{cursor:pointer}
+.lu-man .lu-kit,.lu-man .lu-plate{transition:transform .14s ease,opacity .14s ease}
+.lu-man:active .lu-kit{transform:scale(1.12)}
+.lu-man.picked .lu-kit{transform:scale(1.16)}
+.lu-man.picked .lu-plate rect{fill:var(--green);}
+.lu-man.picked .lu-plate text{fill:#062012}
+.lu-man.picked .lu-kit path:first-child{stroke:var(--green);stroke-width:2.4}
+.lu-man:focus{outline:none}
+.lu-man:focus-visible .lu-kit path:first-child{stroke:#fff;stroke-width:2.4}
+.lu-hint{margin:0 0 10px;text-align:center}
+.sq-row.picked{background:rgba(42,230,126,.16);box-shadow:inset 0 0 0 1px rgba(42,230,126,.4)}
+@media (prefers-reduced-motion:reduce){
+  .lu-man .lu-kit,.lu-man .lu-plate{transition:none}
+}
 .mk-star{color:var(--gold);font-weight:800}
 .mk-ask{font-size:11.5px;font-weight:700;text-align:right;white-space:nowrap}
 .mk-ask em{display:block;font-style:normal;font-size:10px;color:var(--dim);font-weight:600}
@@ -2380,9 +2400,14 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.6.2';
+  const VERSION = '1.7';
   const BUILD = '28 August 2026';
   const CHANGELOG = [
+    { v: '1.7', when: '28 Aug', items: [
+      'The squad is a line-up now, not a list: your eleven drawn on the grass in the club\u2019s colours, shirt numbers on their backs, names and ratings under their feet. Tap a shirt and tap another to swap them — bench or starter, either way',
+      'Anyone out of position wears a red mark, and the shape tells you the rest: no left winger, two number tens, five at the back and nobody in front of them',
+      'The transfer market moves every week now. Rivals sign the men you were thinking about, new names come available, and the asking prices drift — so a market card shows what has moved since last week. Dither on someone and you lose him'
+    ] },
     { v: '1.6.2', when: '28 Aug', items: [
       'Fixed the real Manager Mode bug: the two manager files were never added to the page the website is built from, so on the live site picking a club did nothing at all. The single-file build had them, which is why it worked everywhere except where it mattered. The build now refuses to finish if the two lists of scripts ever disagree again'
     ] },
@@ -10171,6 +10196,23 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
                  hint: 'Five at the back. For when you need a point.' }
   };
 
+  /* Where each man in FORMATIONS[f].line stands, in a 0-100 box with the goal
+     you are defending at the bottom. Same order as the line, so slot i belongs
+     to the shirt in xi[i] — that is what lets the pitch view and the swap
+     logic agree without either knowing about the other. */
+  const SLOTS = {
+    '4-3-3':   [[50, 92], [90, 70], [64, 70], [36, 70], [10, 70],
+                [50, 55], [74, 40], [26, 40], [86, 24], [50, 8], [14, 24]],
+    '4-4-2':   [[50, 92], [90, 70], [64, 70], [36, 70], [10, 70],
+                [88, 46], [63, 50], [37, 50], [12, 46], [64, 14], [36, 14]],
+    '4-2-3-1': [[50, 92], [90, 70], [64, 70], [36, 70], [10, 70],
+                [64, 55], [36, 55], [50, 39], [87, 30], [13, 30], [50, 8]],
+    '3-5-2':   [[50, 92], [72, 72], [50, 76], [28, 72],
+                [92, 50], [50, 57], [70, 41], [30, 41], [8, 50], [64, 14], [36, 14]],
+    '5-3-2':   [[50, 94], [92, 62], [70, 76], [50, 79], [30, 76], [8, 62],
+                [50, 50], [72, 35], [28, 35], [64, 11], [36, 11]]
+  };
+
   const STYLES = {
     balanced: { name: 'Balanced', hint: 'No surprises either way.', att: 0, def: 0, risk: 0 },
     attack:   { name: 'Attacking', hint: 'More goals at both ends.', att: 3.5, def: -2.5, risk: 1 },
@@ -10437,6 +10479,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     g.mgr.board.confidence = U.clamp(
       g.mgr.board.confidence + (deserved - g.mgr.board.confidence) * 0.17 + kick, 0, 100);
 
+    marketTick(g);
     me.form = (me.form || []).concat(result).slice(-5);
     State.news(`${fix.home ? me.name : opp.name} ${fix.home ? gf : ga}-${fix.home ? ga : gf} ${fix.home ? opp.name : me.name}`,
       result === 'W' ? 'good' : result === 'L' ? 'bad' : 'info', null, 'whistle');
@@ -10456,12 +10499,77 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Everyone you could realistically sign: squad players from other clubs in
      the world, priced off what they are worth and who wants them. */
+  /* One listing from a club's squad, priced. */
+  function listFrom(g, c) {
+    const U = global.U;
+    const s = U.pick(global.Engine.Squad.generate(c));
+    s.value = valueFor(s);
+    s.wage = wageFor(s);
+    s.fromClub = c.name;
+    s.fromId = c.id;
+    s.ask = Math.round(s.value * U.rnd(1.05, 1.7) / 50000) * 50000;
+    // nobody wants to sell the best player they have, and they price him like
+    // it — you pay a premium for taking somebody's talisman
+    if (s.ovr >= c.rating + 4) {
+      s.keyman = true;
+      s.ask = Math.round(s.ask * 1.55 / 50000) * 50000;
+    }
+    return s;
+  }
+
+  /* The market is not a catalogue you come back to at your leisure. Every
+     round somebody you were thinking about goes somewhere else, somebody new
+     becomes available, and the asking prices move. Dither and you lose him. */
+  function marketTick(g) {
+    const U = global.U, State = global.State;
+    if (!g.mgr.marketCache) return;
+    const me = State.club(g.mgr.club);
+    const others = Object.values(g.world.clubs).filter(c => c.id !== me.id);
+    const live = g.mgr.marketCache.filter(s => !s.signed && !s.gone);
+    g.mgr.marketNews = g.mgr.marketNews || [];
+
+    // The board of names stays about the size it started at: if it has grown,
+    // rivals move quicker and fewer new men appear, and the other way round.
+    const target = g.mgr.marketSize || live.length;
+    const pressure = U.clamp(live.length / Math.max(target, 1), 0.55, 1.7);
+
+    // rivals do their business too — the better he is, the likelier he goes
+    U.shuffle(live).slice(0, U.int(2, 5)).forEach(s => {
+      const pull = U.clamp((0.09 + (s.ovr - 72) * 0.014) * pressure, 0.03, 0.5);
+      if (!U.chance(pull)) return;
+      const buyer = U.pick(others.filter(c => c.id !== s.fromId && c.rating >= s.ovr - 9)) || U.pick(others);
+      s.gone = true;
+      g.mgr.marketNews.unshift({ t: `${s.name} (${s.ovr}) has gone to ${buyer.name}`, k: 'gone' });
+      State.news(s.free ? `${buyer.name} sign free agent ${s.name}`
+        : `${buyer.name} sign ${s.name} from ${s.fromClub}`, 'info', null, 'transfer');
+    });
+
+    // and new names come onto it
+    const fresh = live.length > target ? U.int(0, 1) : U.int(1, 2);
+    for (let i = 0; i < fresh; i++) {
+      const c = U.pick(others);
+      const s = listFrom(g, c);
+      if (g.mgr.marketCache.some(x => x.name === s.name)) continue;
+      g.mgr.marketCache.push(s);
+      if (s.ovr >= me.rating)
+        g.mgr.marketNews.unshift({ t: `${s.name} (${s.pos} ${s.ovr}) available at ${s.fromClub}`, k: 'new' });
+    }
+
+    // prices drift — a good run makes a club dearer, a bad one makes them listen
+    live.forEach(s => {
+      if (s.free || s.gone) return;
+      s.ask = Math.max(50000, Math.round(s.ask * U.rnd(0.96, 1.05) / 50000) * 50000);
+    });
+    g.mgr.marketNews = g.mgr.marketNews.slice(0, 8);
+  }
+
   function market(g, filter) {
     const State = global.State, U = global.U;
     if (!g.mgr.marketCache || g.mgr.marketSeason !== g.world.year) {
       const me = State.club(g.mgr.club);
       const pool = [];
       const clubs = Object.values(g.world.clubs).filter(c => c.id !== me.id);
+      g.mgr.marketNews = [];
       U.shuffle(clubs).slice(0, 26).forEach(c => {
         // whoever they happen to be willing to listen on, not simply their best
         U.shuffle(global.Engine.Squad.generate(c)).slice(0, U.int(2, 4)).forEach(s => {
@@ -10470,8 +10578,6 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           s.fromClub = c.name;
           s.fromId = c.id;
           s.ask = Math.round(s.value * U.rnd(1.05, 1.7) / 50000) * 50000;
-          // nobody wants to sell the best player they have, and they price him
-          // like it — you pay a premium for taking somebody's talisman
           if (s.ovr >= c.rating + 4) {
             s.keyman = true;
             s.ask = Math.round(s.ask * 1.55 / 50000) * 50000;
@@ -10496,9 +10602,10 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         pool.push(s);
       }
       g.mgr.marketCache = pool;
+      g.mgr.marketSize = pool.length;
       g.mgr.marketSeason = g.world.year;
     }
-    let list = g.mgr.marketCache.filter(s => !s.signed);
+    let list = g.mgr.marketCache.filter(s => !s.signed && !s.gone);
     if (filter && filter.pos) list = list.filter(s => s.pos === filter.pos);
     if (filter && filter.max) list = list.filter(s => s.ask <= filter.max);
     if (filter && filter.afford) {
@@ -10648,10 +10755,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   }
 
   global.Manager = {
-    FORMATIONS, STYLES, TALKS,
+    FORMATIONS, STYLES, TALKS, SLOTS,
+    slots(f) { return SLOTS[f] || SLOTS['4-3-3']; },
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
-    market, bid, sell, squadWages, valueFor, wageFor,
+    market, marketTick, bid, sell, squadWages, valueFor, wageFor,
     seasonReview, nextSeason, squadFor
   };
 })(window);
@@ -10687,6 +10795,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   const MUI = {
     tab: 'mhome',
+    TOKEN: 0.86,          // token scale — the slot spacing in manager.js assumes it
 
     render() {
       const g = State().game;
@@ -10828,11 +10937,114 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     },
 
     /* ---------------- squad ---------------- */
+    /* ---------------- the team, laid out on grass ----------------
+       A team sheet is a list; a line-up is a shape. This draws the eleven
+       where they actually stand, so you can see at a glance that you have
+       nobody on the left wing and two number tens. Tapping a shirt is the
+       same swap as tapping a row was. */
+
+    /* Surname only — a full name never fits under a shirt. */
+    shortName(name) {
+      const parts = String(name || '').trim().split(/\s+/);
+      const last = parts[parts.length - 1];
+      return last.length > 10 ? last.slice(0, 9) + '.' : last;
+    },
+
+    pitchSvg() {
+      // Drawn once, behind the shirts: touchline, halfway, centre circle, both
+      // boxes. Mown stripes give it depth without an image.
+      const L = 'rgba(255,255,255,.30)';
+      let stripes = '';
+      for (let i = 0; i < 10; i++) {
+        stripes += `<rect x="0" y="${i * 44}" width="320" height="44" fill="${
+          i % 2 ? 'rgba(255,255,255,.030)' : 'rgba(0,0,0,.045)'}"/>`;
+      }
+      return `<rect x="0" y="0" width="320" height="440" rx="10" fill="#0f6a3d"/>
+        ${stripes}
+        <g fill="none" stroke="${L}" stroke-width="1.6">
+          <rect x="10" y="10" width="300" height="420" rx="3"/>
+          <line x1="10" y1="220" x2="310" y2="220"/>
+          <circle cx="160" cy="220" r="42"/>
+          <rect x="70" y="10" width="180" height="62"/>
+          <rect x="114" y="10" width="92" height="26"/>
+          <rect x="70" y="368" width="180" height="62"/>
+          <rect x="114" y="404" width="92" height="26"/>
+        </g>
+        <circle cx="160" cy="220" r="2.6" fill="${L}"/>
+        <circle cx="160" cy="58" r="2.2" fill="${L}"/>
+        <circle cx="160" cy="382" r="2.2" fill="${L}"/>`;
+    },
+
+    /* One man: a shirt in the club's colours, his number on it, his name and
+       rating underneath on a plate dark enough to read against grass. */
+    shirtToken(s, slotPos, x, y, kit, picked) {
+      const [c1, c2] = kit;
+      const oop = s.pos !== slotPos;
+      const ink = MUI.readable(c1);
+      const name = esc(MUI.shortName(s.name));
+      const cls = 'lu-man' + (picked ? ' picked' : '') + (oop ? ' oop' : '');
+      // scaled a touch under 1 so a holding midfielder still fits cleanly
+      // between the back four and the men ahead of him
+      return `<g class="${cls}" data-act="mgrSwap" data-arg="${s.id}"
+          transform="translate(${x} ${y}) scale(${MUI.TOKEN})" role="button" tabindex="0"
+          aria-label="${esc(s.name)}, ${esc(slotPos)}, rated ${s.ovr}">
+        <ellipse cx="0" cy="15" rx="14" ry="4" fill="rgba(0,0,0,.28)"/>
+        <g class="lu-kit">
+          <path d="M-11-13 -4-16 0-13 4-16 11-13 14-6 9-3 9 14 -9 14 -9-3 -14-6Z"
+            fill="${c1}" stroke="rgba(0,0,0,.55)" stroke-width="1"/>
+          <path d="M-4-16 0-13 4-16 4-11 0-8 -4-11Z" fill="${c2}"/>
+          <text x="0" y="7" text-anchor="middle" font-size="10" font-weight="800"
+            fill="${ink}" font-family="Inter,Helvetica,Arial,sans-serif">${s.shirt || ''}</text>
+        </g>
+        <g class="lu-plate" transform="translate(0 20)">
+          <rect x="-26" y="0" width="52" height="23" rx="5" fill="rgba(6,12,10,.80)"/>
+          <text x="0" y="9.5" text-anchor="middle" font-size="9" font-weight="700"
+            fill="#eef4f2" font-family="Inter,Helvetica,Arial,sans-serif">${name}</text>
+          <text x="0" y="19" text-anchor="middle" font-size="8.5" font-weight="800"
+            fill="${s.ovr >= 82 ? '#ffc94d' : s.ovr >= 72 ? '#eef4f2' : '#93a5ab'}"
+            font-family="Inter,Helvetica,Arial,sans-serif">${esc(slotPos)} · ${s.ovr}</text>
+        </g>
+        ${oop ? '<circle class="lu-warn" cx="13" cy="-14" r="5" fill="#ff5a6a"/>'
+              + '<text x="13" y="-11" text-anchor="middle" font-size="8" font-weight="800"'
+              + ' fill="#0b0f14" font-family="Inter,Helvetica,Arial,sans-serif">!</text>' : ''}
+      </g>`;
+    },
+
+    /* black or white, whichever you can actually read on this colour */
+    readable(hex) {
+      const h = String(hex || '#888').replace('#', '');
+      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(n.slice(0, 2), 16) || 0, gg = parseInt(n.slice(2, 4), 16) || 0,
+            bl = parseInt(n.slice(4, 6), 16) || 0;
+      return (r * 299 + gg * 587 + bl * 114) / 1000 > 145 ? '#101820' : '#ffffff';
+    },
+
+    lineup(g) {
+      const club = State().club(g.mgr.club);
+      const kit = global.Crest.kitFor(club.name);
+      const shape = M().FORMATIONS[g.mgr.formation].line;
+      const slots = M().slots(g.mgr.formation);
+      const xi = M().xiPlayers(g);
+      const picked = global.Game && global.Game._mgrSwapFrom;
+      const men = xi.map((s, i) => {
+        const [px, py] = slots[i] || [50, 50];
+        // 0-100 in, pixels out, with a margin so nobody's name plate is clipped
+        return MUI.shirtToken(s, shape[i], 24 + px * 2.72, 34 + py * 3.5, kit, picked === s.id);
+      }).join('');
+      return `<div class="lineup"><svg viewBox="0 0 320 440" class="lu-svg"
+        role="group" aria-label="Starting eleven on the pitch">
+        ${MUI.pitchSvg()}${men}
+      </svg></div>`;
+    },
+
     tab_msquad() {
       const g = State().game;
       const shape = M().FORMATIONS[g.mgr.formation].line;
       const xi = M().xiPlayers(g), bench = M().benchPlayers(g);
-      const row = (s, i, inXI) => `<div class="sq-row${inXI ? ' in' : ''}" data-act="mgrSwap" data-arg="${s.id}">
+      const picked = global.Game && global.Game._mgrSwapFrom;
+      const oop = xi.filter((s, i) => s.pos !== shape[i]).length;
+      const row = (s, i, inXI) => `<div class="sq-row${inXI ? ' in' : ''}${
+          picked === s.id ? ' picked' : ''}" data-act="mgrSwap" data-arg="${s.id}">
         <span class="sq-pos">${esc(inXI ? shape[i] : s.pos)}</span>
         <span class="sq-sh">${s.shirt}</span>
         <span class="sq-n">${esc(s.name)}${inXI && s.pos !== shape[i] ? ' <em class="oop">out of position</em>' : ''}</span>
@@ -10840,14 +11052,20 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
       </div>`;
 
-      return `<div class="card"><h3>${ico('squad')} Starting eleven
+      return `<div class="card tight"><h3>${ico('squad')} ${esc(g.mgr.formation)}
           <span class="pill">${M().teamRating(g)}</span></h3>
-        <p class="dim" style="margin:0 0 10px">Tap a player to swap him with someone on the bench.</p>
-        ${xi.map((s, i) => row(s, i, true)).join('')}
-        <div class="row" style="margin-top:10px">
+        ${MUI.lineup(g)}
+        <p class="dim lu-hint">${picked
+          ? 'Now tap whoever takes his place.'
+          : oop ? `Tap a shirt to swap him. ${oop} ${oop === 1 ? 'man is' : 'men are'} out of position.`
+          : 'Tap a shirt to swap him with someone on the bench.'}</p>
+        <div class="row">
           <button class="btn btn-ghost grow" data-act="mgrAuto">${ico('ok')} Pick the best eleven</button>
           <button class="btn btn-ghost grow" data-act="mgrFormation">${ico('tactics')} ${g.mgr.formation}</button>
         </div>
+      </div>
+      <div class="card"><h3>The eleven</h3>
+        ${xi.map((s, i) => row(s, i, true)).join('')}
       </div>
       <div class="card"><h3>Substitutes and reserves</h3>
         ${bench.length ? bench.map(s => row(s, 0, false)).join('')
@@ -10874,6 +11092,12 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           <button class="mk-f${(g.mgr.filter && g.mgr.filter.pos) === (p === 'All' ? undefined : p) ? ' on' : ''}"
             data-act="mgrFilter" data-arg="${p}">${p}</button>`).join('')}</div>
       </div>
+      ${(g.mgr.marketNews || []).length ? `<div class="card"><h3>${ico('trend')} The market this week</h3>
+        ${g.mgr.marketNews.slice(0, 4).map(n => `<div class="res-row">
+          <span class="res-b ${n.k === 'gone' ? 'res-L' : 'res-W'}">${n.k === 'gone' ? '→' : '+'}</span>
+          <span class="res-n wrap">${esc(n.t)}</span></div>`).join('')}
+        <p class="dim" style="margin:8px 0 0">Names come and go every week. If you want him, go now.</p>
+      </div>` : ''}
       <div class="card"><h3>${ico('transfer')} Available</h3>
         ${list.length ? list.map(s => `
           <div class="mk-row" data-act="mgrBid" data-arg="${s.id}">
@@ -13513,14 +13737,27 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     mgrSwap(id) {
       const g = State.game;
-      const inXI = (g.mgr.xi || []).indexOf(id) >= 0;
-      if (inXI) { Game._mgrSwapFrom = id; UI.toast('Now tap a replacement.', ''); return; }
+      const xi = g.mgr.xi || [];
       const from = Game._mgrSwapFrom;
-      if (!from) { Game._mgrSwapFrom = null; UI.toast('Tap someone in the eleven first.', ''); return; }
-      const i = g.mgr.xi.indexOf(from);
-      if (i >= 0) g.mgr.xi[i] = id;
-      Game._mgrSwapFrom = null;
-      State.save(); global.MUI.render();
+      // tapping the man you already picked puts him back down
+      if (from === id) { Game._mgrSwapFrom = null; return global.MUI.render(); }
+      const inXI = xi.indexOf(id) >= 0;
+
+      if (from && xi.indexOf(from) >= 0) {
+        const i = xi.indexOf(from);
+        if (inXI) {
+          // two of your own starters: swap the shirts round the pitch
+          const j = xi.indexOf(id);
+          xi[i] = id; xi[j] = from;
+        } else {
+          xi[i] = id;                       // straight in for the man off
+        }
+        Game._mgrSwapFrom = null;
+        State.save(); global.MUI.render();
+        return;
+      }
+      if (inXI) { Game._mgrSwapFrom = id; return global.MUI.render(); }
+      UI.toast('Tap someone in the eleven first.', '');
     },
 
     mgrFormation() {

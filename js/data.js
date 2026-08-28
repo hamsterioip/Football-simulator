@@ -1212,9 +1212,14 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.6.2';
+  const VERSION = '1.7';
   const BUILD = '28 August 2026';
   const CHANGELOG = [
+    { v: '1.7', when: '28 Aug', items: [
+      'The squad is a line-up now, not a list: your eleven drawn on the grass in the club\u2019s colours, shirt numbers on their backs, names and ratings under their feet. Tap a shirt and tap another to swap them — bench or starter, either way',
+      'Anyone out of position wears a red mark, and the shape tells you the rest: no left winger, two number tens, five at the back and nobody in front of them',
+      'The transfer market moves every week now. Rivals sign the men you were thinking about, new names come available, and the asking prices drift — so a market card shows what has moved since last week. Dither on someone and you lose him'
+    ] },
     { v: '1.6.2', when: '28 Aug', items: [
       'Fixed the real Manager Mode bug: the two manager files were never added to the page the website is built from, so on the live site picking a club did nothing at all. The single-file build had them, which is why it worked everywhere except where it mattered. The build now refuses to finish if the two lists of scripts ever disagree again'
     ] },

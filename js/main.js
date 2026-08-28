@@ -624,14 +624,27 @@
 
     mgrSwap(id) {
       const g = State.game;
-      const inXI = (g.mgr.xi || []).indexOf(id) >= 0;
-      if (inXI) { Game._mgrSwapFrom = id; UI.toast('Now tap a replacement.', ''); return; }
+      const xi = g.mgr.xi || [];
       const from = Game._mgrSwapFrom;
-      if (!from) { Game._mgrSwapFrom = null; UI.toast('Tap someone in the eleven first.', ''); return; }
-      const i = g.mgr.xi.indexOf(from);
-      if (i >= 0) g.mgr.xi[i] = id;
-      Game._mgrSwapFrom = null;
-      State.save(); global.MUI.render();
+      // tapping the man you already picked puts him back down
+      if (from === id) { Game._mgrSwapFrom = null; return global.MUI.render(); }
+      const inXI = xi.indexOf(id) >= 0;
+
+      if (from && xi.indexOf(from) >= 0) {
+        const i = xi.indexOf(from);
+        if (inXI) {
+          // two of your own starters: swap the shirts round the pitch
+          const j = xi.indexOf(id);
+          xi[i] = id; xi[j] = from;
+        } else {
+          xi[i] = id;                       // straight in for the man off
+        }
+        Game._mgrSwapFrom = null;
+        State.save(); global.MUI.render();
+        return;
+      }
+      if (inXI) { Game._mgrSwapFrom = id; return global.MUI.render(); }
+      UI.toast('Tap someone in the eleven first.', '');
     },
 
     mgrFormation() {

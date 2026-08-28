@@ -29,6 +29,23 @@
                  hint: 'Five at the back. For when you need a point.' }
   };
 
+  /* Where each man in FORMATIONS[f].line stands, in a 0-100 box with the goal
+     you are defending at the bottom. Same order as the line, so slot i belongs
+     to the shirt in xi[i] — that is what lets the pitch view and the swap
+     logic agree without either knowing about the other. */
+  const SLOTS = {
+    '4-3-3':   [[50, 92], [90, 70], [64, 70], [36, 70], [10, 70],
+                [50, 55], [74, 40], [26, 40], [86, 24], [50, 8], [14, 24]],
+    '4-4-2':   [[50, 92], [90, 70], [64, 70], [36, 70], [10, 70],
+                [88, 46], [63, 50], [37, 50], [12, 46], [64, 14], [36, 14]],
+    '4-2-3-1': [[50, 92], [90, 70], [64, 70], [36, 70], [10, 70],
+                [64, 55], [36, 55], [50, 39], [87, 30], [13, 30], [50, 8]],
+    '3-5-2':   [[50, 92], [72, 72], [50, 76], [28, 72],
+                [92, 50], [50, 57], [70, 41], [30, 41], [8, 50], [64, 14], [36, 14]],
+    '5-3-2':   [[50, 94], [92, 62], [70, 76], [50, 79], [30, 76], [8, 62],
+                [50, 50], [72, 35], [28, 35], [64, 11], [36, 11]]
+  };
+
   const STYLES = {
     balanced: { name: 'Balanced', hint: 'No surprises either way.', att: 0, def: 0, risk: 0 },
     attack:   { name: 'Attacking', hint: 'More goals at both ends.', att: 3.5, def: -2.5, risk: 1 },
@@ -295,6 +312,7 @@
     g.mgr.board.confidence = U.clamp(
       g.mgr.board.confidence + (deserved - g.mgr.board.confidence) * 0.17 + kick, 0, 100);
 
+    marketTick(g);
     me.form = (me.form || []).concat(result).slice(-5);
     State.news(`${fix.home ? me.name : opp.name} ${fix.home ? gf : ga}-${fix.home ? ga : gf} ${fix.home ? opp.name : me.name}`,
       result === 'W' ? 'good' : result === 'L' ? 'bad' : 'info', null, 'whistle');
@@ -314,12 +332,77 @@
 
   /* Everyone you could realistically sign: squad players from other clubs in
      the world, priced off what they are worth and who wants them. */
+  /* One listing from a club's squad, priced. */
+  function listFrom(g, c) {
+    const U = global.U;
+    const s = U.pick(global.Engine.Squad.generate(c));
+    s.value = valueFor(s);
+    s.wage = wageFor(s);
+    s.fromClub = c.name;
+    s.fromId = c.id;
+    s.ask = Math.round(s.value * U.rnd(1.05, 1.7) / 50000) * 50000;
+    // nobody wants to sell the best player they have, and they price him like
+    // it — you pay a premium for taking somebody's talisman
+    if (s.ovr >= c.rating + 4) {
+      s.keyman = true;
+      s.ask = Math.round(s.ask * 1.55 / 50000) * 50000;
+    }
+    return s;
+  }
+
+  /* The market is not a catalogue you come back to at your leisure. Every
+     round somebody you were thinking about goes somewhere else, somebody new
+     becomes available, and the asking prices move. Dither and you lose him. */
+  function marketTick(g) {
+    const U = global.U, State = global.State;
+    if (!g.mgr.marketCache) return;
+    const me = State.club(g.mgr.club);
+    const others = Object.values(g.world.clubs).filter(c => c.id !== me.id);
+    const live = g.mgr.marketCache.filter(s => !s.signed && !s.gone);
+    g.mgr.marketNews = g.mgr.marketNews || [];
+
+    // The board of names stays about the size it started at: if it has grown,
+    // rivals move quicker and fewer new men appear, and the other way round.
+    const target = g.mgr.marketSize || live.length;
+    const pressure = U.clamp(live.length / Math.max(target, 1), 0.55, 1.7);
+
+    // rivals do their business too — the better he is, the likelier he goes
+    U.shuffle(live).slice(0, U.int(2, 5)).forEach(s => {
+      const pull = U.clamp((0.09 + (s.ovr - 72) * 0.014) * pressure, 0.03, 0.5);
+      if (!U.chance(pull)) return;
+      const buyer = U.pick(others.filter(c => c.id !== s.fromId && c.rating >= s.ovr - 9)) || U.pick(others);
+      s.gone = true;
+      g.mgr.marketNews.unshift({ t: `${s.name} (${s.ovr}) has gone to ${buyer.name}`, k: 'gone' });
+      State.news(s.free ? `${buyer.name} sign free agent ${s.name}`
+        : `${buyer.name} sign ${s.name} from ${s.fromClub}`, 'info', null, 'transfer');
+    });
+
+    // and new names come onto it
+    const fresh = live.length > target ? U.int(0, 1) : U.int(1, 2);
+    for (let i = 0; i < fresh; i++) {
+      const c = U.pick(others);
+      const s = listFrom(g, c);
+      if (g.mgr.marketCache.some(x => x.name === s.name)) continue;
+      g.mgr.marketCache.push(s);
+      if (s.ovr >= me.rating)
+        g.mgr.marketNews.unshift({ t: `${s.name} (${s.pos} ${s.ovr}) available at ${s.fromClub}`, k: 'new' });
+    }
+
+    // prices drift — a good run makes a club dearer, a bad one makes them listen
+    live.forEach(s => {
+      if (s.free || s.gone) return;
+      s.ask = Math.max(50000, Math.round(s.ask * U.rnd(0.96, 1.05) / 50000) * 50000);
+    });
+    g.mgr.marketNews = g.mgr.marketNews.slice(0, 8);
+  }
+
   function market(g, filter) {
     const State = global.State, U = global.U;
     if (!g.mgr.marketCache || g.mgr.marketSeason !== g.world.year) {
       const me = State.club(g.mgr.club);
       const pool = [];
       const clubs = Object.values(g.world.clubs).filter(c => c.id !== me.id);
+      g.mgr.marketNews = [];
       U.shuffle(clubs).slice(0, 26).forEach(c => {
         // whoever they happen to be willing to listen on, not simply their best
         U.shuffle(global.Engine.Squad.generate(c)).slice(0, U.int(2, 4)).forEach(s => {
@@ -328,8 +411,6 @@
           s.fromClub = c.name;
           s.fromId = c.id;
           s.ask = Math.round(s.value * U.rnd(1.05, 1.7) / 50000) * 50000;
-          // nobody wants to sell the best player they have, and they price him
-          // like it — you pay a premium for taking somebody's talisman
           if (s.ovr >= c.rating + 4) {
             s.keyman = true;
             s.ask = Math.round(s.ask * 1.55 / 50000) * 50000;
@@ -354,9 +435,10 @@
         pool.push(s);
       }
       g.mgr.marketCache = pool;
+      g.mgr.marketSize = pool.length;
       g.mgr.marketSeason = g.world.year;
     }
-    let list = g.mgr.marketCache.filter(s => !s.signed);
+    let list = g.mgr.marketCache.filter(s => !s.signed && !s.gone);
     if (filter && filter.pos) list = list.filter(s => s.pos === filter.pos);
     if (filter && filter.max) list = list.filter(s => s.ask <= filter.max);
     if (filter && filter.afford) {
@@ -506,10 +588,11 @@
   }
 
   global.Manager = {
-    FORMATIONS, STYLES, TALKS,
+    FORMATIONS, STYLES, TALKS, SLOTS,
+    slots(f) { return SLOTS[f] || SLOTS['4-3-3']; },
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
-    market, bid, sell, squadWages, valueFor, wageFor,
+    market, marketTick, bid, sell, squadWages, valueFor, wageFor,
     seasonReview, nextSeason, squadFor
   };
 })(window);

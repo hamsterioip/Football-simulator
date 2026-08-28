@@ -746,6 +746,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .res-L .res-b,.res-b.res-L{background:var(--red);color:#2a0a0e}
 .res-D .res-b{background:#7d8ba3;color:#0b1220}
 .res-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* transfer lines are sentences, not labels — let them wrap */
+.res-n.wrap{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.32;padding:2px 0}
 
 .sq-row,.mk-row{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:8px;
   font-size:12.5px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
@@ -759,6 +761,24 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .sq-meta{font-size:10px;color:var(--dim);white-space:nowrap}
 .sq-o{flex:0 0 24px;text-align:right;font-weight:800;color:var(--muted)}
 .sq-o.mid{color:var(--txt)}.sq-o.hi{color:var(--gold)}
+/* ---------- the line-up on grass ---------- */
+.lineup{margin:2px 0 10px;border-radius:12px;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 6px 18px rgba(0,0,0,.35)}
+.lu-svg{display:block;width:100%;height:auto}
+.lu-man{cursor:pointer}
+.lu-man .lu-kit,.lu-man .lu-plate{transition:transform .14s ease,opacity .14s ease}
+.lu-man:active .lu-kit{transform:scale(1.12)}
+.lu-man.picked .lu-kit{transform:scale(1.16)}
+.lu-man.picked .lu-plate rect{fill:var(--green);}
+.lu-man.picked .lu-plate text{fill:#062012}
+.lu-man.picked .lu-kit path:first-child{stroke:var(--green);stroke-width:2.4}
+.lu-man:focus{outline:none}
+.lu-man:focus-visible .lu-kit path:first-child{stroke:#fff;stroke-width:2.4}
+.lu-hint{margin:0 0 10px;text-align:center}
+.sq-row.picked{background:rgba(42,230,126,.16);box-shadow:inset 0 0 0 1px rgba(42,230,126,.4)}
+@media (prefers-reduced-motion:reduce){
+  .lu-man .lu-kit,.lu-man .lu-plate{transition:none}
+}
 .mk-star{color:var(--gold);font-weight:800}
 .mk-ask{font-size:11.5px;font-weight:700;text-align:right;white-space:nowrap}
 .mk-ask em{display:block;font-style:normal;font-size:10px;color:var(--dim);font-weight:600}

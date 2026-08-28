@@ -26,6 +26,7 @@
 
   const MUI = {
     tab: 'mhome',
+    TOKEN: 0.86,          // token scale — the slot spacing in manager.js assumes it
 
     render() {
       const g = State().game;
@@ -167,11 +168,114 @@
     },
 
     /* ---------------- squad ---------------- */
+    /* ---------------- the team, laid out on grass ----------------
+       A team sheet is a list; a line-up is a shape. This draws the eleven
+       where they actually stand, so you can see at a glance that you have
+       nobody on the left wing and two number tens. Tapping a shirt is the
+       same swap as tapping a row was. */
+
+    /* Surname only — a full name never fits under a shirt. */
+    shortName(name) {
+      const parts = String(name || '').trim().split(/\s+/);
+      const last = parts[parts.length - 1];
+      return last.length > 10 ? last.slice(0, 9) + '.' : last;
+    },
+
+    pitchSvg() {
+      // Drawn once, behind the shirts: touchline, halfway, centre circle, both
+      // boxes. Mown stripes give it depth without an image.
+      const L = 'rgba(255,255,255,.30)';
+      let stripes = '';
+      for (let i = 0; i < 10; i++) {
+        stripes += `<rect x="0" y="${i * 44}" width="320" height="44" fill="${
+          i % 2 ? 'rgba(255,255,255,.030)' : 'rgba(0,0,0,.045)'}"/>`;
+      }
+      return `<rect x="0" y="0" width="320" height="440" rx="10" fill="#0f6a3d"/>
+        ${stripes}
+        <g fill="none" stroke="${L}" stroke-width="1.6">
+          <rect x="10" y="10" width="300" height="420" rx="3"/>
+          <line x1="10" y1="220" x2="310" y2="220"/>
+          <circle cx="160" cy="220" r="42"/>
+          <rect x="70" y="10" width="180" height="62"/>
+          <rect x="114" y="10" width="92" height="26"/>
+          <rect x="70" y="368" width="180" height="62"/>
+          <rect x="114" y="404" width="92" height="26"/>
+        </g>
+        <circle cx="160" cy="220" r="2.6" fill="${L}"/>
+        <circle cx="160" cy="58" r="2.2" fill="${L}"/>
+        <circle cx="160" cy="382" r="2.2" fill="${L}"/>`;
+    },
+
+    /* One man: a shirt in the club's colours, his number on it, his name and
+       rating underneath on a plate dark enough to read against grass. */
+    shirtToken(s, slotPos, x, y, kit, picked) {
+      const [c1, c2] = kit;
+      const oop = s.pos !== slotPos;
+      const ink = MUI.readable(c1);
+      const name = esc(MUI.shortName(s.name));
+      const cls = 'lu-man' + (picked ? ' picked' : '') + (oop ? ' oop' : '');
+      // scaled a touch under 1 so a holding midfielder still fits cleanly
+      // between the back four and the men ahead of him
+      return `<g class="${cls}" data-act="mgrSwap" data-arg="${s.id}"
+          transform="translate(${x} ${y}) scale(${MUI.TOKEN})" role="button" tabindex="0"
+          aria-label="${esc(s.name)}, ${esc(slotPos)}, rated ${s.ovr}">
+        <ellipse cx="0" cy="15" rx="14" ry="4" fill="rgba(0,0,0,.28)"/>
+        <g class="lu-kit">
+          <path d="M-11-13 -4-16 0-13 4-16 11-13 14-6 9-3 9 14 -9 14 -9-3 -14-6Z"
+            fill="${c1}" stroke="rgba(0,0,0,.55)" stroke-width="1"/>
+          <path d="M-4-16 0-13 4-16 4-11 0-8 -4-11Z" fill="${c2}"/>
+          <text x="0" y="7" text-anchor="middle" font-size="10" font-weight="800"
+            fill="${ink}" font-family="Inter,Helvetica,Arial,sans-serif">${s.shirt || ''}</text>
+        </g>
+        <g class="lu-plate" transform="translate(0 20)">
+          <rect x="-26" y="0" width="52" height="23" rx="5" fill="rgba(6,12,10,.80)"/>
+          <text x="0" y="9.5" text-anchor="middle" font-size="9" font-weight="700"
+            fill="#eef4f2" font-family="Inter,Helvetica,Arial,sans-serif">${name}</text>
+          <text x="0" y="19" text-anchor="middle" font-size="8.5" font-weight="800"
+            fill="${s.ovr >= 82 ? '#ffc94d' : s.ovr >= 72 ? '#eef4f2' : '#93a5ab'}"
+            font-family="Inter,Helvetica,Arial,sans-serif">${esc(slotPos)} · ${s.ovr}</text>
+        </g>
+        ${oop ? '<circle class="lu-warn" cx="13" cy="-14" r="5" fill="#ff5a6a"/>'
+              + '<text x="13" y="-11" text-anchor="middle" font-size="8" font-weight="800"'
+              + ' fill="#0b0f14" font-family="Inter,Helvetica,Arial,sans-serif">!</text>' : ''}
+      </g>`;
+    },
+
+    /* black or white, whichever you can actually read on this colour */
+    readable(hex) {
+      const h = String(hex || '#888').replace('#', '');
+      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(n.slice(0, 2), 16) || 0, gg = parseInt(n.slice(2, 4), 16) || 0,
+            bl = parseInt(n.slice(4, 6), 16) || 0;
+      return (r * 299 + gg * 587 + bl * 114) / 1000 > 145 ? '#101820' : '#ffffff';
+    },
+
+    lineup(g) {
+      const club = State().club(g.mgr.club);
+      const kit = global.Crest.kitFor(club.name);
+      const shape = M().FORMATIONS[g.mgr.formation].line;
+      const slots = M().slots(g.mgr.formation);
+      const xi = M().xiPlayers(g);
+      const picked = global.Game && global.Game._mgrSwapFrom;
+      const men = xi.map((s, i) => {
+        const [px, py] = slots[i] || [50, 50];
+        // 0-100 in, pixels out, with a margin so nobody's name plate is clipped
+        return MUI.shirtToken(s, shape[i], 24 + px * 2.72, 34 + py * 3.5, kit, picked === s.id);
+      }).join('');
+      return `<div class="lineup"><svg viewBox="0 0 320 440" class="lu-svg"
+        role="group" aria-label="Starting eleven on the pitch">
+        ${MUI.pitchSvg()}${men}
+      </svg></div>`;
+    },
+
     tab_msquad() {
       const g = State().game;
       const shape = M().FORMATIONS[g.mgr.formation].line;
       const xi = M().xiPlayers(g), bench = M().benchPlayers(g);
-      const row = (s, i, inXI) => `<div class="sq-row${inXI ? ' in' : ''}" data-act="mgrSwap" data-arg="${s.id}">
+      const picked = global.Game && global.Game._mgrSwapFrom;
+      const oop = xi.filter((s, i) => s.pos !== shape[i]).length;
+      const row = (s, i, inXI) => `<div class="sq-row${inXI ? ' in' : ''}${
+          picked === s.id ? ' picked' : ''}" data-act="mgrSwap" data-arg="${s.id}">
         <span class="sq-pos">${esc(inXI ? shape[i] : s.pos)}</span>
         <span class="sq-sh">${s.shirt}</span>
         <span class="sq-n">${esc(s.name)}${inXI && s.pos !== shape[i] ? ' <em class="oop">out of position</em>' : ''}</span>
@@ -179,14 +283,20 @@
         <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
       </div>`;
 
-      return `<div class="card"><h3>${ico('squad')} Starting eleven
+      return `<div class="card tight"><h3>${ico('squad')} ${esc(g.mgr.formation)}
           <span class="pill">${M().teamRating(g)}</span></h3>
-        <p class="dim" style="margin:0 0 10px">Tap a player to swap him with someone on the bench.</p>
-        ${xi.map((s, i) => row(s, i, true)).join('')}
-        <div class="row" style="margin-top:10px">
+        ${MUI.lineup(g)}
+        <p class="dim lu-hint">${picked
+          ? 'Now tap whoever takes his place.'
+          : oop ? `Tap a shirt to swap him. ${oop} ${oop === 1 ? 'man is' : 'men are'} out of position.`
+          : 'Tap a shirt to swap him with someone on the bench.'}</p>
+        <div class="row">
           <button class="btn btn-ghost grow" data-act="mgrAuto">${ico('ok')} Pick the best eleven</button>
           <button class="btn btn-ghost grow" data-act="mgrFormation">${ico('tactics')} ${g.mgr.formation}</button>
         </div>
+      </div>
+      <div class="card"><h3>The eleven</h3>
+        ${xi.map((s, i) => row(s, i, true)).join('')}
       </div>
       <div class="card"><h3>Substitutes and reserves</h3>
         ${bench.length ? bench.map(s => row(s, 0, false)).join('')
@@ -213,6 +323,12 @@
           <button class="mk-f${(g.mgr.filter && g.mgr.filter.pos) === (p === 'All' ? undefined : p) ? ' on' : ''}"
             data-act="mgrFilter" data-arg="${p}">${p}</button>`).join('')}</div>
       </div>
+      ${(g.mgr.marketNews || []).length ? `<div class="card"><h3>${ico('trend')} The market this week</h3>
+        ${g.mgr.marketNews.slice(0, 4).map(n => `<div class="res-row">
+          <span class="res-b ${n.k === 'gone' ? 'res-L' : 'res-W'}">${n.k === 'gone' ? '→' : '+'}</span>
+          <span class="res-n wrap">${esc(n.t)}</span></div>`).join('')}
+        <p class="dim" style="margin:8px 0 0">Names come and go every week. If you want him, go now.</p>
+      </div>` : ''}
       <div class="card"><h3>${ico('transfer')} Available</h3>
         ${list.length ? list.map(s => `
           <div class="mk-row" data-act="mgrBid" data-arg="${s.id}">
