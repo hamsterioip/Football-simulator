@@ -918,6 +918,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .pg-flag-pole{fill:#e8edf5}
 .pg-flag-cloth{fill:#ff5a3c;stroke:rgba(0,0,0,.28);stroke-width:.5;transform-origin:1px -24px}
 .pg-flag-top{fill:#ffd94d}
+.pg-tbit{fill:#1c7a4a}
 
 /* props, shown only by the routine that needs them */
 .pg-sc-props > *{opacity:0}

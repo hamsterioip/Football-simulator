@@ -1027,12 +1027,11 @@
       $('match-action').innerHTML = `<div class="scn">
         <div class="scn-h"><div class="art">${ico(scn.art || 'ball')}</div><b>${esc(scn.title)}</b></div>
         <div class="scn-sub">${esc(scn.sub || '')}</div>
-        ${cel ? `<div class="goal-wrap cel-view">${global.Pitch.view({ aim: false })}</div>` : ''}
+        ${cel ? `<div class="goal-wrap cel-view">${global.Pitch.cornerView()}</div>` : ''}
         <div class="choices${scn.options.length >= 5 ? ' cols' : ''}">${scn.options.map((o, i) => `<button class="choice" data-ci="${i}">
           <div class="cb"><b>${esc(o.label)}</b><span>${esc(o.hint || '')}</span></div>
           ${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}</button>`).join('')}</div></div>`;
       const root = cel ? $('match-action').querySelector('.goal-view') : null;
-      if (root) global.Pitch.reset(root);
       $('match-action').querySelectorAll('[data-ci]').forEach(b => {
         b.onclick = () => onChoose(+b.dataset.ci, root);
       });
