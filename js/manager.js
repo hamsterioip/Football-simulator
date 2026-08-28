@@ -452,8 +452,8 @@
     const relegated = pos >= table.length - 1;
     const conf = g.mgr.board.confidence;
     const sacked = g.mgr.board.seasons <= 1
-      ? relegated && conf < 40
-      : conf <= 10 || (relegated && conf < 35);
+      ? relegated && conf < 45
+      : conf <= 12 || (relegated && conf < 60);
     if (sacked) g.mgr.sacked = true;
     const warned = !sacked && (conf <= 22 || relegated);
     if (warned) verdict += ' You keep the job. You will not get another year like it.';

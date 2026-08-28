@@ -434,8 +434,7 @@
       const leagues = D.LEAGUES.map(l => l.id);
       UI.modal({
         title: 'Take a job',
-        html: `<p class="muted">Pick a division, then a club. A big club expects the title;
-          a small one expects you to keep them up.</p>
+        html: `<p class="muted">A big club expects the title. A small one expects you to stay up.</p>
           <div class="list">${leagues.map(id => {
             const L = world.leagues.find(x => x.id === id) || State.league(id);
             const cap = Game._mgrCeiling || 99;

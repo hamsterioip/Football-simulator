@@ -364,14 +364,23 @@ table.tbl td.num,table.tbl th.num{text-align:center;width:30px}
   padding:18px 18px calc(18px + var(--safe-b))}
 .modal-back.on{display:flex}
 .modal{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  width:100%;max-width:520px;max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;
-  padding:20px;box-shadow:var(--shadow);
+  width:100%;max-width:520px;max-height:88vh;max-height:88dvh;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:var(--shadow);position:relative;
   animation:pop .2s ease}
+.modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;padding:20px 20px 6px}
 .modal h2{margin:0 0 6px;font-size:20px}
 .modal p{margin:0 0 14px;color:var(--muted);white-space:pre-line}
-.modal .modal-actions{display:flex;flex-direction:column;gap:8px;margin-top:6px;
-  position:sticky;bottom:-20px;padding:12px 0 4px;
-  background:linear-gradient(180deg,rgba(16,24,32,0),var(--card) 30%)}
+.modal .modal-actions{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;
+  padding:12px 20px calc(14px + var(--safe-b));background:var(--card);
+  border-top:1px solid var(--line)}
+/* there is more list below the fold — say so */
+.modal::after{content:'';position:absolute;left:1px;right:1px;height:44px;pointer-events:none;
+  opacity:0;transition:opacity .18s ease;
+  background:linear-gradient(180deg,rgba(16,24,32,0),var(--card));
+  bottom:0}
+.modal.has-more::after{opacity:1;bottom:var(--fade-b,64px)}
 
 /* ---------- toasts ---------- */
 .toasts{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;
@@ -2385,9 +2394,12 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.6';
+  const VERSION = '1.6.1';
   const BUILD = '28 August 2026';
   const CHANGELOG = [
+    { v: '1.6.1', when: '28 Aug', items: [
+      'Fixed: the bottom of any long list in a pop-up could not be tapped — the button row floated over it, so the last three clubs in every division were unreachable and a tap near them hit Back instead. Pop-ups now scroll properly, with the buttons in a footer underneath and a fade when there is more list below'
+    ] },
     { v: '1.6', when: '28 Aug', items: [
       'Manager Mode: take a club in any of ten divisions, pick the shape, pick the eleven, and answer to a board that has never kicked a ball',
       'A real transfer market — bid low and get laughed at, meet the asking price, or go over the odds. Sell your own to fund it, and watch the wage ceiling',
@@ -10593,8 +10605,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     const relegated = pos >= table.length - 1;
     const conf = g.mgr.board.confidence;
     const sacked = g.mgr.board.seasons <= 1
-      ? relegated && conf < 40
-      : conf <= 10 || (relegated && conf < 35);
+      ? relegated && conf < 45
+      : conf <= 12 || (relegated && conf < 60);
     if (sacked) g.mgr.sacked = true;
     const warned = !sacked && (conf <= 22 || relegated);
     if (warned) verdict += ' You keep the job. You will not get another year like it.';
@@ -11709,13 +11721,17 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       setTimeout(() => el.remove(), 2900);
     },
 
+    /* The content scrolls in its own pane and the buttons sit under it in a
+       real footer. They used to be sticky and float over the content, which
+       meant the bottom of any long list — the last three clubs in a division,
+       say — sat underneath a solid Back button and could not be tapped. */
     modal(opts) {
       const m = $('modal');
-      let html = '';
-      if (opts.title) html += `<h2>${opts.title}</h2>`;
-      if (opts.text) html += `<p>${esc(opts.text)}</p>`;
-      if (opts.html) html += opts.html;
-      html += '<div class="modal-actions">';
+      let body = '';
+      if (opts.title) body += `<h2>${opts.title}</h2>`;
+      if (opts.text) body += `<p>${esc(opts.text)}</p>`;
+      if (opts.html) body += opts.html;
+      let html = `<div class="modal-body">${body}</div><div class="modal-actions">`;
       (opts.actions || [{ label: 'Continue' }]).forEach((a, i) => {
         html += `<button class="btn ${a.cls || 'btn-primary'}" data-mi="${i}">${a.label}</button>`;
       });
@@ -11730,6 +11746,26 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       });
       if (opts.onRender) opts.onRender(m);
       $('modal-back').classList.add('on');
+      UI.modalScrollHint();
+    },
+
+    /* A list that runs past the fold gets a fade at the bottom, so it is
+       obvious there is more of it than the screen is showing. */
+    modalScrollHint() {
+      const m = $('modal'), body = m.querySelector('.modal-body');
+      if (!body) return;
+      const acts = m.querySelector('.modal-actions');
+      const mark = () => {
+        // the fade sits directly on top of the button row, whatever height it is
+        if (acts) m.style.setProperty('--fade-b', acts.offsetHeight + 'px');
+        const more = body.scrollHeight - body.clientHeight - body.scrollTop > 8;
+        m.classList.toggle('has-more', more);
+      };
+      body.onscroll = mark;
+      mark();
+      // crests and badges load after the first paint and change the height
+      requestAnimationFrame(mark);
+      setTimeout(mark, 120);
     },
     closeModal() { $('modal-back').classList.remove('on'); },
 
@@ -13298,8 +13334,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       const leagues = D.LEAGUES.map(l => l.id);
       UI.modal({
         title: 'Take a job',
-        html: `<p class="muted">Pick a division, then a club. A big club expects the title;
-          a small one expects you to keep them up.</p>
+        html: `<p class="muted">A big club expects the title. A small one expects you to stay up.</p>
           <div class="list">${leagues.map(id => {
             const L = world.leagues.find(x => x.id === id) || State.league(id);
             const cap = Game._mgrCeiling || 99;

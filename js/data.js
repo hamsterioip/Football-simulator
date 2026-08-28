@@ -1212,9 +1212,12 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.6';
+  const VERSION = '1.6.1';
   const BUILD = '28 August 2026';
   const CHANGELOG = [
+    { v: '1.6.1', when: '28 Aug', items: [
+      'Fixed: the bottom of any long list in a pop-up could not be tapped — the button row floated over it, so the last three clubs in every division were unreachable and a tap near them hit Back instead. Pop-ups now scroll properly, with the buttons in a footer underneath and a fade when there is more list below'
+    ] },
     { v: '1.6', when: '28 Aug', items: [
       'Manager Mode: take a club in any of ten divisions, pick the shape, pick the eleven, and answer to a board that has never kicked a ball',
       'A real transfer market — bid low and get laughed at, meet the asking price, or go over the odds. Sell your own to fund it, and watch the wage ceiling',
