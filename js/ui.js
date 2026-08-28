@@ -368,6 +368,8 @@
 
     render() {
       if (!State.game) return;
+      // manager mode borrows this screen and draws its own tabs into it
+      if (State.game.mode === 'manager' && global.MUI) return global.MUI.render();
       UI.renderHUD();
       UI.renderTabs();
       const c = $('content');

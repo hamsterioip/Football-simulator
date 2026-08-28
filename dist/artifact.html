@@ -702,6 +702,85 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   .ts-pos{flex-basis:20px}
 }
 
+/* ---------- manager mode ---------- */
+.btn-manager{border-color:rgba(90,168,255,.4);color:var(--blue)}
+.btn-manager:hover{background:rgba(90,168,255,.1)}
+.mgr-badge .crest{width:38px;height:38px}
+.hud-bars{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:9px}
+.hb-l{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:3px}
+.hb-l b{color:var(--txt);font-size:10.5px}
+.hb-t{height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
+.hb-t i{display:block;height:100%;border-radius:2px}
+
+.fixture-card{text-align:center}
+.fx-comp{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--green);font-weight:800}
+.fx-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:12px 0 8px}
+.fx-t{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:700}
+.fx-t .crest{width:44px;height:44px}
+.fx-v{font:900 15px 'Barlow Condensed',system-ui,sans-serif;color:var(--dim)}
+.fx-meta{font-size:11.5px;color:var(--dim)}
+.fx-meta .ic{width:12px;height:12px;vertical-align:-2px}
+
+.mgr-plan{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.plan-btn{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px;
+  text-align:left;font-family:inherit;color:var(--txt);cursor:pointer}
+.plan-btn span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.7px}
+.plan-btn b{font-size:14px}
+.mgr-lines{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.ml{background:rgba(255,255,255,.04);border-radius:8px;padding:7px 4px;text-align:center}
+.ml span{display:block;font-size:9px;letter-spacing:.8px;color:var(--dim);font-weight:800}
+.ml b{font-size:16px}
+
+.res-row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;
+  border-bottom:1px solid rgba(255,255,255,.05)}
+.res-row .crest{width:20px;height:20px}
+.res-b{flex:0 0 20px;height:20px;line-height:20px;text-align:center;border-radius:5px;
+  font-size:10px;font-weight:900;background:rgba(255,255,255,.08)}
+.res-W .res-b,.res-b.res-W{background:var(--green);color:#06210f}
+.res-L .res-b,.res-b.res-L{background:var(--red);color:#2a0a0e}
+.res-D .res-b{background:#7d8ba3;color:#0b1220}
+.res-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.sq-row,.mk-row{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:8px;
+  font-size:12.5px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
+.sq-row.in{background:rgba(42,230,126,.07)}
+.sq-row:hover,.mk-row:hover{background:rgba(255,255,255,.05)}
+.sq-pos{flex:0 0 30px;font-size:9.5px;font-weight:800;color:var(--muted);letter-spacing:.4px}
+.sq-sh{flex:0 0 18px;text-align:right;font-size:10.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.sq-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sq-n em{display:block;font-style:normal;font-size:10.5px;color:var(--dim)}
+.oop{font-size:9.5px;color:var(--gold)}
+.sq-meta{font-size:10px;color:var(--dim);white-space:nowrap}
+.sq-o{flex:0 0 24px;text-align:right;font-weight:800;color:var(--muted)}
+.sq-o.mid{color:var(--txt)}.sq-o.hi{color:var(--gold)}
+.mk-star{color:var(--gold);font-weight:800}
+.mk-ask{font-size:11.5px;font-weight:700;text-align:right;white-space:nowrap}
+.mk-ask em{display:block;font-style:normal;font-size:10px;color:var(--dim);font-weight:600}
+.mk-money{display:flex;justify-content:space-between;margin-bottom:9px}
+.mk-money span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.7px}
+.mk-money b{font-size:15px}
+.mk-money b.bad{color:var(--red)}
+.mk-filter{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
+.mk-filter::-webkit-scrollbar{display:none}
+.mk-f{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;
+  padding:5px 11px;font:700 11px inherit;font-family:inherit;color:var(--muted);cursor:pointer;white-space:nowrap}
+.mk-f.on{background:rgba(42,230,126,.15);border-color:var(--green);color:var(--green)}
+
+.tb-head,.tb-row{display:grid;grid-template-columns:20px 20px 1fr 22px 30px 26px;align-items:center;
+  gap:6px;font-size:12px;padding:5px 3px}
+.tb-head{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--dim);font-weight:800}
+.tb-row{border-bottom:1px solid rgba(255,255,255,.05)}
+.tb-row .crest{width:18px;height:18px}
+.tb-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-row.tgt{background:rgba(42,230,126,.05)}
+.tb-row.me{background:rgba(42,230,126,.14);border-radius:6px;font-weight:700}
+
+.board-conf{display:flex;align-items:center;gap:14px}
+.bc-num{font:900 40px/1 'Barlow Condensed',system-ui,sans-serif}
+.bc-num.good{color:var(--green)}.bc-num.warn{color:var(--gold)}.bc-num.bad{color:var(--red)}
+.bc-tx b{display:block;font-size:14px}
+.bc-tx span{font-size:12px;color:var(--dim)}
+
 /* ---------- heart of the team ---------- */
 .hud-title{font-size:10px;letter-spacing:.8px;text-transform:uppercase;font-weight:800;
   color:var(--gold);margin-top:2px;display:flex;align-items:center;gap:4px}
@@ -964,6 +1043,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     <p class="start-sub">Rob eight legends. Build one career. Play every moment that matters.</p>
     <div class="start-actions">
       <button class="btn btn-primary btn-lg btn-kickoff" id="btn-new">New Career</button>
+      <button class="btn btn-ghost btn-lg btn-manager" id="btn-manager">Manager Mode</button>
       <button class="btn btn-ghost btn-lg" id="btn-continue">Continue Career</button>
       <button class="btn btn-ghost" id="btn-how">How to Play</button>
     </div>
@@ -974,8 +1054,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       <span><svg class="ic"><use href="#i-transfer"/></svg> Transfers</span>
       <span><svg class="ic"><use href="#i-trophy"/></svg> Trophies</span>
       <span><svg class="ic"><use href="#i-nation"/></svg> International football</span>
-      <span class="feat-new"><svg class="ic"><use href="#i-squad"/></svg> Team sheets</span>
-      <span class="feat-new"><svg class="ic"><use href="#i-trophy"/></svg> Trophy lifts</span>
+      <span><svg class="ic"><use href="#i-squad"/></svg> Team sheets</span>
+      <span><svg class="ic"><use href="#i-trophy"/></svg> Trophy lifts</span>
+      <span class="feat-new"><svg class="ic"><use href="#i-manager"/></svg> Manager Mode</span>
     </div>
     <button class="start-ver" id="btn-ver" type="button">
       <span class="ver-dot"></span><span id="ver-text">v—</span>
@@ -2289,9 +2370,16 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.5';
-  const BUILD = '23 August 2026';
+  const VERSION = '1.6';
+  const BUILD = '28 August 2026';
   const CHANGELOG = [
+    { v: '1.6', when: '28 Aug', items: [
+      'Manager Mode: take a club in any of ten divisions, pick the shape, pick the eleven, and answer to a board that has never kicked a ball',
+      'A real transfer market — bid low and get laughed at, meet the asking price, or go over the odds. Sell your own to fund it, and watch the wage ceiling',
+      'Team talks before kick-off: keep it calm, light a fire, talk them through it, or say nothing at all',
+      'The board judge you on the table, not the last kick. Miss the target badly enough and you are gone — but you keep the world, and somebody smaller will always take your call',
+      'Overachieve and it costs you: the board raise the target to whatever you just managed'
+    ] },
     { v: '1.5', when: '23 Aug', items: [
       'Heart of the team: play every week, rate well and decide games and the side starts leaning on you — then the weeks you are missing actually cost them, and sometimes they run themselves into the ground for you instead',
       'Titles: twenty-two nicknames the timeline gives you off what you have actually done, from The Iceman to Cheat Code to Cult Hero. Wear whichever one you like under your name'
@@ -4292,7 +4380,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         const raw = localStorage.getItem(D.CONFIG.SAVE_KEY);
         if (!raw) return null;
         const g = JSON.parse(raw);
-        if (!g || !g.player) return null;
+        // a manager save has no player of its own, only a club and a squad
+        if (!g || (!g.player && g.mode !== 'manager')) return null;
         State.game = g;
         return g;
       } catch (e) { return null; }
@@ -9870,6 +9959,826 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
 </script>
 <script>
+/* js/manager.js */
+/* ==========================================================================
+   manager.js — Manager Mode.
+
+   The other side of the touchline. You take a club, you pick the eleven, you
+   buy and sell, and a board that has never kicked a ball decides whether you
+   are doing well enough to keep the job.
+
+   It shares the world, the clubs, the crests and the fixture maths with the
+   career game, but it keeps its own state on g.mgr and draws its own screens,
+   so neither mode has to know about the other.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+
+  /* ---------------- shapes ---------------- */
+
+  const FORMATIONS = {
+    '4-3-3':   { name: '4-3-3',   line: ['GK', 'RB', 'CB', 'CB', 'LB', 'CDM', 'CM', 'CAM', 'RW', 'ST', 'LW'],
+                 hint: 'Width and a front three. Attacking.' },
+    '4-4-2':   { name: '4-4-2',   line: ['GK', 'RB', 'CB', 'CB', 'LB', 'RW', 'CM', 'CM', 'LW', 'ST', 'ST'],
+                 hint: 'Two banks of four, two up top. Honest.' },
+    '4-2-3-1': { name: '4-2-3-1', line: ['GK', 'RB', 'CB', 'CB', 'LB', 'CDM', 'CDM', 'CAM', 'RW', 'LW', 'ST'],
+                 hint: 'Solid base, one man in the hole. Modern.' },
+    '3-5-2':   { name: '3-5-2',   line: ['GK', 'CB', 'CB', 'CB', 'RB', 'CDM', 'CM', 'CM', 'LB', 'ST', 'ST'],
+                 hint: 'Three at the back, wing-backs flying. Bold.' },
+    '5-3-2':   { name: '5-3-2',   line: ['GK', 'RB', 'CB', 'CB', 'CB', 'LB', 'CDM', 'CM', 'CM', 'ST', 'ST'],
+                 hint: 'Five at the back. For when you need a point.' }
+  };
+
+  const STYLES = {
+    balanced: { name: 'Balanced', hint: 'No surprises either way.', att: 0, def: 0, risk: 0 },
+    attack:   { name: 'Attacking', hint: 'More goals at both ends.', att: 3.5, def: -2.5, risk: 1 },
+    press:    { name: 'High press', hint: 'Suffocate them, and tire.', att: 2.5, def: 1.5, risk: 2 },
+    counter:  { name: 'Counter', hint: 'Sit in, hit them fast.', att: 1, def: 2, risk: -1 },
+    park:     { name: 'Shut up shop', hint: 'A point is a good result.', att: -4, def: 5, risk: -2 }
+  };
+
+  const TALKS = [
+    { id: 'calm',   label: 'Keep it calm', hint: 'Trust them. Steady hands.', boost: 1.2, risk: 0 },
+    { id: 'fire',   label: 'Light a fire', hint: 'Loud. It works, or it backfires.', boost: 3.2, risk: 2.4 },
+    { id: 'tactic', label: 'Talk them through it', hint: 'Whiteboard. Small, certain edge.', boost: 1.8, risk: .4 },
+    { id: 'trust',  label: 'Say nothing', hint: 'They are professionals. Let them play.', boost: .6, risk: -.6 }
+  ];
+
+  /* ---------------- creating a job ---------------- */
+
+  function squadFor(club, size) {
+    const U = global.U, D = global.DATA, Engine = global.Engine;
+    const want = size || 22;
+    // the career game only needs a matchday squad; a manager needs a bench he
+    // can actually rotate, so top it up with fringe players in the positions
+    // the first eighteen are thinnest in
+    const squad = Engine.Squad.generate(club);
+    const seen = new Set(squad.map(s => s.name));
+    for (let guard = 0; squad.length < want && guard < 8; guard++) {
+      Engine.Squad.generate(club).forEach(s => {
+        if (squad.length >= want || seen.has(s.name)) return;
+        const cover = squad.filter(x => x.pos === s.pos).length;
+        if (cover >= 3) return;                    // already deep enough there
+        s.ovr = Math.round(U.clamp(s.ovr - U.int(2, 6), 40, 96));
+        seen.add(s.name);
+        squad.push(s);
+      });
+    }
+    squad.length = Math.min(squad.length, want);
+    squad.forEach((s, i) => {
+      s.wage = wageFor(s);
+      s.value = valueFor(s);
+      s.form = U.int(45, 70);
+      s.fit = U.int(88, 100);
+      s.apps = 0; s.goals = 0; s.assists = 0; s.rating = 0; s.ratingSum = 0;
+      s.shirt = s.shirt || i + 1;
+    });
+    return squad;
+  }
+
+  /* The top of the market is not a curve, it is a cliff: the gap between an 84
+     and a 94 in money is far wider than the ten points suggests, which is what
+     stops you buying a superstar in your first window at a mid-table club. */
+  function elite(ovr, rate) { return ovr >= 84 ? Math.pow(rate, ovr - 83) : 1; }
+
+  function valueFor(s) {
+    const base = Math.pow(Math.max(s.ovr - 42, 2), 2.9) * 260;
+    const age = s.age <= 23 ? 1.45 : s.age <= 27 ? 1.15 : s.age <= 30 ? 0.85 : s.age <= 33 ? 0.45 : 0.2;
+    return Math.max(120000, Math.round(base * elite(s.ovr, 1.18) * age / 50000) * 50000);
+  }
+  function wageFor(s) {
+    return Math.max(1200, Math.round(
+      Math.pow(Math.max(s.ovr - 40, 2), 2.1) * 3.4 * elite(s.ovr, 1.12) / 100) * 100);
+  }
+
+  function boardTarget(club, league) {
+    const rivals = league.clubs.map(id => global.State.club(id)).sort((a, b) => b.rating - a.rating);
+    const rank = rivals.findIndex(c => c.id === club.id) + 1;
+    const n = rivals.length;
+    if (rank <= 2) return { pos: 1, text: 'Win the league. Nothing else will do.' };
+    if (rank <= 4) return { pos: 4, text: 'Finish in the top four.' };
+    if (rank <= 8) return { pos: Math.max(6, rank - 1), text: 'Finish in the top half and be interesting.' };
+    return { pos: Math.max(3, n - 3), text: 'Stay up. That is the job.' };
+  }
+
+  function start(g, clubId) {
+    const U = global.U, State = global.State, Engine = global.Engine;
+    const club = State.club(clubId);
+    const league = State.league(club.league);
+    const target = boardTarget(club, league);
+
+    g.mode = 'manager';
+    g.mgr = {
+      club: clubId,
+      formation: '4-3-3',
+      style: 'balanced',
+      xi: [],
+      budget: Math.round(Math.pow(Math.max(club.rating - 50, 3), 2.6) * 9000 / 500000) * 500000,
+      wageBudget: Math.round(Math.pow(Math.max(club.rating - 45, 4), 2.2) * 62 / 1000) * 1000,
+      board: { target, confidence: 62, seasons: 0 },
+      window: 'summer',
+      shortlist: [],
+      log: [],
+      results: [],
+      trophies: [],
+      sacked: false
+    };
+    g.squad = squadFor(club, 22);
+    // the ceiling has to sit above the bill you inherited, or you start the job
+    // already over budget and can never sign anybody
+    g.mgr.wageBudget = Math.max(g.mgr.wageBudget,
+      Math.round(squadWages(g) * 1.3 / 1000) * 1000);
+    g.mgr.xi = autoPick(g).map(s => s.id);
+    buildSeason(g);
+    State.log(`You are the manager of ${club.name}. ${target.text}`, 'good');
+    return g;
+  }
+
+  /* ---------------- the season ---------------- */
+
+  function buildSeason(g) {
+    const State = global.State, Engine = global.Engine, U = global.U;
+    const club = State.club(g.mgr.club);
+    const league = State.league(club.league);
+    g.tables = g.tables || {};
+    g.tables[league.id] = {};
+    league.clubs.forEach(id => {
+      g.tables[league.id][id] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+    });
+    const single = Engine.Season.roundRobin(league.clubs);
+    const rounds = single.concat(single.map(r => r.map(pair => [pair[1], pair[0]])));
+    g.mgr.rounds = rounds;
+    g.mgr.round = 0;
+    g.mgr.results = [];
+    g.squad.forEach(s => { s.apps = 0; s.goals = 0; s.assists = 0; s.ratingSum = 0; s.form = U.int(45, 70); });
+  }
+
+  function nextFixture(g) {
+    const round = g.mgr.rounds[g.mgr.round];
+    if (!round) return null;
+    const me = g.mgr.club;
+    const pair = round.find(p => p[0] === me || p[1] === me);
+    if (!pair) return null;
+    return { home: pair[0] === me, oppId: pair[0] === me ? pair[1] : pair[0], round: g.mgr.round };
+  }
+
+  /* the eleven you have picked, and what it is worth */
+  function xiPlayers(g) {
+    return (g.mgr.xi || []).map(id => g.squad.find(s => s.id === id)).filter(Boolean);
+  }
+  function benchPlayers(g) {
+    const inXI = {};
+    (g.mgr.xi || []).forEach(id => inXI[id] = true);
+    return g.squad.filter(s => !inXI[s.id]);
+  }
+
+  /* pick the best available player for each slot in the formation */
+  function autoPick(g) {
+    const shape = FORMATIONS[g.mgr.formation].line.slice();
+    const pool = g.squad.slice().sort((a, b) => b.ovr - a.ovr);
+    const used = {}, out = [];
+    shape.forEach(pos => {
+      let best = pool.find(s => !used[s.id] && s.pos === pos);
+      if (!best) best = pool.find(s => !used[s.id] && sameGroup(s.pos, pos));
+      if (!best) best = pool.find(s => !used[s.id]);
+      if (best) { used[best.id] = true; out.push(best); }
+    });
+    return out;
+  }
+  function sameGroup(a, b) {
+    const D = global.DATA;
+    const ga = a === 'GK' ? 'GK' : (D.POSITIONS[a] || {}).group;
+    const gb = b === 'GK' ? 'GK' : (D.POSITIONS[b] || {}).group;
+    return ga === gb;
+  }
+
+  /* how good the eleven actually is, allowing for players out of position */
+  function teamRating(g) {
+    const U = global.U;
+    const xi = xiPlayers(g);
+    if (!xi.length) return 50;
+    const shape = FORMATIONS[g.mgr.formation].line;
+    let total = 0;
+    xi.forEach((s, i) => {
+      const want = shape[i] || s.pos;
+      const fit = s.pos === want ? 1 : sameGroup(s.pos, want) ? 0.94 : 0.84;
+      const cond = 0.9 + (s.fit / 100) * 0.1;
+      const form = 0.94 + (s.form / 100) * 0.12;
+      total += s.ovr * fit * cond * form;
+    });
+    return U.round(total / xi.length, 1);
+  }
+
+  function lines(g) {
+    const xi = xiPlayers(g), shape = FORMATIONS[g.mgr.formation].line;
+    const D = global.DATA, out = { GK: [], DEF: [], MID: [], ATT: [] };
+    xi.forEach((s, i) => {
+      const want = shape[i] || s.pos;
+      const grp = want === 'GK' ? 'GK' : (D.POSITIONS[want] || {}).group;
+      (out[grp] || out.MID).push(s.ovr);
+    });
+    const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : 0;
+    return { gk: avg(out.GK), def: avg(out.DEF), mid: avg(out.MID), att: avg(out.ATT) };
+  }
+
+  /* ---------------- matchday ---------------- */
+
+  function playRound(g, talk) {
+    const U = global.U, State = global.State, Engine = global.Engine;
+    const fix = nextFixture(g);
+    if (!fix) return null;
+    const me = State.club(g.mgr.club), opp = State.club(fix.oppId);
+    const style = STYLES[g.mgr.style];
+    const t = TALKS.find(x => x.id === talk) || TALKS[0];
+
+    // a fired-up dressing room can also over-run itself
+    const talkSwing = t.boost - (t.risk ? U.rnd(0, t.risk) : 0);
+    const mine = teamRating(g) + (fix.home ? 2.5 : 0) + style.att * 0.35 + talkSwing;
+    const theirs = opp.rating + (fix.home ? 0 : 2.5) - style.def * 0.3;
+
+    const diff = mine - theirs;
+    const la = U.clamp(1.35 + diff * 0.052 + style.att * 0.05, 0.2, 4.6);
+    const lb = U.clamp(1.35 - diff * 0.052 - style.def * 0.05, 0.15, 4.6);
+    const gf = U.poisson(la), ga = U.poisson(lb);
+
+    // who scored them
+    const xi = xiPlayers(g);
+    const scorers = [];
+    for (let i = 0; i < gf; i++) {
+      const weights = xi.map(s => {
+        const grp = s.pos === 'GK' ? 0.001 : (global.DATA.POSITIONS[s.pos] || {}).attack || 0.1;
+        return [s, grp * (s.ovr / 70)];
+      });
+      const who = U.weighted(weights);
+      if (who) { who.goals++; scorers.push(who); }
+    }
+    xi.forEach(s => {
+      s.apps++;
+      const r = U.clamp(6.4 + (gf - ga) * 0.28 + U.rnd(-0.8, 0.9) + (s.ovr - teamRating(g)) * 0.03, 3.5, 10);
+      s.ratingSum += r;
+      s.rating = U.round(s.ratingSum / s.apps, 2);
+      s.form = U.clamp(s.form * 0.75 + (r - 6.4) * 26 + 14, 5, 100);
+      s.fit = U.clamp(s.fit - U.rnd(8, 18) + 10, 25, 100);
+    });
+    benchPlayers(g).forEach(s => { s.fit = U.clamp(s.fit + U.rnd(6, 14), 25, 100); });
+
+    // the rest of the division plays too
+    const league = State.league(me.league);
+    const round = g.mgr.rounds[g.mgr.round] || [];
+    round.forEach(pair => {
+      const [A, B] = pair;
+      if (A === g.mgr.club || B === g.mgr.club) {
+        Engine.Season.applyTable(g.tables[league.id], fix.home ? g.mgr.club : fix.oppId,
+          fix.home ? fix.oppId : g.mgr.club, fix.home ? gf : ga, fix.home ? ga : gf);
+        return;
+      }
+      const ca = State.club(A), cb = State.club(B);
+      const d = (ca.rating + 2.5) - cb.rating;
+      const x = U.poisson(U.clamp(1.35 + d * 0.05, 0.2, 4.4));
+      const y = U.poisson(U.clamp(1.35 - d * 0.05, 0.2, 4.4));
+      Engine.Season.applyTable(g.tables[league.id], A, B, x, y);
+    });
+
+    const result = gf > ga ? 'W' : gf === ga ? 'D' : 'L';
+    const entry = { round: g.mgr.round, oppId: fix.oppId, home: fix.home, gf, ga, result,
+                    scorers: scorers.map(s => s.name), talk: t.id };
+    g.mgr.results.push(entry);
+    g.mgr.round++;
+
+    // The board are watching, but they judge you on the table rather than on
+    // the last kick: confidence drifts toward what your position deserves, with
+    // a small nudge for the result so a win still feels like something. A bad
+    // month costs you; it does not end you.
+    const where = position(g);
+    const deserved = U.clamp(80 - (where - g.mgr.board.target.pos) * 6.5, 14, 96);
+    const kick = result === 'W' ? U.rnd(1.5, 3) : result === 'D' ? U.rnd(-0.5, 0.8) : -U.rnd(1.5, 3);
+    g.mgr.board.confidence = U.clamp(
+      g.mgr.board.confidence + (deserved - g.mgr.board.confidence) * 0.17 + kick, 0, 100);
+
+    me.form = (me.form || []).concat(result).slice(-5);
+    State.news(`${fix.home ? me.name : opp.name} ${fix.home ? gf : ga}-${fix.home ? ga : gf} ${fix.home ? opp.name : me.name}`,
+      result === 'W' ? 'good' : result === 'L' ? 'bad' : 'info', null, 'whistle');
+    return entry;
+  }
+
+  function position(g) {
+    const State = global.State;
+    const club = State.club(g.mgr.club);
+    const table = global.Engine.Season.standings(g, club.league);
+    return table.findIndex(r => r.id === club.id) + 1;
+  }
+
+  function seasonOver(g) { return g.mgr.round >= (g.mgr.rounds || []).length; }
+
+  /* ---------------- the market ---------------- */
+
+  /* Everyone you could realistically sign: squad players from other clubs in
+     the world, priced off what they are worth and who wants them. */
+  function market(g, filter) {
+    const State = global.State, U = global.U;
+    if (!g.mgr.marketCache || g.mgr.marketSeason !== g.world.year) {
+      const me = State.club(g.mgr.club);
+      const pool = [];
+      const clubs = Object.values(g.world.clubs).filter(c => c.id !== me.id);
+      U.shuffle(clubs).slice(0, 26).forEach(c => {
+        // whoever they happen to be willing to listen on, not simply their best
+        U.shuffle(global.Engine.Squad.generate(c)).slice(0, U.int(2, 4)).forEach(s => {
+          s.value = valueFor(s);
+          s.wage = wageFor(s);
+          s.fromClub = c.name;
+          s.fromId = c.id;
+          s.ask = Math.round(s.value * U.rnd(1.05, 1.7) / 50000) * 50000;
+          // nobody wants to sell the best player they have, and they price him
+          // like it — you pay a premium for taking somebody's talisman
+          if (s.ovr >= c.rating + 4) {
+            s.keyman = true;
+            s.ask = Math.round(s.ask * 1.55 / 50000) * 50000;
+          }
+          pool.push(s);
+        });
+      });
+      // a handful of free agents, cheap and usually old. Built from scratch
+      // rather than lifted out of a squad, so nobody real turns up unemployed
+      // at an age they have never been.
+      const shapes = Object.keys(global.DATA.POSITIONS);
+      for (let i = 0; i < 6; i++) {
+        const who = global.Names.person(me.country);
+        const s = {
+          id: U.id(), name: who.name, nation: who.nation,
+          pos: U.pick(shapes), age: U.int(30, 36),
+          ovr: U.clamp(Math.round(me.rating + U.gauss(-2, 5)), 55, 86),
+          shirt: 0, goals: 0, assists: 0, apps: 0, rel: 50
+        };
+        s.value = valueFor(s); s.wage = wageFor(s);
+        s.fromClub = 'Free agent'; s.fromId = null; s.ask = 0; s.free = true;
+        pool.push(s);
+      }
+      g.mgr.marketCache = pool;
+      g.mgr.marketSeason = g.world.year;
+    }
+    let list = g.mgr.marketCache.filter(s => !s.signed);
+    if (filter && filter.pos) list = list.filter(s => s.pos === filter.pos);
+    if (filter && filter.max) list = list.filter(s => s.ask <= filter.max);
+    if (filter && filter.afford) {
+      const room = g.mgr.wageBudget - squadWages(g);
+      list = list.filter(s => s.ask <= g.mgr.budget && s.wage <= room);
+    }
+    return list.sort((a, b) => b.ovr - a.ovr);
+  }
+
+  /* Offer a fee. Selling clubs say no to lowballs and yes to silly money. */
+  function bid(g, player, fee) {
+    const U = global.U, State = global.State;
+    if (fee > g.mgr.budget) return { ok: false, why: 'You do not have that kind of money.' };
+    const wageRoom = g.mgr.wageBudget - squadWages(g);
+    if (player.wage > wageRoom) return { ok: false, why: `You cannot fit ${U.cash(player.wage)}/week into the wage bill.` };
+
+    const ratio = player.free ? 2 : fee / Math.max(player.ask, 1);
+    const chance = player.free ? 0.9 : U.clamp((ratio - 0.72) * 1.9, 0.02, 0.96);
+    if (!U.chance(chance)) {
+      return { ok: false, why: ratio < 0.85
+        ? `${player.fromClub} laughed at it. Nowhere near.`
+        : `${player.fromClub} have said no. Close, but no.` };
+    }
+    g.mgr.budget -= fee;
+    player.signed = true;
+    const joined = Object.assign({}, player, { apps: 0, goals: 0, assists: 0, ratingSum: 0,
+      rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g) });
+    delete joined.fromClub; delete joined.fromId; delete joined.ask; delete joined.free;
+    g.squad.push(joined);
+    State.news(`${State.club(g.mgr.club).name} sign ${player.name} for ${U.cash(fee)}`, 'good', null, 'transfer');
+    g.mgr.log.unshift({ t: `Signed ${player.name} (${player.pos} ${player.ovr}) for ${U.cash(fee)}`, k: 'in' });
+    g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + (player.ovr > teamRating(g) ? 3 : 0.5), 0, 100);
+    return { ok: true, player: joined };
+  }
+
+  function freeShirt(g) {
+    const taken = {};
+    g.squad.forEach(s => taken[s.shirt] = true);
+    for (let n = 2; n < 60; n++) if (!taken[n]) return n;
+    return 60;
+  }
+
+  /* Sell one of yours. Offers come in a little under value. */
+  function sell(g, id) {
+    const U = global.U, State = global.State;
+    const idx = g.squad.findIndex(s => s.id === id);
+    if (idx < 0) return null;
+    const s = g.squad[idx];
+    if (g.squad.length <= 14) return { ok: false, why: 'You cannot go below fourteen players.' };
+    const fee = Math.round(s.value * U.rnd(0.75, 1.15) / 50000) * 50000;
+    g.squad.splice(idx, 1);
+    g.mgr.budget += fee;
+    g.mgr.xi = (g.mgr.xi || []).filter(x => x !== id);
+    if (g.mgr.xi.length < 11) g.mgr.xi = autoPick(g).map(x => x.id);
+    State.news(`${s.name} leaves ${State.club(g.mgr.club).name} for ${U.cash(fee)}`, 'info', null, 'transfer');
+    g.mgr.log.unshift({ t: `Sold ${s.name} (${s.pos} ${s.ovr}) for ${U.cash(fee)}`, k: 'out' });
+    return { ok: true, fee };
+  }
+
+  function squadWages(g) {
+    return g.squad.reduce((a, s) => a + (s.wage || 0), 0);
+  }
+
+  /* ---------------- the board ---------------- */
+
+  function seasonReview(g) {
+    const U = global.U, State = global.State;
+    const club = State.club(g.mgr.club);
+    const pos = position(g);
+    const target = g.mgr.board.target;
+    const met = pos <= target.pos;
+    const table = global.Engine.Season.standings(g, club.league);
+    const champion = pos === 1;
+
+    let verdict, swing;
+    if (champion) { verdict = 'Champions. Whatever you want, ask for it.'; swing = 30; }
+    else if (met) { verdict = 'Target met. The board are pleased.'; swing = 14; }
+    else if (pos <= target.pos + 2) { verdict = 'Short of the target, but not by much.'; swing = -8; }
+    else { verdict = 'Nowhere near what was asked of you.'; swing = -26; }
+
+    g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + swing, 0, 100);
+    g.mgr.board.seasons++;
+    g.mgr.board.finishes = (g.mgr.board.finishes || []).concat(pos);
+    // a club that keeps finishing above itself becomes a bigger club: better
+    // players start answering the phone, and the board start expecting more
+    const over = target.pos - pos;
+    club.drift = U.clamp((club.drift || 0) + U.clamp(over * 0.45, -2, 2), -6, 8);
+    if (champion) g.mgr.trophies.push({ name: State.league(club.league).name + ' Title', year: g.world.year + 1 });
+
+    // Nobody is sacked after one year unless it was a disaster and the board
+    // have stopped defending you. After that, the confidence is the job — and
+    // going down in the bottom two ends it well before it reaches zero.
+    const relegated = pos >= table.length - 1;
+    const conf = g.mgr.board.confidence;
+    const sacked = g.mgr.board.seasons <= 1
+      ? relegated && conf < 40
+      : conf <= 10 || (relegated && conf < 35);
+    if (sacked) g.mgr.sacked = true;
+    const warned = !sacked && (conf <= 22 || relegated);
+    if (warned) verdict += ' You keep the job. You will not get another year like it.';
+
+    // next year's money follows where you finished
+    const reward = champion ? 1.6 : met ? 1.25 : pos <= target.pos + 2 ? 0.95 : 0.7;
+    g.mgr.budget = Math.round(g.mgr.budget * 0.4 + Math.pow(Math.max(club.rating - 50, 3), 2.6) * 9000 * reward);
+    g.mgr.budget = Math.round(g.mgr.budget / 500000) * 500000;
+    // wages follow the same money, but never below what you are already paying
+    g.mgr.wageBudget = Math.max(
+      Math.round(Math.pow(Math.max(club.rating - 45, 4), 2.2) * 62 * reward / 1000) * 1000,
+      Math.round(squadWages(g) * 1.15 / 1000) * 1000);
+
+    return { pos, met, champion, verdict, sacked, warned, table, confidence: Math.round(g.mgr.board.confidence) };
+  }
+
+  function nextSeason(g) {
+    const U = global.U, State = global.State;
+    g.world.year++;
+    g.squad.forEach(s => {
+      s.age++;
+      const peak = s.age <= 24 ? U.int(1, 3) : s.age <= 29 ? U.int(0, 1) : s.age <= 32 ? -U.int(0, 2) : -U.int(1, 4);
+      s.ovr = U.clamp(s.ovr + peak, 45, 96);
+      s.value = valueFor(s); s.wage = wageFor(s);
+      s.fit = 100;
+    });
+    g.squad = g.squad.filter(s => s.age <= 37);
+    Object.values(g.world.clubs).forEach(c => {
+      c.rating = U.clamp(Math.round(c.baseRating + (c.drift || 0) + U.gauss(0, 2)), 55, 93);
+      c.form = [];
+    });
+    const club = State.club(g.mgr.club);
+    // A board remembers. Beat what they asked for and that finish is the new
+    // floor — nobody gets to keep being praised for the same season twice.
+    const base = boardTarget(club, State.league(club.league));
+    const fin = (g.mgr.board.finishes || []).slice(-2);
+    let want = base.pos;
+    if (fin.length) {
+      const avg = Math.round(fin.reduce((a, b) => a + b, 0) / fin.length);
+      want = U.clamp(Math.min(base.pos, avg + (fin.length > 1 ? 0 : 1)), 1, base.pos);
+    }
+    g.mgr.board.target = want === base.pos ? base : {
+      pos: want,
+      text: want === 1 ? 'You have made them believe they can win it. So win it.'
+        : `You raised the bar yourself. Finish in the top ${want}.`
+    };
+    g.mgr.marketCache = null;
+    g.mgr.xi = autoPick(g).map(s => s.id);
+    buildSeason(g);
+  }
+
+  global.Manager = {
+    FORMATIONS, STYLES, TALKS,
+    start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
+    teamRating, lines, playRound, position, seasonOver,
+    market, bid, sell, squadWages, valueFor, wageFor,
+    seasonReview, nextSeason, squadFor
+  };
+})(window);
+
+</script>
+<script>
+/* js/manager-ui.js */
+/* ==========================================================================
+   manager-ui.js — the screens for Manager Mode.
+
+   Reuses the game screen's header, content and tab bar, so the mode gets the
+   same chrome as the career game without a second set of markup.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+
+  const U = () => global.U;
+  const State = () => global.State;
+  const M = () => global.Manager;
+  const esc = t => global.U.esc(t);
+  const ico = (n, c) => global.Icons.svg(n, c);
+  const crest = (n, c) => global.Crest.svg(n, c);
+
+  const TABS = [
+    { id: 'mhome', icon: 'career', label: 'Match' },
+    { id: 'msquad', icon: 'squad', label: 'Squad' },
+    { id: 'mmarket', icon: 'transfer', label: 'Market' },
+    { id: 'mtable', icon: 'table', label: 'Table' },
+    { id: 'moffice', icon: 'contract', label: 'Office' }
+  ];
+
+  const MUI = {
+    tab: 'mhome',
+
+    render() {
+      const g = State().game;
+      if (!g || !g.mgr) return;
+      MUI.renderHUD();
+      MUI.renderTabs();
+      const c = $('content');
+      c.innerHTML = MUI['tab_' + MUI.tab] ? MUI['tab_' + MUI.tab]() : '';
+      c.scrollTop = 0;
+      global.UI.bindActions(c);
+    },
+
+    renderHUD() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const conf = Math.round(g.mgr.board.confidence);
+      const pos = M().position(g);
+      $('hud').innerHTML = `
+        <div class="hud-top">
+          <div class="hud-club mgr-badge">${crest(club.name, 'crest-md')}</div>
+          <div class="hud-id">
+            <div class="hud-name">${esc(club.name)}</div>
+            <div class="hud-meta">${ico('manager')} Manager · ${esc(State().league(club.league).name)}</div>
+          </div>
+          <div class="hud-ovr"><b>${M().teamRating(g)}</b><span>TEAM</span></div>
+        </div>
+        <div class="hud-bars">
+          ${MUI.bar('Board', conf, conf >= 60 ? 'var(--green)' : conf >= 30 ? 'var(--gold)' : 'var(--red)')}
+          ${MUI.bar('Position', Math.max(0, 100 - (pos - 1) * 9), 'var(--blue)', pos ? U().ordinal(pos) : '—')}
+          ${MUI.bar('Budget', Math.min(100, g.mgr.budget / 1000000), 'var(--purple)', U().cash(g.mgr.budget))}
+        </div>`;
+    },
+
+    bar(label, v, colour, text) {
+      const val = global.U.clamp(v, 0, 100);
+      return `<div class="hb"><div class="hb-l"><span>${label}</span><b>${text != null ? esc(text) : Math.round(val)}</b></div>
+        <div class="hb-t"><i style="width:${val}%;background:${colour}"></i></div></div>`;
+    },
+
+    renderTabs() {
+      $('tabbar').innerHTML = TABS.map(t =>
+        `<button class="${MUI.tab === t.id ? 'on' : ''}" data-mtab="${t.id}">${ico(t.icon)}${t.label}</button>`).join('');
+      $('tabbar').querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => {
+        MUI.tab = b.dataset.mtab; MUI.render();
+      });
+    },
+
+    /* ---------------- matchday ---------------- */
+    tab_mhome() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const fix = M().nextFixture(g);
+      const l = M().lines(g);
+      let html = '';
+
+      if (g.mgr.sacked) {
+        const won = (g.mgr.trophies || []).length;
+        return `<div class="card center"><h3>${ico('exit')} You were sacked</h3>
+          <p class="dim">${esc(club.name)} have relieved you of your duties after
+            ${g.mgr.board.seasons} season${g.mgr.board.seasons === 1 ? '' : 's'}${won ? ` and ${won} trophy${won === 1 ? '' : 's'}` : ''}.
+            It happens to everyone eventually. Somebody else will be in touch.</p>
+          <div class="row" style="margin-top:12px">
+            <button class="btn btn-primary grow" data-act="mgrRehire">${ico('manager')} Take another job</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn btn-ghost grow" data-act="mgrQuit">Back to the menu</button>
+          </div>
+        </div>` + MUI.cvCard(g);
+      }
+
+      if (!fix) {
+        html += `<div class="card center"><h3>${ico('trophy')} Season over</h3>
+          <p class="dim" style="margin:0 0 12px">Thirty-something games, and the table does not lie.</p>
+          <button class="btn btn-primary btn-lg" data-act="mgrReview">See the board</button></div>`;
+        return html + MUI.formCard(g);
+      }
+
+      const opp = State().club(fix.oppId);
+      html += `<div class="card fixture-card">
+        <div class="fx-comp">${esc(State().league(club.league).name)} · Match ${g.mgr.round + 1} of ${g.mgr.rounds.length}</div>
+        <div class="fx-teams">
+          <div class="fx-t">${crest(fix.home ? club.name : opp.name, 'crest-lg')}
+            <span>${esc(fix.home ? club.name : opp.name)}</span></div>
+          <div class="fx-v">V</div>
+          <div class="fx-t">${crest(fix.home ? opp.name : club.name, 'crest-lg')}
+            <span>${esc(fix.home ? opp.name : club.name)}</span></div>
+        </div>
+        <div class="fx-meta">${fix.home ? ico('home') + ' Home' : ico('away') + ' Away'} ·
+          opposition rated ${opp.rating}</div>
+      </div>`;
+
+      html += `<div class="card"><h3>${ico('tactics')} Your plan</h3>
+        <div class="mgr-plan">
+          <button class="plan-btn" data-act="mgrFormation">
+            <span class="dim">Formation</span><b>${g.mgr.formation}</b></button>
+          <button class="plan-btn" data-act="mgrStyle">
+            <span class="dim">Approach</span><b>${esc(M().STYLES[g.mgr.style].name)}</b></button>
+        </div>
+        <div class="mgr-lines">
+          ${['gk', 'def', 'mid', 'att'].map(k => `<div class="ml"><span>${k.toUpperCase()}</span><b>${l[k] || '—'}</b></div>`).join('')}
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-primary grow" data-act="mgrPlay">${ico('play')} Team talk & kick off</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn btn-ghost grow" data-act="mgrSim">${ico('sim')} Sim to the end of the season</button>
+        </div>
+      </div>`;
+
+      return html + MUI.formCard(g);
+    },
+
+    /* Every job you have had, which is the only real record a manager keeps. */
+    cvCard(g) {
+      const past = (g.mgrHistory || []);
+      if (!past.length) return '';
+      return `<div class="card"><h3>${ico('legacy')} Your record</h3>
+        ${past.map(j => `<div class="res-row">
+          ${crest(j.club, 'crest-sm')}
+          <span class="res-n">${esc(j.club)}</span>
+          <span class="sq-meta">${j.seasons} yr${j.seasons === 1 ? '' : 's'}${
+            j.trophies ? ' · ' + j.trophies + ' won' : ''}${
+            j.finishes && j.finishes.length ? ' · best ' + U().ordinal(Math.min.apply(null, j.finishes)) : ''}</span>
+          <span class="res-b ${j.sacked ? 'res-L' : 'res-D'}">${j.sacked ? 'sacked' : 'left'}</span>
+        </div>`).join('')}</div>`;
+    },
+
+    formCard(g) {
+      const res = (g.mgr.results || []).slice(-6).reverse();
+      if (!res.length) return '';
+      return `<div class="card"><h3>${ico('table')} Recent results</h3>
+        ${res.map(r => {
+          const opp = State().club(r.oppId);
+          return `<div class="res-row res-${r.result}">
+            <span class="res-b">${r.result}</span>
+            ${crest(opp.name, 'crest-sm')}
+            <span class="res-n">${r.home ? 'v' : 'at'} ${esc(opp.name)}</span>
+            <b>${r.gf}–${r.ga}</b>
+          </div>`;
+        }).join('')}</div>`;
+    },
+
+    /* ---------------- squad ---------------- */
+    tab_msquad() {
+      const g = State().game;
+      const shape = M().FORMATIONS[g.mgr.formation].line;
+      const xi = M().xiPlayers(g), bench = M().benchPlayers(g);
+      const row = (s, i, inXI) => `<div class="sq-row${inXI ? ' in' : ''}" data-act="mgrSwap" data-arg="${s.id}">
+        <span class="sq-pos">${esc(inXI ? shape[i] : s.pos)}</span>
+        <span class="sq-sh">${s.shirt}</span>
+        <span class="sq-n">${esc(s.name)}${inXI && s.pos !== shape[i] ? ' <em class="oop">out of position</em>' : ''}</span>
+        <span class="sq-meta">${s.age} · ${U().cash(s.wage)}/w</span>
+        <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+      </div>`;
+
+      return `<div class="card"><h3>${ico('squad')} Starting eleven
+          <span class="pill">${M().teamRating(g)}</span></h3>
+        <p class="dim" style="margin:0 0 10px">Tap a player to swap him with someone on the bench.</p>
+        ${xi.map((s, i) => row(s, i, true)).join('')}
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-ghost grow" data-act="mgrAuto">${ico('ok')} Pick the best eleven</button>
+          <button class="btn btn-ghost grow" data-act="mgrFormation">${ico('tactics')} ${g.mgr.formation}</button>
+        </div>
+      </div>
+      <div class="card"><h3>Substitutes and reserves</h3>
+        ${bench.length ? bench.map(s => row(s, 0, false)).join('')
+          : '<p class="dim" style="margin:0">Nobody left on the bench.</p>'}
+      </div>`;
+    },
+
+    /* ---------------- market ---------------- */
+    tab_mmarket() {
+      const g = State().game;
+      const list = M().market(g, g.mgr.filter).slice(0, 40);
+      const wageRoom = g.mgr.wageBudget - M().squadWages(g);
+      const positions = ['All'].concat(Object.keys(global.DATA.POSITIONS));
+
+      return `<div class="card tight">
+        <div class="mk-money">
+          <div><span class="dim">Transfer budget</span><b>${U().cash(g.mgr.budget)}</b></div>
+          <div><span class="dim">Wage room</span><b class="${wageRoom < 0 ? 'bad' : ''}">${U().cash(wageRoom)}/w</b></div>
+        </div>
+        <div class="mk-filter">
+          <button class="mk-f${g.mgr.filter && g.mgr.filter.afford ? ' on' : ''}"
+            data-act="mgrFilter" data-arg="Affordable">Can afford</button>
+          ${positions.map(p => `
+          <button class="mk-f${(g.mgr.filter && g.mgr.filter.pos) === (p === 'All' ? undefined : p) ? ' on' : ''}"
+            data-act="mgrFilter" data-arg="${p}">${p}</button>`).join('')}</div>
+      </div>
+      <div class="card"><h3>${ico('transfer')} Available</h3>
+        ${list.length ? list.map(s => `
+          <div class="mk-row" data-act="mgrBid" data-arg="${s.id}">
+            <span class="sq-pos">${esc(s.pos)}</span>
+            <span class="sq-n">${esc(s.name)}<em>${esc(s.fromClub)} · ${s.age}${
+              s.keyman ? ' · <b class="mk-star">star man</b>' : ''}</em></span>
+            <span class="mk-ask">${s.free ? 'Free' : U().cash(s.ask)}<em>${U().cash(s.wage)}/w</em></span>
+            <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+          </div>`).join('')
+          : '<p class="dim" style="margin:0">Nobody matches that filter.</p>'}
+      </div>
+      <div class="card"><h3>Sell</h3>
+        <p class="dim" style="margin:0 0 9px">Tap one of yours to take the money.</p>
+        ${g.squad.slice().sort((a, b) => b.value - a.value).map(s => `
+          <div class="mk-row" data-act="mgrSell" data-arg="${s.id}">
+            <span class="sq-pos">${esc(s.pos)}</span>
+            <span class="sq-n">${esc(s.name)}<em>${s.age} · ${s.apps} apps, ${s.goals} goals</em></span>
+            <span class="mk-ask">${U().cash(s.value)}</span>
+            <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+          </div>`).join('')}
+      </div>`;
+    },
+
+    /* ---------------- table ---------------- */
+    tab_mtable() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const table = global.Engine.Season.standings(g, club.league);
+      const target = g.mgr.board.target;
+      return `<div class="card"><h3>${ico('table')} ${esc(State().league(club.league).name)}</h3>
+        <div class="tb-head"><span>#</span><span></span><span class="tb-n">Club</span>
+          <span>P</span><span>GD</span><span>Pts</span></div>
+        ${table.map((r, i) => `<div class="tb-row${r.id === club.id ? ' me' : ''}${i + 1 <= target.pos ? ' tgt' : ''}">
+          <span>${i + 1}</span>
+          ${crest(r.club.name, 'crest-sm')}
+          <span class="tb-n">${esc(r.club.name)}</span>
+          <span>${r.p}</span><span>${r.gf - r.ga > 0 ? '+' : ''}${r.gf - r.ga}</span>
+          <b>${r.pts}</b>
+        </div>`).join('')}
+        <p class="dim" style="margin:10px 0 0">The board asked for ${U().ordinal(target.pos)} or better.</p>
+      </div>`;
+    },
+
+    /* ---------------- office ---------------- */
+    tab_moffice() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const conf = Math.round(g.mgr.board.confidence);
+      const wages = M().squadWages(g);
+      const scorers = g.squad.slice().filter(s => s.goals > 0).sort((a, b) => b.goals - a.goals).slice(0, 5);
+      return `<div class="card"><h3>${ico('manager')} The board</h3>
+        <div class="board-conf">
+          <div class="bc-num ${conf >= 60 ? 'good' : conf >= 30 ? 'warn' : 'bad'}">${conf}</div>
+          <div class="bc-tx"><b>${conf >= 75 ? 'Delighted' : conf >= 55 ? 'Content' : conf >= 32 ? 'Watching closely'
+            : conf >= 15 ? 'Losing patience' : 'One more bad week'}</b>
+            <span>${esc(g.mgr.board.target.text)}</span></div>
+        </div>
+      </div>
+      <div class="card"><h3>${ico('value')} Finances</h3>
+        <div class="stat-grid">
+          <div class="stat"><b>${U().cash(g.mgr.budget)}</b><span>Transfer budget</span></div>
+          <div class="stat"><b>${U().cash(wages)}</b><span>Wage bill /w</span></div>
+          <div class="stat"><b>${U().cash(g.mgr.wageBudget)}</b><span>Wage ceiling</span></div>
+          <div class="stat"><b>${g.squad.length}</b><span>Squad size</span></div>
+        </div>
+      </div>
+      ${scorers.length ? `<div class="card"><h3>${ico('goal')} Top scorers</h3>
+        ${scorers.map(s => `<div class="res-row"><span class="sq-pos">${esc(s.pos)}</span>
+          <span class="res-n">${esc(s.name)}</span><b>${s.goals}</b></div>`).join('')}</div>` : ''}
+      ${g.mgr.trophies.length ? `<div class="card"><h3>${ico('trophy')} Won as manager</h3>
+        ${g.mgr.trophies.map(t => `<span class="trophy">${global.Trophies.svg(global.Trophies.classify(t.name).art, 'tiny')} ${esc(t.name)} ${t.year}</span>`).join('')}</div>` : ''}
+      ${g.mgr.log.length ? `<div class="card"><h3>${ico('transfer')} Transfer log</h3>
+        ${g.mgr.log.slice(0, 12).map(l => `<div class="res-row"><span class="res-b ${l.k === 'in' ? 'res-W' : 'res-L'}">${l.k === 'in' ? '↓' : '↑'}</span>
+          <span class="res-n">${esc(l.t)}</span></div>`).join('')}</div>` : ''}
+      ${MUI.cvCard(g)}
+      <div class="card"><h3>Options</h3><div class="row wrap">
+        <button class="btn btn-ghost" data-act="save">${ico('disk')} Save now</button>
+        <button class="btn btn-danger" data-act="mgrQuit">${ico('exit')} Quit to menu</button>
+      </div></div>`;
+    }
+  };
+
+  global.MUI = MUI;
+})(window);
+
+</script>
+<script>
 /* js/social.js */
 /* ==========================================================================
    social.js — the timeline.
@@ -10955,6 +11864,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     render() {
       if (!State.game) return;
+      // manager mode borrows this screen and draws its own tabs into it
+      if (State.game.mode === 'manager' && global.MUI) return global.MUI.render();
       UI.renderHUD();
       UI.renderTabs();
       const c = $('content');
@@ -11825,10 +12736,16 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       $('btn-new').onclick = () => UI.startWizard();
       $('btn-continue').onclick = () => Game.continueGame();
       $('btn-how').onclick = () => Game.howToPlay();
+      const mb = $('btn-manager'); if (mb) mb.onclick = () => Game.managerStart();
       $('create-back').onclick = () => Game.wizardBack();
       $('create-next').onclick = () => Game.wizardNext();
       $('modal-back').onclick = e => { if (e.target === $('modal-back')) { /* click-off does nothing */ } };
       $('btn-continue').disabled = !State.hasSave();
+      // the same button resumes either mode, so it should say which one is waiting
+      try {
+        const raw = localStorage.getItem(D.CONFIG.SAVE_KEY);
+        if (raw && /"mode":"manager"/.test(raw)) $('btn-continue').textContent = 'Continue Managing';
+      } catch (e) {}
       // the build stamp, so it is obvious which version you are playing
       const vt = document.getElementById('ver-text');
       if (vt) vt.textContent = 'v' + D.CONFIG.VERSION + ' · ' + D.CONFIG.BUILD;
@@ -11874,6 +12791,10 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           <div class="item"><div class="ic">${ico('train')}</div><div class="tx"><b>Train towards your ceiling</b><span>Good decisions and hard sessions push each attribute up — but never past what you drafted.</span></div></div>
           <div class="item"><div class="ic">${ico('transfer')}</div><div class="tx"><b>Move clubs</b><span>Perform and bigger badges come calling. Every summer you choose the next chapter.</span></div></div>
           <div class="item"><div class="ic">${ico('legacy')}</div><div class="tx"><b>Leave a legacy</b><span>Titles, caps, peak rating, peak value — and how the game remembers you.</span></div></div>
+        </div>
+        <p class="muted" style="margin-top:14px">Or take the other seat.</p>
+        <div class="list">
+          <div class="item"><div class="ic">${ico('manager')}</div><div class="tx"><b>Manager Mode</b><span>Take a club, pick the shape and the eleven, sign and sell in the market, and talk to them before kick-off. The board judge you on the table — hit the target and they raise it, miss it badly enough and you are out on your ear looking for a smaller job.</span></div></div>
         </div>`,
         actions: [{ label: 'Got it' }]
       });
@@ -11881,8 +12802,15 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     continueGame() {
       const g = State.load();
-      if (!g) { UI.toast('No saved career found.', 'bad'); return; }
+      if (!g) { UI.toast('No saved game found.', 'bad'); return; }
       g._starMap = null;   // rebuild star lists through the living-world filter
+      if (g.mode === 'manager') {
+        UI.show('game');
+        global.MUI.tab = 'mhome';
+        UI.render();
+        UI.toast('Back in the dugout.', 'good');
+        return;
+      }
       Engine.Squad.ensure(g);
       UI.show('game');
       UI.tab = 'home';
@@ -12162,10 +13090,345 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         case 'newsView': UI.newsView = arg; return UI.render();
         case 'socialPost': return Game.socialPost();
         case 'celebrations': return Game.celebrationMenu();
+        case 'mgrPlay': return Game.mgrTeamTalk();
+        case 'mgrSim': return Game.mgrSimSeason();
+        case 'mgrAuto': return Game.mgrAutoPick();
+        case 'mgrSwap': return Game.mgrSwap(arg);
+        case 'mgrFormation': return Game.mgrFormation();
+        case 'mgrStyle': return Game.mgrStyle();
+        case 'mgrFilter': return Game.mgrFilter(arg);
+        case 'mgrBid': return Game.mgrBid(arg);
+        case 'mgrSell': return Game.mgrSell(arg);
+        case 'mgrReview': return Game.mgrReview();
+        case 'mgrRehire': return Game.mgrRehire();
+        case 'mgrQuit': return Game.quit();
         case 'titles': return Game.titleMenu();
         case 'matchLength': return Game.matchLengthMenu();
         case 'quit': return Game.quit();
       }
+    },
+
+    /* ---------------- MANAGER MODE ---------------- */
+
+    /* Choosing a club to take. Ordered by how hard it will be. */
+    managerStart() {
+      // a sacked manager keeps the world he was working in — same clubs, same
+      // players, and a reputation that decides who will still take his call
+      const world = Game._mgrRehire && Game._mgrWorld
+        ? Game._mgrWorld : State.buildWorld(D.CONFIG.SEASON_START_YEAR, 'modern');
+      Game._mgrWorld = world;
+      const leagues = D.LEAGUES.map(l => l.id);
+      UI.modal({
+        title: 'Take a job',
+        html: `<p class="muted">Pick a division, then a club. A big club expects the title;
+          a small one expects you to keep them up.</p>
+          <div class="list">${leagues.map(id => {
+            const L = world.leagues.find(x => x.id === id) || State.league(id);
+            const cap = Game._mgrCeiling || 99;
+            const open = Object.values(world.clubs).filter(c => c.league === id && c.rating <= cap).length;
+            return `<div class="item click" data-lg="${id}"><div class="ic">${ico('nation')}</div>
+              <div class="tx"><b>${U.esc(L.name)}</b><span>${U.esc(L.country)}${
+                Game._mgrCeiling ? ' · ' + (open ? open + ' club' + (open === 1 ? '' : 's') + ' would have you'
+                                                : 'nobody here wants you') : ''}</span></div></div>`;
+          }).join('')}</div>`,
+        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-lg]').forEach(el => el.onclick = () => Game.managerClubs(el.dataset.lg));
+        }
+      });
+    },
+
+    managerClubs(leagueId) {
+      const world = Game._mgrWorld;
+      const cap = Game._mgrCeiling || 99;
+      const all = Object.values(world.clubs).filter(c => c.league === leagueId)
+        .sort((a, b) => b.rating - a.rating);
+      const clubs = all.filter(c => c.rating <= cap);
+      const snubs = all.length - clubs.length;
+      UI.modal({
+        title: 'Which club?',
+        html: `${snubs ? `<p class="muted">${snubs} club${snubs === 1 ? '' : 's'} in this division
+            would not return your calls. That is what the last job did to your name.</p>` : ''}
+          ${clubs.length ? '' : '<p class="muted">Nobody here is interested. Try a smaller division.</p>'}
+          <div class="list">${clubs.map(c => `
+          <div class="item click" data-club="${c.id}">
+            <div class="ic">${global.Crest.svg(c.name, 'crest-sm')}</div>
+            <div class="tx"><b>${U.esc(c.name)}</b><span>Rated ${c.rating} · ${
+              c.rating >= 84 ? 'they expect to win it' : c.rating >= 76 ? 'a good side, and they know it'
+              : c.rating >= 68 ? 'a fair job, if you are any good' : 'a proper rebuild'}</span></div>
+          </div>`).join('')}</div>`,
+        actions: [{ label: 'Back', cls: 'btn-ghost', onClick: () => Game.managerStart() }],
+        onRender(m) {
+          m.querySelectorAll('[data-club]').forEach(el => el.onclick = () => Game.managerBegin(el.dataset.club));
+        }
+      });
+    },
+
+    managerBegin(clubId) {
+      const world = Game._mgrWorld;
+      const past = (State.game && State.game.mgrHistory) || [];
+      const g = {
+        version: 1, world, era: 'modern', mode: 'manager',
+        log: [], headlines: [], newsSeen: 0, tables: {}, world_year: world.year,
+        mgrHistory: Game._mgrRehire ? past : [],
+        settings: {}
+      };
+      Game._mgrRehire = false;
+      Game._mgrCeiling = 0;
+      const cb = $('btn-continue'); if (cb) { cb.disabled = false; cb.textContent = 'Continue Managing'; }
+      State.game = g;
+      global.Manager.start(g, clubId);
+      const club = State.club(clubId);
+      UI.closeModal();
+      UI.show('game');
+      global.MUI.tab = 'mhome';
+      UI.render();
+      State.save();
+      UI.modal({
+        title: 'Welcome to ' + club.name,
+        text: `${global.Manager.FORMATIONS[g.mgr.formation].name}, ${club.name}, and a board with an opinion.\n\n`
+          + `${g.mgr.board.target.text}\n\nTransfer budget: ${U.cash(g.mgr.budget)}.`,
+        actions: [{ label: 'Get to work' }]
+      });
+    },
+
+    /* the only interactive beat of a matchday: what you say before it */
+    mgrTeamTalk() {
+      const g = State.game;
+      const fix = global.Manager.nextFixture(g);
+      if (!fix) return;
+      const opp = State.club(fix.oppId);
+      UI.modal({
+        title: 'Team talk',
+        html: `<p class="muted">${U.esc(opp.name)}, ${fix.home ? 'at home' : 'away'}. The room is quiet and looking at you.</p>
+          <div class="list">${global.Manager.TALKS.map(t => `
+            <div class="item click" data-talk="${t.id}"><div class="ic">${ico('microphone')}</div>
+              <div class="tx"><b>${U.esc(t.label)}</b><span>${U.esc(t.hint)}</span></div></div>`).join('')}</div>`,
+        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-talk]').forEach(el => el.onclick = () => {
+            UI.closeModal();
+            Game.mgrPlayRound(el.dataset.talk);
+          });
+        }
+      });
+    },
+
+    mgrPlayRound(talk) {
+      const g = State.game;
+      const r = global.Manager.playRound(g, talk);
+      State.save();
+      global.MUI.render();
+      if (!r) return;
+      const opp = State.club(r.oppId);
+      const club = State.club(g.mgr.club);
+      UI.modal({
+        title: r.result === 'W' ? 'Win' : r.result === 'D' ? 'Draw' : 'Defeat',
+        html: `<div class="fx-teams" style="margin-bottom:10px">
+            <div class="fx-t">${global.Crest.svg(r.home ? club.name : opp.name, 'crest-lg')}
+              <span>${U.esc(r.home ? club.name : opp.name)}</span></div>
+            <div class="fx-v" style="font-size:26px">${r.home ? r.gf : r.ga}–${r.home ? r.ga : r.gf}</div>
+            <div class="fx-t">${global.Crest.svg(r.home ? opp.name : club.name, 'crest-lg')}
+              <span>${U.esc(r.home ? opp.name : club.name)}</span></div>
+          </div>
+          ${r.scorers.length ? `<p class="muted" style="text-align:center">${U.esc(r.scorers.join(', '))}</p>` : ''}
+          <p class="dim" style="text-align:center;margin:0">Board confidence ${Math.round(g.mgr.board.confidence)}
+            · ${U.ordinal(global.Manager.position(g))} in the table</p>`,
+        actions: [{ label: global.Manager.seasonOver(g) ? 'See the board' : 'Next',
+          onClick: () => { if (global.Manager.seasonOver(g)) Game.mgrReview(); } }]
+      });
+    },
+
+    mgrSimSeason() {
+      const g = State.game;
+      let n = 0;
+      while (!global.Manager.seasonOver(g) && n++ < 60) global.Manager.playRound(g, 'calm');
+      State.save();
+      global.MUI.render();
+      Game.mgrReview();
+    },
+
+    mgrReview() {
+      const g = State.game;
+      if (!global.Manager.seasonOver(g)) return;
+      const r = global.Manager.seasonReview(g);
+      const club = State.club(g.mgr.club);
+      State.save();
+      UI.modal({
+        title: r.champion ? 'CHAMPIONS' : r.met ? 'Target met' : 'Season over',
+        html: `<div class="stat-grid">
+            <div class="stat"><b>${U.ordinal(r.pos)}</b><span>Finish</span></div>
+            <div class="stat"><b>${r.confidence}</b><span>Board</span></div>
+            <div class="stat"><b>${U.cash(g.mgr.budget)}</b><span>Next budget</span></div>
+          </div>
+          <p class="muted" style="margin-top:12px">${U.esc(r.verdict)}</p>`,
+        actions: [{ label: r.sacked ? 'Clear your desk' : 'Into next season', onClick: () => {
+          if (r.sacked) { global.MUI.render(); return; }
+          global.Manager.nextSeason(g);
+          State.save();
+          global.MUI.tab = 'mmarket';
+          global.MUI.render();
+          UI.toast('Transfer window is open.', 'good');
+        } }]
+      });
+      if (r.champion) {
+        setTimeout(() => Game.trophyLift(State.league(club.league).name + ' Title', 'Champions', () => {}), 60);
+      }
+    },
+
+    /* Sacked is not the end of a managerial career, it is most of one. You keep
+       the world and the record; what you lose is who will have you. */
+    mgrRehire() {
+      const g = State.game;
+      const club = State.club(g.mgr.club);
+      const won = (g.mgr.trophies || []).length;
+      g.mgrHistory = (g.mgrHistory || []).concat({
+        club: club.name, seasons: g.mgr.board.seasons,
+        finishes: (g.mgr.board.finishes || []).slice(),
+        trophies: won, sacked: true
+      });
+      // a trophy buys you another shot at that level; a sacking without one
+      // drops you a rung, and a second drops you further
+      const sackings = g.mgrHistory.filter(j => j.sacked).length;
+      // there is always somebody desperate enough, so never price yourself out
+      // of the whole game — the floor is the worst club in the world
+      const floor = Math.min.apply(null, Object.values(g.world.clubs).map(c => c.rating));
+      const best = Math.min.apply(null, (g.mgrHistory.map(j =>
+        Math.min.apply(null, (j.finishes || []).concat(99)))).concat(99));
+      Game._mgrCeiling = Math.max(floor, Math.round(
+        club.rating + (won ? 3 : 0) + (best <= 3 ? 2 : 0) - sackings * 3));
+      Game._mgrRehire = true;
+      Game._mgrWorld = g.world;
+      Game.managerStart();
+    },
+
+    mgrAutoPick() {
+      const g = State.game;
+      g.mgr.xi = global.Manager.autoPick(g).map(s => s.id);
+      State.save(); global.MUI.render();
+      UI.toast('Best eleven picked.', 'good');
+    },
+
+    mgrSwap(id) {
+      const g = State.game;
+      const inXI = (g.mgr.xi || []).indexOf(id) >= 0;
+      if (inXI) { Game._mgrSwapFrom = id; UI.toast('Now tap a replacement.', ''); return; }
+      const from = Game._mgrSwapFrom;
+      if (!from) { Game._mgrSwapFrom = null; UI.toast('Tap someone in the eleven first.', ''); return; }
+      const i = g.mgr.xi.indexOf(from);
+      if (i >= 0) g.mgr.xi[i] = id;
+      Game._mgrSwapFrom = null;
+      State.save(); global.MUI.render();
+    },
+
+    mgrFormation() {
+      const g = State.game;
+      UI.modal({
+        title: 'Formation',
+        html: `<div class="list">${Object.keys(global.Manager.FORMATIONS).map(k => {
+          const f = global.Manager.FORMATIONS[k];
+          return `<div class="item click cel-opt${k === g.mgr.formation ? ' on' : ''}" data-form="${k}">
+            <div class="ic">${ico('tactics')}</div>
+            <div class="tx"><b>${U.esc(f.name)}</b><span>${U.esc(f.hint)}</span></div>
+            <div class="cel-tick">${ico('ok')}</div></div>`;
+        }).join('')}</div>`,
+        actions: [{ label: 'Done', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-form]').forEach(el => el.onclick = () => {
+            g.mgr.formation = el.dataset.form;
+            g.mgr.xi = global.Manager.autoPick(g).map(s => s.id);
+            UI.closeModal(); State.save(); global.MUI.render();
+          });
+        }
+      });
+    },
+
+    mgrStyle() {
+      const g = State.game;
+      UI.modal({
+        title: 'Approach',
+        html: `<div class="list">${Object.keys(global.Manager.STYLES).map(k => {
+          const st = global.Manager.STYLES[k];
+          return `<div class="item click cel-opt${k === g.mgr.style ? ' on' : ''}" data-style="${k}">
+            <div class="ic">${ico('tactics')}</div>
+            <div class="tx"><b>${U.esc(st.name)}</b><span>${U.esc(st.hint)}</span></div>
+            <div class="cel-tick">${ico('ok')}</div></div>`;
+        }).join('')}</div>`,
+        actions: [{ label: 'Done', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-style]').forEach(el => el.onclick = () => {
+            g.mgr.style = el.dataset.style;
+            UI.closeModal(); State.save(); global.MUI.render();
+          });
+        }
+      });
+    },
+
+    mgrFilter(pos) {
+      const g = State.game;
+      const f = g.mgr.filter || {};
+      if (pos === 'Affordable') f.afford = !f.afford;
+      else if (pos === 'All') delete f.pos;
+      else f.pos = pos;
+      g.mgr.filter = (f.pos || f.afford) ? f : null;
+      global.MUI.render();
+    },
+
+    mgrBid(id) {
+      const g = State.game;
+      const player = global.Manager.market(g).find(s => s.id === id);
+      if (!player) return;
+      const asks = player.free ? [0] : [
+        Math.round(player.ask * 0.8 / 50000) * 50000,
+        player.ask,
+        Math.round(player.ask * 1.25 / 50000) * 50000
+      ];
+      UI.modal({
+        title: player.name,
+        html: `<p class="muted">${U.esc(player.pos)} · ${player.age} · rated <b>${player.ovr}</b><br>
+          ${U.esc(player.fromClub)} want ${player.free ? 'nothing — he is a free agent' : U.cash(player.ask)}.
+          Wages ${U.cash(player.wage)}/week.</p>
+          <div class="list">${asks.map((a, i) => `
+            <div class="item click" data-fee="${a}"><div class="ic">${ico('value')}</div>
+              <div class="tx"><b>${a ? U.cash(a) : 'Sign him'}</b><span>${
+                player.free ? 'Nothing to pay but the wages.'
+                : i === 0 ? 'A cheeky one. They will probably say no.'
+                : i === 1 ? 'Meet the asking price.' : 'Over the odds. Hard to turn down.'}</span></div></div>`).join('')}</div>`,
+        actions: [{ label: 'Walk away', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-fee]').forEach(el => el.onclick = () => {
+            const res = global.Manager.bid(g, player, +el.dataset.fee);
+            UI.closeModal();
+            State.save(); global.MUI.render();
+            if (!res.ok) return UI.toast(res.why, 'bad');
+            // signing him does not pick him — that is still your job
+            const xi = global.Manager.xiPlayers(g);
+            const worst = xi.reduce((a, b) => (a && a.ovr <= b.ovr ? a : b), null);
+            UI.toast(worst && res.player.ovr > worst.ovr
+              ? `${player.name} signs. He is better than someone in your eleven.`
+              : `${player.name} signs.`, 'good');
+          });
+        }
+      });
+    },
+
+    mgrSell(id) {
+      const g = State.game;
+      const s = g.squad.find(x => x.id === id);
+      if (!s) return;
+      UI.modal({
+        title: 'Sell ' + s.name + '?',
+        text: `${s.pos} · ${s.age} · rated ${s.ovr}. Valued at ${U.cash(s.value)}.\n\n`
+          + `${s.apps} appearances, ${s.goals} goals for you.`,
+        actions: [
+          { label: 'Take the money', cls: 'btn-danger', onClick: () => {
+            const r = global.Manager.sell(g, id);
+            State.save(); global.MUI.render();
+            UI.toast(r && r.ok ? `Sold for ${U.cash(r.fee)}.` : (r && r.why) || 'No deal.', r && r.ok ? 'good' : 'bad');
+          } },
+          { label: 'Keep him', cls: 'btn-ghost' }
+        ]
+      });
     },
 
     /* The names the timeline has given you. Wear whichever one you like. */

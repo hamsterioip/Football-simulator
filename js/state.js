@@ -214,7 +214,8 @@
         const raw = localStorage.getItem(D.CONFIG.SAVE_KEY);
         if (!raw) return null;
         const g = JSON.parse(raw);
-        if (!g || !g.player) return null;
+        // a manager save has no player of its own, only a club and a squad
+        if (!g || (!g.player && g.mode !== 'manager')) return null;
         State.game = g;
         return g;
       } catch (e) { return null; }

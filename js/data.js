@@ -1212,9 +1212,16 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.5';
-  const BUILD = '23 August 2026';
+  const VERSION = '1.6';
+  const BUILD = '28 August 2026';
   const CHANGELOG = [
+    { v: '1.6', when: '28 Aug', items: [
+      'Manager Mode: take a club in any of ten divisions, pick the shape, pick the eleven, and answer to a board that has never kicked a ball',
+      'A real transfer market — bid low and get laughed at, meet the asking price, or go over the odds. Sell your own to fund it, and watch the wage ceiling',
+      'Team talks before kick-off: keep it calm, light a fire, talk them through it, or say nothing at all',
+      'The board judge you on the table, not the last kick. Miss the target badly enough and you are gone — but you keep the world, and somebody smaller will always take your call',
+      'Overachieve and it costs you: the board raise the target to whatever you just managed'
+    ] },
     { v: '1.5', when: '23 Aug', items: [
       'Heart of the team: play every week, rate well and decide games and the side starts leaning on you — then the weeks you are missing actually cost them, and sometimes they run themselves into the ground for you instead',
       'Titles: twenty-two nicknames the timeline gives you off what you have actually done, from The Iceman to Cheat Code to Cult Hero. Wear whichever one you like under your name'
