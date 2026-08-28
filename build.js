@@ -45,6 +45,32 @@ function stampAssets(html) {
   if (after !== before) fs.writeFileSync(path.join(ROOT, 'index.html'), after);
 }
 
+/* ---------- the two lists must agree ----------
+   play.html is built from the JS array above; the deployed site is index.html
+   and loads its own <script> tags. Adding a file to one and forgetting the
+   other ships a site where that module simply does not exist — which is how
+   Manager Mode reached production with Manager undefined: every screen drew,
+   and picking a club threw. The build now refuses to produce that. */
+{
+  const tags = [];
+  read('index.html').replace(/<script src="(js\/[^"?]+)/g, (_, f) => { tags.push(f); return _; });
+  const missing = JS.filter(f => tags.indexOf(f) < 0);
+  const extra = tags.filter(f => JS.indexOf(f) < 0);
+  const problems = [];
+  if (missing.length) problems.push('index.html is missing: ' + missing.join(', '));
+  if (extra.length) problems.push('index.html loads files build.js does not: ' + extra.join(', '));
+  // load order matters — each module attaches a global the next one may use
+  const shared = tags.filter(f => JS.indexOf(f) >= 0);
+  const wanted = JS.filter(f => tags.indexOf(f) >= 0);
+  if (!problems.length && shared.join('|') !== wanted.join('|'))
+    problems.push('index.html loads the scripts in a different order than build.js:\n  index.html: '
+      + shared.join(' ') + '\n  build.js:   ' + wanted.join(' '));
+  if (problems.length) {
+    console.error('\nbuild failed — index.html and build.js disagree:\n  ' + problems.join('\n  ') + '\n');
+    process.exit(1);
+  }
+}
+
 const styles = CSS.map(f => `/* ${f} */\n` + read(f)).join('\n');
 const scripts = JS.map(f => `<script>\n/* ${f} */\n` + guard(read(f), f) + '\n</script>').join('\n');
 

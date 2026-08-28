@@ -2380,9 +2380,12 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.6.1';
+  const VERSION = '1.6.2';
   const BUILD = '28 August 2026';
   const CHANGELOG = [
+    { v: '1.6.2', when: '28 Aug', items: [
+      'Fixed the real Manager Mode bug: the two manager files were never added to the page the website is built from, so on the live site picking a club did nothing at all. The single-file build had them, which is why it worked everywhere except where it mattered. The build now refuses to finish if the two lists of scripts ever disagree again'
+    ] },
     { v: '1.6.1', when: '28 Aug', items: [
       'Fixed: the bottom of any long list in a pop-up could not be tapped — the button row floated over it, so the last three clubs in every division were unreachable and a tap near them hit Back instead. Pop-ups now scroll properly, with the buttons in a footer underneath and a fade when there is more list below'
     ] },
