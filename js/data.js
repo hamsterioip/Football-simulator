@@ -1451,9 +1451,14 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.6';
+  const VERSION = '2.7';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.7', when: '30 Aug', items: [
+      'Fixed: sign every superstar and wait long enough and the Top Players board used to empty out completely — the whole card just disappeared with no explanation. Eleven seasons was enough to do it',
+      'Football does not run out of great players. When the board thins, the next generation comes through: eighteen to twenty-three year olds who have become the best in the world, at real clubs, with their own trait and their own card, announced when they arrive',
+      'They age, decline and retire in their turn, so the board keeps turning over for as long as you keep managing. Thirty seasons and sixty retirements later it is still fourteen names deep, and the best player alive is somebody who did not exist when you started'
+    ] },
     { v: '2.6', when: '30 Aug', items: [
       'Win the league twice and the board back you properly: a transfer budget of at least $450M, whoever you are managing, and $75M more for every title after that',
       'One title already opens the safe at $200M',

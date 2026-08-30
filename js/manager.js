@@ -390,6 +390,62 @@
     return Math.round(38000 * Math.pow(1.14, ovr - ELITE) / 1000) * 1000;
   }
 
+  const TOP_TARGET = 14;            // the board never thins out below this many
+
+  /* A trait has to suit the position — a centre-back is not a Shot Stopper. */
+  const RISEN_TRAITS = {
+    GK:  ['Shot Stopper'],
+    DEF: ['The Wall', 'Aerial Threat', 'Engine', 'Blistering Pace'],
+    MID: ['Playmaker', 'Engine', 'Late Runs', 'Set-Piece Specialist', 'Power Shot', 'Dribbler Expert'],
+    ATT: ['Finisher', 'Poacher', 'Dribbler Expert', 'Blistering Pace', 'Flair', 'Power Shot']
+  };
+  function traitFor(pos) {
+    const D = global.DATA;
+    const grp = pos === 'GK' ? 'GK' : ((D.POSITIONS[pos] || {}).group || 'MID');
+    return global.U.pick(RISEN_TRAITS[grp] || RISEN_TRAITS.MID);
+  }
+
+  /* Football does not run out of great players. When the ones on the board
+     have retired — and if you sign them all, eventually they all will — the
+     next generation comes through: kids who were nobody a few years ago and
+     are now the best in the world. They age and retire in their turn, so the
+     board keeps turning over instead of emptying out. */
+  function riseStar(g) {
+    const U = global.U, State = global.State;
+    const clubs = Object.values(g.world.clubs)
+      .filter(c => c.id !== g.mgr.club).sort((a, b) => b.rating - a.rating);
+    const club = U.pick(clubs.slice(0, 28)) || clubs[0];
+    const who = global.Names.person(club.country);
+    const pos = U.pick(Object.keys(global.DATA.POSITIONS));
+    return {
+      name: who.name, nation: who.nation, pos,
+      age: U.int(18, 23), ovr: U.int(ELITE, 93),
+      club: club.name, clubId: club.id,
+      trait: traitFor(pos), since: g.world.year
+    };
+  }
+
+  /* Their careers run on, a year at a time, whether you sign them or not. */
+  function ageRisen(g) {
+    const U = global.U, State = global.State;
+    if (!g.mgr.risen || !g.mgr.risen.length) return;
+    const done = [];
+    g.mgr.risen.forEach(r => {
+      r.age++;
+      r.ovr = U.clamp(r.ovr + (r.age <= 27 ? U.int(0, 2) : r.age <= 31 ? U.int(-1, 1)
+        : -U.int(1, 3)), 60, 97);
+      if (r.age >= 36 && !U.chance(U.clamp(0.6 - (r.age - 36) * 0.16, 0.05, 0.6))) done.push(r);
+      // he has faded out of the very top bracket; the board is for the elite
+      else if (r.ovr < ELITE - 3) done.push(r);
+    });
+    if (done.length) {
+      const names = {};
+      done.forEach(r => { names[r.name] = true;
+        State.news(`${r.name} retires at ${r.age}`, 'info', null, 'legacy'); });
+      g.mgr.risen = g.mgr.risen.filter(r => !names[r.name]);
+    }
+  }
+
   function topPlayers(g) {
     const State = global.State, U = global.U;
     // whoever is already in your squad is not for sale to you — the board is
@@ -399,32 +455,71 @@
     (g.squad || []).forEach(s => { mine[s.name] = true; });
     (g.mgr.hungUp || []).forEach(n => { mine[n] = true; });
     const live = list => list.filter(s => !s.signed && !s.gone && !mine[s.name]);
-    if (g.mgr.topCache && g.mgr.topSeason === g.world.year) return live(g.mgr.topCache);
-    const me = State.club(g.mgr.club);
-    const out = [];
-    Object.values(g.world.clubs).forEach(c => {
-      if (c.id === me.id) return;
-      const stars = global.Eras.starsFor(g, c.name);
-      if (!stars) return;
-      stars.forEach(st => {
-        const [name, nation, pos, ovr, age] = st;
-        if (ovr < ELITE) return;
+
+    if (!(g.mgr.topCache && g.mgr.topSeason === g.world.year)) {
+      const me = State.club(g.mgr.club);
+      const out = [];
+      const add = (name, nation, pos, ovr, age, clubName, clubId, trait) => {
         const s = {
           id: U.id(), name, nation, pos, ovr, age,
           shirt: 0, goals: 0, assists: 0, apps: 0, rel: 50, star: true, elite: true,
-          fromClub: c.name, fromId: c.id
+          fromClub: clubName, fromId: clubId
         };
+        if (trait) s.trait = trait;
         s.value = eliteFee(ovr, age);
         // they are not for sale, so the number is what it would take
         s.ask = Math.round(s.value * U.rnd(1.15, 1.55) / 500000) * 500000;
         s.wage = Math.max(wageFor(s), eliteWage(ovr));
         out.push(s);
+      };
+      Object.values(g.world.clubs).forEach(c => {
+        if (c.id === me.id) return;
+        const stars = global.Eras.starsFor(g, c.name);
+        if (!stars) return;
+        stars.forEach(st => {
+          const [name, nation, pos, ovr, age] = st;
+          if (ovr >= ELITE) add(name, nation, pos, ovr, age, c.name, c.id, null);
+        });
       });
-    });
-    out.sort((a, b) => b.ovr - a.ovr || b.ask - a.ask);
-    g.mgr.topCache = out;
-    g.mgr.topSeason = g.world.year;
-    return live(out);
+      (g.mgr.risen || []).forEach(r => {
+        if (r.ovr >= ELITE) add(r.name, r.nation, r.pos, r.ovr, r.age, r.club, r.clubId, r.trait);
+      });
+      out.sort((a, b) => b.ovr - a.ovr || b.ask - a.ask);
+      g.mgr.topCache = out;
+      g.mgr.topSeason = g.world.year;
+    }
+
+    // if the great names have thinned out, the next lot have arrived
+    let list = live(g.mgr.topCache);
+    if (list.length < TOP_TARGET) {
+      g.mgr.risen = g.mgr.risen || [];
+      const known = {};
+      g.mgr.topCache.forEach(s => { known[s.name] = true; });
+      (g.squad || []).forEach(s => { known[s.name] = true; });
+      let guard = 0;
+      while (list.length < TOP_TARGET && guard++ < 60) {
+        const r = riseStar(g);
+        if (known[r.name] || mine[r.name]) continue;
+        known[r.name] = true;
+        g.mgr.risen.push(r);
+        const before = g.mgr.topCache.length;
+        const tmp = { id: U.id(), name: r.name, nation: r.nation, pos: r.pos, ovr: r.ovr,
+          age: r.age, shirt: 0, goals: 0, assists: 0, apps: 0, rel: 50,
+          star: true, elite: true, trait: r.trait, fromClub: r.club, fromId: r.clubId };
+        tmp.value = eliteFee(r.ovr, r.age);
+        tmp.ask = Math.round(tmp.value * U.rnd(1.15, 1.55) / 500000) * 500000;
+        tmp.wage = Math.max(wageFor(tmp), eliteWage(r.ovr));
+        g.mgr.topCache.push(tmp);
+        if (g.mgr.topCache.length > before) {
+          global.State.news(`${r.name} (${r.age}) has become one of the best players in the world`,
+            'good', null, 'star');
+        }
+        list = live(g.mgr.topCache);
+      }
+      g.mgr.topCache.sort((a, b) => b.ovr - a.ovr || b.ask - a.ask);
+      list = live(g.mgr.topCache);
+    }
+    return list;
   }
 
   /* One listing from a club's squad, priced. */
@@ -820,6 +915,10 @@
       g.mgr.retired = retiring.map(s => ({ name: s.name, age: s.age, ovr: s.ovr }));
     } else g.mgr.retired = [];
 
+    // the best players in the world get a year older too, whether or not they
+    // ever played for you
+    ageRisen(g);
+
     /* Somebody has to replace them. Without this the squad quietly shrank a
        man a year until you could not field a bench. */
     if (g.squad.length < 20) {
@@ -879,7 +978,7 @@
     slots(f) { return SLOTS[f] || SLOTS['4-3-3']; },
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
-    market, marketTick, topPlayers, ELITE, TITLE_FLOOR, bid, sell, squadWages, valueFor, wageFor,
+    market, marketTick, topPlayers, ELITE, TITLE_FLOOR, TOP_TARGET, bid, sell, squadWages, valueFor, wageFor,
     traitOf, traitBonus, TRAIT_GOALS,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor

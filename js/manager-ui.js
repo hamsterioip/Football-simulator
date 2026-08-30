@@ -363,10 +363,19 @@
       const budget = g.mgr.budget, room = g.mgr.wageBudget - M().squadWages(g);
       const f = g.mgr.filter || {};
       const within = s => s.ask <= budget && s.wage <= room;
-      let list = M().topPlayers(g);
+      let all = M().topPlayers(g);
+      let list = all;
       if (f.pos) list = list.filter(s => s.pos === f.pos);
       if (f.afford) list = list.filter(within);
-      if (!list.length) return '';
+      // a filter with no matches is not the same as an empty world — never let
+      // the whole board disappear without saying why
+      if (!list.length) {
+        return `<div class="card top-card"><h3>${ico('crown')} Top players</h3>
+          <p class="dim" style="margin:0">${all.length
+            ? 'None of the best in the world match that filter.'
+            : 'Every great player has retired. Give it a season — somebody always comes through.'}</p>
+        </div>`;
+      }
       const shown = (g.mgr.topOpen ? list : list.slice(0, 6));
       const reach = list.filter(within).length;
       return `<div class="card top-card"><h3>${ico('crown')} Top players
