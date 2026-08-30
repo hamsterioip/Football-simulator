@@ -2840,9 +2840,15 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.5';
+  const VERSION = '2.6';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.6', when: '30 Aug', items: [
+      'Win the league twice and the board back you properly: a transfer budget of at least $450M, whoever you are managing, and $75M more for every title after that',
+      'One title already opens the safe at $200M',
+      'The wage ceiling moves with it, so the money is money you can actually spend — two titles at any club and the whole top-players board comes within reach',
+      'And it sticks: finish seventh the next year and the budget is still there. What you have won does not stop counting'
+    ] },
     { v: '2.5', when: '30 Aug', items: [
       'Manager Mode asks which era first: Modern, Classic 2005 or the Golden Era. It decides every squad in the world — take Chelsea in 2005 with \u010cech and Terry, or Inter in the Golden Era with R9 up front',
       'Ronaldo\u2019s 2008 at United is a 98 as well, so he has two peak cards — both animated, and both worth different money',
@@ -11263,6 +11269,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
      three seasons building towards, not a Tuesday. */
 
   const ELITE = 88;                 // the cut for the top-players board
+  const TITLE_FLOOR = 450000000;    // what two league titles are worth to a board
 
   /* At this level price is not a curve off the rating, it is a different market
      entirely: an 88 costs seventy million and a 95 costs three times that. And
@@ -11640,7 +11647,31 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       Math.round(Math.pow(Math.max(club.rating - 45, 4), 2.2) * 62 * reward / 1000) * 1000,
       Math.round(squadWages(g) * 1.15 / 1000) * 1000);
 
-    return { pos, met, champion, verdict, sacked, warned, table, confidence: Math.round(g.mgr.board.confidence) };
+    /* Winning changes what they will spend on you. One title and the board
+       open the safe; two and the money is there to buy anybody, whoever you
+       are managing and whatever the club was worth when you walked in. The
+       wage ceiling has to move with it or the budget is a number you cannot
+       spend — a superstar's problem is always the weekly, not the fee. */
+    const titles = (g.mgr.trophies || []).length;
+    let backed = false;
+    if (titles >= 1) {
+      const floor = titles >= 2 ? TITLE_FLOOR + (titles - 2) * 75000000 : 200000000;
+      backed = floor > g.mgr.budget;
+      g.mgr.budget = Math.max(g.mgr.budget, floor);
+      const wageFloor = titles >= 2 ? 1.55 : 1.3;
+      g.mgr.wageBudget = Math.max(g.mgr.wageBudget,
+        Math.round(squadWages(g) * wageFloor / 1000) * 1000);
+      if (backed && champion) {
+        verdict += titles === 1 ? ` The safe is open: ${U.cash(g.mgr.budget)} to spend.`
+          : titles === 2 ? ` Two titles. They will fund anybody you want — ${U.cash(g.mgr.budget)} and the wages to match.`
+          : ` ${titles} titles now. Ask for whoever you like — ${U.cash(g.mgr.budget)} and the wages to match.`;
+      } else if (backed) {
+        verdict += ` What you have already won still counts — ${U.cash(g.mgr.budget)} to spend.`;
+      }
+    }
+
+    return { pos, met, champion, verdict, sacked, warned, table, titles,
+             confidence: Math.round(g.mgr.board.confidence) };
   }
 
   function nextSeason(g) {
@@ -11745,7 +11776,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     slots(f) { return SLOTS[f] || SLOTS['4-3-3']; },
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
-    market, marketTick, topPlayers, ELITE, bid, sell, squadWages, valueFor, wageFor,
+    market, marketTick, topPlayers, ELITE, TITLE_FLOOR, bid, sell, squadWages, valueFor, wageFor,
     traitOf, traitBonus, TRAIT_GOALS,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor

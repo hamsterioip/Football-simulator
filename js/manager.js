@@ -372,6 +372,7 @@
      three seasons building towards, not a Tuesday. */
 
   const ELITE = 88;                 // the cut for the top-players board
+  const TITLE_FLOOR = 450000000;    // what two league titles are worth to a board
 
   /* At this level price is not a curve off the rating, it is a different market
      entirely: an 88 costs seventy million and a 95 costs three times that. And
@@ -749,7 +750,31 @@
       Math.round(Math.pow(Math.max(club.rating - 45, 4), 2.2) * 62 * reward / 1000) * 1000,
       Math.round(squadWages(g) * 1.15 / 1000) * 1000);
 
-    return { pos, met, champion, verdict, sacked, warned, table, confidence: Math.round(g.mgr.board.confidence) };
+    /* Winning changes what they will spend on you. One title and the board
+       open the safe; two and the money is there to buy anybody, whoever you
+       are managing and whatever the club was worth when you walked in. The
+       wage ceiling has to move with it or the budget is a number you cannot
+       spend — a superstar's problem is always the weekly, not the fee. */
+    const titles = (g.mgr.trophies || []).length;
+    let backed = false;
+    if (titles >= 1) {
+      const floor = titles >= 2 ? TITLE_FLOOR + (titles - 2) * 75000000 : 200000000;
+      backed = floor > g.mgr.budget;
+      g.mgr.budget = Math.max(g.mgr.budget, floor);
+      const wageFloor = titles >= 2 ? 1.55 : 1.3;
+      g.mgr.wageBudget = Math.max(g.mgr.wageBudget,
+        Math.round(squadWages(g) * wageFloor / 1000) * 1000);
+      if (backed && champion) {
+        verdict += titles === 1 ? ` The safe is open: ${U.cash(g.mgr.budget)} to spend.`
+          : titles === 2 ? ` Two titles. They will fund anybody you want — ${U.cash(g.mgr.budget)} and the wages to match.`
+          : ` ${titles} titles now. Ask for whoever you like — ${U.cash(g.mgr.budget)} and the wages to match.`;
+      } else if (backed) {
+        verdict += ` What you have already won still counts — ${U.cash(g.mgr.budget)} to spend.`;
+      }
+    }
+
+    return { pos, met, champion, verdict, sacked, warned, table, titles,
+             confidence: Math.round(g.mgr.board.confidence) };
   }
 
   function nextSeason(g) {
@@ -854,7 +879,7 @@
     slots(f) { return SLOTS[f] || SLOTS['4-3-3']; },
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
-    market, marketTick, topPlayers, ELITE, bid, sell, squadWages, valueFor, wageFor,
+    market, marketTick, topPlayers, ELITE, TITLE_FLOOR, bid, sell, squadWages, valueFor, wageFor,
     traitOf, traitBonus, TRAIT_GOALS,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor

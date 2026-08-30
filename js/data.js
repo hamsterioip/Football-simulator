@@ -1451,9 +1451,15 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.5';
+  const VERSION = '2.6';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.6', when: '30 Aug', items: [
+      'Win the league twice and the board back you properly: a transfer budget of at least $450M, whoever you are managing, and $75M more for every title after that',
+      'One title already opens the safe at $200M',
+      'The wage ceiling moves with it, so the money is money you can actually spend — two titles at any club and the whole top-players board comes within reach',
+      'And it sticks: finish seventh the next year and the budget is still there. What you have won does not stop counting'
+    ] },
     { v: '2.5', when: '30 Aug', items: [
       'Manager Mode asks which era first: Modern, Classic 2005 or the Golden Era. It decides every squad in the world — take Chelsea in 2005 with \u010cech and Terry, or Inter in the Golden Era with R9 up front',
       'Ronaldo\u2019s 2008 at United is a 98 as well, so he has two peak cards — both animated, and both worth different money',
