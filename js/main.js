@@ -413,6 +413,7 @@
         case 'mgrStyle': return Game.mgrStyle();
         case 'mgrFilter': return Game.mgrFilter(arg);
         case 'mgrTopMore': return Game.mgrTopMore();
+        case 'mgrNewsMore': return Game.mgrNewsMore();
         case 'mgrCard': return Game.mgrPlayerCard(arg);
         case 'mgrEra': return Game.mgrEra(arg);
         case 'mgrBid': return Game.mgrBid(arg);
@@ -578,6 +579,8 @@
               <span>${U.esc(r.home ? opp.name : club.name)}</span></div>
           </div>
           ${r.scorers.length ? `<p class="muted" style="text-align:center">${U.esc(r.scorers.join(', '))}</p>` : ''}
+          ${(r.moments || []).length ? `<div class="mn-modal">${r.moments.map(m =>
+            `<div class="mnews mn-${U.esc(m.k)}"><span class="mn-t">${U.esc(m.t)}</span></div>`).join('')}</div>` : ''}
           <p class="dim" style="text-align:center;margin:0">Board confidence ${Math.round(g.mgr.board.confidence)}
             · ${U.ordinal(global.Manager.position(g))} in the table</p>`,
         actions: [{ label: global.Manager.seasonOver(g) ? 'See the board' : 'Next',
@@ -876,6 +879,12 @@
         UI.toast(`${me.name} in for ${out ? out.name : 'him'}.`, 'good');
       }
       State.save();
+      global.MUI.render();
+    },
+
+    mgrNewsMore() {
+      const g = State.game;
+      g.mgr.newsOpen = !g.mgr.newsOpen;
       global.MUI.render();
     },
 

@@ -995,6 +995,20 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   .era-glow{opacity:.9}
   .era-best{box-shadow:0 0 0 1px rgba(255,201,77,.42),0 8px 26px rgba(0,0,0,.45)}
 }
+/* ---------- the talk: what happened in the matches ---------- */
+.mnews{display:flex;align-items:flex-start;gap:8px;padding:8px 2px;
+  border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px;line-height:1.4}
+.mnews:last-of-type{border-bottom:0}
+.mn-ic{flex:0 0 auto;color:var(--muted);margin-top:1px}
+.mn-ic .ic{width:14px;height:14px}
+.mn-t{flex:1;min-width:0}
+.mn-w{flex:0 0 auto;font-size:10.5px;color:var(--dim);white-space:nowrap;margin-top:2px}
+.mn-goal .mn-ic{color:var(--green)}
+.mn-good .mn-ic{color:var(--green)}
+.mn-bad .mn-ic{color:var(--red)}
+.mn-flat .mn-t{color:var(--dim);font-style:italic}
+.mn-modal{margin:10px 0 2px;text-align:left}
+.mn-modal .mnews{padding:6px 0}
 .mk-star{color:var(--gold);font-weight:800}
 .mk-ask{font-size:11.5px;font-weight:700;text-align:right;white-space:nowrap}
 .mk-ask em{display:block;font-style:normal;font-size:10px;color:var(--dim);font-weight:600}
@@ -2854,9 +2868,16 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.7';
+  const VERSION = '2.8';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.8', when: '30 Aug', items: [
+      'Both Ronaldo peak cards are 99 now — 2008 at United and 2014 at Madrid — and Messi\u2019s 2012 is a 99 as well',
+      'The Talk: a news feed of what actually happened out there. Hat-tricks, one from thirty yards, a header at the back post, a free kick over the wall, a penalty put over the bar, a keeper who kept them out on his own, a red card, a hamstring. Seventy-odd different things and rising',
+      'It is drawn from the real match — who scored, how many, whether you kept a clean sheet — and coloured by the trait the man carries, so a Power Shot signing really does hit them from distance',
+      'Sometimes nothing happens at all, because that is football too. About one match in seven',
+      'The talking points also appear on the result screen straight after the final whistle'
+    ] },
     { v: '2.7', when: '30 Aug', items: [
       'Fixed: sign every superstar and wait long enough and the Top Players board used to empty out completely — the whole card just disappeared with no explanation. Eleven seasons was enough to do it',
       'Football does not run out of great players. When the board thins, the next generation comes through: eighteen to twenty-three year olds who have become the best in the world, at real clubs, with their own trait and their own card, announced when they arrive',
@@ -10758,15 +10779,15 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     'Cristiano Ronaldo': [
       [2004, 'Sporting CP', 18, 74, 'The kid from Madeira', 'Flair'],
       [2007, 'Manchester United', 22, 89, 'Stepovers and a whole league rattled', 'Dribbler Expert'],
-      [2008, 'Manchester United', 23, 98, 'Forty-two goals, a European Cup, a Ballon d’Or', 'Dribbler Expert'],
-      [2014, 'Real Madrid', 29, 98, 'La Décima. The best on earth', 'Knuckleball Power Shot'],
+      [2008, 'Manchester United', 23, 99, 'Forty-two goals, a European Cup, a Ballon d’Or', 'Dribbler Expert'],
+      [2014, 'Real Madrid', 29, 99, 'La Décima. The best on earth', 'Knuckleball Power Shot'],
       [2018, 'Juventus', 33, 93, 'Still scoring, somewhere new', 'Aerial Threat'],
       [2026, 'Al Nassr', 41, 93, 'Forty-one, and nowhere near finished', 'Finisher']
     ],
     'Lionel Messi': [
       [2005, 'Barcelona', 18, 76, 'Seventeen and already impossible to mark', 'Flair'],
       [2009, 'Barcelona', 22, 93, 'Six trophies in a calendar year', 'Dribbler Expert'],
-      [2012, 'Barcelona', 25, 98, 'Ninety-one goals in a year', 'Playmaker'],
+      [2012, 'Barcelona', 25, 99, 'Ninety-one goals in a year', 'Playmaker'],
       [2015, 'Barcelona', 28, 97, 'The second treble', 'Playmaker'],
       [2022, 'Paris SG', 35, 94, 'A World Cup, finally', 'Set-Piece Specialist'],
       [2026, 'Inter Miami', 38, 95, 'Still the best passer in any room', 'Playmaker']
@@ -11248,7 +11269,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     const result = gf > ga ? 'W' : gf === ga ? 'D' : 'L';
     const entry = { round: g.mgr.round, oppId: fix.oppId, home: fix.home, gf, ga, result,
                     scorers: scorers.map(s => s.name), talk: t.id };
+    entry.moments = matchMoments(g, entry, xi, scorers);
     g.mgr.results.push(entry);
+    // the week's talking points, newest first
+    g.mgr.news = (entry.moments.map(m => Object.assign({
+      round: g.mgr.round + 1, year: g.world.year, opp: State.club(fix.oppId).name,
+      score: (fix.home ? gf : ga) + '-' + (fix.home ? ga : gf), result
+    }, m))).concat(g.mgr.news || []).slice(0, 60);
     g.mgr.round++;
 
     // The board are watching, but they judge you on the table rather than on
@@ -11266,6 +11293,146 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     State.news(`${fix.home ? me.name : opp.name} ${fix.home ? gf : ga}-${fix.home ? ga : gf} ${fix.home ? opp.name : me.name}`,
       result === 'W' ? 'good' : result === 'L' ? 'bad' : 'info', null, 'whistle');
     return entry;
+  }
+
+  /* ---------------- what actually happened out there ----------------
+     A scoreline tells you nothing. These are the bits people talk about on the
+     way home: the one from thirty yards, the header at the back post, the
+     sending off, the penalty he put over the bar. Drawn from what really
+     happened in the match — who scored, how many, what the keeper had to do —
+     then coloured by the trait the man carries. Most matches give you one or
+     two. Some give you nothing, which is also true of football. */
+
+  const GOAL_WAYS = [
+    { t: 'from fully thirty yards, and the net is still shaking', w: 6, trait: 'Power Shot' },
+    { t: 'with a knuckleball from distance that moved twice in the air', w: 4, trait: 'Knuckleball Power Shot' },
+    { t: 'after beating three men on the way into the box', w: 6, trait: 'Dribbler Expert' },
+    { t: 'with a free kick up and over the wall', w: 5, trait: 'Set-Piece Specialist' },
+    { t: 'with a header at the back post nobody went with him for', w: 6, trait: 'Aerial Threat' },
+    { t: 'racing clear of the last man and finishing calmly', w: 6, trait: 'Blistering Pace' },
+    { t: 'arriving late in the box the way he always does', w: 5, trait: 'Late Runs' },
+    { t: 'with a first-time volley on the turn', w: 5 },
+    { t: 'from two yards, because that is where he lives', w: 5, trait: 'Poacher' },
+    { t: 'with a chip over the keeper from the edge of the area', w: 4 },
+    { t: 'off the underside of the bar from a tight angle', w: 4 },
+    { t: 'after a one-two on the edge of the box', w: 5, trait: 'Playmaker' },
+    { t: 'with a backheel he had no right to try', w: 2, trait: 'Flair' },
+    { t: 'from the penalty spot, straight down the middle', w: 4 },
+    { t: 'with an overhead kick that will be on every highlight reel', w: 1 },
+    { t: 'through the keeper’s legs from twelve yards', w: 3 },
+    { t: 'off a deflection he will claim for the rest of his life', w: 3 },
+    { t: 'on the break, three passes from their corner flag to his', w: 4 }
+  ];
+
+  /* `who` decides who the line is about, and `when` whether it can be said at
+     all. Both matter: a hat-trick scorer has not "still not scored", and
+     nobody saves a point in a defeat. */
+  const ODD_MOMENTS = [
+    { t: '{p} hit the bar twice and still has not scored this month', w: 3, who: 'blank' },
+    { t: '{p} was booked for taking his shirt off. Worth it, he said', w: 2, who: 'scorer' },
+    { t: '{p} put a penalty over the bar and could not look up', w: 3, who: 'blank' },
+    { t: '{p} went off holding his hamstring. It does not look good', w: 3 },
+    { t: '{p} was sent off for a second yellow with twenty minutes left', w: 2 },
+    { t: '{p} cleared one off the line with the keeper beaten', w: 4 },
+    { t: '{p} made a save in the last minute that won the point', w: 4, who: 'keeper',
+      when: e => e.result === 'D' },
+    { t: '{p} made a save at the end to keep it to one', w: 3, who: 'keeper',
+      when: e => e.result === 'L' && e.ga <= 2 },
+    { t: '{p} had almost nothing to do and still looked the part', w: 2, who: 'keeper',
+      when: e => e.ga === 0 && e.gf >= 3 },
+    { t: '{p} kept them out on his own for an hour', w: 4, who: 'keeper',
+      when: e => e.ga === 0 },
+    { t: '{p} played the pass of the season and nobody gambled on it', w: 3, who: 'blank' },
+    { t: '{p} argued with the referee for so long the crowd started singing about it', w: 2 },
+    { t: '{p} came off the bench and changed it inside ninety seconds', w: 3, who: 'bench',
+      when: e => e.result !== 'L' },
+    { t: '{p} gave the ball away for their goal and did not hide afterwards', w: 3,
+      when: e => e.ga > 0 },
+    { t: '{p} won every header he went for', w: 3 },
+    { t: '{p} ran further than anyone on the pitch', w: 3 },
+    { t: '{p} limped through the last twenty minutes with everything used up', w: 2 },
+    { t: '{p} got the standing ovation when he came off', w: 3, who: 'scorer' },
+    { t: 'Nothing much happened. Some weeks are like that', w: 4, plain: true },
+    { t: 'A flat afternoon that nobody will remember by Tuesday', w: 3, plain: true },
+    { t: 'The referee was the busiest man on the pitch', w: 2, plain: true },
+    { t: 'Ninety minutes, no shots worth the name, and a point each', w: 2, plain: true,
+      when: e => e.result === 'D' && e.gf === 0 }
+  ];
+
+  function pickWeighted(list, filter) {
+    const U = global.U;
+    const ok = list.filter(x => !filter || filter(x));
+    if (!ok.length) return null;
+    return U.weighted(ok.map(x => [x, x.w || 1]));
+  }
+
+  /* Build the talking points for one match. */
+  function matchMoments(g, entry, xi, scored) {
+    const U = global.U, State = global.State;
+    const out = [];
+    const club = State.club(g.mgr.club);
+    const keeper = xi.find(s => s.pos === 'GK');
+    const cleanSheet = entry.ga === 0;
+
+    // how many each of them got
+    const tally = {};
+    scored.forEach(s => { tally[s.id] = (tally[s.id] || 0) + 1; });
+    const multi = Object.keys(tally).filter(id => tally[id] >= 2)
+      .map(id => ({ p: scored.find(s => s.id === id), n: tally[id] }))
+      .sort((a, b) => b.n - a.n);
+
+    multi.forEach(m => {
+      if (!m.p) return;
+      out.push({ k: 'goal', t: m.n >= 4
+        ? `${m.p.name} scored ${m.n}. Four in one game, and he wanted a fifth`
+        : m.n === 3 ? `${m.p.name} took the match ball home. A hat-trick, and the third was the best of them`
+        : `${m.p.name} scored twice` });
+    });
+
+    // one goal described properly, if anybody scored
+    const soloScorers = scored.filter(s => (tally[s.id] || 0) === 1);
+    if (soloScorers.length && U.chance(0.72)) {
+      const who = U.pick(soloScorers);
+      const trait = traitOf(who);
+      // his trait makes its own kind of goal far likelier
+      const way = pickWeighted(GOAL_WAYS, w => !w.trait || w.trait === trait || U.chance(0.28))
+        || GOAL_WAYS[0];
+      out.push({ k: 'goal', t: `${who.name} scored ${way.t}` });
+    }
+
+    // and something that was not a goal
+    if (U.chance(0.6)) {
+      const scoredIds = {};
+      scored.forEach(s => { scoredIds[s.id] = true; });
+      const outfield = xi.filter(x => x.pos !== 'GK');
+      const blanks = outfield.filter(x => !scoredIds[x.id]);
+      const bench = benchPlayers(g);
+      const subjectFor = who =>
+        who === 'keeper' ? keeper
+        : who === 'scorer' ? (scored.length ? U.pick(scored) : null)
+        : who === 'blank' ? (blanks.length ? U.pick(blanks) : null)
+        : who === 'bench' ? (bench.length ? U.pick(bench) : null)
+        : (outfield.length ? U.pick(outfield) : xi[0]);
+
+      const pool = ODD_MOMENTS.filter(m =>
+        (!m.when || m.when(entry)) && (m.plain || !!subjectFor(m.who)));
+      const m = pickWeighted(pool);
+      if (m) {
+        const subject = m.plain ? null : subjectFor(m.who);
+        out.push({ k: m.plain ? 'flat' : 'note',
+          t: m.plain ? m.t : m.t.replace('{p}', subject ? subject.name : club.name) });
+      }
+    }
+
+    // the shape of the game itself
+    if (entry.gf >= 4 && entry.ga === 0) out.push({ k: 'good', t: `${entry.gf}-0. They never got out of their half` });
+    else if (entry.ga >= 4) out.push({ k: 'bad', t: `Four conceded. That will take some explaining` });
+    else if (entry.result === 'W' && entry.gf - entry.ga === 1 && U.chance(0.4))
+      out.push({ k: 'good', t: 'Won it with the last kick of the game' });
+    else if (entry.result === 'D' && entry.gf >= 2 && U.chance(0.5))
+      out.push({ k: 'note', t: 'Two goals down and level by the end. They did not stop' });
+
+    return out.slice(0, 3);
   }
 
   function position(g) {
@@ -11895,6 +12062,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, TITLE_FLOOR, TOP_TARGET, bid, sell, squadWages, valueFor, wageFor,
+    matchMoments, GOAL_WAYS, ODD_MOMENTS,
     traitOf, traitBonus, TRAIT_GOALS,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor
@@ -12040,7 +12208,26 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         </div>
       </div>`;
 
-      return html + MUI.formCard(g);
+      return html + MUI.newsCard(g) + MUI.formCard(g);
+    },
+
+    /* What people are actually talking about — the hat-trick, the one from
+       thirty yards, the penalty he put over the bar. */
+    newsCard(g) {
+      const feed = (g.mgr.news || []).slice(0, g.mgr.newsOpen ? 24 : 6);
+      if (!feed.length) return '';
+      const dot = k => k === 'goal' ? 'goal' : k === 'good' ? 'up'
+        : k === 'bad' ? 'down' : k === 'flat' ? 'clock' : 'quote';
+      return `<div class="card"><h3>${ico('news')} The talk</h3>
+        ${feed.map(n => `<div class="mnews mn-${esc(n.k)}">
+          <span class="mn-ic">${ico(dot(n.k))}</span>
+          <span class="mn-t">${esc(n.t)}</span>
+          <span class="mn-w">${esc(n.score)} ${esc(n.opp)}</span>
+        </div>`).join('')}
+        ${(g.mgr.news || []).length > 6 ? `<button class="btn btn-ghost btn-sm"
+          data-act="mgrNewsMore" style="margin-top:8px;width:100%">${
+            g.mgr.newsOpen ? 'Show less' : 'Everything that has happened'}</button>` : ''}
+      </div>`;
     },
 
     /* Every job you have had, which is the only real record a manager keeps. */
@@ -14931,6 +15118,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         case 'mgrStyle': return Game.mgrStyle();
         case 'mgrFilter': return Game.mgrFilter(arg);
         case 'mgrTopMore': return Game.mgrTopMore();
+        case 'mgrNewsMore': return Game.mgrNewsMore();
         case 'mgrCard': return Game.mgrPlayerCard(arg);
         case 'mgrEra': return Game.mgrEra(arg);
         case 'mgrBid': return Game.mgrBid(arg);
@@ -15096,6 +15284,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
               <span>${U.esc(r.home ? opp.name : club.name)}</span></div>
           </div>
           ${r.scorers.length ? `<p class="muted" style="text-align:center">${U.esc(r.scorers.join(', '))}</p>` : ''}
+          ${(r.moments || []).length ? `<div class="mn-modal">${r.moments.map(m =>
+            `<div class="mnews mn-${U.esc(m.k)}"><span class="mn-t">${U.esc(m.t)}</span></div>`).join('')}</div>` : ''}
           <p class="dim" style="text-align:center;margin:0">Board confidence ${Math.round(g.mgr.board.confidence)}
             · ${U.ordinal(global.Manager.position(g))} in the table</p>`,
         actions: [{ label: global.Manager.seasonOver(g) ? 'See the board' : 'Next',
@@ -15394,6 +15584,12 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         UI.toast(`${me.name} in for ${out ? out.name : 'him'}.`, 'good');
       }
       State.save();
+      global.MUI.render();
+    },
+
+    mgrNewsMore() {
+      const g = State.game;
+      g.mgr.newsOpen = !g.mgr.newsOpen;
       global.MUI.render();
     },
 

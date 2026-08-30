@@ -21,15 +21,15 @@
     'Cristiano Ronaldo': [
       [2004, 'Sporting CP', 18, 74, 'The kid from Madeira', 'Flair'],
       [2007, 'Manchester United', 22, 89, 'Stepovers and a whole league rattled', 'Dribbler Expert'],
-      [2008, 'Manchester United', 23, 98, 'Forty-two goals, a European Cup, a Ballon d’Or', 'Dribbler Expert'],
-      [2014, 'Real Madrid', 29, 98, 'La Décima. The best on earth', 'Knuckleball Power Shot'],
+      [2008, 'Manchester United', 23, 99, 'Forty-two goals, a European Cup, a Ballon d’Or', 'Dribbler Expert'],
+      [2014, 'Real Madrid', 29, 99, 'La Décima. The best on earth', 'Knuckleball Power Shot'],
       [2018, 'Juventus', 33, 93, 'Still scoring, somewhere new', 'Aerial Threat'],
       [2026, 'Al Nassr', 41, 93, 'Forty-one, and nowhere near finished', 'Finisher']
     ],
     'Lionel Messi': [
       [2005, 'Barcelona', 18, 76, 'Seventeen and already impossible to mark', 'Flair'],
       [2009, 'Barcelona', 22, 93, 'Six trophies in a calendar year', 'Dribbler Expert'],
-      [2012, 'Barcelona', 25, 98, 'Ninety-one goals in a year', 'Playmaker'],
+      [2012, 'Barcelona', 25, 99, 'Ninety-one goals in a year', 'Playmaker'],
       [2015, 'Barcelona', 28, 97, 'The second treble', 'Playmaker'],
       [2022, 'Paris SG', 35, 94, 'A World Cup, finally', 'Set-Piece Specialist'],
       [2026, 'Inter Miami', 38, 95, 'Still the best passer in any room', 'Playmaker']

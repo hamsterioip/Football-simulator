@@ -1451,9 +1451,16 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.7';
+  const VERSION = '2.8';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.8', when: '30 Aug', items: [
+      'Both Ronaldo peak cards are 99 now — 2008 at United and 2014 at Madrid — and Messi\u2019s 2012 is a 99 as well',
+      'The Talk: a news feed of what actually happened out there. Hat-tricks, one from thirty yards, a header at the back post, a free kick over the wall, a penalty put over the bar, a keeper who kept them out on his own, a red card, a hamstring. Seventy-odd different things and rising',
+      'It is drawn from the real match — who scored, how many, whether you kept a clean sheet — and coloured by the trait the man carries, so a Power Shot signing really does hit them from distance',
+      'Sometimes nothing happens at all, because that is football too. About one match in seven',
+      'The talking points also appear on the result screen straight after the final whistle'
+    ] },
     { v: '2.7', when: '30 Aug', items: [
       'Fixed: sign every superstar and wait long enough and the Top Players board used to empty out completely — the whole card just disappeared with no explanation. Eleven seasons was enough to do it',
       'Football does not run out of great players. When the board thins, the next generation comes through: eighteen to twenty-three year olds who have become the best in the world, at real clubs, with their own trait and their own card, announced when they arrive',

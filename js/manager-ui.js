@@ -134,7 +134,26 @@
         </div>
       </div>`;
 
-      return html + MUI.formCard(g);
+      return html + MUI.newsCard(g) + MUI.formCard(g);
+    },
+
+    /* What people are actually talking about — the hat-trick, the one from
+       thirty yards, the penalty he put over the bar. */
+    newsCard(g) {
+      const feed = (g.mgr.news || []).slice(0, g.mgr.newsOpen ? 24 : 6);
+      if (!feed.length) return '';
+      const dot = k => k === 'goal' ? 'goal' : k === 'good' ? 'up'
+        : k === 'bad' ? 'down' : k === 'flat' ? 'clock' : 'quote';
+      return `<div class="card"><h3>${ico('news')} The talk</h3>
+        ${feed.map(n => `<div class="mnews mn-${esc(n.k)}">
+          <span class="mn-ic">${ico(dot(n.k))}</span>
+          <span class="mn-t">${esc(n.t)}</span>
+          <span class="mn-w">${esc(n.score)} ${esc(n.opp)}</span>
+        </div>`).join('')}
+        ${(g.mgr.news || []).length > 6 ? `<button class="btn btn-ghost btn-sm"
+          data-act="mgrNewsMore" style="margin-top:8px;width:100%">${
+            g.mgr.newsOpen ? 'Show less' : 'Everything that has happened'}</button>` : ''}
+      </div>`;
     },
 
     /* Every job you have had, which is the only real record a manager keeps. */
