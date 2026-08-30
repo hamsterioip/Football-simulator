@@ -398,9 +398,9 @@
 
     /* Fixed positions rather than random ones, so the sparkle never lands on
        the rating and never moves between renders. */
-    STARS: [[9, 26, 1.0, 0], [21, 68, .62, .7], [35, 16, .78, 1.5], [47, 82, .55, .35],
-            [58, 30, .9, 2.1], [69, 62, .68, 1.1], [79, 20, .82, .55], [88, 74, .6, 1.8],
-            [94, 38, .74, 2.6], [15, 48, .5, 2.3], [64, 12, .58, 1.35], [40, 52, .46, 3]],
+    STARS: [[9, 26, 1.0, 0], [21, 68, .62, .7], [35, 14, .78, 1.5], [11, 88, .55, .35],
+            [78, 34, .9, 2.1], [69, 62, .68, 1.1], [80, 18, .82, .55], [90, 70, .6, 1.8],
+            [94, 40, .74, 2.6], [13, 48, .5, 2.3], [62, 10, .58, 1.35], [26, 40, .46, 3]],
 
     eraStars() {
       return `<div class="era-stars" aria-hidden="true">${MUI.STARS.map(([x, y, sc, d], i) =>
@@ -456,6 +456,14 @@
       </g>`;
     },
 
+    /* Embers for the peak card — fixed lanes, staggered clocks. */
+    fcDust() {
+      const d = [[10, 0, 3.4, 0], [24, 1.2, 4.2, 1], [38, .5, 3.7, 0], [52, 2.1, 4.6, 1],
+                 [64, .9, 3.5, 0], [78, 2.6, 4.9, 1], [88, 1.6, 3.8, 0], [46, 3.1, 5.2, 1]];
+      return `<div class="fc-dust" aria-hidden="true">${d.map(([x, dl, du, v]) =>
+        `<i class="${v ? 'vio' : ''}" style="left:${x}%;--dl:${dl}s;--du:${du}s"></i>`).join('')}</div>`;
+    },
+
     eraPortrait(e, p, best, buy) {
       const uid = 'fc' + (MUI._fc = (MUI._fc || 0) + 1);
       const kit = e.club ? global.Crest.kitFor(e.club) : ['#5a6a76', '#93a5ab'];
@@ -505,7 +513,7 @@
               <ellipse cx="105" cy="130" rx="120" ry="120" fill="url(#${uid}burst)"/>
               ${stars.map(([x, y, r, rot], i) =>
                 star(x, y, r, rot, best ? '#ffd873' : '#c3b4ff', best ? (i % 2 ? .24 : .32) : (i % 2 ? .13 : .18))).join('')}
-              <g opacity="${best ? .3 : .16}">
+              <g class="fc-rays" opacity="${best ? .34 : .16}">
                 ${[0, 1, 2, 3, 4, 5].map(i =>
                   `<path d="M105 118 L${-40 + i * 60} 310 L${-4 + i * 60} 310 Z" fill="#fff" opacity=".35"/>`).join('')}
               </g>
@@ -533,7 +541,11 @@
             <span class="fc-dot"></span>
             ${e.club ? crest(e.club, 'crest-sm') : '<span class="fc-dot"></span>'}
           </div>
-          ${best ? '<div class="fc-shine"></div>' + MUI.eraStars() + '<div class="fc-tag">PEAK</div>' : ''}
+          ${best ? MUI.fcDust() + '<div class="fc-shine"></div>' + MUI.eraStars()
+            + '<div class="fc-ring" aria-hidden="true"><i></i></div>'
+            + '<div class="fc-glint g1" aria-hidden="true"></div>'
+            + '<div class="fc-glint g2" aria-hidden="true"></div>'
+            + '<div class="fc-tag">PEAK</div>' : ''}
         </div>
         ${buy ? `<div class="era-buy ${buy.active ? 'on' : buy.owned ? 'owned' : ''}">${
           buy.active ? ico('ok') + ' In your squad'

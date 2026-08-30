@@ -1451,9 +1451,14 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.3';
+  const VERSION = '2.4';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.4', when: '30 Aug', items: [
+      'The peak card moves like a real game card now: it floats on a slow 3D tilt, a gold-into-violet border runs around the frame, light rays turn behind him, embers drift up off the bottom edge, glints pop on the frame, and the name and rating shimmer',
+      'Also restored the twinkling stars, which had silently lost their styling in the 2.2 rework — twelve of them, back on their own clocks',
+      'Every bit of it switches off under reduced motion and the card stays marked in gold'
+    ] },
     { v: '2.3', when: '30 Aug', items: [
       'Fixed the vanishing superstar properly: a forty-one-year-old Ronaldo had a 41% chance of retiring the very first season after you signed him, and Benzema 56%. Nobody you have just signed retires before he has played a season for you',
       'Veterans last the way their quality says they should — a ninety-rated forty-two-year-old gives you years, an ordinary thirty-six-year-old still goes',

@@ -861,16 +861,67 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .fc-label{margin-top:7px;font-size:10.5px;line-height:1.35;color:var(--dim);text-align:center}
 .fc-card.fc-on{outline:2px solid var(--green);outline-offset:-2px}
 
-/* the peak one moves */
-.fc-best{box-shadow:0 0 0 1px rgba(255,201,77,.45),0 8px 28px rgba(139,86,214,.42),
-  0 6px 20px rgba(0,0,0,.5);animation:eraLift 3.2s ease-in-out infinite}
-.fc-best .fc-name{color:#ffe9b0}
+/* ---- the peak one moves like a game card ----
+   Layers, back to front: light rays turning behind him (in the SVG), the
+   twinkle field, embers rising off the bottom edge, the light bar, then a
+   live gold-into-violet border ring and glints popping on the frame. The
+   whole card floats on a slow 3D tilt. */
+.fc-best{box-shadow:0 0 0 1px rgba(255,201,77,.45),0 10px 34px rgba(139,86,214,.5),
+  0 0 26px rgba(255,201,77,.18),0 6px 20px rgba(0,0,0,.5);
+  animation:fcFloat 6.4s ease-in-out infinite;will-change:transform}
+.fc-best .fc-name{background:linear-gradient(100deg,#ffe9b0 15%,#fffef2 38%,#e8c8ff 62%,#ffe9b0 85%);
+  background-size:230% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.65));
+  animation:eraTag 5s ease-in-out infinite}
+.fc-best .fc-rating b{animation:fcNum 3.2s ease-in-out infinite}
+.fc-best .fc-rays{transform-box:view-box;transform-origin:105px 118px;
+  animation:fcRays 26s linear infinite}
 .fc-shine{position:absolute;inset:-40% -60%;z-index:3;pointer-events:none;
   background:linear-gradient(103deg,transparent 42%,rgba(255,255,255,.20) 46.5%,
     rgba(255,255,255,.85) 50%,rgba(255,255,255,.20) 53.5%,transparent 58%);
   animation:eraShine 3.2s ease-in-out infinite}
+/* the twinkle field — four-point stars on their own staggered clocks */
+.era-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.era-stars i{position:absolute;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
+  background:#fff8dd;opacity:0;transform:scale(var(--s));
+  filter:drop-shadow(0 0 5px rgba(255,226,150,.95));
+  clip-path:polygon(50% 0%,59% 41%,100% 50%,59% 59%,50% 100%,41% 59%,0% 50%,41% 41%);
+  animation:eraTwinkle 3.4s ease-in-out infinite;animation-delay:var(--d)}
+.era-stars i.sp{background:#ecd9ff;width:10px;height:10px;margin:-5px 0 0 -5px;
+  filter:drop-shadow(0 0 5px rgba(196,150,255,.95));animation-duration:4.2s}
+@keyframes eraTwinkle{0%,100%{opacity:0;transform:scale(calc(var(--s) * .25)) rotate(0deg)}
+  12%{opacity:1;transform:scale(var(--s)) rotate(30deg)}
+  30%{opacity:.42;transform:scale(calc(var(--s) * .72)) rotate(58deg)}
+  46%,99%{opacity:0;transform:scale(calc(var(--s) * .25)) rotate(80deg)}}
 .fc-best .era-stars{z-index:3;border-radius:16px}
-.fc-tag{position:absolute;z-index:4;top:0;right:0;padding:3px 8px 4px;
+
+/* the border is alive: a conic gold/violet gradient turning inside a ring mask */
+.fc-ring{position:absolute;inset:0;z-index:5;border-radius:16px;padding:2.6px;pointer-events:none;
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;overflow:hidden}
+.fc-ring i{position:absolute;inset:-62%;display:block;
+  background:conic-gradient(from 0deg,#ffd873,#a06bff 24%,#fff6d8 50%,#7b5cff 76%,#ffd873);
+  animation:eraSpin 5.5s linear infinite}
+
+/* embers drifting up off the bottom of the card */
+.fc-dust{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;border-radius:16px}
+.fc-dust i{position:absolute;bottom:-8px;width:4.5px;height:4.5px;border-radius:50%;
+  background:radial-gradient(circle,#fff7dc 0%,rgba(255,216,115,0) 72%);
+  opacity:0;animation:fcRise var(--du) linear infinite;animation-delay:var(--dl)}
+.fc-dust i.vio{background:radial-gradient(circle,#ecd9ff 0%,rgba(176,131,255,0) 72%)}
+
+/* glints popping on the frame itself */
+.fc-glint{position:absolute;z-index:6;width:15px;height:15px;pointer-events:none;background:#fff;
+  clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%);
+  filter:drop-shadow(0 0 6px rgba(255,240,200,.95));
+  opacity:0;animation:fcGlint 4.6s ease-in-out infinite}
+.fc-glint.g1{left:-2px;top:58px}
+.fc-glint.g2{right:0;bottom:64px;width:11px;height:11px;
+  animation-delay:2.3s;animation-duration:5.4s;
+  filter:drop-shadow(0 0 6px rgba(214,180,255,.95))}
+
+.fc-tag{position:absolute;z-index:6;top:0;right:0;padding:3px 8px 4px;
   font:800 8.5px/1 var(--font);letter-spacing:1.2px;color:#2a1d00;
   background:linear-gradient(110deg,#ffe08a,var(--gold) 40%,#d9b3ff 70%,#ffe08a);
   background-size:220% 100%;border-radius:0 15px 0 10px;
@@ -879,9 +930,21 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .fc-solo{display:flex;justify-content:center;margin:2px 0 4px}
 .fc-solo .fc-wrap{width:170px}
 .fc-solo .fc-card{width:170px}
+@keyframes fcFloat{
+  0%,100%{transform:perspective(760px) rotateY(-2.2deg) rotateX(1deg)}
+  50%{transform:perspective(760px) rotateY(2.2deg) rotateX(-.8deg) translateY(-3px)}}
+@keyframes fcRays{to{transform:rotate(360deg)}}
+@keyframes fcRise{0%{transform:translateY(0) scale(.55);opacity:0}
+  12%{opacity:.95}65%{opacity:.5}
+  100%{transform:translateY(-236px) scale(1.2);opacity:0}}
+@keyframes fcGlint{0%,84%,100%{opacity:0;transform:scale(.2) rotate(0deg)}
+  90%{opacity:1;transform:scale(1) rotate(40deg)}
+  95%{opacity:.35;transform:scale(.55) rotate(65deg)}}
+@keyframes fcNum{0%,100%{text-shadow:0 2px 8px rgba(0,0,0,.65),0 0 12px rgba(255,216,115,.3)}
+  50%{text-shadow:0 2px 8px rgba(0,0,0,.65),0 0 26px rgba(255,228,160,.9)}}
 @media (prefers-reduced-motion:reduce){
-  .fc-shine{display:none}
-  .fc-best,.fc-tag{animation:none}
+  .fc-shine,.fc-dust,.fc-glint,.era-stars{display:none}
+  .fc-best,.fc-tag,.fc-ring i,.fc-best .fc-rays,.fc-best .fc-name,.fc-best .fc-rating b{animation:none}
 }
 .tl-row.on .tl-dot{border-color:var(--green);background:var(--green);
   box-shadow:0 0 0 4px rgba(42,230,126,.16)}
@@ -2787,9 +2850,14 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.3';
+  const VERSION = '2.4';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.4', when: '30 Aug', items: [
+      'The peak card moves like a real game card now: it floats on a slow 3D tilt, a gold-into-violet border runs around the frame, light rays turn behind him, embers drift up off the bottom edge, glints pop on the frame, and the name and rating shimmer',
+      'Also restored the twinkling stars, which had silently lost their styling in the 2.2 rework — twelve of them, back on their own clocks',
+      'Every bit of it switches off under reduced motion and the card stays marked in gold'
+    ] },
     { v: '2.3', when: '30 Aug', items: [
       'Fixed the vanishing superstar properly: a forty-one-year-old Ronaldo had a 41% chance of retiring the very first season after you signed him, and Benzema 56%. Nobody you have just signed retires before he has played a season for you',
       'Veterans last the way their quality says they should — a ninety-rated forty-two-year-old gives you years, an ordinary thirty-six-year-old still goes',
@@ -12042,9 +12110,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     /* Fixed positions rather than random ones, so the sparkle never lands on
        the rating and never moves between renders. */
-    STARS: [[9, 26, 1.0, 0], [21, 68, .62, .7], [35, 16, .78, 1.5], [47, 82, .55, .35],
-            [58, 30, .9, 2.1], [69, 62, .68, 1.1], [79, 20, .82, .55], [88, 74, .6, 1.8],
-            [94, 38, .74, 2.6], [15, 48, .5, 2.3], [64, 12, .58, 1.35], [40, 52, .46, 3]],
+    STARS: [[9, 26, 1.0, 0], [21, 68, .62, .7], [35, 14, .78, 1.5], [11, 88, .55, .35],
+            [78, 34, .9, 2.1], [69, 62, .68, 1.1], [80, 18, .82, .55], [90, 70, .6, 1.8],
+            [94, 40, .74, 2.6], [13, 48, .5, 2.3], [62, 10, .58, 1.35], [26, 40, .46, 3]],
 
     eraStars() {
       return `<div class="era-stars" aria-hidden="true">${MUI.STARS.map(([x, y, sc, d], i) =>
@@ -12100,6 +12168,14 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       </g>`;
     },
 
+    /* Embers for the peak card — fixed lanes, staggered clocks. */
+    fcDust() {
+      const d = [[10, 0, 3.4, 0], [24, 1.2, 4.2, 1], [38, .5, 3.7, 0], [52, 2.1, 4.6, 1],
+                 [64, .9, 3.5, 0], [78, 2.6, 4.9, 1], [88, 1.6, 3.8, 0], [46, 3.1, 5.2, 1]];
+      return `<div class="fc-dust" aria-hidden="true">${d.map(([x, dl, du, v]) =>
+        `<i class="${v ? 'vio' : ''}" style="left:${x}%;--dl:${dl}s;--du:${du}s"></i>`).join('')}</div>`;
+    },
+
     eraPortrait(e, p, best, buy) {
       const uid = 'fc' + (MUI._fc = (MUI._fc || 0) + 1);
       const kit = e.club ? global.Crest.kitFor(e.club) : ['#5a6a76', '#93a5ab'];
@@ -12149,7 +12225,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
               <ellipse cx="105" cy="130" rx="120" ry="120" fill="url(#${uid}burst)"/>
               ${stars.map(([x, y, r, rot], i) =>
                 star(x, y, r, rot, best ? '#ffd873' : '#c3b4ff', best ? (i % 2 ? .24 : .32) : (i % 2 ? .13 : .18))).join('')}
-              <g opacity="${best ? .3 : .16}">
+              <g class="fc-rays" opacity="${best ? .34 : .16}">
                 ${[0, 1, 2, 3, 4, 5].map(i =>
                   `<path d="M105 118 L${-40 + i * 60} 310 L${-4 + i * 60} 310 Z" fill="#fff" opacity=".35"/>`).join('')}
               </g>
@@ -12177,7 +12253,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
             <span class="fc-dot"></span>
             ${e.club ? crest(e.club, 'crest-sm') : '<span class="fc-dot"></span>'}
           </div>
-          ${best ? '<div class="fc-shine"></div>' + MUI.eraStars() + '<div class="fc-tag">PEAK</div>' : ''}
+          ${best ? MUI.fcDust() + '<div class="fc-shine"></div>' + MUI.eraStars()
+            + '<div class="fc-ring" aria-hidden="true"><i></i></div>'
+            + '<div class="fc-glint g1" aria-hidden="true"></div>'
+            + '<div class="fc-glint g2" aria-hidden="true"></div>'
+            + '<div class="fc-tag">PEAK</div>' : ''}
         </div>
         ${buy ? `<div class="era-buy ${buy.active ? 'on' : buy.owned ? 'owned' : ''}">${
           buy.active ? ico('ok') + ' In your squad'
