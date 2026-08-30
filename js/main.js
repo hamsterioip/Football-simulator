@@ -414,6 +414,7 @@
         case 'mgrFilter': return Game.mgrFilter(arg);
         case 'mgrTopMore': return Game.mgrTopMore();
         case 'mgrCard': return Game.mgrPlayerCard(arg);
+        case 'mgrEra': return Game.mgrEra(arg);
         case 'mgrBid': return Game.mgrBid(arg);
         case 'mgrSell': return Game.mgrSell(arg);
         case 'mgrReview': return Game.mgrReview();
@@ -752,7 +753,56 @@
           m.querySelectorAll('[data-ptab]').forEach(el => el.onclick = () => {
             Game.mgrPlayerCard(id, el.dataset.ptab);
           });
+          // the era cards carry data-act, and nothing binds those inside a
+          // modal unless we ask — which is why tapping one did nothing
+          UI.bindActions(m);
         }
+      });
+    },
+
+    /* Buying a version of him. The fee comes out of the transfer budget, and
+       his wage becomes what that version would want. */
+    mgrEra(arg) {
+      const g = State.game, M = global.Manager, MUI = global.MUI;
+      const [id, ix] = String(arg).split(':');
+      const p = (g.squad || []).find(s => s.id === id);
+      if (!p) return;
+      const era = global.Timeline.for(p)[+ix];
+      if (!era) return;
+      if (M.eraActive(p, era)) return UI.toast('That is the version you already have.', '');
+
+      const price = M.eraPrice(p, era);
+      const wage = M.eraWage(p, era);
+      const room = g.mgr.wageBudget - M.squadWages(g) + (p.wage || 0);
+      const shortOfCash = price > g.mgr.budget;
+      const shortOfRoom = wage > room;
+
+      UI.modal({
+        title: era.now ? 'Back to himself' : `The ${era.year} ${p.name}`,
+        html: `<div class="pc-pane">${MUI.eraCard(era, p, false, null)}</div>
+          <div class="pc-rows" style="margin-top:10px">
+            <div class="pc-row"><span>Rating</span><b>${p.ovr} → ${era.ovr}</b></div>
+            <div class="pc-row"><span>Age</span><b>${p.age} → ${era.age}</b></div>
+            <div class="pc-row"><span>Fee</span><b class="${shortOfCash ? 'bad' : ''}">${
+              price ? U.cash(price) : 'Free'}</b></div>
+            <div class="pc-row"><span>Wages</span><b class="${shortOfRoom ? 'bad' : ''}">${
+              U.cash(wage)}/w</b></div>
+          </div>
+          ${shortOfCash ? '<p class="muted bad">More than you have in the budget.</p>' : ''}
+          ${shortOfRoom ? '<p class="muted bad">His wages will not fit. Sell someone first.</p>' : ''}`,
+        actions: (shortOfCash || shortOfRoom ? [] : [{
+          label: price ? `Sign him for ${U.cash(price)}` : 'Bring him back',
+          onClick: () => {
+            const r = M.buyEra(g, id, era);
+            if (!r.ok) return UI.toast(r.why || 'It did not happen.', 'bad');
+            State.save();
+            global.MUI.render();
+            UI.toast(era.now ? `${p.name} is himself again.`
+              : `${p.name} is the ${era.year} version now — ${era.ovr}.`, 'good');
+            setTimeout(() => Game.mgrPlayerCard(id, 'pTimeline'), 60);
+          }
+        }]).concat([{ label: 'Not now', cls: 'btn-ghost',
+          onClick: () => Game.mgrPlayerCard(id, 'pTimeline') }])
       });
     },
 

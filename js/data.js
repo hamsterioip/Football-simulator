@@ -1451,9 +1451,16 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.0';
+  const VERSION = '2.1';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.1', when: '30 Aug', items: [
+      'Fixed: the superstars you signed were gone again every new season. Anyone over 37 was silently deleted at the rollover — so the forty-one-year-old Ronaldo you paid nine figures for vanished — and the top-players board, which is rebuilt every summer, had no memory of who you already owned and put him straight back up for sale',
+      'Retirement is now about whether he is still any good, not just his birthday, and it is announced when it happens. A world-class veteran plays on for years; an ordinary thirty-six-year-old goes',
+      'Your squad no longer shrinks a man a year with nothing replacing them — the academy promotes youngsters each summer to keep you at twenty',
+      'Era cards are now buyable. Tap one on a player\u2019s timeline and pay from the transfer budget to bring that version of him back: the 2014 Ronaldo really does arrive as a 98-rated twenty-nine-year-old, on the wages that version would want',
+      'Once you have paid for a version you can switch to it for nothing — but only the rating comes back, not the years, so you cannot flip between two eras forever and stay young'
+    ] },
     { v: '2.0', when: '30 Aug', items: [
       'Players have a card of their own now — tap any name in your squad, or anyone on the top-players board, and you get his page',
       'And on it, a Timeline: every era of him there has ever been. Ronaldo from the kid at Sporting to the D\u00e9cima to forty-one at Al Nassr; Messi from seventeen to ninety-one goals in a calendar year. Club, year, age and rating for each one',

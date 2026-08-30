@@ -813,6 +813,20 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .tl-locked{text-align:center;padding:10px 4px}
 .tl-lock{font-size:30px;color:var(--gold);opacity:.8;margin-bottom:6px}
 .tl-foot{margin:10px 0 0;font-size:11px;line-height:1.45}
+.tl-foot + .tl-foot{margin-top:6px;opacity:.75}
+.era-pick{cursor:pointer}
+.era-pick:active{transform:scale(.985)}
+.tl-row.on .tl-dot{border-color:var(--green);background:var(--green);
+  box-shadow:0 0 0 4px rgba(42,230,126,.16)}
+.era-on{border-color:rgba(42,230,126,.55)}
+.era-buy{position:relative;z-index:3;margin:8px 0 0;padding:5px 8px;border-radius:7px;
+  text-align:center;font:800 11px/1.25 var(--font);letter-spacing:.2px;
+  background:rgba(255,255,255,.07);color:var(--txt)}
+.era-buy.owned{background:rgba(90,168,255,.14);color:var(--blue)}
+.era-buy.on{background:rgba(42,230,126,.16);color:var(--green);
+  display:flex;align-items:center;justify-content:center;gap:5px}
+.era-buy .ic{width:13px;height:13px}
+.era-best .era-buy{background:rgba(0,0,0,.34);color:#ffe08a}
 
 .timeline{position:relative;display:flex;flex-direction:column;gap:10px}
 .tl-row{display:flex;gap:10px;align-items:stretch}

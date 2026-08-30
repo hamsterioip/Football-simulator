@@ -358,9 +358,13 @@
 
   function topPlayers(g) {
     const State = global.State, U = global.U;
-    if (g.mgr.topCache && g.mgr.topSeason === g.world.year) {
-      return g.mgr.topCache.filter(s => !s.signed && !s.gone);
-    }
+    // whoever is already in your squad is not for sale to you — the board is
+    // rebuilt every summer from the world's stars and has no memory of what
+    // you bought last year, so this is what stops him reappearing
+    const mine = {};
+    (g.squad || []).forEach(s => { mine[s.name] = true; });
+    const live = list => list.filter(s => !s.signed && !s.gone && !mine[s.name]);
+    if (g.mgr.topCache && g.mgr.topSeason === g.world.year) return live(g.mgr.topCache);
     const me = State.club(g.mgr.club);
     const out = [];
     Object.values(g.world.clubs).forEach(c => {
@@ -385,7 +389,7 @@
     out.sort((a, b) => b.ovr - a.ovr || b.ask - a.ask);
     g.mgr.topCache = out;
     g.mgr.topSeason = g.world.year;
-    return out;
+    return live(out);
   }
 
   /* One listing from a club's squad, priced. */
@@ -494,8 +498,12 @@
       g.mgr.marketSize = pool.length;
       g.mgr.marketSeason = g.world.year;
     }
-    // the genuinely elite have their own board; they do not also appear here
-    let list = g.mgr.marketCache.filter(s => !s.signed && !s.gone && !(s.star && s.ovr >= ELITE));
+    // the genuinely elite have their own board; they do not also appear here,
+    // and neither does anybody already on your own books
+    const mine = {};
+    (g.squad || []).forEach(x => { mine[x.name] = true; });
+    let list = g.mgr.marketCache.filter(s =>
+      !s.signed && !s.gone && !mine[s.name] && !(s.star && s.ovr >= ELITE));
     if (filter && filter.pos) list = list.filter(s => s.pos === filter.pos);
     if (filter && filter.max) list = list.filter(s => s.ask <= filter.max);
     if (filter && filter.afford) {
@@ -572,6 +580,86 @@
     return g.squad.reduce((a, s) => a + (s.wage || 0), 0);
   }
 
+  /* ---------------- bringing a version of him back ----------------
+     You own the man as he is today. Paying for an era swaps him for the
+     version of himself that played it — the rating and the age of that year.
+     It costs the difference between what he is and what he was, and once you
+     have paid for a version you can switch back to it for nothing. */
+
+  /* His last era is him as he is today: always his, never charged for. */
+  function eraOwned(s, era) {
+    return !!era.now || (s.erasOwned || []).indexOf(era.year) >= 0;
+  }
+
+  function eraActive(s, era) {
+    return s.era ? s.era.year === era.year : !!era.now;
+  }
+
+  /* What it costs to bring that version in. Nothing for one you already have. */
+  function eraPrice(s, era) {
+    const U = global.U;
+    if (eraOwned(s, era)) return 0;
+    const nowFee = eliteFee(Math.max(s.baseOvr || s.ovr, 55), s.baseAge || s.age);
+    const thenFee = eliteFee(Math.max(era.ovr, 55), era.age);
+    const gap = thenFee - nowFee;
+    if (gap <= 0) return 0;                     // a lesser version is free to try
+    return Math.max(1000000, Math.round(gap / 500000) * 500000);
+  }
+
+  function eraWage(s, era) {
+    const probe = { ovr: era.ovr, age: era.age };
+    return Math.max(wageFor(probe), era.ovr >= ELITE ? eliteWage(era.ovr) : 0);
+  }
+
+  /* Swap him for that version. Returns why not, if not. */
+  function buyEra(g, id, era) {
+    const U = global.U, State = global.State;
+    const s = g.squad.find(x => x.id === id);
+    if (!s) return { ok: false, why: 'He is not yours.' };
+
+    if (eraActive(s, era)) return { ok: false, why: 'He is already this version.' };
+    // going back to himself costs nothing and needs no room
+    if (era.now) return Object.assign({ price: 0 }, restoreEra(g, id));
+    // remember who he actually is, the first time we change him
+    if (s.baseOvr == null) { s.baseOvr = s.ovr; s.baseAge = s.age; }
+
+    const price = eraPrice(s, era);
+    const wage = eraWage(s, era);
+    const room = g.mgr.wageBudget - squadWages(g) + (s.wage || 0);
+    if (price > g.mgr.budget) return { ok: false, why: 'You cannot afford that version of him.' };
+    if (wage > room) return { ok: false, why: `He would want ${U.cash(wage)}/week. Sell someone first.` };
+
+    g.mgr.budget -= price;
+    s.erasOwned = (s.erasOwned || []);
+    if (s.erasOwned.indexOf(era.year) < 0 && price > 0) s.erasOwned.push(era.year);
+    s.era = { year: era.year, label: era.label, club: era.club, ovr: era.ovr, age: era.age };
+    s.ovr = era.ovr;
+    // Paying for a version buys the years back with it. Switching to one you
+    // already own gives you the rating only — otherwise you could flip between
+    // two owned eras forever and never grow old.
+    s.age = price > 0 ? era.age : Math.max(s.age, era.age);
+    s.wage = wage;
+    s.value = era.ovr >= ELITE ? eliteFee(era.ovr, era.age) : valueFor(s);
+    if (price > 0) {
+      State.news(`${State.club(g.mgr.club).name} unveil the ${era.year} ${s.name}`, 'good', null, 'star');
+      g.mgr.log.unshift({ t: `Brought back the ${era.year} ${s.name} (${era.ovr}) for ${U.cash(price)}`, k: 'in' });
+    }
+    return { ok: true, price, wage };
+  }
+
+  /* Back to the man you actually signed, free, whenever you like. */
+  function restoreEra(g, id) {
+    const s = g.squad.find(x => x.id === id);
+    if (!s) return { ok: false, why: 'He is not yours.' };
+    if (s.baseOvr == null) { s.era = null; return { ok: true }; }
+    s.ovr = s.baseOvr;
+    s.age = Math.max(s.age, s.baseAge);   // the years he has actually lived
+    s.era = null;
+    s.wage = Math.max(wageFor(s), s.ovr >= ELITE ? eliteWage(s.ovr) : 0);
+    s.value = s.ovr >= ELITE ? eliteFee(s.ovr, s.age) : valueFor(s);
+    return { ok: true };
+  }
+
   /* ---------------- the board ---------------- */
 
   function seasonReview(g) {
@@ -628,11 +716,65 @@
     g.squad.forEach(s => {
       s.age++;
       const peak = s.age <= 24 ? U.int(1, 3) : s.age <= 29 ? U.int(0, 1) : s.age <= 32 ? -U.int(0, 2) : -U.int(1, 4);
-      s.ovr = U.clamp(s.ovr + peak, 45, 96);
-      s.value = valueFor(s); s.wage = wageFor(s);
+      // 99, not 96: an era signing can be a 98 and must not be filed down to
+      // the ceiling of an ordinary squad player the first time a year turns
+      s.ovr = U.clamp(s.ovr + peak, 45, 99);
+      s.value = s.ovr >= ELITE ? eliteFee(s.ovr, s.age) : valueFor(s);
+      s.wage = Math.max(wageFor(s), s.ovr >= ELITE ? eliteWage(s.ovr) : 0);
       s.fit = 100;
     });
-    g.squad = g.squad.filter(s => s.age <= 37);
+
+    /* Retirement used to be a silent age filter, which deleted the
+       forty-one-year-old you had just paid nine figures for and put him
+       straight back on the market to be bought again. Now it depends on
+       whether he is still any good, and it is announced either way. */
+    const retiring = g.squad.filter(s => {
+      if (s.age < 36) return false;
+      if (s.age >= 44) return true;
+      // how good he still is matters far more than the number of birthdays:
+      // an ordinary thirty-six-year-old goes, a world-class one plays on
+      const stay = U.clamp(0.15 + (s.ovr - 78) * 0.075 - (s.age - 37) * 0.10, 0.02, 0.95);
+      return !U.chance(stay);
+    });
+    retiring.forEach(s => {
+      State.news(`${s.name} retires at ${s.age}`, 'info', null, 'legacy');
+      g.mgr.log.unshift({ t: `${s.name} (${s.pos} ${s.ovr}) retired, aged ${s.age}`, k: 'out' });
+    });
+    if (retiring.length) {
+      const ids = retiring.map(s => s.id);
+      g.squad = g.squad.filter(s => ids.indexOf(s.id) < 0);
+      g.mgr.retired = retiring.map(s => ({ name: s.name, age: s.age, ovr: s.ovr }));
+    } else g.mgr.retired = [];
+
+    /* Somebody has to replace them. Without this the squad quietly shrank a
+       man a year until you could not field a bench. */
+    if (g.squad.length < 20) {
+      const club = State.club(g.mgr.club);
+      const need = 20 - g.squad.length;
+      const seen = {};
+      g.squad.forEach(s => { seen[s.name] = true; });
+      const shape = g.squad.map(s => s.pos);
+      const pool = squadFor(club, 22).filter(s => !seen[s.name]);
+      const young = [];
+      pool.forEach(s => {
+        if (young.length >= need) return;
+        if (seen[s.name]) return;
+        s.age = U.int(17, 21);
+        s.ovr = U.clamp(Math.round(club.rating - U.int(6, 14)), 45, 88);
+        s.value = valueFor(s); s.wage = wageFor(s);
+        s.apps = 0; s.goals = 0; s.assists = 0; s.ratingSum = 0; s.fit = 100;
+        s.shirt = freeShirt(g);
+        s.academy = true;
+        seen[s.name] = true;
+        g.squad.push(s);
+        young.push(s);
+      });
+      if (young.length) {
+        State.news(`${young.length} from the ${club.name} academy step up to the first team`,
+          'info', null, 'academy');
+        g.mgr.log.unshift({ t: `${young.length} promoted from the academy`, k: 'in' });
+      }
+    }
     Object.values(g.world.clubs).forEach(c => {
       c.rating = U.clamp(Math.round(c.baseRating + (c.drift || 0) + U.gauss(0, 2)), 55, 93);
       c.form = [];
@@ -663,6 +805,7 @@
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, bid, sell, squadWages, valueFor, wageFor,
+    eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor
   };
 })(window);

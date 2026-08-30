@@ -828,6 +828,20 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .tl-locked{text-align:center;padding:10px 4px}
 .tl-lock{font-size:30px;color:var(--gold);opacity:.8;margin-bottom:6px}
 .tl-foot{margin:10px 0 0;font-size:11px;line-height:1.45}
+.tl-foot + .tl-foot{margin-top:6px;opacity:.75}
+.era-pick{cursor:pointer}
+.era-pick:active{transform:scale(.985)}
+.tl-row.on .tl-dot{border-color:var(--green);background:var(--green);
+  box-shadow:0 0 0 4px rgba(42,230,126,.16)}
+.era-on{border-color:rgba(42,230,126,.55)}
+.era-buy{position:relative;z-index:3;margin:8px 0 0;padding:5px 8px;border-radius:7px;
+  text-align:center;font:800 11px/1.25 var(--font);letter-spacing:.2px;
+  background:rgba(255,255,255,.07);color:var(--txt)}
+.era-buy.owned{background:rgba(90,168,255,.14);color:var(--blue)}
+.era-buy.on{background:rgba(42,230,126,.16);color:var(--green);
+  display:flex;align-items:center;justify-content:center;gap:5px}
+.era-buy .ic{width:13px;height:13px}
+.era-best .era-buy{background:rgba(0,0,0,.34);color:#ffe08a}
 
 .timeline{position:relative;display:flex;flex-direction:column;gap:10px}
 .tl-row{display:flex;gap:10px;align-items:stretch}
@@ -2782,9 +2796,16 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.0';
+  const VERSION = '2.1';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.1', when: '30 Aug', items: [
+      'Fixed: the superstars you signed were gone again every new season. Anyone over 37 was silently deleted at the rollover — so the forty-one-year-old Ronaldo you paid nine figures for vanished — and the top-players board, which is rebuilt every summer, had no memory of who you already owned and put him straight back up for sale',
+      'Retirement is now about whether he is still any good, not just his birthday, and it is announced when it happens. A world-class veteran plays on for years; an ordinary thirty-six-year-old goes',
+      'Your squad no longer shrinks a man a year with nothing replacing them — the academy promotes youngsters each summer to keep you at twenty',
+      'Era cards are now buyable. Tap one on a player\u2019s timeline and pay from the transfer budget to bring that version of him back: the 2014 Ronaldo really does arrive as a 98-rated twenty-nine-year-old, on the wages that version would want',
+      'Once you have paid for a version you can switch to it for nothing — but only the rating comes back, not the years, so you cannot flip between two eras forever and stay young'
+    ] },
     { v: '2.0', when: '30 Aug', items: [
       'Players have a card of their own now — tap any name in your squad, or anyone on the top-players board, and you get his page',
       'And on it, a Timeline: every era of him there has ever been. Ronaldo from the kid at Sporting to the D\u00e9cima to forty-one at Al Nassr; Messi from seventeen to ninety-one goals in a calendar year. Club, year, age and rating for each one',
@@ -10770,9 +10791,10 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       if (!p) return [];
       const raw = PLAYER_ERAS[p.name];
       const rows = raw ? raw.map(r => r.slice()) : generated(p);
-      return rows.map(([year, club, age, ovr, label]) => ({
-        year, club, age, ovr, label,
-        now: label === 'Now' || /^Now\b/.test(label || '') || year === (raw ? raw[raw.length - 1][0] : 0)
+      // the last entry is always him as he is today — that is the one you own
+      // by default, and the one every other era is priced against
+      return rows.map(([year, club, age, ovr, label], i) => ({
+        year, club, age, ovr, label, index: i, now: i === rows.length - 1
       }));
     },
 
@@ -11153,9 +11175,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   function topPlayers(g) {
     const State = global.State, U = global.U;
-    if (g.mgr.topCache && g.mgr.topSeason === g.world.year) {
-      return g.mgr.topCache.filter(s => !s.signed && !s.gone);
-    }
+    // whoever is already in your squad is not for sale to you — the board is
+    // rebuilt every summer from the world's stars and has no memory of what
+    // you bought last year, so this is what stops him reappearing
+    const mine = {};
+    (g.squad || []).forEach(s => { mine[s.name] = true; });
+    const live = list => list.filter(s => !s.signed && !s.gone && !mine[s.name]);
+    if (g.mgr.topCache && g.mgr.topSeason === g.world.year) return live(g.mgr.topCache);
     const me = State.club(g.mgr.club);
     const out = [];
     Object.values(g.world.clubs).forEach(c => {
@@ -11180,7 +11206,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     out.sort((a, b) => b.ovr - a.ovr || b.ask - a.ask);
     g.mgr.topCache = out;
     g.mgr.topSeason = g.world.year;
-    return out;
+    return live(out);
   }
 
   /* One listing from a club's squad, priced. */
@@ -11289,8 +11315,12 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       g.mgr.marketSize = pool.length;
       g.mgr.marketSeason = g.world.year;
     }
-    // the genuinely elite have their own board; they do not also appear here
-    let list = g.mgr.marketCache.filter(s => !s.signed && !s.gone && !(s.star && s.ovr >= ELITE));
+    // the genuinely elite have their own board; they do not also appear here,
+    // and neither does anybody already on your own books
+    const mine = {};
+    (g.squad || []).forEach(x => { mine[x.name] = true; });
+    let list = g.mgr.marketCache.filter(s =>
+      !s.signed && !s.gone && !mine[s.name] && !(s.star && s.ovr >= ELITE));
     if (filter && filter.pos) list = list.filter(s => s.pos === filter.pos);
     if (filter && filter.max) list = list.filter(s => s.ask <= filter.max);
     if (filter && filter.afford) {
@@ -11367,6 +11397,86 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     return g.squad.reduce((a, s) => a + (s.wage || 0), 0);
   }
 
+  /* ---------------- bringing a version of him back ----------------
+     You own the man as he is today. Paying for an era swaps him for the
+     version of himself that played it — the rating and the age of that year.
+     It costs the difference between what he is and what he was, and once you
+     have paid for a version you can switch back to it for nothing. */
+
+  /* His last era is him as he is today: always his, never charged for. */
+  function eraOwned(s, era) {
+    return !!era.now || (s.erasOwned || []).indexOf(era.year) >= 0;
+  }
+
+  function eraActive(s, era) {
+    return s.era ? s.era.year === era.year : !!era.now;
+  }
+
+  /* What it costs to bring that version in. Nothing for one you already have. */
+  function eraPrice(s, era) {
+    const U = global.U;
+    if (eraOwned(s, era)) return 0;
+    const nowFee = eliteFee(Math.max(s.baseOvr || s.ovr, 55), s.baseAge || s.age);
+    const thenFee = eliteFee(Math.max(era.ovr, 55), era.age);
+    const gap = thenFee - nowFee;
+    if (gap <= 0) return 0;                     // a lesser version is free to try
+    return Math.max(1000000, Math.round(gap / 500000) * 500000);
+  }
+
+  function eraWage(s, era) {
+    const probe = { ovr: era.ovr, age: era.age };
+    return Math.max(wageFor(probe), era.ovr >= ELITE ? eliteWage(era.ovr) : 0);
+  }
+
+  /* Swap him for that version. Returns why not, if not. */
+  function buyEra(g, id, era) {
+    const U = global.U, State = global.State;
+    const s = g.squad.find(x => x.id === id);
+    if (!s) return { ok: false, why: 'He is not yours.' };
+
+    if (eraActive(s, era)) return { ok: false, why: 'He is already this version.' };
+    // going back to himself costs nothing and needs no room
+    if (era.now) return Object.assign({ price: 0 }, restoreEra(g, id));
+    // remember who he actually is, the first time we change him
+    if (s.baseOvr == null) { s.baseOvr = s.ovr; s.baseAge = s.age; }
+
+    const price = eraPrice(s, era);
+    const wage = eraWage(s, era);
+    const room = g.mgr.wageBudget - squadWages(g) + (s.wage || 0);
+    if (price > g.mgr.budget) return { ok: false, why: 'You cannot afford that version of him.' };
+    if (wage > room) return { ok: false, why: `He would want ${U.cash(wage)}/week. Sell someone first.` };
+
+    g.mgr.budget -= price;
+    s.erasOwned = (s.erasOwned || []);
+    if (s.erasOwned.indexOf(era.year) < 0 && price > 0) s.erasOwned.push(era.year);
+    s.era = { year: era.year, label: era.label, club: era.club, ovr: era.ovr, age: era.age };
+    s.ovr = era.ovr;
+    // Paying for a version buys the years back with it. Switching to one you
+    // already own gives you the rating only — otherwise you could flip between
+    // two owned eras forever and never grow old.
+    s.age = price > 0 ? era.age : Math.max(s.age, era.age);
+    s.wage = wage;
+    s.value = era.ovr >= ELITE ? eliteFee(era.ovr, era.age) : valueFor(s);
+    if (price > 0) {
+      State.news(`${State.club(g.mgr.club).name} unveil the ${era.year} ${s.name}`, 'good', null, 'star');
+      g.mgr.log.unshift({ t: `Brought back the ${era.year} ${s.name} (${era.ovr}) for ${U.cash(price)}`, k: 'in' });
+    }
+    return { ok: true, price, wage };
+  }
+
+  /* Back to the man you actually signed, free, whenever you like. */
+  function restoreEra(g, id) {
+    const s = g.squad.find(x => x.id === id);
+    if (!s) return { ok: false, why: 'He is not yours.' };
+    if (s.baseOvr == null) { s.era = null; return { ok: true }; }
+    s.ovr = s.baseOvr;
+    s.age = Math.max(s.age, s.baseAge);   // the years he has actually lived
+    s.era = null;
+    s.wage = Math.max(wageFor(s), s.ovr >= ELITE ? eliteWage(s.ovr) : 0);
+    s.value = s.ovr >= ELITE ? eliteFee(s.ovr, s.age) : valueFor(s);
+    return { ok: true };
+  }
+
   /* ---------------- the board ---------------- */
 
   function seasonReview(g) {
@@ -11423,11 +11533,65 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     g.squad.forEach(s => {
       s.age++;
       const peak = s.age <= 24 ? U.int(1, 3) : s.age <= 29 ? U.int(0, 1) : s.age <= 32 ? -U.int(0, 2) : -U.int(1, 4);
-      s.ovr = U.clamp(s.ovr + peak, 45, 96);
-      s.value = valueFor(s); s.wage = wageFor(s);
+      // 99, not 96: an era signing can be a 98 and must not be filed down to
+      // the ceiling of an ordinary squad player the first time a year turns
+      s.ovr = U.clamp(s.ovr + peak, 45, 99);
+      s.value = s.ovr >= ELITE ? eliteFee(s.ovr, s.age) : valueFor(s);
+      s.wage = Math.max(wageFor(s), s.ovr >= ELITE ? eliteWage(s.ovr) : 0);
       s.fit = 100;
     });
-    g.squad = g.squad.filter(s => s.age <= 37);
+
+    /* Retirement used to be a silent age filter, which deleted the
+       forty-one-year-old you had just paid nine figures for and put him
+       straight back on the market to be bought again. Now it depends on
+       whether he is still any good, and it is announced either way. */
+    const retiring = g.squad.filter(s => {
+      if (s.age < 36) return false;
+      if (s.age >= 44) return true;
+      // how good he still is matters far more than the number of birthdays:
+      // an ordinary thirty-six-year-old goes, a world-class one plays on
+      const stay = U.clamp(0.15 + (s.ovr - 78) * 0.075 - (s.age - 37) * 0.10, 0.02, 0.95);
+      return !U.chance(stay);
+    });
+    retiring.forEach(s => {
+      State.news(`${s.name} retires at ${s.age}`, 'info', null, 'legacy');
+      g.mgr.log.unshift({ t: `${s.name} (${s.pos} ${s.ovr}) retired, aged ${s.age}`, k: 'out' });
+    });
+    if (retiring.length) {
+      const ids = retiring.map(s => s.id);
+      g.squad = g.squad.filter(s => ids.indexOf(s.id) < 0);
+      g.mgr.retired = retiring.map(s => ({ name: s.name, age: s.age, ovr: s.ovr }));
+    } else g.mgr.retired = [];
+
+    /* Somebody has to replace them. Without this the squad quietly shrank a
+       man a year until you could not field a bench. */
+    if (g.squad.length < 20) {
+      const club = State.club(g.mgr.club);
+      const need = 20 - g.squad.length;
+      const seen = {};
+      g.squad.forEach(s => { seen[s.name] = true; });
+      const shape = g.squad.map(s => s.pos);
+      const pool = squadFor(club, 22).filter(s => !seen[s.name]);
+      const young = [];
+      pool.forEach(s => {
+        if (young.length >= need) return;
+        if (seen[s.name]) return;
+        s.age = U.int(17, 21);
+        s.ovr = U.clamp(Math.round(club.rating - U.int(6, 14)), 45, 88);
+        s.value = valueFor(s); s.wage = wageFor(s);
+        s.apps = 0; s.goals = 0; s.assists = 0; s.ratingSum = 0; s.fit = 100;
+        s.shirt = freeShirt(g);
+        s.academy = true;
+        seen[s.name] = true;
+        g.squad.push(s);
+        young.push(s);
+      });
+      if (young.length) {
+        State.news(`${young.length} from the ${club.name} academy step up to the first team`,
+          'info', null, 'academy');
+        g.mgr.log.unshift({ t: `${young.length} promoted from the academy`, k: 'in' });
+      }
+    }
     Object.values(g.world.clubs).forEach(c => {
       c.rating = U.clamp(Math.round(c.baseRating + (c.drift || 0) + U.gauss(0, 2)), 55, 93);
       c.form = [];
@@ -11458,6 +11622,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, bid, sell, squadWages, valueFor, wageFor,
+    eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor
   };
 })(window);
@@ -11875,11 +12040,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       ).join('')}</div>`;
     },
 
-    eraCard(e, p, best) {
+    eraCard(e, p, best, buy) {
       const kit = e.club ? global.Crest.kitFor(e.club) : ['#2b3a44', '#8fa3ad'];
       const ink = best ? '#2a1b00' : MUI.readable(kit[0]);
       const badge = best ? { a: '#ffd257', b: '#a06bff' } : { a: kit[0], b: kit[1] };
-      return `<div class="era-card${best ? ' era-best' : ''}">
+      const act = buy ? ` data-act="mgrEra" data-arg="${p.id}:${e.index}"` : '';
+      return `<div class="era-card${best ? ' era-best' : ''}${buy ? ' era-pick' : ''}${
+          buy && buy.active ? ' era-on' : ''}"${act}>
         ${best ? '<div class="era-prism"></div><div class="era-glow"></div>'
                + MUI.eraStars() + '<div class="era-shine"></div>' : ''}
         <div class="era-body">
@@ -11893,6 +12060,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           </div>
         </div>
         ${best ? '<div class="era-tag">PEAK</div>' : ''}
+        ${buy ? `<div class="era-buy ${buy.active ? 'on' : buy.owned ? 'owned' : ''}">${
+          buy.active ? ico('ok') + ' In your squad'
+            : buy.owned ? 'Switch back — free'
+            : buy.price ? U().cash(buy.price)
+            : 'Free — he was worse then'}</div>` : ''}
       </div>`;
     },
 
@@ -11908,17 +12080,27 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           <p class="dim">${eras.length} eras on record.</p>
         </div>`;
       }
-      const span = eras[eras.length - 1].ovr - eras[0].ovr;
+      const g = State().game;
+      const budget = g.mgr.budget;
+      const room = g.mgr.wageBudget - M().squadWages(g) + (p.wage || 0);
+      const info = eras.map(e => ({
+        active: M().eraActive(p, e), owned: M().eraOwned(p, e),
+        price: M().eraPrice(p, e), wage: M().eraWage(p, e)
+      }));
+      const canAny = info.some(b => !b.active && (b.owned || b.price <= budget) && b.wage <= room);
       return `<div class="timeline">
-        ${eras.map((e, i) => `<div class="tl-row${i === best ? ' peak' : ''}">
+        ${eras.map((e, i) => `<div class="tl-row${i === best ? ' peak' : ''}${
+            info[i].active ? ' on' : ''}">
           <div class="tl-rail"><span class="tl-dot"></span></div>
-          ${MUI.eraCard(e, p, i === best)}
+          ${MUI.eraCard(e, p, i === best, info[i])}
         </div>`).join('')}
       </div>
+      <p class="dim tl-foot">Tap an era to bring that version of him back — it comes out of the
+        transfer budget, and once you have paid for a version you can switch to it for nothing.
+        ${canAny ? '' : 'Nothing here is within your budget yet.'}</p>
       <p class="dim tl-foot">${global.Timeline.curated(p)
         ? 'Clubs and years are a matter of record. The ratings are this game’s opinion.'
-        : 'Reconstructed from his age and what he is now — no club history on file for him.'}
-        ${span > 0 ? ` He has come ${span} points since he started.` : ''}</p>`;
+        : 'Reconstructed from his age and what he is now — no club history on file for him.'}</p>`;
     },
 
     playerTabs: [
@@ -14350,6 +14532,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         case 'mgrFilter': return Game.mgrFilter(arg);
         case 'mgrTopMore': return Game.mgrTopMore();
         case 'mgrCard': return Game.mgrPlayerCard(arg);
+        case 'mgrEra': return Game.mgrEra(arg);
         case 'mgrBid': return Game.mgrBid(arg);
         case 'mgrSell': return Game.mgrSell(arg);
         case 'mgrReview': return Game.mgrReview();
@@ -14688,7 +14871,56 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           m.querySelectorAll('[data-ptab]').forEach(el => el.onclick = () => {
             Game.mgrPlayerCard(id, el.dataset.ptab);
           });
+          // the era cards carry data-act, and nothing binds those inside a
+          // modal unless we ask — which is why tapping one did nothing
+          UI.bindActions(m);
         }
+      });
+    },
+
+    /* Buying a version of him. The fee comes out of the transfer budget, and
+       his wage becomes what that version would want. */
+    mgrEra(arg) {
+      const g = State.game, M = global.Manager, MUI = global.MUI;
+      const [id, ix] = String(arg).split(':');
+      const p = (g.squad || []).find(s => s.id === id);
+      if (!p) return;
+      const era = global.Timeline.for(p)[+ix];
+      if (!era) return;
+      if (M.eraActive(p, era)) return UI.toast('That is the version you already have.', '');
+
+      const price = M.eraPrice(p, era);
+      const wage = M.eraWage(p, era);
+      const room = g.mgr.wageBudget - M.squadWages(g) + (p.wage || 0);
+      const shortOfCash = price > g.mgr.budget;
+      const shortOfRoom = wage > room;
+
+      UI.modal({
+        title: era.now ? 'Back to himself' : `The ${era.year} ${p.name}`,
+        html: `<div class="pc-pane">${MUI.eraCard(era, p, false, null)}</div>
+          <div class="pc-rows" style="margin-top:10px">
+            <div class="pc-row"><span>Rating</span><b>${p.ovr} → ${era.ovr}</b></div>
+            <div class="pc-row"><span>Age</span><b>${p.age} → ${era.age}</b></div>
+            <div class="pc-row"><span>Fee</span><b class="${shortOfCash ? 'bad' : ''}">${
+              price ? U.cash(price) : 'Free'}</b></div>
+            <div class="pc-row"><span>Wages</span><b class="${shortOfRoom ? 'bad' : ''}">${
+              U.cash(wage)}/w</b></div>
+          </div>
+          ${shortOfCash ? '<p class="muted bad">More than you have in the budget.</p>' : ''}
+          ${shortOfRoom ? '<p class="muted bad">His wages will not fit. Sell someone first.</p>' : ''}`,
+        actions: (shortOfCash || shortOfRoom ? [] : [{
+          label: price ? `Sign him for ${U.cash(price)}` : 'Bring him back',
+          onClick: () => {
+            const r = M.buyEra(g, id, era);
+            if (!r.ok) return UI.toast(r.why || 'It did not happen.', 'bad');
+            State.save();
+            global.MUI.render();
+            UI.toast(era.now ? `${p.name} is himself again.`
+              : `${p.name} is the ${era.year} version now — ${era.ovr}.`, 'good');
+            setTimeout(() => Game.mgrPlayerCard(id, 'pTimeline'), 60);
+          }
+        }]).concat([{ label: 'Not now', cls: 'btn-ghost',
+          onClick: () => Game.mgrPlayerCard(id, 'pTimeline') }])
       });
     },
 

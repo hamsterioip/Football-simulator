@@ -408,11 +408,13 @@
       ).join('')}</div>`;
     },
 
-    eraCard(e, p, best) {
+    eraCard(e, p, best, buy) {
       const kit = e.club ? global.Crest.kitFor(e.club) : ['#2b3a44', '#8fa3ad'];
       const ink = best ? '#2a1b00' : MUI.readable(kit[0]);
       const badge = best ? { a: '#ffd257', b: '#a06bff' } : { a: kit[0], b: kit[1] };
-      return `<div class="era-card${best ? ' era-best' : ''}">
+      const act = buy ? ` data-act="mgrEra" data-arg="${p.id}:${e.index}"` : '';
+      return `<div class="era-card${best ? ' era-best' : ''}${buy ? ' era-pick' : ''}${
+          buy && buy.active ? ' era-on' : ''}"${act}>
         ${best ? '<div class="era-prism"></div><div class="era-glow"></div>'
                + MUI.eraStars() + '<div class="era-shine"></div>' : ''}
         <div class="era-body">
@@ -426,6 +428,11 @@
           </div>
         </div>
         ${best ? '<div class="era-tag">PEAK</div>' : ''}
+        ${buy ? `<div class="era-buy ${buy.active ? 'on' : buy.owned ? 'owned' : ''}">${
+          buy.active ? ico('ok') + ' In your squad'
+            : buy.owned ? 'Switch back — free'
+            : buy.price ? U().cash(buy.price)
+            : 'Free — he was worse then'}</div>` : ''}
       </div>`;
     },
 
@@ -441,17 +448,27 @@
           <p class="dim">${eras.length} eras on record.</p>
         </div>`;
       }
-      const span = eras[eras.length - 1].ovr - eras[0].ovr;
+      const g = State().game;
+      const budget = g.mgr.budget;
+      const room = g.mgr.wageBudget - M().squadWages(g) + (p.wage || 0);
+      const info = eras.map(e => ({
+        active: M().eraActive(p, e), owned: M().eraOwned(p, e),
+        price: M().eraPrice(p, e), wage: M().eraWage(p, e)
+      }));
+      const canAny = info.some(b => !b.active && (b.owned || b.price <= budget) && b.wage <= room);
       return `<div class="timeline">
-        ${eras.map((e, i) => `<div class="tl-row${i === best ? ' peak' : ''}">
+        ${eras.map((e, i) => `<div class="tl-row${i === best ? ' peak' : ''}${
+            info[i].active ? ' on' : ''}">
           <div class="tl-rail"><span class="tl-dot"></span></div>
-          ${MUI.eraCard(e, p, i === best)}
+          ${MUI.eraCard(e, p, i === best, info[i])}
         </div>`).join('')}
       </div>
+      <p class="dim tl-foot">Tap an era to bring that version of him back — it comes out of the
+        transfer budget, and once you have paid for a version you can switch to it for nothing.
+        ${canAny ? '' : 'Nothing here is within your budget yet.'}</p>
       <p class="dim tl-foot">${global.Timeline.curated(p)
         ? 'Clubs and years are a matter of record. The ratings are this game’s opinion.'
-        : 'Reconstructed from his age and what he is now — no club history on file for him.'}
-        ${span > 0 ? ` He has come ${span} points since he started.` : ''}</p>`;
+        : 'Reconstructed from his age and what he is now — no club history on file for him.'}</p>`;
     },
 
     playerTabs: [

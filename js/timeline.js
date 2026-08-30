@@ -144,9 +144,10 @@
       if (!p) return [];
       const raw = PLAYER_ERAS[p.name];
       const rows = raw ? raw.map(r => r.slice()) : generated(p);
-      return rows.map(([year, club, age, ovr, label]) => ({
-        year, club, age, ovr, label,
-        now: label === 'Now' || /^Now\b/.test(label || '') || year === (raw ? raw[raw.length - 1][0] : 0)
+      // the last entry is always him as he is today — that is the one you own
+      // by default, and the one every other era is priced against
+      return rows.map(([year, club, age, ovr, label], i) => ({
+        year, club, age, ovr, label, index: i, now: i === rows.length - 1
       }));
     },
 
