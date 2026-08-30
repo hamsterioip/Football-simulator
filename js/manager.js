@@ -543,7 +543,8 @@
     g.mgr.budget -= fee;
     player.signed = true;
     const joined = Object.assign({}, player, { apps: 0, goals: 0, assists: 0, ratingSum: 0,
-      rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g) });
+      rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g),
+      joined: g.world.year });
     delete joined.fromClub; delete joined.fromId; delete joined.ask; delete joined.free;
     g.squad.push(joined);
     State.news(player.elite
@@ -732,10 +733,14 @@
        whether he is still any good, and it is announced either way. */
     const retiring = g.squad.filter(s => {
       if (s.age < 36) return false;
-      if (s.age >= 44) return true;
-      // how good he still is matters far more than the number of birthdays:
-      // an ordinary thirty-six-year-old goes, a world-class one plays on
-      const stay = U.clamp(0.15 + (s.ovr - 78) * 0.075 - (s.age - 37) * 0.10, 0.02, 0.95);
+      // nobody you have just signed hangs up his boots before he has played a
+      // season for you — paying nine figures for a thirty-eight-year-old and
+      // losing him at the first rollover is not a twist, it reads as a bug
+      if (s.joined != null && g.world.year - s.joined < 2) return false;
+      if (s.age >= 46) return true;
+      // how good he still is matters more than the number of birthdays: an
+      // ordinary thirty-six-year-old goes, a world-class one plays on for years
+      const stay = U.clamp(0.25 + (s.ovr - 74) * 0.045 - (s.age - 36) * 0.022, 0.03, 0.95);
       return !U.chance(stay);
     });
     g.mgr.hungUp = g.mgr.hungUp || [];
@@ -770,6 +775,7 @@
         s.apps = 0; s.goals = 0; s.assists = 0; s.ratingSum = 0; s.fit = 100;
         s.shirt = freeShirt(g);
         s.academy = true;
+        s.joined = g.world.year;
         seen[s.name] = true;
         g.squad.push(s);
         young.push(s);

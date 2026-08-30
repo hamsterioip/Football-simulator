@@ -1451,9 +1451,14 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.2';
+  const VERSION = '2.3';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.3', when: '30 Aug', items: [
+      'Fixed the vanishing superstar properly: a forty-one-year-old Ronaldo had a 41% chance of retiring the very first season after you signed him, and Benzema 56%. Nobody you have just signed retires before he has played a season for you',
+      'Veterans last the way their quality says they should — a ninety-rated forty-two-year-old gives you years, an ordinary thirty-six-year-old still goes',
+      'And when somebody does retire you are told to your face at the season turn, by name, instead of finding out later by counting the bench'
+    ] },
     { v: '2.2', when: '30 Aug', items: [
       'The timeline is a shelf of collectible cards now — portrait, gold-framed, one per era, swiping sideways. Rating and position shouting from the top corner, the man drawn in that club\u2019s kit, his name across the bottom and his country and club under that',
       'The peak card is the one in gold and violet, with the sparkles and the light sweeping across it',

@@ -2773,9 +2773,14 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.2';
+  const VERSION = '2.3';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.3', when: '30 Aug', items: [
+      'Fixed the vanishing superstar properly: a forty-one-year-old Ronaldo had a 41% chance of retiring the very first season after you signed him, and Benzema 56%. Nobody you have just signed retires before he has played a season for you',
+      'Veterans last the way their quality says they should — a ninety-rated forty-two-year-old gives you years, an ordinary thirty-six-year-old still goes',
+      'And when somebody does retire you are told to your face at the season turn, by name, instead of finding out later by counting the bench'
+    ] },
     { v: '2.2', when: '30 Aug', items: [
       'The timeline is a shelf of collectible cards now — portrait, gold-framed, one per era, swiping sideways. Rating and position shouting from the top corner, the man drawn in that club\u2019s kit, his name across the bottom and his country and club under that',
       'The peak card is the one in gold and violet, with the sparkles and the light sweeping across it',
@@ -11342,7 +11347,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     g.mgr.budget -= fee;
     player.signed = true;
     const joined = Object.assign({}, player, { apps: 0, goals: 0, assists: 0, ratingSum: 0,
-      rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g) });
+      rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g),
+      joined: g.world.year });
     delete joined.fromClub; delete joined.fromId; delete joined.ask; delete joined.free;
     g.squad.push(joined);
     State.news(player.elite
@@ -11531,10 +11537,14 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
        whether he is still any good, and it is announced either way. */
     const retiring = g.squad.filter(s => {
       if (s.age < 36) return false;
-      if (s.age >= 44) return true;
-      // how good he still is matters far more than the number of birthdays:
-      // an ordinary thirty-six-year-old goes, a world-class one plays on
-      const stay = U.clamp(0.15 + (s.ovr - 78) * 0.075 - (s.age - 37) * 0.10, 0.02, 0.95);
+      // nobody you have just signed hangs up his boots before he has played a
+      // season for you — paying nine figures for a thirty-eight-year-old and
+      // losing him at the first rollover is not a twist, it reads as a bug
+      if (s.joined != null && g.world.year - s.joined < 2) return false;
+      if (s.age >= 46) return true;
+      // how good he still is matters more than the number of birthdays: an
+      // ordinary thirty-six-year-old goes, a world-class one plays on for years
+      const stay = U.clamp(0.25 + (s.ovr - 74) * 0.045 - (s.age - 36) * 0.022, 0.03, 0.95);
       return !U.chance(stay);
     });
     g.mgr.hungUp = g.mgr.hungUp || [];
@@ -11569,6 +11579,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         s.apps = 0; s.goals = 0; s.assists = 0; s.ratingSum = 0; s.fit = 100;
         s.shirt = freeShirt(g);
         s.academy = true;
+        s.joined = g.world.year;
         seen[s.name] = true;
         g.squad.push(s);
         young.push(s);
@@ -14795,7 +14806,21 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           State.save();
           global.MUI.tab = 'mmarket';
           global.MUI.render();
-          UI.toast('Transfer window is open.', 'good');
+          // losing a player has to be something you are told, not something you
+          // discover later by counting the bench
+          const gone = g.mgr.retired || [];
+          if (gone.length) {
+            UI.modal({
+              title: gone.length === 1 ? 'He has hung up his boots' : 'Hanging up their boots',
+              html: `<div class="list">${gone.map(r => `<div class="item">
+                  <div class="ic">${ico('legacy')}</div>
+                  <div class="tx"><b>${U.esc(r.name)}</b><span>Retired at ${r.age}, rated ${r.ovr}</span></div>
+                </div>`).join('')}</div>
+                <p class="muted">${gone.length === 1 ? 'That is him done.' : 'That is them done.'}
+                  You will need to replace ${gone.length === 1 ? 'him' : 'them'}.</p>`,
+              actions: [{ label: 'Into the window' }]
+            });
+          } else UI.toast('Transfer window is open.', 'good');
         } }]
       });
 

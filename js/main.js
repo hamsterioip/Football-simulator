@@ -586,7 +586,21 @@
           State.save();
           global.MUI.tab = 'mmarket';
           global.MUI.render();
-          UI.toast('Transfer window is open.', 'good');
+          // losing a player has to be something you are told, not something you
+          // discover later by counting the bench
+          const gone = g.mgr.retired || [];
+          if (gone.length) {
+            UI.modal({
+              title: gone.length === 1 ? 'He has hung up his boots' : 'Hanging up their boots',
+              html: `<div class="list">${gone.map(r => `<div class="item">
+                  <div class="ic">${ico('legacy')}</div>
+                  <div class="tx"><b>${U.esc(r.name)}</b><span>Retired at ${r.age}, rated ${r.ovr}</span></div>
+                </div>`).join('')}</div>
+                <p class="muted">${gone.length === 1 ? 'That is him done.' : 'That is them done.'}
+                  You will need to replace ${gone.length === 1 ? 'him' : 'them'}.</p>`,
+              actions: [{ label: 'Into the window' }]
+            });
+          } else UI.toast('Transfer window is open.', 'good');
         } }]
       });
 
