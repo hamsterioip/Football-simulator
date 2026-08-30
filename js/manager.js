@@ -332,6 +332,62 @@
 
   /* Everyone you could realistically sign: squad players from other clubs in
      the world, priced off what they are worth and who wants them. */
+  /* ---------------- the ones you cannot normally have ----------------
+     The best footballers alive do not turn up in a random sample of somebody's
+     squad — they get their own board, their own prices, and a club that mostly
+     tells you where to go. Signing one is meant to be the thing you spend
+     three seasons building towards, not a Tuesday. */
+
+  const ELITE = 88;                 // the cut for the top-players board
+
+  /* At this level price is not a curve off the rating, it is a different market
+     entirely: an 88 costs seventy million and a 95 costs three times that. And
+     icons hold their value in a way ordinary players do not — a thirty-eight
+     year old who still sells out the stadium is not worth a fifth of himself. */
+  function eliteFee(ovr, age) {
+    const base = 70000000 * Math.pow(1.176, ovr - ELITE);
+    const age3 = age <= 24 ? 1.3 : age <= 28 ? 1.15 : age <= 31 ? 0.95 : age <= 34 ? 0.72 : 0.55;
+    return Math.round(base * age3 / 500000) * 500000;
+  }
+
+  /* What he earns. Enormous next to the rest of your bill — which is the real
+     obstacle, not the fee: you have to clear the wages to fit him in. */
+  function eliteWage(ovr) {
+    return Math.round(38000 * Math.pow(1.14, ovr - ELITE) / 1000) * 1000;
+  }
+
+  function topPlayers(g) {
+    const State = global.State, U = global.U;
+    if (g.mgr.topCache && g.mgr.topSeason === g.world.year) {
+      return g.mgr.topCache.filter(s => !s.signed && !s.gone);
+    }
+    const me = State.club(g.mgr.club);
+    const out = [];
+    Object.values(g.world.clubs).forEach(c => {
+      if (c.id === me.id) return;
+      const stars = global.Eras.starsFor(g, c.name);
+      if (!stars) return;
+      stars.forEach(st => {
+        const [name, nation, pos, ovr, age] = st;
+        if (ovr < ELITE) return;
+        const s = {
+          id: U.id(), name, nation, pos, ovr, age,
+          shirt: 0, goals: 0, assists: 0, apps: 0, rel: 50, star: true, elite: true,
+          fromClub: c.name, fromId: c.id
+        };
+        s.value = eliteFee(ovr, age);
+        // they are not for sale, so the number is what it would take
+        s.ask = Math.round(s.value * U.rnd(1.15, 1.55) / 500000) * 500000;
+        s.wage = Math.max(wageFor(s), eliteWage(ovr));
+        out.push(s);
+      });
+    });
+    out.sort((a, b) => b.ovr - a.ovr || b.ask - a.ask);
+    g.mgr.topCache = out;
+    g.mgr.topSeason = g.world.year;
+    return out;
+  }
+
   /* One listing from a club's squad, priced. */
   function listFrom(g, c) {
     const U = global.U;
@@ -438,7 +494,8 @@
       g.mgr.marketSize = pool.length;
       g.mgr.marketSeason = g.world.year;
     }
-    let list = g.mgr.marketCache.filter(s => !s.signed && !s.gone);
+    // the genuinely elite have their own board; they do not also appear here
+    let list = g.mgr.marketCache.filter(s => !s.signed && !s.gone && !(s.star && s.ovr >= ELITE));
     if (filter && filter.pos) list = list.filter(s => s.pos === filter.pos);
     if (filter && filter.max) list = list.filter(s => s.ask <= filter.max);
     if (filter && filter.afford) {
@@ -456,8 +513,19 @@
     if (player.wage > wageRoom) return { ok: false, why: `You cannot fit ${U.cash(player.wage)}/week into the wage bill.` };
 
     const ratio = player.free ? 2 : fee / Math.max(player.ask, 1);
-    const chance = player.free ? 0.9 : U.clamp((ratio - 0.72) * 1.9, 0.02, 0.96);
+    let chance = player.free ? 0.9 : U.clamp((ratio - 0.72) * 1.9, 0.02, 0.96);
+    if (player.elite) {
+      // the badge has to mean something to him, and money alone will not do it
+      const pull = U.clamp(0.32 + (State.club(g.mgr.club).rating - 76) * 0.045
+        + (g.mgr.board.confidence - 50) * 0.002 + (g.mgr.trophies || []).length * 0.05, 0.06, 0.9);
+      chance = U.clamp(chance * pull, 0.01, 0.72);
+    }
     if (!U.chance(chance)) {
+      if (player.elite) {
+        return { ok: false, why: ratio < 0.95
+          ? `${player.fromClub} did not even take the call. He is not for sale at that.`
+          : `${player.name} has turned you down. He is not leaving ${player.fromClub} for this.` };
+      }
       return { ok: false, why: ratio < 0.85
         ? `${player.fromClub} laughed at it. Nowhere near.`
         : `${player.fromClub} have said no. Close, but no.` };
@@ -468,7 +536,9 @@
       rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g) });
     delete joined.fromClub; delete joined.fromId; delete joined.ask; delete joined.free;
     g.squad.push(joined);
-    State.news(`${State.club(g.mgr.club).name} sign ${player.name} for ${U.cash(fee)}`, 'good', null, 'transfer');
+    State.news(player.elite
+      ? `${State.club(g.mgr.club).name} have signed ${player.name}. ${U.cash(fee)}. Nobody saw it coming.`
+      : `${State.club(g.mgr.club).name} sign ${player.name} for ${U.cash(fee)}`, 'good', null, 'transfer');
     g.mgr.log.unshift({ t: `Signed ${player.name} (${player.pos} ${player.ovr}) for ${U.cash(fee)}`, k: 'in' });
     g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + (player.ovr > teamRating(g) ? 3 : 0.5), 0, 100);
     return { ok: true, player: joined };
@@ -592,7 +662,7 @@
     slots(f) { return SLOTS[f] || SLOTS['4-3-3']; },
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
-    market, marketTick, bid, sell, squadWages, valueFor, wageFor,
+    market, marketTick, topPlayers, ELITE, bid, sell, squadWages, valueFor, wageFor,
     seasonReview, nextSeason, squadFor
   };
 })(window);

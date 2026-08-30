@@ -779,6 +779,21 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 @media (prefers-reduced-motion:reduce){
   .lu-man .lu-kit,.lu-man .lu-plate{transition:none}
 }
+/* ---------- the top-players board ---------- */
+.top-card{border-color:rgba(255,201,77,.30);
+  background:linear-gradient(180deg,rgba(255,201,77,.055),transparent 120px),var(--card)}
+.top-card h3{color:var(--gold)}
+.pill.gold{background:rgba(255,201,77,.14);color:var(--gold);border:1px solid rgba(255,201,77,.3)}
+.top-row{gap:9px}
+.top-ovr{flex:0 0 30px;text-align:center;font-weight:800;font-size:14px;color:#101820;
+  background:linear-gradient(180deg,#ffd873,var(--gold));border-radius:7px;padding:3px 0;
+  font-family:var(--font-d);letter-spacing:.3px}
+.top-row .mk-ask{color:var(--gold)}
+.top-row.outofreach{opacity:.62}
+.top-foot{margin:9px 0 0;text-align:center;font-size:11.5px}
+.item.noafford{opacity:.42;cursor:default}
+.top-row.outofreach .mk-ask{color:var(--muted)}
+.btn-sm{padding:8px 12px;font-size:12px}
 .mk-star{color:var(--gold);font-weight:800}
 .mk-ask{font-size:11.5px;font-weight:700;text-align:right;white-space:nowrap}
 .mk-ask em{display:block;font-style:normal;font-size:10px;color:var(--dim);font-weight:600}

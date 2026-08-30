@@ -330,22 +330,22 @@
   const REAL_STARS = {
     // England
     'Manchester City': [
-      ['Erling Haaland', 'Norway', 'ST', 92, 25], ['Rodri', 'Spain', 'CDM', 90, 29],
-      ['Gianluigi Donnarumma', 'Italy', 'GK', 89, 26], ['Rúben Dias', 'Portugal', 'CB', 87, 28],
-      ['Phil Foden', 'England', 'CAM', 86, 25], ['Bernardo Silva', 'Portugal', 'CM', 85, 31]
+      ['Erling Haaland', 'Norway', 'ST', 95, 25], ['Rodri', 'Spain', 'CDM', 92, 29],
+      ['Gianluigi Donnarumma', 'Italy', 'GK', 91, 26], ['Rúben Dias', 'Portugal', 'CB', 89, 28],
+      ['Phil Foden', 'England', 'CAM', 89, 25], ['Bernardo Silva', 'Portugal', 'CM', 85, 31]
     ],
     'Arsenal': [
-      ['Declan Rice', 'England', 'CDM', 88, 26], ['Bukayo Saka', 'England', 'RW', 88, 24],
-      ['William Saliba', 'France', 'CB', 87, 24], ['Martin Ødegaard', 'Norway', 'CAM', 87, 26],
+      ['Declan Rice', 'England', 'CDM', 90, 26], ['Bukayo Saka', 'England', 'RW', 91, 24],
+      ['William Saliba', 'France', 'CB', 90, 24], ['Martin Ødegaard', 'Norway', 'CAM', 89, 26],
       ['Gabriel Magalhães', 'Brazil', 'CB', 86, 27], ['David Raya', 'Spain', 'GK', 85, 30]
     ],
     'Liverpool': [
-      ['Mohamed Salah', 'Egypt', 'RW', 89, 33], ['Virgil van Dijk', 'Netherlands', 'CB', 89, 34],
-      ['Alisson Becker', 'Brazil', 'GK', 89, 32], ['Florian Wirtz', 'Germany', 'CAM', 88, 22],
-      ['Alexander Isak', 'Sweden', 'ST', 88, 26], ['Alexis Mac Allister', 'Argentina', 'CM', 85, 26]
+      ['Mohamed Salah', 'Egypt', 'RW', 92, 33], ['Virgil van Dijk', 'Netherlands', 'CB', 91, 34],
+      ['Alisson Becker', 'Brazil', 'GK', 91, 32], ['Florian Wirtz', 'Germany', 'CAM', 92, 22],
+      ['Alexander Isak', 'Sweden', 'ST', 90, 26], ['Alexis Mac Allister', 'Argentina', 'CM', 85, 26]
     ],
     'Chelsea': [
-      ['Cole Palmer', 'England', 'CAM', 88, 23], ['Moisés Caicedo', 'Ecuador', 'CDM', 85, 23],
+      ['Cole Palmer', 'England', 'CAM', 91, 23], ['Moisés Caicedo', 'Ecuador', 'CDM', 85, 23],
       ['Enzo Fernández', 'Argentina', 'CM', 84, 24], ['Reece James', 'England', 'RB', 83, 25]
     ],
     'Manchester United': [
@@ -383,21 +383,21 @@
     ],
     // Spain
     'Real Madrid': [
-      ['Kylian Mbappé', 'France', 'ST', 91, 26], ['Jude Bellingham', 'England', 'CAM', 89, 22],
-      ['Vinícius Júnior', 'Brazil', 'LW', 89, 25], ['Thibaut Courtois', 'Belgium', 'GK', 89, 33],
-      ['Federico Valverde', 'Uruguay', 'CM', 86, 27], ['Antonio Rüdiger', 'Germany', 'CB', 84, 32]
+      ['Kylian Mbappé', 'France', 'ST', 95, 26], ['Jude Bellingham', 'England', 'CAM', 93, 22],
+      ['Vinícius Júnior', 'Brazil', 'LW', 93, 25], ['Thibaut Courtois', 'Belgium', 'GK', 92, 33],
+      ['Federico Valverde', 'Uruguay', 'CM', 90, 27], ['Antonio Rüdiger', 'Germany', 'CB', 84, 32]
     ],
     'Barcelona': [
-      ['Lamine Yamal', 'Spain', 'RW', 89, 18], ['Pedri', 'Spain', 'CM', 87, 22],
+      ['Lamine Yamal', 'Spain', 'RW', 94, 18], ['Pedri', 'Spain', 'CM', 90, 22],
       ['Raphinha', 'Brazil', 'LW', 87, 28], ['Robert Lewandowski', 'Poland', 'ST', 86, 37],
       ['Marc-André ter Stegen', 'Germany', 'GK', 85, 33], ['Jules Koundé', 'France', 'RB', 84, 26]
     ],
     'Atlético Madrid': [
       ['Jan Oblak', 'Slovenia', 'GK', 87, 32], ['Julián Alvarez', 'Argentina', 'ST', 86, 25],
-      ['Antoine Griezmann', 'France', 'CAM', 85, 34], ['Marcos Llorente', 'Spain', 'CM', 82, 30]
+      ['Antoine Griezmann', 'France', 'CAM', 88, 34], ['Marcos Llorente', 'Spain', 'CM', 82, 30]
     ],
     'Athletic Club': [
-      ['Nico Williams', 'Spain', 'LW', 84, 23], ['Unai Simón', 'Spain', 'GK', 83, 28],
+      ['Nico Williams', 'Spain', 'LW', 89, 23], ['Unai Simón', 'Spain', 'GK', 83, 28],
       ['Oihan Sancet', 'Spain', 'CAM', 82, 25], ['Iñaki Williams', 'Ghana', 'ST', 80, 31]
     ],
     'Real Sociedad': [
@@ -433,7 +433,7 @@
     ],
     // Italy
     'Inter': [
-      ['Lautaro Martínez', 'Argentina', 'ST', 88, 28], ['Nicolò Barella', 'Italy', 'CM', 86, 28],
+      ['Lautaro Martínez', 'Argentina', 'ST', 91, 28], ['Nicolò Barella', 'Italy', 'CM', 86, 28],
       ['Alessandro Bastoni', 'Italy', 'CB', 84, 26], ['Hakan Çalhanoğlu', 'Turkey', 'CDM', 84, 31],
       ['Yann Sommer', 'Switzerland', 'GK', 84, 36]
     ],
@@ -448,7 +448,7 @@
       ['Fikayo Tomori', 'England', 'CB', 82, 27]
     ],
     'Napoli': [
-      ['Kevin De Bruyne', 'Belgium', 'CM', 85, 34], ['Scott McTominay', 'Scotland', 'CM', 83, 28],
+      ['Kevin De Bruyne', 'Belgium', 'CM', 90, 34], ['Scott McTominay', 'Scotland', 'CM', 83, 28],
       ['Romelu Lukaku', 'Belgium', 'ST', 82, 32], ['Alex Meret', 'Italy', 'GK', 82, 28],
       ['Giovanni Di Lorenzo', 'Italy', 'RB', 81, 32]
     ],
@@ -485,7 +485,7 @@
     ],
     // Germany
     'Bayern München': [
-      ['Harry Kane', 'England', 'ST', 90, 32], ['Jamal Musiala', 'Germany', 'CAM', 87, 22],
+      ['Harry Kane', 'England', 'ST', 93, 32], ['Jamal Musiala', 'Germany', 'CAM', 87, 22],
       ['Michael Olise', 'France', 'RW', 85, 23], ['Joshua Kimmich', 'Germany', 'CDM', 85, 30],
       ['Manuel Neuer', 'Germany', 'GK', 84, 39], ['Dayot Upamecano', 'France', 'CB', 83, 26]
     ],
@@ -536,8 +536,8 @@
     ],
     // France
     'Paris SG': [
-      ['Ousmane Dembélé', 'France', 'RW', 88, 28], ['Khvicha Kvaratskhelia', 'Georgia', 'LW', 87, 24],
-      ['Vitinha', 'Portugal', 'CM', 86, 25], ['Achraf Hakimi', 'Morocco', 'RB', 86, 26],
+      ['Ousmane Dembélé', 'France', 'RW', 91, 28], ['Khvicha Kvaratskhelia', 'Georgia', 'LW', 87, 24],
+      ['Vitinha', 'Portugal', 'CM', 86, 25], ['Achraf Hakimi', 'Morocco', 'RB', 90, 26],
       ['Nuno Mendes', 'Portugal', 'LB', 84, 23], ['Willian Pacho', 'Ecuador', 'CB', 83, 23]
     ],
     'Monaco': [
@@ -657,7 +657,7 @@
     ],
     // USA
     'Inter Miami': [
-      ['Lionel Messi', 'Argentina', 'RW', 88, 38], ['Luis Suárez', 'Uruguay', 'ST', 82, 38],
+      ['Lionel Messi', 'Argentina', 'RW', 95, 38], ['Luis Suárez', 'Uruguay', 'ST', 82, 38],
       ['Rodrigo De Paul', 'Argentina', 'CM', 82, 31], ['Sergio Busquets', 'Spain', 'CDM', 81, 37],
       ['Jordi Alba', 'Spain', 'LB', 80, 36]
     ],
@@ -707,7 +707,7 @@
     ],
     // Turkey
     'Galatasaray': [
-      ['Victor Osimhen', 'Nigeria', 'ST', 88, 27], ['Mauro Icardi', 'Argentina', 'ST', 83, 33],
+      ['Victor Osimhen', 'Nigeria', 'ST', 89, 27], ['Mauro Icardi', 'Argentina', 'ST', 83, 33],
       ['Lucas Torreira', 'Uruguay', 'CDM', 82, 30], ['Davinson Sánchez', 'Colombia', 'CB', 81, 30],
       ['Fernando Muslera', 'Uruguay', 'GK', 79, 40]
     ],
@@ -796,17 +796,17 @@
     ],
     // Saudi Arabia
     'Al Hilal': [
-      ['Aleksandar Mitrović', 'Serbia', 'ST', 85, 31], ['Rúben Neves', 'Portugal', 'CDM', 85, 29],
+      ['Aleksandar Mitrović', 'Serbia', 'ST', 86, 31], ['Rúben Neves', 'Portugal', 'CDM', 85, 29],
       ['Kalidou Koulibaly', 'Senegal', 'CB', 83, 35], ['Sergej Milinković-Savić', 'Serbia', 'CM', 85, 31],
       ['Yassine Bounou', 'Morocco', 'GK', 83, 35], ['Salem Al-Dawsari', 'Saudi Arabia', 'LW', 81, 34]
     ],
     'Al Nassr': [
-      ['Cristiano Ronaldo', 'Portugal', 'ST', 86, 41], ['Sadio Mané', 'Senegal', 'LW', 83, 34],
+      ['Cristiano Ronaldo', 'Portugal', 'ST', 93, 41], ['Sadio Mané', 'Senegal', 'LW', 83, 34],
       ['Marcelo Brozović', 'Croatia', 'CDM', 84, 33], ['Aymeric Laporte', 'Spain', 'CB', 83, 32],
       ['Bento', 'Brazil', 'GK', 81, 27]
     ],
     'Al Ittihad': [
-      ['Karim Benzema', 'France', 'ST', 84, 38], ['N\u2019Golo Kanté', 'France', 'CDM', 84, 35],
+      ['Karim Benzema', 'France', 'ST', 88, 38], ['N\u2019Golo Kanté', 'France', 'CDM', 84, 35],
       ['Fabinho', 'Brazil', 'CDM', 81, 32], ['Moussa Diaby', 'France', 'RW', 83, 26],
       ['Houssem Aouar', 'Algeria', 'CAM', 79, 27]
     ],
@@ -1451,9 +1451,16 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.8';
+  const VERSION = '1.9';
   const BUILD = '28 August 2026';
   const CHANGELOG = [
+    { v: '1.9', when: '28 Aug', items: [
+      'Top players: a board of its own at the top of the transfer market, with the best footballers alive on it — Messi, Mbapp\u00e9, Haaland, Yamal, Ronaldo, Bellingham, Vin\u00edcius and the rest, with what each of them would actually cost',
+      'The elite are rated like the elite now, into the nineties, so a 95 stands apart from a very good 87 the way he should',
+      'None of them are for sale, and the prices say so: hundreds of millions, wages that swallow your budget, and a club that mostly says no. The bigger you are and the more you have won, the likelier the answer changes',
+      'They are meant to be what you build towards — a title-winning side gets there in a few seasons, and selling to clear the wage bill is how you fit one in',
+      'The bid screen now greys out any fee you cannot afford and warns you up front when the wages will not fit, instead of letting you offer and then telling you no'
+    ] },
     { v: '1.8', when: '28 Aug', items: [
       'Six new leagues: the S\u00fcper Lig, the Scottish Premiership, the Belgian Pro League, Liga MX, the Saudi Pro League and the J1 League — 192 clubs across sixteen divisions, all of them manageable',
       'Asia gets its own continental cup, so Saudi and Japanese clubs have something to play for beyond the league',

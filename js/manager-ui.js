@@ -327,6 +327,7 @@
           <button class="mk-f${(g.mgr.filter && g.mgr.filter.pos) === (p === 'All' ? undefined : p) ? ' on' : ''}"
             data-act="mgrFilter" data-arg="${p}">${p}</button>`).join('')}</div>
       </div>
+      ${MUI.topBoard(g)}
       ${(g.mgr.marketNews || []).length ? `<div class="card"><h3>${ico('trend')} The market this week</h3>
         ${g.mgr.marketNews.slice(0, 4).map(n => `<div class="res-row">
           <span class="res-b ${n.k === 'gone' ? 'res-L' : 'res-W'}">${n.k === 'gone' ? '→' : '+'}</span>
@@ -353,6 +354,41 @@
             <span class="mk-ask">${U().cash(s.value)}</span>
             <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
           </div>`).join('')}
+      </div>`;
+    },
+
+    /* The best players alive, with what it would take. Almost all of them are
+       out of reach — that is the point of showing them. */
+    topBoard(g) {
+      const budget = g.mgr.budget, room = g.mgr.wageBudget - M().squadWages(g);
+      const f = g.mgr.filter || {};
+      const within = s => s.ask <= budget && s.wage <= room;
+      let list = M().topPlayers(g);
+      if (f.pos) list = list.filter(s => s.pos === f.pos);
+      if (f.afford) list = list.filter(within);
+      if (!list.length) return '';
+      const shown = (g.mgr.topOpen ? list : list.slice(0, 6));
+      const reach = list.filter(within).length;
+      return `<div class="card top-card"><h3>${ico('crown')} Top players
+          <span class="pill gold">world class</span></h3>
+        <p class="dim" style="margin:0 0 10px">The best in the world. None of them are for
+          sale — these are the numbers it would take.</p>
+        ${shown.map(s => {
+          const canFee = s.ask <= budget, canWage = s.wage <= room;
+          return `<div class="mk-row top-row${canFee && canWage ? '' : ' outofreach'}"
+              data-act="mgrBid" data-arg="${s.id}">
+            <span class="top-ovr">${s.ovr}</span>
+            ${crest(s.fromClub, 'crest-sm')}
+            <span class="sq-n">${esc(s.name)}<em>${esc(s.pos)} · ${s.age} · ${esc(s.fromClub)}</em></span>
+            <span class="mk-ask">${U().cash(s.ask)}<em class="${canWage ? '' : 'bad'}">${U().cash(s.wage)}/w</em></span>
+          </div>`;
+        }).join('')}
+        ${list.length > 6 ? `<button class="btn btn-ghost btn-sm" data-act="mgrTopMore"
+          style="margin-top:8px;width:100%">${g.mgr.topOpen ? 'Show fewer'
+            : 'Show all ' + list.length}</button>` : ''}
+        <p class="dim top-foot">${reach
+          ? `${reach} of them ${reach === 1 ? 'is' : 'are'} within reach right now.`
+          : 'Not one of them is within reach yet. Win things and the money follows — and selling clears the wages to fit him in.'}</p>
       </div>`;
     },
 

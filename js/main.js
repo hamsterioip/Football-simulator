@@ -411,6 +411,7 @@
         case 'mgrFormation': return Game.mgrFormation();
         case 'mgrStyle': return Game.mgrStyle();
         case 'mgrFilter': return Game.mgrFilter(arg);
+        case 'mgrTopMore': return Game.mgrTopMore();
         case 'mgrBid': return Game.mgrBid(arg);
         case 'mgrSell': return Game.mgrSell(arg);
         case 'mgrReview': return Game.mgrReview();
@@ -707,9 +708,17 @@
       global.MUI.render();
     },
 
+    mgrTopMore() {
+      const g = State.game;
+      g.mgr.topOpen = !g.mgr.topOpen;
+      global.MUI.render();
+    },
+
     mgrBid(id) {
       const g = State.game;
-      const player = global.Manager.market(g).find(s => s.id === id);
+      const M = global.Manager;
+      const player = M.market(g).find(s => s.id === id)
+        || M.topPlayers(g).find(s => s.id === id);
       if (!player) return;
       const asks = player.free ? [0] : [
         Math.round(player.ask * 0.8 / 50000) * 50000,
@@ -720,13 +729,19 @@
         title: player.name,
         html: `<p class="muted">${U.esc(player.pos)} · ${player.age} · rated <b>${player.ovr}</b><br>
           ${U.esc(player.fromClub)} want ${player.free ? 'nothing — he is a free agent' : U.cash(player.ask)}.
-          Wages ${U.cash(player.wage)}/week.</p>
-          <div class="list">${asks.map((a, i) => `
-            <div class="item click" data-fee="${a}"><div class="ic">${ico('value')}</div>
+          Wages ${U.cash(player.wage)}/week${
+            player.wage > g.mgr.wageBudget - global.Manager.squadWages(g)
+              ? ' — <b class="bad">more room than you have. Sell someone first.</b>' : '.'}</p>
+          <div class="list">${asks.map((a, i) => {
+            const tooMuch = a > g.mgr.budget;
+            return `<div class="item ${tooMuch ? 'noafford' : 'click'}" ${tooMuch ? '' : `data-fee="${a}"`}>
+              <div class="ic">${ico('value')}</div>
               <div class="tx"><b>${a ? U.cash(a) : 'Sign him'}</b><span>${
-                player.free ? 'Nothing to pay but the wages.'
+                tooMuch ? 'More than you have.'
+                : player.free ? 'Nothing to pay but the wages.'
                 : i === 0 ? 'A cheeky one. They will probably say no.'
-                : i === 1 ? 'Meet the asking price.' : 'Over the odds. Hard to turn down.'}</span></div></div>`).join('')}</div>`,
+                : i === 1 ? 'Meet the asking price.' : 'Over the odds. Hard to turn down.'}</span></div></div>`;
+          }).join('')}</div>`,
         actions: [{ label: 'Walk away', cls: 'btn-ghost' }],
         onRender(m) {
           m.querySelectorAll('[data-fee]').forEach(el => el.onclick = () => {
