@@ -363,6 +363,7 @@
     // you bought last year, so this is what stops him reappearing
     const mine = {};
     (g.squad || []).forEach(s => { mine[s.name] = true; });
+    (g.mgr.hungUp || []).forEach(n => { mine[n] = true; });
     const live = list => list.filter(s => !s.signed && !s.gone && !mine[s.name]);
     if (g.mgr.topCache && g.mgr.topSeason === g.world.year) return live(g.mgr.topCache);
     const me = State.club(g.mgr.club);
@@ -502,6 +503,7 @@
     // and neither does anybody already on your own books
     const mine = {};
     (g.squad || []).forEach(x => { mine[x.name] = true; });
+    (g.mgr.hungUp || []).forEach(n => { mine[n] = true; });
     let list = g.mgr.marketCache.filter(s =>
       !s.signed && !s.gone && !mine[s.name] && !(s.star && s.ovr >= ELITE));
     if (filter && filter.pos) list = list.filter(s => s.pos === filter.pos);
@@ -736,9 +738,12 @@
       const stay = U.clamp(0.15 + (s.ovr - 78) * 0.075 - (s.age - 37) * 0.10, 0.02, 0.95);
       return !U.chance(stay);
     });
+    g.mgr.hungUp = g.mgr.hungUp || [];
     retiring.forEach(s => {
       State.news(`${s.name} retires at ${s.age}`, 'info', null, 'legacy');
       g.mgr.log.unshift({ t: `${s.name} (${s.pos} ${s.ovr}) retired, aged ${s.age}`, k: 'out' });
+      // he has hung up his boots — he does not turn up for sale again next summer
+      if (g.mgr.hungUp.indexOf(s.name) < 0) g.mgr.hungUp.push(s.name);
     });
     if (retiring.length) {
       const ids = retiring.map(s => s.id);

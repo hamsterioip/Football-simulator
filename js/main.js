@@ -779,7 +779,7 @@
 
       UI.modal({
         title: era.now ? 'Back to himself' : `The ${era.year} ${p.name}`,
-        html: `<div class="pc-pane">${MUI.eraCard(era, p, false, null)}</div>
+        html: `<div class="fc-solo">${MUI.eraPortrait(era, p, era.ovr >= p.ovr, null)}</div>
           <div class="pc-rows" style="margin-top:10px">
             <div class="pc-row"><span>Rating</span><b>${p.ovr} → ${era.ovr}</b></div>
             <div class="pc-row"><span>Age</span><b>${p.age} → ${era.age}</b></div>

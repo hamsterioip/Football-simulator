@@ -814,11 +814,62 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .tl-lock{font-size:30px;color:var(--gold);opacity:.8;margin-bottom:6px}
 .tl-foot{margin:10px 0 0;font-size:11px;line-height:1.45}
 .tl-foot + .tl-foot{margin-top:6px;opacity:.75}
-.era-pick{cursor:pointer}
-.era-pick:active{transform:scale(.985)}
+/* ---------- the portrait card ---------- */
+.fc-rail{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  padding:2px 2px 6px;margin:0 -2px}
+.fc-rail::-webkit-scrollbar{height:5px}
+.fc-rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.fc-wrap{flex:0 0 auto;width:152px;scroll-snap-align:center}
+.fc-card{position:relative;width:152px;aspect-ratio:210/310;border-radius:16px;
+  overflow:hidden;cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,.5);transition:transform .16s ease}
+.fc-card:active{transform:scale(.975)}
+.fc-art{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fc-rating{position:absolute;left:9%;top:5.5%;line-height:1;text-align:center;z-index:2}
+.fc-rating b{display:block;font:800 30px/0.9 var(--font-d);color:#fff;
+  text-shadow:0 2px 8px rgba(0,0,0,.65)}
+.fc-rating span{display:block;margin-top:2px;font:800 11px/1 var(--font-d);
+  letter-spacing:1px;color:#fff;opacity:.92;text-shadow:0 1px 5px rgba(0,0,0,.7)}
+.fc-year{position:absolute;right:9%;top:6.5%;z-index:2;font:800 10px/1 var(--font);
+  letter-spacing:.6px;color:rgba(255,255,255,.62)}
+.fc-name{position:absolute;left:6%;right:6%;top:76.5%;z-index:2;text-align:center;
+  font:800 13px/1 var(--font-d);letter-spacing:.7px;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-shadow:0 2px 7px rgba(0,0,0,.7)}
+.fc-foot{position:absolute;left:0;right:0;top:86%;z-index:2;
+  display:flex;align-items:center;justify-content:center;gap:9px}
+.fc-foot .fl{width:17px;height:17px}
+.fc-foot .crest{width:19px;height:19px}
+.fc-dot{width:5px;height:5px;border-radius:1px;transform:rotate(45deg);
+  background:rgba(255,255,255,.45)}
+.fc-label{margin-top:7px;font-size:10.5px;line-height:1.35;color:var(--dim);text-align:center}
+.fc-card.fc-on{outline:2px solid var(--green);outline-offset:-2px}
+
+/* the peak one moves */
+.fc-best{box-shadow:0 0 0 1px rgba(255,201,77,.45),0 8px 28px rgba(139,86,214,.42),
+  0 6px 20px rgba(0,0,0,.5);animation:eraLift 3.2s ease-in-out infinite}
+.fc-best .fc-name{color:#ffe9b0}
+.fc-shine{position:absolute;inset:-40% -60%;z-index:3;pointer-events:none;
+  background:linear-gradient(103deg,transparent 42%,rgba(255,255,255,.20) 46.5%,
+    rgba(255,255,255,.85) 50%,rgba(255,255,255,.20) 53.5%,transparent 58%);
+  animation:eraShine 3.2s ease-in-out infinite}
+.fc-best .era-stars{z-index:3;border-radius:16px}
+.fc-tag{position:absolute;z-index:4;top:0;right:0;padding:3px 8px 4px;
+  font:800 8.5px/1 var(--font);letter-spacing:1.2px;color:#2a1d00;
+  background:linear-gradient(110deg,#ffe08a,var(--gold) 40%,#d9b3ff 70%,#ffe08a);
+  background-size:220% 100%;border-radius:0 15px 0 10px;
+  animation:eraTag 4s ease-in-out infinite}
+.fc-wrap .era-buy{margin-top:8px}
+.fc-solo{display:flex;justify-content:center;margin:2px 0 4px}
+.fc-solo .fc-wrap{width:170px}
+.fc-solo .fc-card{width:170px}
+@media (prefers-reduced-motion:reduce){
+  .fc-shine{display:none}
+  .fc-best,.fc-tag{animation:none}
+}
 .tl-row.on .tl-dot{border-color:var(--green);background:var(--green);
   box-shadow:0 0 0 4px rgba(42,230,126,.16)}
-.era-on{border-color:rgba(42,230,126,.55)}
 .era-buy{position:relative;z-index:3;margin:8px 0 0;padding:5px 8px;border-radius:7px;
   text-align:center;font:800 11px/1.25 var(--font);letter-spacing:.2px;
   background:rgba(255,255,255,.07);color:var(--txt)}
@@ -840,67 +891,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .tl-row.peak .tl-dot{border-color:var(--gold);background:var(--gold);
   box-shadow:0 0 0 4px rgba(255,201,77,.18)}
 
-.era-card{position:relative;flex:1;min-width:0;overflow:hidden;border-radius:12px;
-  border:1px solid var(--line);background:var(--card2);padding:10px 11px}
-.era-body{position:relative;z-index:2;display:flex;align-items:center;gap:11px}
-.era-ovr{flex:0 0 46px;text-align:center;border-radius:9px;padding:5px 0;
-  background:linear-gradient(160deg,var(--k1),var(--k2));
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
-.era-ovr b{display:block;font:800 19px/1 var(--font-d)}
-.era-ovr span{display:block;font-size:8.5px;font-weight:800;letter-spacing:.6px;opacity:.85}
-.era-id{min-width:0;flex:1}
-.era-name{font:800 13.5px/1.2 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.era-meta{font-size:10.5px;color:var(--dim);margin-top:1px;display:flex;align-items:center;gap:3px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.era-meta .crest{width:13px;height:13px}
-.era-label{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35}
-
-/* ---- the best version of him does not sit still ----
-   Five layers: a slow gold/purple prism turning behind everything, a glow
-   that breathes, sparkles that twinkle on their own clocks, a hard light
-   streak crossing the whole card, and the content on top of the lot. */
-.era-best{border-color:rgba(255,201,77,.66);padding:11px 12px;
-  background:linear-gradient(135deg,#2a1e06,#150f26 42%,#1d1533 62%,#2a1e06);
-  background-size:260% 260%;
-  animation:eraDrift 9s ease-in-out infinite,eraLift 3.2s ease-in-out infinite}
-.era-best .era-name{color:#ffe08a;text-shadow:0 0 16px rgba(255,201,77,.45)}
-.era-best .era-label{color:#efe6ff}
-.era-best .era-meta{color:#cbbce8}
-
-/* the prism: a conic sweep of gold into purple, turning slowly */
-.era-prism{position:absolute;inset:-75%;z-index:0;pointer-events:none;opacity:.34;
-  background:conic-gradient(from 0deg,
-    rgba(255,201,77,.55),rgba(180,131,255,.50) 22%,rgba(255,224,138,.30) 42%,
-    rgba(123,92,255,.52) 62%,rgba(255,201,77,.45) 82%,rgba(255,201,77,.55));
-  filter:blur(16px);animation:eraSpin 11s linear infinite}
-.era-glow{position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:12px;
-  background:radial-gradient(130% 95% at 14% 0%,rgba(255,201,77,.42),transparent 60%),
-    radial-gradient(120% 90% at 92% 110%,rgba(180,131,255,.40),transparent 60%);
-  animation:eraGlow 3.2s ease-in-out infinite}
-
-/* sparkles — four-point stars on their own clocks */
-.era-stars{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;border-radius:12px}
-.era-stars i{position:absolute;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
-  background:#fff8dd;opacity:0;transform:scale(var(--s));
-  filter:drop-shadow(0 0 5px rgba(255,226,150,.95));
-  clip-path:polygon(50% 0%,59% 41%,100% 50%,59% 59%,50% 100%,41% 59%,0% 50%,41% 41%);
-  animation:eraTwinkle 3.4s ease-in-out infinite;animation-delay:var(--d)}
-.era-stars i.sp{background:#ecd9ff;width:10px;height:10px;margin:-5px 0 0 -5px;
-  filter:drop-shadow(0 0 5px rgba(196,150,255,.95));animation-duration:4.2s}
-
-/* a hard streak with soft shoulders, the way light comes off a real card */
-.era-shine{position:absolute;inset:-70% -50%;z-index:2;pointer-events:none;
-  background:linear-gradient(103deg,transparent 42%,rgba(255,255,255,.20) 46.5%,
-    rgba(255,255,255,.85) 50%,rgba(255,255,255,.20) 53.5%,transparent 58%);
-  animation:eraShine 3.2s ease-in-out infinite}
-.era-best .era-body{z-index:3}
-.era-best .era-ovr{box-shadow:inset 0 0 0 1px rgba(255,255,255,.45),
-  0 0 18px rgba(255,201,77,.5)}
-.era-tag{position:absolute;z-index:4;top:0;right:0;padding:3px 8px 4px;overflow:hidden;
-  font:800 9px/1 var(--font);letter-spacing:1.2px;color:#2a1d00;
-  background:linear-gradient(110deg,#ffe08a,var(--gold) 40%,#d9b3ff 70%,#ffe08a);
-  background-size:220% 100%;border-radius:0 11px 0 10px;
-  animation:eraTag 4s ease-in-out infinite}
+/* the horizontal era row was replaced by the portrait card above */
 @keyframes eraShine{0%,8%{transform:translateX(-115%) rotate(2deg)}
   46%,100%{transform:translateX(115%) rotate(2deg)}}
 @keyframes eraGlow{0%,100%{opacity:.5}50%{opacity:1}}

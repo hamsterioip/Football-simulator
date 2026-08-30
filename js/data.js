@@ -1451,9 +1451,14 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.1';
+  const VERSION = '2.2';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.2', when: '30 Aug', items: [
+      'The timeline is a shelf of collectible cards now — portrait, gold-framed, one per era, swiping sideways. Rating and position shouting from the top corner, the man drawn in that club\u2019s kit, his name across the bottom and his country and club under that',
+      'The peak card is the one in gold and violet, with the sparkles and the light sweeping across it',
+      'Fixed: a player who retired came back onto the transfer market the following summer as if nothing had happened'
+    ] },
     { v: '2.1', when: '30 Aug', items: [
       'Fixed: the superstars you signed were gone again every new season. Anyone over 37 was silently deleted at the rollover — so the forty-one-year-old Ronaldo you paid nine figures for vanished — and the top-players board, which is rebuilt every summer, had no memory of who you already owned and put him straight back up for sale',
       'Retirement is now about whether he is still any good, not just his birthday, and it is announced when it happens. A world-class veteran plays on for years; an ordinary thirty-six-year-old goes',

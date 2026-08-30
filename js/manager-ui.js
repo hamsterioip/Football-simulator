@@ -408,31 +408,139 @@
       ).join('')}</div>`;
     },
 
-    eraCard(e, p, best, buy) {
-      const kit = e.club ? global.Crest.kitFor(e.club) : ['#2b3a44', '#8fa3ad'];
-      const ink = best ? '#2a1b00' : MUI.readable(kit[0]);
-      const badge = best ? { a: '#ffd257', b: '#a06bff' } : { a: kit[0], b: kit[1] };
+    /* ---------------- the portrait card ----------------
+       Laid out the way a collectible card is: the rating shouting from the
+       top-left, the man in the middle, his name across the bottom, and his
+       country and his club under that. Drawn rather than photographed —
+       everything in this game is. */
+
+    /* "Cristiano Ronaldo" -> "C. RONALDO" */
+    cardName(name) {
+      const parts = String(name || '').trim().split(/\s+/);
+      const last = parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
+      const initial = parts.length > 1 ? parts[0][0] + '. ' : '';
+      const full = (initial + last).toUpperCase();
+      return full.length > 15 ? last.toUpperCase() : full;
+    },
+
+    /* The man himself, in his kit, from the thighs up. */
+    cardFigure(kit, trim, ink, num) {
+      // A bust, cropped at the waist by the name plate. Every shape carries a
+      // thin dark edge, because half the kits in this game are white and would
+      // otherwise dissolve into one another and into the background.
+      const edge = 'rgba(0,0,0,.34)';
+      const arm = side => `<path d="M${side * 12.6} -17
+          q${side * 7} 1.6 ${side * 7.8} 8.4 l${side * 1.2} 22
+          q${side * -3.8} 1.8 ${side * -7.4} 0 l${side * -2.4} -18 Z"
+        fill="${kit}" stroke="${edge}" stroke-width=".8" stroke-linejoin="round"/>
+        <path d="M${side * 12.6} -17 q${side * 7} 1.6 ${side * 7.8} 8.4 l${side * .6} 10 q${side * -4} -8 ${side * -8.4} -12 Z" fill="rgba(0,0,0,.11)"/>
+        <circle cx="${side * 21}" cy="19" r="3.5" fill="#e8b892" stroke="${edge}" stroke-width=".45"/>`;
+      return `<g class="fc-man" transform="translate(105 184) scale(3.0)">
+        <ellipse cx="0" cy="30" rx="27" ry="8" fill="rgba(0,0,0,.28)"/>
+        <path d="M-5.6 -24 h11.2 l.4 6.5 h-12 Z" fill="#dda87f"/>
+        <circle cx="-9.5" cy="-29.5" r="2" fill="#e3b088"/>
+        <circle cx="9.5" cy="-29.5" r="2" fill="#e3b088"/>
+        <circle cx="0" cy="-30" r="9.7" fill="#f0c69f"/>
+        <path d="M-9.7 -31.8 q0 -10.6 9.7 -10.6 9.7 0 9.7 10.6 -2.2 -4 -5.5 -5.3
+          -5.5 1.8 -13.9 5.3 Z" fill="#2f2018"/>
+        ${arm(-1)}${arm(1)}
+        <path d="M-12.6 -17 q12.6 -6.4 25.2 0 l3 48 h-31.2 Z"
+          fill="${kit}" stroke="${edge}" stroke-width=".55" stroke-linejoin="round"/>
+        <path d="M-12.6 -17 q12.6 -6.4 25.2 0 l-.6 4 q-12 -4.4 -24 0 Z" fill="${trim}"/>
+        <path d="M-5.8 -17.6 L0 -10 L5.8 -17.6 q-5.8 -1.9 -11.6 0 Z"
+          fill="${trim}" stroke="${edge}" stroke-width=".4"/>
+        <path d="M-12.6 -17 q12.6 -6.4 25.2 0 l.6 8 q-13.2 -5.2 -26.4 0 Z"
+          fill="rgba(0,0,0,.13)"/>
+        <text x="0" y="9" text-anchor="middle" font-size="7" font-weight="800"
+          fill="${ink}" opacity=".7" font-family="Inter,Helvetica,Arial,sans-serif">${num || ''}</text>
+      </g>`;
+    },
+
+    eraPortrait(e, p, best, buy) {
+      const uid = 'fc' + (MUI._fc = (MUI._fc || 0) + 1);
+      const kit = e.club ? global.Crest.kitFor(e.club) : ['#5a6a76', '#93a5ab'];
+      const ink = MUI.readable(kit[0]);
       const act = buy ? ` data-act="mgrEra" data-arg="${p.id}:${e.index}"` : '';
-      return `<div class="era-card${best ? ' era-best' : ''}${buy ? ' era-pick' : ''}${
-          buy && buy.active ? ' era-on' : ''}"${act}>
-        ${best ? '<div class="era-prism"></div><div class="era-glow"></div>'
-               + MUI.eraStars() + '<div class="era-shine"></div>' : ''}
-        <div class="era-body">
-          <div class="era-ovr" style="--k1:${badge.a};--k2:${badge.b};color:${ink}">
-            <b>${e.ovr}</b><span>${esc(p.pos)}</span>
+      // big background stars, placed by hand so none of them sit on his face
+      const stars = [[18, 46, 26, -14], [186, 74, 34, 12], [30, 250, 30, 8],
+                     [176, 232, 22, -8], [104, 22, 18, 0], [12, 158, 16, 10],
+                     [196, 160, 18, -12]];
+      const star = (x, y, r, rot, fill, op) =>
+        `<path transform="translate(${x} ${y}) rotate(${rot}) scale(${r / 50})" opacity="${op}" fill="${fill}"
+          d="M0 -50 C6 -18 18 -6 50 0 18 6 6 18 0 50 -6 18 -18 6 -50 0 -18 -6 -6 -18 0 -50 Z"/>`;
+
+      return `<div class="fc-wrap">
+        <div class="fc-card${best ? ' fc-best' : ''}${buy && buy.active ? ' fc-on' : ''}"${act}
+            role="${act ? 'button' : 'img'}" ${act ? 'tabindex="0"' : ''}
+            aria-label="${esc(p.name)}, ${e.year}, rated ${e.ovr}">
+          <svg class="fc-art" viewBox="0 0 210 310" aria-hidden="true">
+            <defs>
+              <linearGradient id="${uid}bg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="${best ? '#2f1656' : '#1a1b34'}"/>
+                <stop offset=".45" stop-color="${best ? '#6d31a6' : '#2b2a53'}"/>
+                <stop offset="1" stop-color="${best ? '#1c0f3c' : '#131228'}"/>
+              </linearGradient>
+              <radialGradient id="${uid}burst" cx=".5" cy=".42" r=".62">
+                <stop offset="0" stop-color="${best ? 'rgba(255,214,150,.46)' : 'rgba(168,150,255,.28)'}"/>
+                <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+              </radialGradient>
+              <linearGradient id="${uid}frame" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#fdf6e2"/><stop offset=".28" stop-color="#c9b47e"/>
+                <stop offset=".5" stop-color="#fffdf6"/><stop offset=".72" stop-color="#b79ad8"/>
+                <stop offset="1" stop-color="#f6ecff"/>
+              </linearGradient>
+              <clipPath id="${uid}clip"><rect x="5" y="5" width="200" height="300" rx="17"/></clipPath>
+              <radialGradient id="${uid}spot" cx=".5" cy=".45" r=".5">
+                <stop offset="0" stop-color="${best ? 'rgba(255,232,180,.36)' : 'rgba(190,178,255,.26)'}"/>
+                <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+              </radialGradient>
+              <linearGradient id="${uid}fade" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="rgba(6,8,16,0)"/>
+                <stop offset=".24" stop-color="rgba(6,8,16,.78)"/>
+                <stop offset="1" stop-color="rgba(6,8,16,.88)"/>
+              </linearGradient>
+            </defs>
+            <g clip-path="url(#${uid}clip)">
+              <rect x="5" y="5" width="200" height="300" fill="url(#${uid}bg)"/>
+              <ellipse cx="105" cy="130" rx="120" ry="120" fill="url(#${uid}burst)"/>
+              ${stars.map(([x, y, r, rot], i) =>
+                star(x, y, r, rot, best ? '#ffd873' : '#c3b4ff', best ? (i % 2 ? .24 : .32) : (i % 2 ? .13 : .18))).join('')}
+              <g opacity="${best ? .3 : .16}">
+                ${[0, 1, 2, 3, 4, 5].map(i =>
+                  `<path d="M105 118 L${-40 + i * 60} 310 L${-4 + i * 60} 310 Z" fill="#fff" opacity=".35"/>`).join('')}
+              </g>
+              <ellipse cx="105" cy="150" rx="74" ry="86" fill="url(#${uid}spot)"/>
+              ${MUI.cardFigure(kit[0], kit[1], ink, p.shirt)}
+              <g class="fc-front">
+                ${star(30, 116, 40, -18, best ? '#ffd873' : '#c3b4ff', best ? .30 : .17)}
+                ${star(184, 178, 46, 14, best ? '#ffe6a8' : '#d6cbff', best ? .26 : .14)}
+                ${star(150, 62, 22, 6, '#ffffff', best ? .5 : .3)}
+              </g>
+              <rect x="5" y="206" width="200" height="99" fill="url(#${uid}fade)"/>
+              <rect x="30" y="224" width="150" height="1.3" fill="${best ? 'rgba(255,216,115,.75)' : 'rgba(255,255,255,.35)'}"/>
+            </g>
+            <rect x="5" y="5" width="200" height="300" rx="17" fill="none"
+              stroke="url(#${uid}frame)" stroke-width="3"/>
+            <rect x="8.5" y="8.5" width="193" height="293" rx="14" fill="none"
+              stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+          </svg>
+
+          <div class="fc-rating"><b>${e.ovr}</b><span>${esc(p.pos)}</span></div>
+          <div class="fc-year">${e.year}</div>
+          <div class="fc-name">${esc(MUI.cardName(p.name))}</div>
+          <div class="fc-foot">
+            ${global.Icons.flag(p.nation, 'sm')}
+            <span class="fc-dot"></span>
+            ${e.club ? crest(e.club, 'crest-sm') : '<span class="fc-dot"></span>'}
           </div>
-          <div class="era-id">
-            <div class="era-name">${esc(p.name)}</div>
-            <div class="era-meta">${e.club ? crest(e.club, 'crest-sm') + ' ' + esc(e.club) + ' · ' : ''}${e.year} · aged ${e.age}</div>
-            <div class="era-label">${esc(e.label)}</div>
-          </div>
+          ${best ? '<div class="fc-shine"></div>' + MUI.eraStars() + '<div class="fc-tag">PEAK</div>' : ''}
         </div>
-        ${best ? '<div class="era-tag">PEAK</div>' : ''}
         ${buy ? `<div class="era-buy ${buy.active ? 'on' : buy.owned ? 'owned' : ''}">${
           buy.active ? ico('ok') + ' In your squad'
             : buy.owned ? 'Switch back — free'
             : buy.price ? U().cash(buy.price)
-            : 'Free — he was worse then'}</div>` : ''}
+            : 'Free'}</div>` : ''}
+        <div class="fc-label">${esc(e.label)}</div>
       </div>`;
     },
 
@@ -456,12 +564,8 @@
         price: M().eraPrice(p, e), wage: M().eraWage(p, e)
       }));
       const canAny = info.some(b => !b.active && (b.owned || b.price <= budget) && b.wage <= room);
-      return `<div class="timeline">
-        ${eras.map((e, i) => `<div class="tl-row${i === best ? ' peak' : ''}${
-            info[i].active ? ' on' : ''}">
-          <div class="tl-rail"><span class="tl-dot"></span></div>
-          ${MUI.eraCard(e, p, i === best, info[i])}
-        </div>`).join('')}
+      return `<div class="fc-rail">
+        ${eras.map((e, i) => MUI.eraPortrait(e, p, i === best, info[i])).join('')}
       </div>
       <p class="dim tl-foot">Tap an era to bring that version of him back — it comes out of the
         transfer budget, and once you have paid for a version you can switch to it for nothing.
