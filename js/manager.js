@@ -210,6 +210,37 @@
   }
 
   /* how good the eleven actually is, allowing for players out of position */
+  /* An era signing carries the trait that version of him was known for. It is
+     on the card, so it has to mean something on the pitch: the finishers get
+     the ball in front of goal more often, and the defensive ones tighten the
+     side up rather than adding to the attack. */
+  const TRAIT_GOALS = {
+    'Finisher': 1.35, 'Poacher': 1.45, 'Knuckleball Power Shot': 1.3, 'Power Shot': 1.25,
+    'Set-Piece Specialist': 1.2, 'Late Runs': 1.25, 'Dribbler Expert': 1.15,
+    'Blistering Pace': 1.15, 'Flair': 1.1, 'Playmaker': 0.95, 'Engine': 1.0,
+    'Aerial Threat': 1.2, 'The Wall': 0.7, 'Shot Stopper': 0.7
+  };
+  const TRAIT_TEAM = {
+    'Playmaker': { att: 1.1, def: 0 }, 'Engine': { att: 0.5, def: 0.5 },
+    'The Wall': { att: 0, def: 1.4 }, 'Shot Stopper': { att: 0, def: 1.5 },
+    'Blistering Pace': { att: 0.8, def: 0 }, 'Dribbler Expert': { att: 0.8, def: 0 },
+    'Knuckleball Power Shot': { att: 0.9, def: 0 }, 'Power Shot': { att: 0.7, def: 0 },
+    'Finisher': { att: 0.7, def: 0 }, 'Poacher': { att: 0.6, def: 0 },
+    'Aerial Threat': { att: 0.5, def: 0.4 }, 'Late Runs': { att: 0.6, def: 0 },
+    'Set-Piece Specialist': { att: 0.6, def: 0 }, 'Flair': { att: 0.5, def: 0 }
+  };
+  /* The version you signed carries its own trait, before you buy any era. */
+  function traitOf(s) { return (s && ((s.era && s.era.trait) || s.trait)) || null; }
+  function traitScoring(s) { return TRAIT_GOALS[traitOf(s)] || 1; }
+  function traitBonus(g) {
+    let att = 0, def = 0;
+    xiPlayers(g).forEach(s => {
+      const t = TRAIT_TEAM[traitOf(s)];
+      if (t) { att += t.att; def += t.def; }
+    });
+    return { att, def };
+  }
+
   function teamRating(g) {
     const U = global.U;
     const xi = xiPlayers(g);
@@ -253,9 +284,11 @@
     const mine = teamRating(g) + (fix.home ? 2.5 : 0) + style.att * 0.35 + talkSwing;
     const theirs = opp.rating + (fix.home ? 0 : 2.5) - style.def * 0.3;
 
-    const diff = mine - theirs;
-    const la = U.clamp(1.35 + diff * 0.052 + style.att * 0.05, 0.2, 4.6);
-    const lb = U.clamp(1.35 - diff * 0.052 - style.def * 0.05, 0.15, 4.6);
+    // what the era signings in your eleven actually bring
+    const tr = traitBonus(g);
+    const diff = mine - theirs + tr.att * 0.5 + tr.def * 0.5;
+    const la = U.clamp(1.35 + diff * 0.052 + style.att * 0.05 + tr.att * 0.055, 0.2, 4.6);
+    const lb = U.clamp(1.35 - diff * 0.052 - style.def * 0.05 - tr.def * 0.06, 0.15, 4.6);
     const gf = U.poisson(la), ga = U.poisson(lb);
 
     // who scored them
@@ -264,7 +297,7 @@
     for (let i = 0; i < gf; i++) {
       const weights = xi.map(s => {
         const grp = s.pos === 'GK' ? 0.001 : (global.DATA.POSITIONS[s.pos] || {}).attack || 0.1;
-        return [s, grp * (s.ovr / 70)];
+        return [s, grp * (s.ovr / 70) * traitScoring(s)];
       });
       const who = U.weighted(weights);
       if (who) { who.goals++; scorers.push(who); }
@@ -545,6 +578,11 @@
     const joined = Object.assign({}, player, { apps: 0, goals: 0, assists: 0, ratingSum: 0,
       rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g),
       joined: g.world.year });
+    if (global.Timeline) {
+      const line = global.Timeline.for(joined);
+      const now = line[line.length - 1];
+      if (now && now.trait) joined.trait = now.trait;
+    }
     delete joined.fromClub; delete joined.fromId; delete joined.ask; delete joined.free;
     g.squad.push(joined);
     State.news(player.elite
@@ -635,7 +673,8 @@
     g.mgr.budget -= price;
     s.erasOwned = (s.erasOwned || []);
     if (s.erasOwned.indexOf(era.year) < 0 && price > 0) s.erasOwned.push(era.year);
-    s.era = { year: era.year, label: era.label, club: era.club, ovr: era.ovr, age: era.age };
+    s.era = { year: era.year, label: era.label, club: era.club,
+              ovr: era.ovr, age: era.age, trait: era.trait || null };
     s.ovr = era.ovr;
     // Paying for a version buys the years back with it. Switching to one you
     // already own gives you the rating only — otherwise you could flip between
@@ -816,6 +855,7 @@
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, bid, sell, squadWages, valueFor, wageFor,
+    traitOf, traitBonus, TRAIT_GOALS,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor
   };

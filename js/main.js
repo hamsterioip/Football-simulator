@@ -429,16 +429,44 @@
     /* ---------------- MANAGER MODE ---------------- */
 
     /* Choosing a club to take. Ordered by how hard it will be. */
+    /* Which football are you managing in? Asked before anything else, because
+       it decides the whole world — who plays for whom, and how good they are.
+       A sacked manager skips this: he stays in the world he was working in. */
     managerStart() {
+      if (Game._mgrRehire && Game._mgrWorld) return Game.managerLeagues();
+      UI.modal({
+        title: 'Which era?',
+        html: `<p class="muted">Pick the football you want to manage in. It decides every squad
+            in the world.</p>
+          <div class="list">${D.ERAS.map(e => `
+            <div class="item click" data-mera="${e.id}">
+              <div class="ic">${ico(e.icon)}</div>
+              <div class="tx"><b>${U.esc(e.name)} <span class="pill">${U.esc(e.years)}</span></b>
+                <span>${U.esc(e.blurb)}</span></div>
+            </div>`).join('')}</div>`,
+        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-mera]').forEach(el => el.onclick = () => {
+            Game._mgrEra = el.dataset.mera;
+            Game.managerLeagues();
+          });
+        }
+      });
+    },
+
+    managerLeagues() {
       // a sacked manager keeps the world he was working in — same clubs, same
       // players, and a reputation that decides who will still take his call
+      const eraId = Game._mgrEra || 'modern';
+      const era = D.ERAS.find(e => e.id === eraId) || D.ERAS[0];
       const world = Game._mgrRehire && Game._mgrWorld
-        ? Game._mgrWorld : State.buildWorld(D.CONFIG.SEASON_START_YEAR, 'modern');
+        ? Game._mgrWorld : State.buildWorld(era.startYear, eraId);
       Game._mgrWorld = world;
       const leagues = D.LEAGUES.map(l => l.id);
       UI.modal({
         title: 'Take a job',
-        html: `<p class="muted">A big club expects the title. A small one expects you to stay up.</p>
+        html: `<p class="muted">${U.esc(era.name)} · ${U.esc(era.years)}.
+            A big club expects the title. A small one expects you to stay up.</p>
           <div class="list">${leagues.map(id => {
             const L = world.leagues.find(x => x.id === id) || State.league(id);
             const cap = Game._mgrCeiling || 99;
@@ -448,7 +476,8 @@
                 Game._mgrCeiling ? ' · ' + (open ? open + ' club' + (open === 1 ? '' : 's') + ' would have you'
                                                 : 'nobody here wants you') : ''}</span></div></div>`;
           }).join('')}</div>`,
-        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
+        actions: [{ label: Game._mgrRehire ? 'Cancel' : 'Back', cls: 'btn-ghost',
+          onClick: () => { if (!Game._mgrRehire) Game.managerStart(); } }],
         onRender(m) {
           m.querySelectorAll('[data-lg]').forEach(el => el.onclick = () => Game.managerClubs(el.dataset.lg));
         }
@@ -474,7 +503,7 @@
               c.rating >= 84 ? 'they expect to win it' : c.rating >= 76 ? 'a good side, and they know it'
               : c.rating >= 68 ? 'a fair job, if you are any good' : 'a proper rebuild'}</span></div>
           </div>`).join('')}</div>`,
-        actions: [{ label: 'Back', cls: 'btn-ghost', onClick: () => Game.managerStart() }],
+        actions: [{ label: 'Back', cls: 'btn-ghost', onClick: () => Game.managerLeagues() }],
         onRender(m) {
           m.querySelectorAll('[data-club]').forEach(el => el.onclick = () => Game.managerBegin(el.dataset.club));
         }
@@ -485,7 +514,7 @@
       const world = Game._mgrWorld;
       const past = (State.game && State.game.mgrHistory) || [];
       const g = {
-        version: 1, world, era: 'modern', mode: 'manager',
+        version: 1, world, era: Game._mgrEra || 'modern', mode: 'manager',
         log: [], headlines: [], newsSeen: 0, tables: {}, world_year: world.year,
         mgrHistory: Game._mgrRehire ? past : [],
         settings: {}

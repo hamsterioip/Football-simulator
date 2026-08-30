@@ -1451,9 +1451,15 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.4';
+  const VERSION = '2.5';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.5', when: '30 Aug', items: [
+      'Manager Mode asks which era first: Modern, Classic 2005 or the Golden Era. It decides every squad in the world — take Chelsea in 2005 with \u010cech and Terry, or Inter in the Golden Era with R9 up front',
+      'Ronaldo\u2019s 2008 at United is a 98 as well, so he has two peak cards — both animated, and both worth different money',
+      'Every era carries the trait that version was known for. The 2014 Madrid card is a Knuckleball Power Shot; the 2008 United one is a Dribbler Expert',
+      'Traits are not decoration: the shooting ones put him in front of goal more often, the creative ones lift the whole attack, and the defensive ones tighten the side. Measured over forty seasons, the Madrid Ronaldo scores about a goal a season more than the United one, while the United one is worth slightly more league points'
+    ] },
     { v: '2.4', when: '30 Aug', items: [
       'The peak card moves like a real game card now: it floats on a slow 3D tilt, a gold-into-violet border runs around the frame, light rays turn behind him, embers drift up off the bottom edge, glints pop on the frame, and the name and rating shimmer',
       'Also restored the twinkling stars, which had silently lost their styling in the 2.2 rework — twelve of them, back on their own clocks',

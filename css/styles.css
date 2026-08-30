@@ -833,11 +833,15 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   letter-spacing:1px;color:#fff;opacity:.92;text-shadow:0 1px 5px rgba(0,0,0,.7)}
 .fc-year{position:absolute;right:9%;top:6.5%;z-index:2;font:800 10px/1 var(--font);
   letter-spacing:.6px;color:rgba(255,255,255,.62)}
-.fc-name{position:absolute;left:6%;right:6%;top:76.5%;z-index:2;text-align:center;
+.fc-name{position:absolute;left:6%;right:6%;top:74.5%;z-index:2;text-align:center;
   font:800 13px/1 var(--font-d);letter-spacing:.7px;color:#fff;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   text-shadow:0 2px 7px rgba(0,0,0,.7)}
-.fc-foot{position:absolute;left:0;right:0;top:86%;z-index:2;
+.fc-trait{position:absolute;left:8%;right:8%;top:82%;z-index:2;text-align:center;
+  font:800 7.5px/1 var(--font);letter-spacing:.7px;text-transform:uppercase;
+  color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc-best .fc-trait{color:#ffd873}
+.fc-foot{position:absolute;left:0;right:0;top:88.5%;z-index:2;
   display:flex;align-items:center;justify-content:center;gap:9px}
 .fc-foot .fl{width:17px;height:17px}
 .fc-foot .crest{width:19px;height:19px}

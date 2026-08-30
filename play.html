@@ -848,11 +848,15 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   letter-spacing:1px;color:#fff;opacity:.92;text-shadow:0 1px 5px rgba(0,0,0,.7)}
 .fc-year{position:absolute;right:9%;top:6.5%;z-index:2;font:800 10px/1 var(--font);
   letter-spacing:.6px;color:rgba(255,255,255,.62)}
-.fc-name{position:absolute;left:6%;right:6%;top:76.5%;z-index:2;text-align:center;
+.fc-name{position:absolute;left:6%;right:6%;top:74.5%;z-index:2;text-align:center;
   font:800 13px/1 var(--font-d);letter-spacing:.7px;color:#fff;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   text-shadow:0 2px 7px rgba(0,0,0,.7)}
-.fc-foot{position:absolute;left:0;right:0;top:86%;z-index:2;
+.fc-trait{position:absolute;left:8%;right:8%;top:82%;z-index:2;text-align:center;
+  font:800 7.5px/1 var(--font);letter-spacing:.7px;text-transform:uppercase;
+  color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc-best .fc-trait{color:#ffd873}
+.fc-foot{position:absolute;left:0;right:0;top:88.5%;z-index:2;
   display:flex;align-items:center;justify-content:center;gap:9px}
 .fc-foot .fl{width:17px;height:17px}
 .fc-foot .crest{width:19px;height:19px}
@@ -2850,9 +2854,15 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.4';
+  const VERSION = '2.5';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.5', when: '30 Aug', items: [
+      'Manager Mode asks which era first: Modern, Classic 2005 or the Golden Era. It decides every squad in the world — take Chelsea in 2005 with \u010cech and Terry, or Inter in the Golden Era with R9 up front',
+      'Ronaldo\u2019s 2008 at United is a 98 as well, so he has two peak cards — both animated, and both worth different money',
+      'Every era carries the trait that version was known for. The 2014 Madrid card is a Knuckleball Power Shot; the 2008 United one is a Dribbler Expert',
+      'Traits are not decoration: the shooting ones put him in front of goal more often, the creative ones lift the whole attack, and the defensive ones tighten the side. Measured over forty seasons, the Madrid Ronaldo scores about a goal a season more than the United one, while the United one is worth slightly more league points'
+    ] },
     { v: '2.4', when: '30 Aug', items: [
       'The peak card moves like a real game card now: it floats on a slow 3D tilt, a gold-into-violet border runs around the frame, light rays turn behind him, embers drift up off the bottom edge, glints pop on the frame, and the name and rating shimmer',
       'Also restored the twinkling stars, which had silently lost their styling in the 2.2 rework — twelve of them, back on their own clocks',
@@ -10730,101 +10740,103 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 (function (global) {
   'use strict';
 
-  /* [year, club, age, ovr, label] */
+  /* [year, club, age, ovr, label, trait]
+     The trait is what that version of him was known for — shown on the card,
+     and worth something to the match engine when he is in your eleven. */
   const PLAYER_ERAS = {
     'Cristiano Ronaldo': [
-      [2004, 'Sporting CP', 18, 74, 'The kid from Madeira'],
-      [2007, 'Manchester United', 22, 89, 'Stepovers and a whole league rattled'],
-      [2009, 'Manchester United', 24, 93, 'Ballon d’Or, and off to Madrid'],
-      [2014, 'Real Madrid', 29, 98, 'La Décima. The best on earth'],
-      [2018, 'Juventus', 33, 93, 'Still scoring, somewhere new'],
-      [2026, 'Al Nassr', 41, 93, 'Forty-one, and nowhere near finished']
+      [2004, 'Sporting CP', 18, 74, 'The kid from Madeira', 'Flair'],
+      [2007, 'Manchester United', 22, 89, 'Stepovers and a whole league rattled', 'Dribbler Expert'],
+      [2008, 'Manchester United', 23, 98, 'Forty-two goals, a European Cup, a Ballon d’Or', 'Dribbler Expert'],
+      [2014, 'Real Madrid', 29, 98, 'La Décima. The best on earth', 'Knuckleball Power Shot'],
+      [2018, 'Juventus', 33, 93, 'Still scoring, somewhere new', 'Aerial Threat'],
+      [2026, 'Al Nassr', 41, 93, 'Forty-one, and nowhere near finished', 'Finisher']
     ],
     'Lionel Messi': [
-      [2005, 'Barcelona', 18, 76, 'Seventeen and already impossible to mark'],
-      [2009, 'Barcelona', 22, 93, 'Six trophies in a calendar year'],
-      [2012, 'Barcelona', 25, 98, 'Ninety-one goals in a year'],
-      [2015, 'Barcelona', 28, 97, 'The second treble'],
-      [2022, 'Paris SG', 35, 94, 'A World Cup, finally'],
-      [2026, 'Inter Miami', 38, 95, 'Still the best passer in any room']
+      [2005, 'Barcelona', 18, 76, 'Seventeen and already impossible to mark', 'Flair'],
+      [2009, 'Barcelona', 22, 93, 'Six trophies in a calendar year', 'Dribbler Expert'],
+      [2012, 'Barcelona', 25, 98, 'Ninety-one goals in a year', 'Playmaker'],
+      [2015, 'Barcelona', 28, 97, 'The second treble', 'Playmaker'],
+      [2022, 'Paris SG', 35, 94, 'A World Cup, finally', 'Set-Piece Specialist'],
+      [2026, 'Inter Miami', 38, 95, 'Still the best passer in any room', 'Playmaker']
     ],
     'Kylian Mbappé': [
-      [2017, 'Monaco', 18, 82, 'Nobody could live with him'],
-      [2018, 'Paris SG', 19, 88, 'A World Cup at nineteen'],
-      [2022, 'Paris SG', 23, 93, 'A hat-trick in a final'],
-      [2026, 'Real Madrid', 26, 95, 'The best forward alive']
+      [2017, 'Monaco', 18, 82, 'Nobody could live with him', 'Blistering Pace'],
+      [2018, 'Paris SG', 19, 88, 'A World Cup at nineteen', 'Blistering Pace'],
+      [2022, 'Paris SG', 23, 93, 'A hat-trick in a final', 'Finisher'],
+      [2026, 'Real Madrid', 26, 95, 'The best forward alive', 'Finisher']
     ],
     'Erling Haaland': [
-      [2019, 'RB Salzburg', 19, 80, 'Eight in the group stage'],
-      [2021, 'Borussia Dortmund', 21, 88, 'A goal every time he played'],
-      [2023, 'Manchester City', 23, 93, 'Thirty-six in a league season'],
-      [2026, 'Manchester City', 25, 95, 'A treble and a habit']
+      [2019, 'RB Salzburg', 19, 80, 'Eight in the group stage', 'Poacher'],
+      [2021, 'Borussia Dortmund', 21, 88, 'A goal every time he played', 'Poacher'],
+      [2023, 'Manchester City', 23, 93, 'Thirty-six in a league season', 'Finisher'],
+      [2026, 'Manchester City', 25, 95, 'A treble and a habit', 'Finisher']
     ],
     'Harry Kane': [
-      [2015, 'Tottenham', 21, 82, 'One-season wonder, they said'],
-      [2018, 'Tottenham', 24, 90, 'A Golden Boot at a World Cup'],
-      [2021, 'Tottenham', 27, 92, 'Scoring them and making them'],
-      [2026, 'Bayern München', 32, 93, 'Finally winning things']
+      [2015, 'Tottenham', 21, 82, 'One-season wonder, they said', 'Poacher'],
+      [2018, 'Tottenham', 24, 90, 'A Golden Boot at a World Cup', 'Finisher'],
+      [2021, 'Tottenham', 27, 92, 'Scoring them and making them', 'Playmaker'],
+      [2026, 'Bayern München', 32, 93, 'Finally winning things', 'Finisher']
     ],
     'Mohamed Salah': [
-      [2014, 'Chelsea', 21, 76, 'It did not work out in London'],
-      [2016, 'Roma', 24, 85, 'Rebuilt in Italy'],
-      [2018, 'Liverpool', 25, 92, 'Thirty-two in a Premier League season'],
-      [2020, 'Liverpool', 27, 93, 'A European Cup and a title'],
-      [2026, 'Liverpool', 33, 92, 'Still the first name on the sheet']
+      [2014, 'Chelsea', 21, 76, 'It did not work out in London', 'Blistering Pace'],
+      [2016, 'Roma', 24, 85, 'Rebuilt in Italy', 'Dribbler Expert'],
+      [2018, 'Liverpool', 25, 92, 'Thirty-two in a Premier League season', 'Finisher'],
+      [2020, 'Liverpool', 27, 93, 'A European Cup and a title', 'Finisher'],
+      [2026, 'Liverpool', 33, 92, 'Still the first name on the sheet', 'Finisher']
     ],
     'Kevin De Bruyne': [
-      [2013, 'Chelsea', 22, 78, 'Sent out on loan'],
-      [2015, 'Wolfsburg', 24, 86, 'The best player in Germany'],
-      [2020, 'Manchester City', 29, 94, 'Twenty assists in a season'],
-      [2026, 'Manchester City', 34, 90, 'Fewer minutes, same passes']
+      [2013, 'Chelsea', 22, 78, 'Sent out on loan', 'Playmaker'],
+      [2015, 'Wolfsburg', 24, 86, 'The best player in Germany', 'Playmaker'],
+      [2020, 'Manchester City', 29, 94, 'Twenty assists in a season', 'Power Shot'],
+      [2026, 'Manchester City', 34, 90, 'Fewer minutes, same passes', 'Playmaker']
     ],
     'Karim Benzema': [
-      [2008, 'Lyon', 20, 82, 'The best young forward in France'],
-      [2014, 'Real Madrid', 26, 88, 'The one who made room for others'],
-      [2022, 'Real Madrid', 34, 93, 'His own Ballon d’Or at last'],
-      [2026, 'Al Ittihad', 38, 88, 'A different league, the same touch']
+      [2008, 'Lyon', 20, 82, 'The best young forward in France', 'Finisher'],
+      [2014, 'Real Madrid', 26, 88, 'The one who made room for others', 'Playmaker'],
+      [2022, 'Real Madrid', 34, 93, 'His own Ballon d’Or at last', 'Finisher'],
+      [2026, 'Al Ittihad', 38, 88, 'A different league, the same touch', 'Finisher']
     ],
     'Virgil van Dijk': [
-      [2015, 'Southampton', 24, 82, 'Too good for where he was'],
-      [2019, 'Liverpool', 27, 93, 'Nobody got past him for a year'],
-      [2026, 'Liverpool', 34, 91, 'Reads it before it happens']
+      [2015, 'Southampton', 24, 82, 'Too good for where he was', 'Aerial Threat'],
+      [2019, 'Liverpool', 27, 93, 'Nobody got past him for a year', 'The Wall'],
+      [2026, 'Liverpool', 34, 91, 'Reads it before it happens', 'The Wall']
     ],
     'Vinícius Júnior': [
-      [2018, 'Real Madrid', 18, 76, 'All running, no end product'],
-      [2022, 'Real Madrid', 22, 88, 'Scored in a Champions League final'],
-      [2026, 'Real Madrid', 25, 93, 'Unplayable down the left']
+      [2018, 'Real Madrid', 18, 76, 'All running, no end product', 'Blistering Pace'],
+      [2022, 'Real Madrid', 22, 88, 'Scored in a Champions League final', 'Dribbler Expert'],
+      [2026, 'Real Madrid', 25, 93, 'Unplayable down the left', 'Dribbler Expert']
     ],
     'Jude Bellingham': [
-      [2020, 'Borussia Dortmund', 17, 76, 'Seventeen, and running a midfield'],
-      [2023, 'Borussia Dortmund', 20, 85, 'Captain material already'],
-      [2024, 'Real Madrid', 21, 91, 'Nineteen goals from midfield'],
-      [2026, 'Real Madrid', 22, 93, 'The best midfielder in the world']
+      [2020, 'Borussia Dortmund', 17, 76, 'Seventeen, and running a midfield', 'Engine'],
+      [2023, 'Borussia Dortmund', 20, 85, 'Captain material already', 'Engine'],
+      [2024, 'Real Madrid', 21, 91, 'Nineteen goals from midfield', 'Late Runs'],
+      [2026, 'Real Madrid', 22, 93, 'The best midfielder in the world', 'Late Runs']
     ],
     'Lamine Yamal': [
-      [2023, 'Barcelona', 16, 74, 'Sixteen years old, in a first team'],
-      [2024, 'Barcelona', 17, 86, 'A European Championship at seventeen'],
-      [2026, 'Barcelona', 18, 94, 'Already the best right winger alive']
+      [2023, 'Barcelona', 16, 74, 'Sixteen years old, in a first team', 'Flair'],
+      [2024, 'Barcelona', 17, 86, 'A European Championship at seventeen', 'Dribbler Expert'],
+      [2026, 'Barcelona', 18, 94, 'Already the best right winger alive', 'Dribbler Expert']
     ],
     'Rodri': [
-      [2018, 'Atlético Madrid', 22, 82, 'The best young holder in Spain'],
-      [2023, 'Manchester City', 27, 91, 'Scored the goal that won the lot'],
-      [2026, 'Manchester City', 29, 92, 'The whole team runs through him']
+      [2018, 'Atlético Madrid', 22, 82, 'The best young holder in Spain', 'The Wall'],
+      [2023, 'Manchester City', 27, 91, 'Scored the goal that won the lot', 'Playmaker'],
+      [2026, 'Manchester City', 29, 92, 'The whole team runs through him', 'Playmaker']
     ],
     'Bukayo Saka': [
-      [2020, 'Arsenal', 18, 76, 'Thrown in and never dropped'],
-      [2023, 'Arsenal', 21, 86, 'Carrying a title challenge'],
-      [2026, 'Arsenal', 24, 91, 'Nobody in England beats him one-on-one']
+      [2020, 'Arsenal', 18, 76, 'Thrown in and never dropped', 'Flair'],
+      [2023, 'Arsenal', 21, 86, 'Carrying a title challenge', 'Dribbler Expert'],
+      [2026, 'Arsenal', 24, 91, 'Nobody in England beats him one-on-one', 'Dribbler Expert']
     ],
     'Thibaut Courtois': [
-      [2013, 'Atlético Madrid', 21, 85, 'On loan and already the best in Spain'],
-      [2022, 'Real Madrid', 30, 93, 'The final he won on his own'],
-      [2026, 'Real Madrid', 33, 92, 'Still enormous']
+      [2013, 'Atlético Madrid', 21, 85, 'On loan and already the best in Spain', 'Shot Stopper'],
+      [2022, 'Real Madrid', 30, 93, 'The final he won on his own', 'Shot Stopper'],
+      [2026, 'Real Madrid', 33, 92, 'Still enormous', 'Shot Stopper']
     ],
     'Lautaro Martínez': [
-      [2018, 'Racing Club', 20, 78, 'Argentina noticed first'],
-      [2023, 'Inter', 25, 87, 'Captain, and a European final'],
-      [2026, 'Inter', 28, 91, 'Scores every kind of goal']
+      [2018, 'Racing Club', 20, 78, 'Argentina noticed first', 'Poacher'],
+      [2023, 'Inter', 25, 87, 'Captain, and a European final', 'Finisher'],
+      [2026, 'Inter', 28, 91, 'Scores every kind of goal', 'Finisher']
     ]
   };
 
@@ -10862,16 +10874,23 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       const rows = raw ? raw.map(r => r.slice()) : generated(p);
       // the last entry is always him as he is today — that is the one you own
       // by default, and the one every other era is priced against
-      return rows.map(([year, club, age, ovr, label], i) => ({
-        year, club, age, ovr, label, index: i, now: i === rows.length - 1
+      return rows.map(([year, club, age, ovr, label, trait], i) => ({
+        year, club, age, ovr, label, trait: trait || null,
+        index: i, now: i === rows.length - 1
       }));
     },
 
-    /* The best version there has ever been — the one that gets the card. */
+    /* The best version there has ever been — the one that gets the card. When
+       two of his years were equally good, they both get it. */
     peakIndex(eras) {
       let best = 0;
       eras.forEach((e, i) => { if (e.ovr > eras[best].ovr) best = i; });
       return best;
+    },
+    isPeak(eras, i) {
+      if (!eras.length) return false;
+      const top = eras.reduce((n, e) => Math.max(n, e.ovr), 0);
+      return eras[i].ovr === top;
     },
 
     /* Is this somebody we actually have a written history for? */
@@ -11096,6 +11115,37 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   }
 
   /* how good the eleven actually is, allowing for players out of position */
+  /* An era signing carries the trait that version of him was known for. It is
+     on the card, so it has to mean something on the pitch: the finishers get
+     the ball in front of goal more often, and the defensive ones tighten the
+     side up rather than adding to the attack. */
+  const TRAIT_GOALS = {
+    'Finisher': 1.35, 'Poacher': 1.45, 'Knuckleball Power Shot': 1.3, 'Power Shot': 1.25,
+    'Set-Piece Specialist': 1.2, 'Late Runs': 1.25, 'Dribbler Expert': 1.15,
+    'Blistering Pace': 1.15, 'Flair': 1.1, 'Playmaker': 0.95, 'Engine': 1.0,
+    'Aerial Threat': 1.2, 'The Wall': 0.7, 'Shot Stopper': 0.7
+  };
+  const TRAIT_TEAM = {
+    'Playmaker': { att: 1.1, def: 0 }, 'Engine': { att: 0.5, def: 0.5 },
+    'The Wall': { att: 0, def: 1.4 }, 'Shot Stopper': { att: 0, def: 1.5 },
+    'Blistering Pace': { att: 0.8, def: 0 }, 'Dribbler Expert': { att: 0.8, def: 0 },
+    'Knuckleball Power Shot': { att: 0.9, def: 0 }, 'Power Shot': { att: 0.7, def: 0 },
+    'Finisher': { att: 0.7, def: 0 }, 'Poacher': { att: 0.6, def: 0 },
+    'Aerial Threat': { att: 0.5, def: 0.4 }, 'Late Runs': { att: 0.6, def: 0 },
+    'Set-Piece Specialist': { att: 0.6, def: 0 }, 'Flair': { att: 0.5, def: 0 }
+  };
+  /* The version you signed carries its own trait, before you buy any era. */
+  function traitOf(s) { return (s && ((s.era && s.era.trait) || s.trait)) || null; }
+  function traitScoring(s) { return TRAIT_GOALS[traitOf(s)] || 1; }
+  function traitBonus(g) {
+    let att = 0, def = 0;
+    xiPlayers(g).forEach(s => {
+      const t = TRAIT_TEAM[traitOf(s)];
+      if (t) { att += t.att; def += t.def; }
+    });
+    return { att, def };
+  }
+
   function teamRating(g) {
     const U = global.U;
     const xi = xiPlayers(g);
@@ -11139,9 +11189,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     const mine = teamRating(g) + (fix.home ? 2.5 : 0) + style.att * 0.35 + talkSwing;
     const theirs = opp.rating + (fix.home ? 0 : 2.5) - style.def * 0.3;
 
-    const diff = mine - theirs;
-    const la = U.clamp(1.35 + diff * 0.052 + style.att * 0.05, 0.2, 4.6);
-    const lb = U.clamp(1.35 - diff * 0.052 - style.def * 0.05, 0.15, 4.6);
+    // what the era signings in your eleven actually bring
+    const tr = traitBonus(g);
+    const diff = mine - theirs + tr.att * 0.5 + tr.def * 0.5;
+    const la = U.clamp(1.35 + diff * 0.052 + style.att * 0.05 + tr.att * 0.055, 0.2, 4.6);
+    const lb = U.clamp(1.35 - diff * 0.052 - style.def * 0.05 - tr.def * 0.06, 0.15, 4.6);
     const gf = U.poisson(la), ga = U.poisson(lb);
 
     // who scored them
@@ -11150,7 +11202,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     for (let i = 0; i < gf; i++) {
       const weights = xi.map(s => {
         const grp = s.pos === 'GK' ? 0.001 : (global.DATA.POSITIONS[s.pos] || {}).attack || 0.1;
-        return [s, grp * (s.ovr / 70)];
+        return [s, grp * (s.ovr / 70) * traitScoring(s)];
       });
       const who = U.weighted(weights);
       if (who) { who.goals++; scorers.push(who); }
@@ -11431,6 +11483,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     const joined = Object.assign({}, player, { apps: 0, goals: 0, assists: 0, ratingSum: 0,
       rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g),
       joined: g.world.year });
+    if (global.Timeline) {
+      const line = global.Timeline.for(joined);
+      const now = line[line.length - 1];
+      if (now && now.trait) joined.trait = now.trait;
+    }
     delete joined.fromClub; delete joined.fromId; delete joined.ask; delete joined.free;
     g.squad.push(joined);
     State.news(player.elite
@@ -11521,7 +11578,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     g.mgr.budget -= price;
     s.erasOwned = (s.erasOwned || []);
     if (s.erasOwned.indexOf(era.year) < 0 && price > 0) s.erasOwned.push(era.year);
-    s.era = { year: era.year, label: era.label, club: era.club, ovr: era.ovr, age: era.age };
+    s.era = { year: era.year, label: era.label, club: era.club,
+              ovr: era.ovr, age: era.age, trait: era.trait || null };
     s.ovr = era.ovr;
     // Paying for a version buys the years back with it. Switching to one you
     // already own gives you the rating only — otherwise you could flip between
@@ -11702,6 +11760,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, bid, sell, squadWages, valueFor, wageFor,
+    traitOf, traitBonus, TRAIT_GOALS,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor
   };
@@ -12248,6 +12307,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           <div class="fc-rating"><b>${e.ovr}</b><span>${esc(p.pos)}</span></div>
           <div class="fc-year">${e.year}</div>
           <div class="fc-name">${esc(MUI.cardName(p.name))}</div>
+          ${e.trait ? `<div class="fc-trait">${esc(e.trait)}</div>` : ''}
           <div class="fc-foot">
             ${global.Icons.flag(p.nation, 'sm')}
             <span class="fc-dot"></span>
@@ -12289,7 +12349,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       }));
       const canAny = info.some(b => !b.active && (b.owned || b.price <= budget) && b.wage <= room);
       return `<div class="fc-rail">
-        ${eras.map((e, i) => MUI.eraPortrait(e, p, i === best, info[i])).join('')}
+        ${eras.map((e, i) => MUI.eraPortrait(e, p, global.Timeline.isPeak(eras, i), info[i])).join('')}
       </div>
       <p class="dim tl-foot">Tap an era to bring that version of him back — it comes out of the
         transfer budget, and once you have paid for a version you can switch to it for nothing.
@@ -14743,16 +14803,44 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     /* ---------------- MANAGER MODE ---------------- */
 
     /* Choosing a club to take. Ordered by how hard it will be. */
+    /* Which football are you managing in? Asked before anything else, because
+       it decides the whole world — who plays for whom, and how good they are.
+       A sacked manager skips this: he stays in the world he was working in. */
     managerStart() {
+      if (Game._mgrRehire && Game._mgrWorld) return Game.managerLeagues();
+      UI.modal({
+        title: 'Which era?',
+        html: `<p class="muted">Pick the football you want to manage in. It decides every squad
+            in the world.</p>
+          <div class="list">${D.ERAS.map(e => `
+            <div class="item click" data-mera="${e.id}">
+              <div class="ic">${ico(e.icon)}</div>
+              <div class="tx"><b>${U.esc(e.name)} <span class="pill">${U.esc(e.years)}</span></b>
+                <span>${U.esc(e.blurb)}</span></div>
+            </div>`).join('')}</div>`,
+        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-mera]').forEach(el => el.onclick = () => {
+            Game._mgrEra = el.dataset.mera;
+            Game.managerLeagues();
+          });
+        }
+      });
+    },
+
+    managerLeagues() {
       // a sacked manager keeps the world he was working in — same clubs, same
       // players, and a reputation that decides who will still take his call
+      const eraId = Game._mgrEra || 'modern';
+      const era = D.ERAS.find(e => e.id === eraId) || D.ERAS[0];
       const world = Game._mgrRehire && Game._mgrWorld
-        ? Game._mgrWorld : State.buildWorld(D.CONFIG.SEASON_START_YEAR, 'modern');
+        ? Game._mgrWorld : State.buildWorld(era.startYear, eraId);
       Game._mgrWorld = world;
       const leagues = D.LEAGUES.map(l => l.id);
       UI.modal({
         title: 'Take a job',
-        html: `<p class="muted">A big club expects the title. A small one expects you to stay up.</p>
+        html: `<p class="muted">${U.esc(era.name)} · ${U.esc(era.years)}.
+            A big club expects the title. A small one expects you to stay up.</p>
           <div class="list">${leagues.map(id => {
             const L = world.leagues.find(x => x.id === id) || State.league(id);
             const cap = Game._mgrCeiling || 99;
@@ -14762,7 +14850,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
                 Game._mgrCeiling ? ' · ' + (open ? open + ' club' + (open === 1 ? '' : 's') + ' would have you'
                                                 : 'nobody here wants you') : ''}</span></div></div>`;
           }).join('')}</div>`,
-        actions: [{ label: 'Cancel', cls: 'btn-ghost' }],
+        actions: [{ label: Game._mgrRehire ? 'Cancel' : 'Back', cls: 'btn-ghost',
+          onClick: () => { if (!Game._mgrRehire) Game.managerStart(); } }],
         onRender(m) {
           m.querySelectorAll('[data-lg]').forEach(el => el.onclick = () => Game.managerClubs(el.dataset.lg));
         }
@@ -14788,7 +14877,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
               c.rating >= 84 ? 'they expect to win it' : c.rating >= 76 ? 'a good side, and they know it'
               : c.rating >= 68 ? 'a fair job, if you are any good' : 'a proper rebuild'}</span></div>
           </div>`).join('')}</div>`,
-        actions: [{ label: 'Back', cls: 'btn-ghost', onClick: () => Game.managerStart() }],
+        actions: [{ label: 'Back', cls: 'btn-ghost', onClick: () => Game.managerLeagues() }],
         onRender(m) {
           m.querySelectorAll('[data-club]').forEach(el => el.onclick = () => Game.managerBegin(el.dataset.club));
         }
@@ -14799,7 +14888,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       const world = Game._mgrWorld;
       const past = (State.game && State.game.mgrHistory) || [];
       const g = {
-        version: 1, world, era: 'modern', mode: 'manager',
+        version: 1, world, era: Game._mgrEra || 'modern', mode: 'manager',
         log: [], headlines: [], newsSeen: 0, tables: {}, world_year: world.year,
         mgrHistory: Game._mgrRehire ? past : [],
         settings: {}

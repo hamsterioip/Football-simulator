@@ -536,6 +536,7 @@
           <div class="fc-rating"><b>${e.ovr}</b><span>${esc(p.pos)}</span></div>
           <div class="fc-year">${e.year}</div>
           <div class="fc-name">${esc(MUI.cardName(p.name))}</div>
+          ${e.trait ? `<div class="fc-trait">${esc(e.trait)}</div>` : ''}
           <div class="fc-foot">
             ${global.Icons.flag(p.nation, 'sm')}
             <span class="fc-dot"></span>
@@ -577,7 +578,7 @@
       }));
       const canAny = info.some(b => !b.active && (b.owned || b.price <= budget) && b.wage <= room);
       return `<div class="fc-rail">
-        ${eras.map((e, i) => MUI.eraPortrait(e, p, i === best, info[i])).join('')}
+        ${eras.map((e, i) => MUI.eraPortrait(e, p, global.Timeline.isPeak(eras, i), info[i])).join('')}
       </div>
       <p class="dim tl-foot">Tap an era to bring that version of him back — it comes out of the
         transfer budget, and once you have paid for a version you can switch to it for nothing.
