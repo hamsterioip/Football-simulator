@@ -1451,9 +1451,16 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.9';
-  const BUILD = '28 August 2026';
+  const VERSION = '2.0';
+  const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.0', when: '30 Aug', items: [
+      'Players have a card of their own now — tap any name in your squad, or anyone on the top-players board, and you get his page',
+      'And on it, a Timeline: every era of him there has ever been. Ronaldo from the kid at Sporting to the D\u00e9cima to forty-one at Al Nassr; Messi from seventeen to ninety-one goals in a calendar year. Club, year, age and rating for each one',
+      'The best version of him — Ronaldo\u2019s 98 at Madrid, Messi\u2019s 98 at Barcelona — gets a card that actually moves: gold into purple, a prism turning behind it, sparkles on their own clocks and a hard bar of light crossing the whole thing',
+      'The timeline is locked until he is yours. Sign him and it opens',
+      'Sixteen of the greats have a written history; everybody else gets an arc built from his age and what he is now, and no invented clubs'
+    ] },
     { v: '1.9', when: '28 Aug', items: [
       'Top players: a board of its own at the top of the transfer market, with the best footballers alive on it — Messi, Mbapp\u00e9, Haaland, Yamal, Ronaldo, Bellingham, Vin\u00edcius and the rest, with what each of them would actually cost',
       'The elite are rated like the elite now, into the nineties, so a 95 stands apart from a very good 87 the way he should',

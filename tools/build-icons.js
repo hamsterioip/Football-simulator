@@ -38,7 +38,7 @@ const ICONS = {
   'trophy': 'trophy', 'medal': 'medal', 'podium': 'podium', 'crown': 'crown',
   'star': 'star', 'shirt': 'tshirt-crew', 'squad': 'account-group',
   'manager': 'account-tie', 'nation': 'earth', 'calendar': 'calendar',
-  'contract': 'file-document-edit', 'transfer': 'swap-horizontal', 'value': 'cash',
+  'contract': 'file-document-edit', 'lock': 'lock', 'unlocked': 'lock-open-variant', 'transfer': 'swap-horizontal', 'value': 'cash',
   'fans': 'bullhorn', 'academy': 'school', 'legend': 'account-star',
   // condition
   'fitness': 'heart-pulse', 'form': 'chart-line', 'morale': 'fire',

@@ -794,6 +794,120 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .item.noafford{opacity:.42;cursor:default}
 .top-row.outofreach .mk-ask{color:var(--muted)}
 .btn-sm{padding:8px 12px;font-size:12px}
+/* ---------- a player's card, and his timeline ---------- */
+.pc-tabs{display:flex;gap:6px;margin:-4px 0 12px}
+.pc-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+  padding:9px 6px;border-radius:9px;border:1px solid var(--line);background:var(--card2);
+  color:var(--muted);font:700 12px/1 var(--font);cursor:pointer}
+.pc-tab.on{background:rgba(42,230,126,.12);border-color:rgba(42,230,126,.42);color:var(--green)}
+.pc-tab .ic{width:14px;height:14px}
+.pc-head{display:flex;align-items:center;gap:11px;margin:0 0 12px}
+.pc-name{font:800 19px/1.15 var(--font-d);letter-spacing:.4px;text-transform:uppercase}
+.pc-rows{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pc-row{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;
+  background:var(--card2);border-radius:8px;font-size:12px}
+.pc-row span{color:var(--dim)}
+/* the modal wraps its paragraphs in pre-line for authored line breaks; the
+   card's own copy is prose and should just flow */
+.pc-pane p{white-space:normal}
+.tl-locked{text-align:center;padding:10px 4px}
+.tl-lock{font-size:30px;color:var(--gold);opacity:.8;margin-bottom:6px}
+.tl-foot{margin:10px 0 0;font-size:11px;line-height:1.45}
+
+.timeline{position:relative;display:flex;flex-direction:column;gap:10px}
+.tl-row{display:flex;gap:10px;align-items:stretch}
+.tl-rail{position:relative;flex:0 0 10px}
+.tl-rail:before{content:'';position:absolute;left:4px;top:-10px;bottom:-10px;width:2px;
+  background:linear-gradient(180deg,transparent,var(--line) 12%,var(--line) 88%,transparent)}
+.tl-row:first-child .tl-rail:before{top:24px}
+.tl-row:last-child .tl-rail:before{bottom:auto;height:24px}
+.tl-dot{position:absolute;left:0;top:20px;width:10px;height:10px;border-radius:50%;
+  background:var(--card);border:2px solid var(--muted)}
+.tl-row.peak .tl-dot{border-color:var(--gold);background:var(--gold);
+  box-shadow:0 0 0 4px rgba(255,201,77,.18)}
+
+.era-card{position:relative;flex:1;min-width:0;overflow:hidden;border-radius:12px;
+  border:1px solid var(--line);background:var(--card2);padding:10px 11px}
+.era-body{position:relative;z-index:2;display:flex;align-items:center;gap:11px}
+.era-ovr{flex:0 0 46px;text-align:center;border-radius:9px;padding:5px 0;
+  background:linear-gradient(160deg,var(--k1),var(--k2));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.era-ovr b{display:block;font:800 19px/1 var(--font-d)}
+.era-ovr span{display:block;font-size:8.5px;font-weight:800;letter-spacing:.6px;opacity:.85}
+.era-id{min-width:0;flex:1}
+.era-name{font:800 13.5px/1.2 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.era-meta{font-size:10.5px;color:var(--dim);margin-top:1px;display:flex;align-items:center;gap:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.era-meta .crest{width:13px;height:13px}
+.era-label{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35}
+
+/* ---- the best version of him does not sit still ----
+   Five layers: a slow gold/purple prism turning behind everything, a glow
+   that breathes, sparkles that twinkle on their own clocks, a hard light
+   streak crossing the whole card, and the content on top of the lot. */
+.era-best{border-color:rgba(255,201,77,.66);padding:11px 12px;
+  background:linear-gradient(135deg,#2a1e06,#150f26 42%,#1d1533 62%,#2a1e06);
+  background-size:260% 260%;
+  animation:eraDrift 9s ease-in-out infinite,eraLift 3.2s ease-in-out infinite}
+.era-best .era-name{color:#ffe08a;text-shadow:0 0 16px rgba(255,201,77,.45)}
+.era-best .era-label{color:#efe6ff}
+.era-best .era-meta{color:#cbbce8}
+
+/* the prism: a conic sweep of gold into purple, turning slowly */
+.era-prism{position:absolute;inset:-75%;z-index:0;pointer-events:none;opacity:.34;
+  background:conic-gradient(from 0deg,
+    rgba(255,201,77,.55),rgba(180,131,255,.50) 22%,rgba(255,224,138,.30) 42%,
+    rgba(123,92,255,.52) 62%,rgba(255,201,77,.45) 82%,rgba(255,201,77,.55));
+  filter:blur(16px);animation:eraSpin 11s linear infinite}
+.era-glow{position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:12px;
+  background:radial-gradient(130% 95% at 14% 0%,rgba(255,201,77,.42),transparent 60%),
+    radial-gradient(120% 90% at 92% 110%,rgba(180,131,255,.40),transparent 60%);
+  animation:eraGlow 3.2s ease-in-out infinite}
+
+/* sparkles — four-point stars on their own clocks */
+.era-stars{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;border-radius:12px}
+.era-stars i{position:absolute;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
+  background:#fff8dd;opacity:0;transform:scale(var(--s));
+  filter:drop-shadow(0 0 5px rgba(255,226,150,.95));
+  clip-path:polygon(50% 0%,59% 41%,100% 50%,59% 59%,50% 100%,41% 59%,0% 50%,41% 41%);
+  animation:eraTwinkle 3.4s ease-in-out infinite;animation-delay:var(--d)}
+.era-stars i.sp{background:#ecd9ff;width:10px;height:10px;margin:-5px 0 0 -5px;
+  filter:drop-shadow(0 0 5px rgba(196,150,255,.95));animation-duration:4.2s}
+
+/* a hard streak with soft shoulders, the way light comes off a real card */
+.era-shine{position:absolute;inset:-70% -50%;z-index:2;pointer-events:none;
+  background:linear-gradient(103deg,transparent 42%,rgba(255,255,255,.20) 46.5%,
+    rgba(255,255,255,.85) 50%,rgba(255,255,255,.20) 53.5%,transparent 58%);
+  animation:eraShine 3.2s ease-in-out infinite}
+.era-best .era-body{z-index:3}
+.era-best .era-ovr{box-shadow:inset 0 0 0 1px rgba(255,255,255,.45),
+  0 0 18px rgba(255,201,77,.5)}
+.era-tag{position:absolute;z-index:4;top:0;right:0;padding:3px 8px 4px;overflow:hidden;
+  font:800 9px/1 var(--font);letter-spacing:1.2px;color:#2a1d00;
+  background:linear-gradient(110deg,#ffe08a,var(--gold) 40%,#d9b3ff 70%,#ffe08a);
+  background-size:220% 100%;border-radius:0 11px 0 10px;
+  animation:eraTag 4s ease-in-out infinite}
+@keyframes eraShine{0%,8%{transform:translateX(-115%) rotate(2deg)}
+  46%,100%{transform:translateX(115%) rotate(2deg)}}
+@keyframes eraGlow{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes eraDrift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes eraSpin{to{transform:rotate(360deg)}}
+@keyframes eraTag{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes eraTwinkle{0%,100%{opacity:0;transform:scale(calc(var(--s) * .25)) rotate(0deg)}
+  12%{opacity:1;transform:scale(var(--s)) rotate(30deg)}
+  30%{opacity:.42;transform:scale(calc(var(--s) * .72)) rotate(58deg)}
+  46%,99%{opacity:0;transform:scale(calc(var(--s) * .25)) rotate(80deg)}}
+@keyframes eraLift{0%,100%{transform:scale(1);
+    box-shadow:0 0 0 1px rgba(255,201,77,.18),0 6px 20px rgba(0,0,0,.45)}
+  50%{transform:scale(1.016);
+    box-shadow:0 0 0 1px rgba(255,201,77,.45),0 10px 34px rgba(180,131,255,.22),
+      0 6px 22px rgba(255,201,77,.16),0 6px 20px rgba(0,0,0,.5)}}
+@media (prefers-reduced-motion:reduce){
+  .era-shine,.era-stars{display:none}
+  .era-best,.era-glow,.era-prism,.era-tag{animation:none}
+  .era-glow{opacity:.9}
+  .era-best{box-shadow:0 0 0 1px rgba(255,201,77,.42),0 8px 26px rgba(0,0,0,.45)}
+}
 .mk-star{color:var(--gold);font-weight:800}
 .mk-ask{font-size:11.5px;font-weight:700;text-align:right;white-space:nowrap}
 .mk-ask em{display:block;font-style:normal;font-size:10px;color:var(--dim);font-weight:600}

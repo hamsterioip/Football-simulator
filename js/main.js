@@ -408,10 +408,12 @@
         case 'mgrSim': return Game.mgrSimSeason();
         case 'mgrAuto': return Game.mgrAutoPick();
         case 'mgrSwap': return Game.mgrSwap(arg);
+        case 'mgrRow': return Game.mgrRow(arg);
         case 'mgrFormation': return Game.mgrFormation();
         case 'mgrStyle': return Game.mgrStyle();
         case 'mgrFilter': return Game.mgrFilter(arg);
         case 'mgrTopMore': return Game.mgrTopMore();
+        case 'mgrCard': return Game.mgrPlayerCard(arg);
         case 'mgrBid': return Game.mgrBid(arg);
         case 'mgrSell': return Game.mgrSell(arg);
         case 'mgrReview': return Game.mgrReview();
@@ -705,6 +707,82 @@
       else if (pos === 'All') delete f.pos;
       else f.pos = pos;
       g.mgr.filter = (f.pos || f.afford) ? f : null;
+      global.MUI.render();
+    },
+
+    /* A player's own screen: who he is, and every version of him there has
+       been. The timeline only opens once he is yours — that is the point of
+       signing him. */
+    /* A row in the squad list. Mid-swap it is the man coming on; the rest of
+       the time it is the way into his card. */
+    mgrRow(id) {
+      if (Game._mgrSwapFrom) return Game.mgrSwap(id);
+      return Game.mgrPlayerCard(id);
+    },
+
+    mgrPlayerCard(id, tab) {
+      const g = State.game;
+      const M = global.Manager, MUI = global.MUI;
+      const mine = (g.squad || []).find(s => s.id === id);
+      const p = mine || M.topPlayers(g).find(s => s.id === id)
+        || M.market(g).find(s => s.id === id);
+      if (!p) return;
+      const owned = !!mine;
+      const which = tab || 'pOverview';
+      const inXI = owned && (g.mgr.xi || []).indexOf(p.id) >= 0;
+
+      const actions = [];
+      if (owned) {
+        actions.push({ label: inXI ? 'Take him out of the eleven' : 'Put him in the eleven',
+          onClick: () => { Game.mgrSwapVia(p.id); } });
+      } else {
+        actions.push({ label: 'Make an offer', onClick: () => Game.mgrBid(p.id) });
+      }
+      actions.push({ label: 'Close', cls: 'btn-ghost' });
+
+      UI.modal({
+        title: '',
+        html: `<div class="pc-tabs">${MUI.playerTabs.map(t =>
+            `<button class="pc-tab${which === t.id ? ' on' : ''}" data-ptab="${t.id}">
+              ${ico(t.icon)} ${t.label}${t.id === 'pTimeline' && !owned ? ' ' + ico('lock') : ''}</button>`).join('')}</div>
+          <div class="pc-pane">${which === 'pTimeline'
+            ? MUI.timelineHtml(p, owned) : MUI.overviewHtml(p, owned)}</div>`,
+        actions,
+        onRender(m) {
+          m.querySelectorAll('[data-ptab]').forEach(el => el.onclick = () => {
+            Game.mgrPlayerCard(id, el.dataset.ptab);
+          });
+        }
+      });
+    },
+
+    /* Swapping from inside the card: into the eleven, or out of it. */
+    mgrSwapVia(id) {
+      const g = State.game;
+      const xi = g.mgr.xi || [];
+      const i = xi.indexOf(id);
+      if (i >= 0) {
+        const bench = global.Manager.benchPlayers(g);
+        const best = bench.slice().sort((a, b) => b.ovr - a.ovr)[0];
+        if (!best) return UI.toast('Nobody on the bench to bring on.', 'bad');
+        xi[i] = best.id;
+        UI.toast(`${best.name} comes in.`, 'good');
+      } else {
+        // straight in for whoever is weakest in his position, or weakest overall
+        const shape = global.Manager.FORMATIONS[g.mgr.formation].line;
+        const me = g.squad.find(s => s.id === id);
+        let slot = -1, worst = 999;
+        xi.forEach((sid, k) => {
+          const s = g.squad.find(x => x.id === sid); if (!s) return;
+          const fit = shape[k] === me.pos ? 0 : 40;   // prefer his own position
+          if (s.ovr + fit < worst) { worst = s.ovr + fit; slot = k; }
+        });
+        if (slot < 0) return;
+        const out = g.squad.find(x => x.id === xi[slot]);
+        xi[slot] = id;
+        UI.toast(`${me.name} in for ${out ? out.name : 'him'}.`, 'good');
+      }
+      State.save();
       global.MUI.render();
     },
 

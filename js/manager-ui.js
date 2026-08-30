@@ -279,7 +279,7 @@
       const picked = global.Game && global.Game._mgrSwapFrom;
       const oop = xi.filter((s, i) => s.pos !== shape[i]).length;
       const row = (s, i, inXI) => `<div class="sq-row${inXI ? ' in' : ''}${
-          picked === s.id ? ' picked' : ''}" data-act="mgrSwap" data-arg="${s.id}">
+          picked === s.id ? ' picked' : ''}" data-act="mgrRow" data-arg="${s.id}">
         <span class="sq-pos">${esc(inXI ? shape[i] : s.pos)}</span>
         <span class="sq-sh">${s.shirt}</span>
         <span class="sq-n">${esc(s.name)}${inXI && s.pos !== shape[i] ? ' <em class="oop">out of position</em>' : ''}</span>
@@ -293,7 +293,7 @@
         <p class="dim lu-hint">${picked
           ? 'Now tap whoever takes his place.'
           : oop ? `Tap a shirt to swap him. ${oop} ${oop === 1 ? 'man is' : 'men are'} out of position.`
-          : 'Tap a shirt to swap him with someone on the bench.'}</p>
+          : 'Tap a shirt to swap him. Tap a name below to open his card.'}</p>
         <div class="row">
           <button class="btn btn-ghost grow" data-act="mgrAuto">${ico('ok')} Pick the best eleven</button>
           <button class="btn btn-ghost grow" data-act="mgrFormation">${ico('tactics')} ${g.mgr.formation}</button>
@@ -376,7 +376,7 @@
         ${shown.map(s => {
           const canFee = s.ask <= budget, canWage = s.wage <= room;
           return `<div class="mk-row top-row${canFee && canWage ? '' : ' outofreach'}"
-              data-act="mgrBid" data-arg="${s.id}">
+              data-act="mgrCard" data-arg="${s.id}">
             <span class="top-ovr">${s.ovr}</span>
             ${crest(s.fromClub, 'crest-sm')}
             <span class="sq-n">${esc(s.name)}<em>${esc(s.pos)} · ${s.age} · ${esc(s.fromClub)}</em></span>
@@ -390,6 +390,91 @@
           ? `${reach} of them ${reach === 1 ? 'is' : 'are'} within reach right now.`
           : 'Not one of them is within reach yet. Win things and the money follows — and selling clears the wages to fit him in.'}</p>
       </div>`;
+    },
+
+    /* ---------------- a player, and every version of him ----------------
+       The peak era gets the treatment: a card that actually moves, because
+       the best version of a great player should not sit still on the page. */
+
+    /* Fixed positions rather than random ones, so the sparkle never lands on
+       the rating and never moves between renders. */
+    STARS: [[9, 26, 1.0, 0], [21, 68, .62, .7], [35, 16, .78, 1.5], [47, 82, .55, .35],
+            [58, 30, .9, 2.1], [69, 62, .68, 1.1], [79, 20, .82, .55], [88, 74, .6, 1.8],
+            [94, 38, .74, 2.6], [15, 48, .5, 2.3], [64, 12, .58, 1.35], [40, 52, .46, 3]],
+
+    eraStars() {
+      return `<div class="era-stars" aria-hidden="true">${MUI.STARS.map(([x, y, sc, d], i) =>
+        `<i class="${i % 3 === 2 ? 'sp' : ''}" style="left:${x}%;top:${y}%;--s:${sc};--d:${d}s"></i>`
+      ).join('')}</div>`;
+    },
+
+    eraCard(e, p, best) {
+      const kit = e.club ? global.Crest.kitFor(e.club) : ['#2b3a44', '#8fa3ad'];
+      const ink = best ? '#2a1b00' : MUI.readable(kit[0]);
+      const badge = best ? { a: '#ffd257', b: '#a06bff' } : { a: kit[0], b: kit[1] };
+      return `<div class="era-card${best ? ' era-best' : ''}">
+        ${best ? '<div class="era-prism"></div><div class="era-glow"></div>'
+               + MUI.eraStars() + '<div class="era-shine"></div>' : ''}
+        <div class="era-body">
+          <div class="era-ovr" style="--k1:${badge.a};--k2:${badge.b};color:${ink}">
+            <b>${e.ovr}</b><span>${esc(p.pos)}</span>
+          </div>
+          <div class="era-id">
+            <div class="era-name">${esc(p.name)}</div>
+            <div class="era-meta">${e.club ? crest(e.club, 'crest-sm') + ' ' + esc(e.club) + ' · ' : ''}${e.year} · aged ${e.age}</div>
+            <div class="era-label">${esc(e.label)}</div>
+          </div>
+        </div>
+        ${best ? '<div class="era-tag">PEAK</div>' : ''}
+      </div>`;
+    },
+
+    timelineHtml(p, owned) {
+      const eras = global.Timeline.for(p);
+      if (!eras.length) return '<p class="dim">Nothing on record.</p>';
+      const best = global.Timeline.peakIndex(eras);
+      if (!owned) {
+        return `<div class="tl-locked">
+          <div class="tl-lock">${ico('lock')}</div>
+          <p class="muted">Sign him and his whole career opens up here —
+            every version of him there has ever been, and the best one of the lot.</p>
+          <p class="dim">${eras.length} eras on record.</p>
+        </div>`;
+      }
+      const span = eras[eras.length - 1].ovr - eras[0].ovr;
+      return `<div class="timeline">
+        ${eras.map((e, i) => `<div class="tl-row${i === best ? ' peak' : ''}">
+          <div class="tl-rail"><span class="tl-dot"></span></div>
+          ${MUI.eraCard(e, p, i === best)}
+        </div>`).join('')}
+      </div>
+      <p class="dim tl-foot">${global.Timeline.curated(p)
+        ? 'Clubs and years are a matter of record. The ratings are this game’s opinion.'
+        : 'Reconstructed from his age and what he is now — no club history on file for him.'}
+        ${span > 0 ? ` He has come ${span} points since he started.` : ''}</p>`;
+    },
+
+    playerTabs: [
+      { id: 'pOverview', label: 'Player', icon: 'player' },
+      { id: 'pTimeline', label: 'Timeline', icon: 'clock' }
+    ],
+
+    overviewHtml(p, owned) {
+      const rows = [
+        ['Position', p.pos], ['Age', p.age], ['Rating', p.ovr],
+        ['Nation', p.nation || '—'],
+        ['Wages', U().cash(p.wage || 0) + '/week'],
+        owned ? ['Shirt', p.shirt || '—'] : ['Club', p.fromClub || '—'],
+        owned ? ['Appearances', p.apps || 0] : ['Asking price', U().cash(p.ask || p.value || 0)],
+        owned ? ['Goals', p.goals || 0] : ['Value', U().cash(p.value || 0)]
+      ];
+      return `<div class="pc-head">
+          ${global.Icons.flag(p.nation, 'lg')}
+          <div><div class="pc-name">${esc(p.name)}</div>
+            <div class="dim">${esc(p.pos)} · ${p.age} · rated <b>${p.ovr}</b></div></div>
+        </div>
+        <div class="pc-rows">${rows.map(([k, v]) =>
+          `<div class="pc-row"><span>${esc(k)}</span><b>${esc(String(v))}</b></div>`).join('')}</div>`;
     },
 
     /* ---------------- table ---------------- */
