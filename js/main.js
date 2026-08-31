@@ -601,6 +601,15 @@
           </div>
           ${cupLine}
           ${r.scorers.length ? `<p class="muted" style="text-align:center">${U.esc(r.scorers.join(', '))}</p>` : ''}
+          ${(() => {
+            const c = r.cas || {};
+            const bits = (c.hurt || []).map(h =>
+              `${U.esc(h.name)} out ${h.games} game${h.games === 1 ? '' : 's'} (${U.esc(h.label)})`)
+              .concat((c.banned || []).map(b =>
+                `${U.esc(b.name)} banned ${b.games} game${b.games === 1 ? '' : 's'} — ${U.esc(b.why)}`));
+            return bits.length
+              ? `<p class="mgr-cas">${ico('hospital')} ${bits.join('<br>')}</p>` : '';
+          })()}
           ${(r.moments || []).length ? `<div class="mn-modal">${r.moments.map(m =>
             `<div class="mnews mn-${U.esc(m.k)}"><span class="mn-t">${U.esc(m.t)}</span></div>`).join('')}</div>` : ''}
           <p class="dim" style="text-align:center;margin:0">Board confidence ${Math.round(g.mgr.board.confidence)}
@@ -715,6 +724,13 @@
       if (from === id) { Game._mgrSwapFrom = null; return global.MUI.render(); }
       const inXI = xi.indexOf(id) >= 0;
 
+      const man = g.squad.find(x => x.id === id);
+      if (man && !global.Manager.available(man)) {
+        const why = global.Manager.unavailableWhy(man);
+        UI.toast(`${man.name} is ${why.k === 'ban' ? 'suspended' : 'injured'} — ${
+          why.games} game${why.games === 1 ? '' : 's'} to go.`, 'bad');
+        return;
+      }
       if (from && xi.indexOf(from) >= 0) {
         const i = xi.indexOf(from);
         if (inXI) {

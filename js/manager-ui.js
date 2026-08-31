@@ -122,6 +122,8 @@
         <div class="fx-meta">${fix.neutral ? ico('trophy') + ' Neutral ground'
           : fix.home ? ico('home') + ' Home' : ico('away') + ' Away'} ·
           opposition rated ${opp.rating}${fix.comp === 'cup' ? ' · one match, no replay' : ''}</div>
+        ${(() => { const n = M().unavailablePlayers(g).length;
+          return n ? `<div class="fx-out">${ico('hospital')} ${n} unavailable</div>` : ''; })()}
       </div>`;
 
       html += `<div class="card"><h3>${ico('tactics')} Your plan</h3>
@@ -142,7 +144,7 @@
         </div>
       </div>`;
 
-      return html + MUI.cupsCard(g) + MUI.newsCard(g) + MUI.formCard(g);
+      return html + MUI.newsRoom(g, true) + MUI.cupsCard(g) + MUI.newsCard(g) + MUI.formCard(g);
     },
 
     /* ---------------- the cups you are in this year ----------------
@@ -336,14 +338,20 @@
       const xi = M().xiPlayers(g), bench = M().benchPlayers(g);
       const picked = global.Game && global.Game._mgrSwapFrom;
       const oop = xi.filter((s, i) => s.pos !== shape[i]).length;
-      const row = (s, i, inXI) => `<div class="sq-row${inXI ? ' in' : ''}${
+      const row = (s, i, inXI) => {
+        const why = M().unavailableWhy(s);
+        return `<div class="sq-row${inXI ? ' in' : ''}${why ? ' unfit' : ''}${
           picked === s.id ? ' picked' : ''}" data-act="mgrRow" data-arg="${s.id}">
         <span class="sq-pos">${esc(inXI ? shape[i] : s.pos)}</span>
         <span class="sq-sh">${s.shirt}</span>
-        <span class="sq-n">${esc(s.name)}${inXI && s.pos !== shape[i] ? ' <em class="oop">out of position</em>' : ''}</span>
-        <span class="sq-meta">${s.age} · ${U().cash(s.wage)}/w</span>
+        <span class="sq-n">${esc(s.name)}${inXI && s.pos !== shape[i] ? ' <em class="oop">out of position</em>' : ''}${
+          why ? `<em class="unav ${why.k}">${ico(why.k === 'ban' ? 'card' : 'injury')} ${esc(why.label)}</em>` : ''}</span>
+        <span class="sq-meta">${why
+          ? `${why.games} game${why.games === 1 ? '' : 's'}`
+          : `${s.age} · ${MUI.fitWord(s.fit)}`}</span>
         <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
       </div>`;
+      };
 
       return `<div class="card tight"><h3>${ico('squad')} ${esc(g.mgr.formation)}
           <span class="pill">${M().teamRating(g)}</span></h3>
@@ -363,7 +371,36 @@
       <div class="card"><h3>Substitutes and reserves</h3>
         ${bench.length ? bench.map(s => row(s, 0, false)).join('')
           : '<p class="dim" style="margin:0">Nobody left on the bench.</p>'}
-      </div>`;
+      </div>` + MUI.newsRoom(g);
+    },
+
+    /* ---------------- the treatment room ----------------
+       Who cannot play, why, and for how much longer. A manager should never
+       have to work this out by scrolling a squad list looking for red text. */
+    newsRoom(g, compact) {
+      const out = M().unavailablePlayers(g);
+      if (!out.length) return compact ? '' : `<div class="card"><h3>${ico('hospital')} Team news</h3>
+        <p class="dim" style="margin:0">Everybody is fit. Make the most of it.</p></div>`;
+      const order = out.slice().sort((a, b) => {
+        const A = M().unavailableWhy(a), B = M().unavailableWhy(b);
+        return (A.k === 'ban' ? 1 : 0) - (B.k === 'ban' ? 1 : 0) || B.games - A.games;
+      });
+      return `<div class="card"><h3>${ico('hospital')} Team news
+          <span class="pill">${out.length} out</span></h3>
+        ${order.map(s => {
+          const why = M().unavailableWhy(s);
+          return `<div class="tn-row tn-${why.k}">
+            <span class="tn-ic">${ico(why.k === 'ban' ? 'card' : 'injury')}</span>
+            <span class="tn-n">${esc(s.name)}<em>${esc(s.pos)} ${s.ovr} · ${esc(why.label)}</em></span>
+            <span class="tn-g">${why.games}<small>${why.games === 1 ? 'game' : 'games'}</small></span>
+          </div>`;
+        }).join('')}</div>`;
+    },
+
+    /* Fitness as a word, because "63" means nothing on its own. */
+    fitWord(fit) {
+      return fit >= 92 ? 'fresh' : fit >= 78 ? 'sharp' : fit >= 64 ? 'has miles in him'
+        : fit >= 50 ? 'tiring' : 'running on empty';
     },
 
     /* ---------------- market ---------------- */

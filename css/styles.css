@@ -1305,3 +1305,38 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 .mgr-cupline.good{color:var(--gold)}
 .mgr-cupline.bad{color:var(--red)}
 .mgr-cupline .ic{width:13px;height:13px;vertical-align:-2px}
+
+/* ---------------- the treatment room ----------------
+   A knock now costs you a player, so it has to be legible at a glance rather
+   than something you work out by scrolling a squad list. */
+.sq-row.unfit .sq-n,.sq-row.unfit .sq-pos,.sq-row.unfit .sq-o{opacity:.55}
+.sq-row.unfit{background:rgba(255,90,106,.05)}
+em.unav{display:block;font-style:normal;font-size:10px;font-weight:800;letter-spacing:.3px;
+  text-transform:uppercase;margin-top:2px;opacity:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+em.unav .ic{width:11px;height:11px;vertical-align:-2px;margin-right:3px}
+em.unav.out{color:var(--red)}
+em.unav.ban{color:var(--gold)}
+
+.tn-row{display:flex;align-items:center;gap:9px;padding:7px 0;
+  border-bottom:1px solid rgba(255,255,255,.05)}
+.tn-row:last-child{border-bottom:0}
+.tn-ic{flex:0 0 20px;display:flex}
+.tn-ic .ic{width:16px;height:16px}
+.tn-out .tn-ic .ic{color:var(--red)}
+.tn-ban .tn-ic .ic{color:var(--gold)}
+.tn-n{flex:1;min-width:0;font-size:12.5px;font-weight:700;line-height:1.25}
+.tn-n em{display:block;font-style:normal;font-size:10.5px;font-weight:600;color:var(--dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tn-g{flex:0 0 auto;text-align:center;font:800 15px var(--font-d),system-ui,sans-serif;
+  line-height:1;color:var(--muted)}
+.tn-g small{display:block;font-size:9px;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--dim);margin-top:2px}
+.tn-out .tn-g{color:var(--red)}
+.tn-ban .tn-g{color:var(--gold)}
+
+.fx-out{margin-top:6px;font-size:11px;font-weight:800;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--red)}
+.fx-out .ic{width:12px;height:12px;vertical-align:-2px;margin-right:3px}
+.mgr-cas{margin:8px 0 2px;text-align:center;font-size:12px;font-weight:700;color:var(--red)}
+.mgr-cas .ic{width:12px;height:12px;vertical-align:-2px;margin-right:3px}

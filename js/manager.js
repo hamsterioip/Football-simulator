@@ -252,6 +252,7 @@
     g.mgr.calendar = cal;
     g.mgr.round = 0;
     g.mgr.results = [];
+    repairXI(g);
     g.squad.forEach(s => { s.apps = 0; s.goals = 0; s.assists = 0; s.ratingSum = 0; s.form = U.int(45, 70); });
   }
 
@@ -323,6 +324,196 @@
   function xiPlayers(g) {
     return (g.mgr.xi || []).map(id => g.squad.find(s => s.id === id)).filter(Boolean);
   }
+  /* ---------------- who is actually available ----------------
+     The Talk has always told you a man went off holding his hamstring, and he
+     has always played the following week. That is the one thing in here that
+     was never true. Now a knock keeps him out, a fifth booking bans him, and a
+     red card costs you the next two — which is what makes a bench, a squad and
+     a quiet week of rotation worth anything.
+
+     Most of it is nothing: about four injuries in five have him back inside a
+     fortnight. The bad ones are rare and they hurt, the way they should. */
+
+  const INJURIES = [
+    { w: 40, min: 1,  max: 1,  kind: 'knock',
+      names: ['a dead leg', 'a bruised foot', 'a tight calf', 'a bang on the ankle',
+              'a cut that needed stitches', 'a stiff back'] },
+    { w: 29, min: 2,  max: 3,  kind: 'strain',
+      names: ['a hamstring strain', 'a groin strain', 'a twisted ankle',
+              'a knock on the knee', 'a hip problem', 'a dead arm he landed on'] },
+    { w: 18, min: 4,  max: 7,  kind: 'tear',
+      names: ['a torn hamstring', 'medial ligament damage', 'a hairline fracture in his foot',
+              'a shoulder he landed on badly', 'a calf tear'] },
+    { w: 10, min: 8,  max: 14, kind: 'bad',
+      names: ['a broken metatarsal', 'ankle ligaments', 'a serious hamstring tear',
+              'a fractured cheekbone'] },
+    { w: 3,  min: 20, max: 34, kind: 'season',
+      names: ['a cruciate ligament', 'an Achilles', 'a broken leg'] }
+  ];
+
+  const BOOKINGS_BAN = 4;          // a fourth yellow and he sits one out
+                                 // (a shorter season than the real thing, so a
+                                 //  lower bar — a ban a year, roughly)
+
+  function available(s) {
+    return !(s.out && s.out.games > 0) && !(s.ban > 0);
+  }
+  function unavailableWhy(s) {
+    if (s.out && s.out.games > 0) return { k: 'out', games: s.out.games, label: s.out.label };
+    if (s.ban > 0) return { k: 'ban', games: s.ban, label: s.banWhy || 'suspended' };
+    return null;
+  }
+  function availablePlayers(g) { return g.squad.filter(available); }
+  function unavailablePlayers(g) { return g.squad.filter(s => !available(s)); }
+
+  /* Nobody plays a fixture they are not available for. If your eleven has a
+     hole in it at kick-off the best man on the bench fills it, and you are
+     told — losing a match because a name you never picked was still in the
+     side would be the game cheating. */
+  function repairXI(g) {
+    const shape = FORMATIONS[g.mgr.formation].line;
+    const ids = (g.mgr.xi || []).slice();
+    const byId = {};
+    g.squad.forEach(s => { byId[s.id] = s; });
+    const inXI = {};
+    ids.forEach(id => { if (id != null) inXI[id] = true; });
+    const changes = [];
+    for (let i = 0; i < ids.length; i++) {
+      const man = byId[ids[i]];
+      if (man && available(man)) continue;
+      const want = shape[i] || (man && man.pos);
+      const pool = g.squad.filter(s => available(s) && !inXI[s.id])
+        .sort((a, b) => (worth(b) + (b.pos === want ? 9 : sameGroup(b.pos, want) ? 4 : 0))
+                      - (worth(a) + (a.pos === want ? 9 : sameGroup(a.pos, want) ? 4 : 0)));
+      const inn = pool[0];
+      if (!inn) continue;
+      if (man) delete inXI[man.id];
+      ids[i] = inn.id;
+      inXI[inn.id] = true;
+      changes.push({ out: man ? man.name : null, in: inn.name, pos: want,
+                     why: man ? unavailableWhy(man) : null });
+    }
+    g.mgr.xi = ids.filter(id => id != null);
+    // an eleven short of eleven is not an eleven: fill it from whoever is fit
+    if (g.mgr.xi.length < 11) {
+      g.squad.filter(s => available(s) && !inXI[s.id])
+        .sort((a, b) => worth(b) - worth(a))
+        .forEach(s => { if (g.mgr.xi.length < 11) { g.mgr.xi.push(s.id); inXI[s.id] = true; } });
+    }
+    return changes;
+  }
+
+  /* A squad can be picked apart by injuries. Rather than fielding nine men,
+     the kids come up — which is what actually happens, and gives a bad month
+     a story rather than a soft-lock. */
+  function emergencyCallUps(g) {
+    const U = global.U, State = global.State;
+    if (availablePlayers(g).length >= 13) return [];
+    const club = State.club(g.mgr.club);
+    const seen = {};
+    g.squad.forEach(s => { seen[s.name] = true; });
+    const need = 13 - availablePlayers(g).length;
+    const kids = [];
+    squadFor(club, 22).forEach(s => {
+      if (kids.length >= need || seen[s.name]) return;
+      s.age = U.int(16, 19);
+      s.ovr = U.clamp(Math.round(club.rating - U.int(8, 16)), 45, 82);
+      s.value = valueFor(s); s.wage = wageFor(s);
+      s.apps = 0; s.goals = 0; s.assists = 0; s.ratingSum = 0; s.fit = 100;
+      s.shirt = freeShirt(g);
+      s.academy = true;
+      s.joined = g.world.year;
+      seen[s.name] = true;
+      g.squad.push(s);
+      kids.push(s);
+    });
+    if (kids.length) {
+      State.news(`${club.name} call up ${kids.length} from the youth team — the treatment room is full`,
+        'info', null, 'academy');
+      g.mgr.log.unshift({ t: `${kids.length} called up from the youth team (injury crisis)`, k: 'in' });
+    }
+    return kids;
+  }
+
+  /* Everyone who is out moves a game closer to being back. Called once per
+     fixture, before that fixture creates any new casualties. */
+  function tickAvailability(g, skip) {
+    const State = global.State;
+    const back = [];
+    const fresh = skip || {};
+    g.squad.forEach(s => {
+      if (fresh[s.id]) return;          // felled in the match just played
+      if (s.out && s.out.games > 0) {
+        s.out.games--;
+        if (s.out.games <= 0) { s.out = null; back.push(s); }
+      }
+      if (s.ban > 0) {
+        s.ban--;
+        if (s.ban <= 0) s.banWhy = null;
+      }
+    });
+    back.forEach(s => {
+      g.mgr.log.unshift({ t: `${s.name} is fit again`, k: 'in' });
+    });
+    return back;
+  }
+
+  /* What the match did to your players: bookings, a sending off now and then,
+     and the injuries. Risk rides on how tired a man is and how old he is —
+     which is the whole argument for resting him. */
+  function matchCasualties(g, xi, style, preFit) {
+    const U = global.U;
+    const ev = { yellows: [], red: null, hurt: [], banned: [] };
+
+    const cardRisk = s => {
+      const grp = s.pos === 'GK' ? 0.2
+        : (global.DATA.POSITIONS[s.pos] || {}).group === 'DEF' ? 1.25
+        : (global.DATA.POSITIONS[s.pos] || {}).group === 'MID' ? 1.15 : 0.7;
+      return U.clamp(0.098 * grp * (1 + style.def * 0.05), 0.01, 0.3);
+    };
+
+    xi.forEach(s => {
+      if (U.chance(cardRisk(s))) {
+        s.yellows = (s.yellows || 0) + 1;
+        ev.yellows.push(s);
+        if (s.yellows >= BOOKINGS_BAN) {
+          s.yellows = 0;
+          s.ban = 1;
+          s.banWhy = 'four bookings';
+          ev.banned.push({ p: s, why: 'four bookings', games: 1 });
+        }
+      }
+    });
+
+    // one match in thirty or so has somebody walking
+    if (U.chance(0.045)) {
+      const pool = xi.filter(s => s.pos !== 'GK');
+      const s = U.pick(pool.length ? pool : xi);
+      if (s) {
+        s.ban = U.int(2, 3);
+        s.banWhy = 'sent off';
+        s.yellows = 0;
+        ev.red = s;
+        ev.banned.push({ p: s, why: 'sent off', games: s.ban });
+      }
+    }
+
+    xi.forEach(s => {
+      // tired legs and old legs break; a fresh twenty-four-year-old rarely does
+      const was = preFit && preFit[s.id] != null ? preFit[s.id] : s.fit;
+      const tired = 1 + (100 - U.clamp(was, 0, 100)) / 100 * 2.2;
+      const old = s.age >= 33 ? 1.5 : s.age >= 30 ? 1.2 : s.age <= 21 ? 1.1 : 1;
+      if (!U.chance(U.clamp(0.024 * tired * old, 0.004, 0.12))) return;
+      const band = U.weighted(INJURIES.map(b => [b, b.w]));
+      const games = U.int(band.min, band.max);
+      s.out = { games, kind: band.kind, label: U.pick(band.names) };
+      s.fit = U.clamp(s.fit - U.rnd(10, 25), 15, 100);
+      ev.hurt.push(s);
+    });
+
+    return ev;
+  }
+
   function benchPlayers(g) {
     const inXI = {};
     (g.mgr.xi || []).forEach(id => inXI[id] = true);
@@ -330,9 +521,17 @@
   }
 
   /* pick the best available player for each slot in the formation */
+  /* The best eleven you can put out today — which is not the same as the
+     eleven with the biggest numbers. A man in the treatment room is in nobody's
+     side, and legs that have played every game for two months are worth less
+     than fresh ones. Tap the button often enough and it rotates for you. */
+  function worth(s) {
+    return s.ovr * (0.9 + (s.fit / 100) * 0.1) * (0.96 + (s.form / 100) * 0.08);
+  }
   function autoPick(g) {
     const shape = FORMATIONS[g.mgr.formation].line.slice();
-    const pool = g.squad.slice().sort((a, b) => b.ovr - a.ovr);
+    let pool = g.squad.filter(available).sort((a, b) => worth(b) - worth(a));
+    if (pool.length < shape.length) pool = g.squad.slice().sort((a, b) => worth(b) - worth(a));
     const used = {}, out = [];
     shape.forEach(pos => {
       let best = pool.find(s => !used[s.id] && s.pos === pos);
@@ -433,6 +632,14 @@
     const style = STYLES[g.mgr.style];
     const t = TALKS.find(x => x.id === talk) || TALKS[0];
 
+    /* Before a ball is kicked: the treatment room is emptied out of the
+       eleven, and if there is nobody left to replace them the kids come up.
+       Both before the team is rated, so what you are rated on is who actually
+       plays. The count of games missed comes down after the match, not before,
+       or a one-game injury would cost nobody anything. */
+    emergencyCallUps(g);
+    const forced = repairXI(g);
+
     // a fired-up dressing room can also over-run itself
     const talkSwing = t.boost - (t.risk ? U.rnd(0, t.risk) : 0);
     // a final on neutral ground belongs to neither of you
@@ -473,15 +680,26 @@
       const who = U.weighted(weights);
       if (who) { who.goals++; scorers.push(who); }
     }
+    /* Fitness settles rather than drains away. Everyone gets the days between
+       fixtures — the further off full you are, the more of it you get back —
+       and whoever played hands most of it straight back. A man in the side
+       every week lives around seventy; a man who is rested is fresh again. */
+    const preFit = {};
+    xi.forEach(s => { preFit[s.id] = s.fit; });
+    g.squad.forEach(s => { s.fit = U.clamp(s.fit + (100 - s.fit) * 0.42, 25, 100); });
+
     xi.forEach(s => {
       s.apps++;
       const r = U.clamp(6.4 + (gf - ga) * 0.28 + U.rnd(-0.8, 0.9) + (s.ovr - teamRating(g)) * 0.03, 3.5, 10);
       s.ratingSum += r;
       s.rating = U.round(s.ratingSum / s.apps, 2);
       s.form = U.clamp(s.form * 0.75 + (r - 6.4) * 26 + 14, 5, 100);
-      s.fit = U.clamp(s.fit - U.rnd(8, 18) + 10, 25, 100);
+      // ninety minutes takes more out of a thirty-four-year-old
+      s.fit = U.clamp(s.fit - U.rnd(9, 14) - (s.age >= 32 ? 3 : 0), 25, 100);
     });
-    benchPlayers(g).forEach(s => { s.fit = U.clamp(s.fit + U.rnd(6, 14), 25, 100); });
+
+    // and what it cost you — judged on the legs he started the match with
+    const cas = matchCasualties(g, xi, style, preFit);
 
     /* The rest of the division plays too — but only on a league weekend. A cup
        tie does not move the table, yours or anybody else's. */
@@ -542,8 +760,33 @@
       cup.oppId = null;
       cup.drawStage = -1;
     }
-    entry.moments = matchMoments(g, entry, xi, scorers);
+    entry.cas = {
+      yellows: cas.yellows.map(p => p.name),
+      red: cas.red ? cas.red.name : null,
+      hurt: cas.hurt.map(p => ({ name: p.name, games: p.out.games, label: p.out.label, kind: p.out.kind })),
+      banned: cas.banned.map(b => ({ name: b.p.name, why: b.why, games: b.games })),
+      forced: forced.map(f => ({ out: f.out, in: f.in }))
+    };
+    entry.moments = matchMoments(g, entry, xi, scorers, cas);
     g.mgr.results.push(entry);
+
+    /* Put it in the log while it is news, and hand the eleven back legal so
+       the squad screen never shows a man who cannot play in it. */
+    cas.hurt.forEach(p => {
+      const wk = p.out.games === 1 ? 'the next game' : `the next ${p.out.games} games`;
+      State.news(`${p.name} out for ${wk} — ${p.out.label}`, 'bad', null, 'injury');
+      g.mgr.log.unshift({ t: `${p.name} out for ${wk} (${p.out.label})`, k: 'out' });
+    });
+    cas.banned.forEach(b => {
+      State.news(`${b.p.name} suspended for ${b.games === 1 ? 'one game' : b.games + ' games'} — ${b.why}`,
+        'bad', null, 'card');
+      g.mgr.log.unshift({ t: `${b.p.name} banned ${b.games} (${b.why})`, k: 'out' });
+    });
+    const felled = {};
+    cas.hurt.forEach(p => { felled[p.id] = true; });
+    cas.banned.forEach(b => { felled[b.p.id] = true; });
+    tickAvailability(g, felled);
+    repairXI(g);
     // the week's talking points, newest first
     g.mgr.news = (entry.moments.map(m => Object.assign({
       round: g.mgr.round + 1, year: g.world.year, opp: State.club(fix.oppId).name,
@@ -678,13 +921,13 @@
     { t: '{p} kept a clean sheet and barely got his shorts dirty', w: 2, who: 'keeper', when: e => e.ga === 0 },
     { t: '{p} punched clear when he should have caught it, twice', w: 2, who: 'keeper' },
     { t: '{p} went up for a corner at the end. It nearly worked', w: 2, who: 'keeper', when: e => e.result === 'L' },
-    { t: '{p} was booked for taking his shirt off. Worth it, he said', w: 2, who: 'scorer' },
+    { t: '{p} was booked for taking his shirt off. Worth it, he said', w: 2, who: 'booked' },
     { t: '{p} got the standing ovation when he came off', w: 3, who: 'scorer' },
     { t: '{p} pointed at the away end and said nothing', w: 2, who: 'scorer' },
     { t: '{p} refused to celebrate against his old club', w: 2, who: 'scorer' },
     { t: '{p} took the ball off the designated penalty taker and scored anyway', w: 2, who: 'scorer' },
     { t: '{p} has now scored in five straight games', w: 3, who: 'scorer' },
-    { t: '{p} celebrated in front of the wrong supporters and got a booking', w: 2, who: 'scorer' },
+    { t: '{p} celebrated in front of the wrong supporters and got a booking', w: 2, who: 'booked' },
     { t: '{p} scored and immediately asked for the ball back', w: 2, who: 'scorer', when: e => e.result === 'L' },
     { t: '{p} has more goals than anyone else in the division', w: 2, who: 'scorer' },
     { t: '{p} was carried off the pitch by his own team-mates', w: 2, who: 'scorer', when: e => e.result === 'W' },
@@ -704,9 +947,8 @@
     { t: '{p} warmed up for forty minutes and never got on', w: 3, who: 'bench' },
     { t: '{p} came on for the last ten and looked lively', w: 3, who: 'bench' },
     { t: '{p} was the only substitute not used, again', w: 2, who: 'bench' },
-    { t: '{p} came on and was booked within a minute', w: 2, who: 'bench' },
-    { t: '{p} went off holding his hamstring. It does not look good', w: 3 },
-    { t: '{p} was sent off for a second yellow with twenty minutes left', w: 2 },
+    { t: '{p} was booked within a minute of the restart', w: 2, who: 'booked' },
+    
     { t: '{p} cleared one off the line with the keeper beaten', w: 4 },
     { t: '{p} argued with the referee for so long the crowd started singing about it', w: 2 },
     { t: '{p} gave the ball away for their goal and did not hide afterwards', w: 3, when: e => e.ga > 0 },
@@ -716,7 +958,7 @@
     { t: '{p} played the full ninety with a bandage round his head', w: 2 },
     { t: '{p} made a tackle in his own box that was worth a goal', w: 4 },
     { t: '{p} completed every pass he attempted', w: 3 },
-    { t: '{p} was booked inside two minutes and had to be careful all game', w: 3 },
+    { t: '{p} was booked inside two minutes and had to be careful all game', w: 3, who: 'booked' },
     { t: '{p} blocked three shots with his body in one minute', w: 3 },
     { t: '{p} shouted at his own goalkeeper for ten minutes straight', w: 2 },
     { t: '{p} played out of position and was the best man on the pitch', w: 3 },
@@ -741,7 +983,7 @@
     { t: '{p} celebrated the final whistle like it was a cup final', w: 2, when: e => e.result === 'W' },
     { t: '{p} threw his shirt into the away end afterwards', w: 2 },
     { t: '{p} stayed out on the pitch long after everyone else had gone in', w: 2, when: e => e.result === 'L' },
-    { t: '{p} nutmegged the same defender three times and got booked for the fourth attempt', w: 2 },
+    { t: '{p} nutmegged the same defender three times and got booked for the fourth attempt', w: 2, who: 'booked' },
     { t: '{p} had a goal disallowed for a foul nobody saw', w: 3 },
     { t: '{p} hit the corner flag from twelve yards', w: 2 },
     { t: '{p} got a standing ovation from the opposition supporters', w: 2 },
@@ -841,7 +1083,40 @@
   }
 
   /* Build the talking points for one match. */
-  function matchMoments(g, entry, xi, scored) {
+  /* ---------------- the ones that are not decoration ----------------
+     A sending off and an injury are the two things The Talk says that now cost
+     you something, so they are never invented: these are only ever said about
+     a man who really walked, or who really came off. */
+
+  const RED_LINES = [
+    '{p} was sent off for a second yellow with twenty minutes left',
+    '{p} saw red for a challenge he will not want to watch again',
+    '{p} walked on the half hour and left them with ten men to hang on with',
+    '{p} was sent off for dissent, of all things',
+    '{p} got a straight red and did not argue with it',
+    '{p} was sent off in stoppage time for something nobody in the ground saw',
+    '{p} lasted forty minutes before the referee had seen enough of him',
+    '{p} picked up a second booking for kicking the ball away'
+  ];
+
+  const HURT_LINES = {
+    knock:  ['{p} took a knock and could not run it off', '{p} came off at half time holding {l}',
+             '{p} finished the game but will not train this week — {l}'],
+    strain: ['{p} pulled up on his own and went straight down the tunnel with {l}',
+             '{p} went off holding his hamstring. It does not look good',
+             '{p} felt something go and signalled to the bench before anyone else saw it'],
+    tear:   ['{p} went down with nobody near him, which is never a good sign — {l}',
+             '{p} was helped off with {l} and the ground went quiet',
+             '{p} knew straight away. {l}, and he will be gone a while'],
+    bad:    ['{p} was stretchered off with {l}. He will not be seen for months',
+             '{p} left the pitch in a boot and on crutches — {l}',
+             '{p} went off in the ninth minute with {l} and that is his winter gone'],
+    season: ['{p} landed badly and did not get up. {l} — that is his season',
+             '{p} was carried off with {l}. Nobody said anything on the coach home',
+             '{p} has done {l}. He will be back next year, if you are lucky']
+  };
+
+  function matchMoments(g, entry, xi, scored, cas) {
     const U = global.U, State = global.State;
     const out = [];
     const club = State.club(g.mgr.club);
@@ -881,11 +1156,13 @@
       const outfield = xi.filter(x => x.pos !== 'GK');
       const blanks = outfield.filter(x => !scoredIds[x.id]);
       const bench = benchPlayers(g);
+      const booked = (cas && cas.yellows) || [];
       const subjectFor = who =>
         who === 'keeper' ? keeper
         : who === 'scorer' ? (scored.length ? U.pick(scored) : null)
         : who === 'blank' ? (blanks.length ? U.pick(blanks) : null)
         : who === 'bench' ? (bench.length ? U.pick(bench) : null)
+        : who === 'booked' ? (booked.length ? U.pick(booked) : null)
         : (outfield.length ? U.pick(outfield) : xi[0]);
 
       const isCup = entry.comp === 'cup';
@@ -899,6 +1176,24 @@
       }
     }
 
+    /* A man walking off is the story of the match, not the third line of it. */
+    if (cas && cas.red) {
+      out.unshift({ k: 'bad', t: U.pick(RED_LINES).replace('{p}', cas.red.name) });
+    }
+    if (cas && cas.hurt.length) {
+      const p = cas.hurt[0];
+      const bank = HURT_LINES[p.out.kind] || HURT_LINES.strain;
+      out.push({ k: 'bad', t: U.pick(bank).replace('{p}', p.name).replace('{l}', p.out.label) });
+      if (cas.hurt.length > 1) {
+        out.push({ k: 'bad', t: `${cas.hurt[1].name} joined him in the treatment room with ${cas.hurt[1].out.label}` });
+      }
+    }
+    // a fifth booking is worth a line of its own
+    (cas && cas.banned || []).forEach(b => {
+      if (b.why !== 'four bookings') return;
+      out.push({ k: 'bad', t: `${b.p.name} picked up his fourth booking of the season and misses the next one` });
+    });
+
     // and the shape of the game itself
     if (U.chance(0.45)) {
       // a cup night has its own lines, and none of the league's talk of points
@@ -909,7 +1204,8 @@
       if (m) out.push({ k: m.k, t: m.t.replace('{gf}', entry.gf).replace('{ga}', entry.ga) });
     }
 
-    return out.slice(0, 3);
+    // a match that cost you somebody is allowed a fourth line
+    return out.slice(0, cas && (cas.red || cas.hurt.length) ? 4 : 3);
   }
 
   function position(g) {
@@ -1467,6 +1763,14 @@
       s.value = s.ovr >= ELITE ? eliteFee(s.ovr, s.age) : valueFor(s);
       s.wage = Math.max(wageFor(s), s.ovr >= ELITE ? eliteWage(s.ovr) : 0);
       s.fit = 100;
+      /* A summer fixes most things. Only the ones who did a cruciate in April
+         are still limping in August, and they carry it into the new season. */
+      if (s.out && s.out.games > 0) {
+        s.out = s.out.kind === 'season' && s.out.games > 12
+          ? { games: Math.min(s.out.games - 12, 10), kind: s.out.kind, label: s.out.label }
+          : null;
+      }
+      s.ban = 0; s.banWhy = null; s.yellows = 0;
     });
 
     /* Retirement used to be a silent age filter, which deleted the
@@ -1563,8 +1867,10 @@
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, TITLE_FLOOR, TOP_TARGET, bid, sell, squadWages, valueFor, wageFor,
     CUP_STAGES, cupById, cupsForSeason,
-    matchMoments, GOAL_WAYS, ODD_MOMENTS, SHAPE_LINES,
-    traitOf, traitBonus, TRAIT_GOALS,
+    matchMoments, GOAL_WAYS, ODD_MOMENTS, SHAPE_LINES, RED_LINES, HURT_LINES,
+    available, unavailablePlayers, unavailableWhy, availablePlayers, repairXI,
+    INJURIES, BOOKINGS_BAN,
+    traitOf, traitBonus, TRAIT_GOALS, worth,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor
   };

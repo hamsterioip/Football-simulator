@@ -1451,9 +1451,18 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.1';
+  const VERSION = '3.2';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.2', when: '31 Aug', items: [
+      'Injuries and suspensions are real. The Talk has always told you a man went off holding his hamstring and he has always played the following week \u2014 that was the one thing in here that was never true. Now he misses games',
+      'Most of it is nothing: a dead leg, a tight calf, back for the weekend. But a torn hamstring is a month, ankle ligaments are a winter, and a cruciate is his season',
+      'A fourth booking bans him for one. A red card costs you two or three. Both are announced, both are served, and neither can be picked around',
+      'Fitness settles instead of draining away: play a man every week and he lives around seventy, rest him and he is fresh again. Tired legs get injured, and \u201cPick the best eleven\u201d now means the best eleven available today, so it rotates for you',
+      'A team news board on matchday and in the squad: who is out, what with, and how many games are left of it',
+      'If the treatment room takes your squad apart, the youth team comes up rather than the game leaving you with nine men',
+      'Nothing The Talk says about a card or an injury is invented any more \u2014 those lines are only ever said about the man it actually happened to'
+    ] },
     { v: '3.1', when: '31 Aug', items: [
       'Every club in the game now has its real badge \u2014 all 194 of them. Turkey, Scotland, Belgium, Mexico, Saudi Arabia and Japan had none at all and were showing a drawn shield with two letters on it; they have proper crests now',
       'The old badges are gone completely: no drawn shield underneath, no hot-linked images that could arrive late or not at all. The badge is the crest, and it is built into the game',
