@@ -1284,6 +1284,45 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   .tabbar{max-width:820px;margin:0 auto;border-radius:var(--radius) var(--radius) 0 0}
 }
 
+/* ---------------- the cups ----------------
+   A knockout has a shape a league table does not: a row of stages you either
+   get through or you do not. The dots are that shape — filled behind you,
+   hollow ahead, greyed out the night it ends. */
+.fixture-card.fx-cup{background:
+  radial-gradient(120% 90% at 50% -10%, rgba(255,201,77,.14), transparent 60%), var(--card)}
+.fx-cup .fx-comp{color:var(--gold)}
+.fx-cup .fx-comp .ic{width:12px;height:12px;vertical-align:-2px}
+
+.cup-row{display:flex;align-items:center;gap:8px;padding:7px 0;font-size:12.5px;
+  border-bottom:1px solid rgba(255,255,255,.05)}
+.cup-row:last-of-type{border-bottom:0}
+.cup-ic{flex:0 0 18px;display:flex}
+.cup-ic .ic{width:14px;height:14px;color:var(--dim)}
+.cup-won .cup-ic .ic{color:var(--gold)}
+.cup-alive .cup-ic .ic{color:var(--green)}
+.cup-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.cup-out .cup-n{color:var(--dim)}
+.cup-dots{display:flex;gap:3px;flex:0 0 auto}
+.cup-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.14)}
+.cup-dot.on{background:var(--green)}
+.cup-dot.gone{background:rgba(255,90,106,.35)}
+.cup-won .cup-dot{background:var(--gold)}
+.cup-st{flex:0 0 auto;font-size:10.5px;letter-spacing:.3px;text-transform:uppercase;
+  font-weight:800;color:var(--muted);max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cup-won .cup-st{color:var(--gold)}
+.cup-out .cup-st{color:var(--dim)}
+.cup-alive .cup-st{color:var(--green)}
+.cup-tally{margin-top:10px;border-top:1px solid rgba(255,255,255,.06)}
+.dim.tiny{font-size:10.5px;line-height:1.4}
+
+.res-cup{color:var(--gold);font-size:10px;font-weight:800;letter-spacing:.3px;
+  text-transform:uppercase;margin-left:6px}
+.res-iscup .res-b{box-shadow:0 0 0 1px rgba(255,201,77,.4) inset}
+.mgr-cupline{text-align:center;font-size:12.5px;font-weight:700;margin:2px 0 8px}
+.mgr-cupline.good{color:var(--gold)}
+.mgr-cupline.bad{color:var(--red)}
+.mgr-cupline .ic{width:13px;height:13px;vertical-align:-2px}
+
 </style>
 </head>
 <body>
@@ -2868,9 +2907,19 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.9';
-  const BUILD = '30 August 2026';
+  const VERSION = '3.0';
+  const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.0', when: '31 Aug', items: [
+      'The cups. A season is not just a league any more \u2014 there is a domestic cup every year, a continental one you have to qualify for, the Club World Cup, and a Super Cup to open the season',
+      'Every tie is one match. Level after ninety and you play the extra half hour; level after that and it is penalties. Win and you are through, lose and it is over for the year',
+      'Qualifying is earned: finish in the top four or win a cup and you are in Europe. Win Europe and the Club World Cup follows. Win the league or a cup and you open the next season with the Super Cup',
+      'The draw firms up as the rounds go on \u2014 an early round can be anybody, a final rarely is \u2014 and a side you have already knocked out is not in the hat again',
+      'Cup ties are dropped in between league rounds and do not touch the table. The matchday card, the recent results and The Talk all know which competition you are in',
+      'The board notice. A cup in the cabinet lifts their confidence, and two of them count toward the money they will back you with',
+      'You lift a cup rather than read about it \u2014 winning a final opens the trophy the same way winning the league does',
+      'The Talk knows which night it is: nine new lines for a cup tie, extra time and penalties among them, and not a word about three points on one'
+    ] },
     { v: '2.9', when: '30 Aug', items: [
       'The Talk now has 224 different things to say — 71 ways of scoring a goal, 123 things that happened around it, and 30 lines about the shape of the match itself',
       'Seventy-one goals: knuckleballs, rabonas, backheels, headers at the back post, sixty-yard carries, toe-pokes, one off the shin he will take, and one that went in off the crossbar and was eventually given',
@@ -11096,6 +11145,69 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* ---------------- the season ---------------- */
 
+  /* ---------------- the cups ----------------
+     A season is not just a league. There is the domestic cup, which everybody
+     is in; the continental cup, which you have to qualify for; the Club World
+     Cup, which you only see by winning the continental one; and the Super Cup,
+     one match at the start of the year for whoever won something last. Each is
+     a straight knockout: win the tie and you go through, lose and it is over
+     for the year. They are dropped into the calendar between league rounds. */
+
+  const CUP_STAGES = {
+    dom:   ['Third round', 'Fourth round', 'Quarter-final', 'Semi-final', 'Final'],
+    cont:  ['Play-off', 'Round of 16', 'Quarter-final', 'Semi-final', 'Final'],
+    world: ['Semi-final', 'Final'],
+    super: ['Final']
+  };
+
+  /* Who you get drawn against, and how good they are at that stage. */
+  function cupPool(g, kind) {
+    const State = global.State;
+    const me = State.club(g.mgr.club);
+    const all = Object.values(g.world.clubs).filter(c => c.id !== me.id);
+    if (kind === 'dom') return all.filter(c => c.league === me.league);
+    if (kind === 'super') return all.filter(c => c.league === me.league);
+    const myLeague = State.league(me.league);
+    if (kind === 'cont') {
+      return all.filter(c => {
+        const L = State.league(c.league);
+        return L && L.cont === myLeague.cont;
+      });
+    }
+    return all;                       // the Club World Cup takes the lot
+  }
+
+  /* Did you earn a place in this one? */
+  function cupsForSeason(g) {
+    const State = global.State, U = global.U;
+    const club = State.club(g.mgr.club);
+    const league = State.league(club.league);
+    const last = g.mgr.lastSeason || {};
+    const out = [];
+
+    out.push({ id: 'dom', kind: 'dom', name: league.cup || 'the Cup',
+               short: league.cup || 'Cup', stage: 0, alive: true });
+
+    const contMeta = global.DATA.CONTINENTAL[league.cont];
+    // top four last year, or a trophy, or you were good enough to start there
+    const qualified = g.mgr.board.seasons === 0
+      ? club.rating >= 78
+      : (last.pos && last.pos <= 4) || last.wonDom || last.wonCont;
+    if (contMeta && qualified) {
+      out.push({ id: 'cont', kind: 'cont', name: contMeta.name,
+                 short: contMeta.short, stage: 0, alive: true });
+    }
+    if (last.wonCont) {
+      out.push({ id: 'world', kind: 'world', name: 'Club World Cup',
+                 short: 'Club World Cup', stage: 0, alive: true });
+    }
+    if (last.wonLeague || last.wonDom || last.wonCont) {
+      out.push({ id: 'super', kind: 'super', name: (league.country || '') + ' Super Cup',
+                 short: 'Super Cup', stage: 0, alive: true });
+    }
+    return out;
+  }
+
   function buildSeason(g) {
     const State = global.State, Engine = global.Engine, U = global.U;
     const club = State.club(g.mgr.club);
@@ -11108,18 +11220,95 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     const single = Engine.Season.roundRobin(league.clubs);
     const rounds = single.concat(single.map(r => r.map(pair => [pair[1], pair[0]])));
     g.mgr.rounds = rounds;
+    g.mgr.cups = cupsForSeason(g);
+
+    /* The calendar: league rounds with the cup ties dropped in between them.
+       A Super Cup opens the season; everything else is spread across it so the
+       later rounds fall late, when they should. */
+    const cal = rounds.map((r, i) => ({ type: 'league', idx: i }));
+    const insert = [];
+    g.mgr.cups.forEach((cup, ci) => {
+      const n = CUP_STAGES[cup.kind].length;
+      for (let st = 0; st < n; st++) {
+        // the offset keeps two competitions from landing on the same midweek
+        const at = cup.kind === 'super' ? 0
+          : Math.min(rounds.length,
+              Math.round(rounds.length * (0.14 + (st + 1) / (n + 1) * 0.82)) + ci);
+        insert.push({ at, entry: { type: 'cup', cup: cup.id, stage: st } });
+      }
+    });
+    // later insertions first, so earlier ones do not shift them
+    insert.sort((a, b) => b.at - a.at || b.entry.stage - a.entry.stage);
+    insert.forEach(x => cal.splice(x.at, 0, x.entry));
+
+    g.mgr.calendar = cal;
     g.mgr.round = 0;
     g.mgr.results = [];
     g.squad.forEach(s => { s.apps = 0; s.goals = 0; s.assists = 0; s.ratingSum = 0; s.form = U.int(45, 70); });
   }
 
+  function cupById(g, id) { return (g.mgr.cups || []).find(c => c.id === id); }
+
+  /* The next thing you actually have to play. Skips cup ties in competitions
+     you have already gone out of. */
   function nextFixture(g) {
-    const round = g.mgr.rounds[g.mgr.round];
-    if (!round) return null;
+    const State = global.State, U = global.U;
+    // a season saved before the cups existed is still a season: play it out as
+    // a league year and the cups start with the next one
+    if (!g.mgr.calendar) {
+      g.mgr.calendar = (g.mgr.rounds || []).map((r, i) => ({ type: 'league', idx: i }));
+      g.mgr.cups = g.mgr.cups || [];
+    }
+    const cal = g.mgr.calendar;
     const me = g.mgr.club;
-    const pair = round.find(p => p[0] === me || p[1] === me);
-    if (!pair) return null;
-    return { home: pair[0] === me, oppId: pair[0] === me ? pair[1] : pair[0], round: g.mgr.round };
+    while (g.mgr.round < cal.length) {
+      const slot = cal[g.mgr.round];
+      if (slot.type === 'league') {
+        const round = g.mgr.rounds[slot.idx];
+        const pair = round && round.find(p => p[0] === me || p[1] === me);
+        if (pair) {
+          return { home: pair[0] === me, oppId: pair[0] === me ? pair[1] : pair[0],
+                   round: g.mgr.round, comp: 'league', compName: State.league(State.club(me).league).name };
+        }
+        g.mgr.round++;
+        continue;
+      }
+      const cup = cupById(g, slot.cup);
+      // knocked out, or this stage already played: move on
+      if (!cup || !cup.alive || cup.stage !== slot.stage) { g.mgr.round++; continue; }
+      const stages = CUP_STAGES[cup.kind];
+      /* The draw is made once and then it stands. Re-rolling it every time the
+         screen redrew would mean a different opponent each time you looked. */
+      if (cup.drawStage !== slot.stage || !cup.oppId || !State.club(cup.oppId)) {
+        let pool = cupPool(g, cup.kind);
+        // a side you have already knocked out is not in the hat any more
+        const beaten = cup.beaten || [];
+        const left = pool.filter(c => beaten.indexOf(c.id) < 0);
+        if (left.length) pool = left;
+        if (!pool.length) { g.mgr.round++; continue; }
+        /* The further you go, the better the company. An early round throws up
+           the small clubs; by the final you are playing whoever is left, and
+           whoever is left is usually somebody. */
+        let f = slot.stage / Math.max(stages.length - 1, 1);
+        if (cup.kind === 'super') f = 1;
+        else if (cup.kind === 'world') f = 0.72 + f * 0.28;
+        // a domestic cup final is not always two giants: somebody always has a run
+        else if (cup.kind === 'dom') f = 0.1 + f * 0.62;
+        const sorted = pool.slice().sort((a, b) => a.rating - b.rating);
+        // the field narrows as well as sharpens: a final is the best few left
+        const w = Math.max(3, Math.round(sorted.length * (0.36 - f * 0.24)));
+        const band = sorted.slice(Math.round((sorted.length - w) * f), Math.round((sorted.length - w) * f) + w);
+        cup.oppId = band[U.int(0, band.length - 1)].id;
+        cup.drawStage = slot.stage;
+        cup.neutral = cup.kind === 'super' || cup.kind === 'world' || slot.stage === stages.length - 1;
+        cup.home = cup.neutral ? true : U.chance(0.5);
+      }
+      return { home: !!cup.home, oppId: cup.oppId, round: g.mgr.round,
+               comp: 'cup', cup: cup.id, kind: cup.kind,
+               compName: cup.name, shortName: cup.short, stageName: stages[slot.stage],
+               stage: slot.stage, stages: stages.length, neutral: !!cup.neutral };
+    }
+    return null;
   }
 
   /* the eleven you have picked, and what it is worth */
@@ -11214,6 +11403,20 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* ---------------- matchday ---------------- */
 
+  /* Five each, and then until somebody blinks. Rating counts for something
+     from twelve yards, but not for much — which is the whole point of them. */
+  function shootout(edge) {
+    const U = global.U;
+    const pa = U.clamp(0.74 + edge * 0.005, 0.55, 0.9);
+    const pb = U.clamp(0.74 - edge * 0.005, 0.55, 0.9);
+    let a = 0, b = 0;
+    for (let i = 0; i < 5; i++) { if (U.chance(pa)) a++; if (U.chance(pb)) b++; }
+    let guard = 0;
+    while (a === b && guard++ < 25) { if (U.chance(pa)) a++; if (U.chance(pb)) b++; }
+    if (a === b) a++;
+    return [a, b];
+  }
+
   function playRound(g, talk) {
     const U = global.U, State = global.State, Engine = global.Engine;
     const fix = nextFixture(g);
@@ -11224,15 +11427,32 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     // a fired-up dressing room can also over-run itself
     const talkSwing = t.boost - (t.risk ? U.rnd(0, t.risk) : 0);
-    const mine = teamRating(g) + (fix.home ? 2.5 : 0) + style.att * 0.35 + talkSwing;
-    const theirs = opp.rating + (fix.home ? 0 : 2.5) - style.def * 0.3;
+    // a final on neutral ground belongs to neither of you
+    const hb = fix.neutral ? 0 : 2.5;
+    const mine = teamRating(g) + (fix.home ? hb : 0) + style.att * 0.35 + talkSwing;
+    const theirs = opp.rating + (fix.home ? 0 : hb) - style.def * 0.3;
 
     // what the era signings in your eleven actually bring
     const tr = traitBonus(g);
-    const diff = mine - theirs + tr.att * 0.5 + tr.def * 0.5;
+    /* One night counts for less than thirty-eight of them: in a cup tie the
+       gap between the sides matters, but it matters less. That is why the
+       small clubs turn up. */
+    const isCup = fix.comp === 'cup';
+    const diff = (mine - theirs) * (isCup ? 0.8 : 1) + tr.att * 0.5 + tr.def * 0.5;
     const la = U.clamp(1.35 + diff * 0.052 + style.att * 0.05 + tr.att * 0.055, 0.2, 4.6);
     const lb = U.clamp(1.35 - diff * 0.052 - style.def * 0.05 - tr.def * 0.06, 0.15, 4.6);
-    const gf = U.poisson(la), ga = U.poisson(lb);
+    let gf = U.poisson(la), ga = U.poisson(lb);
+
+    /* A cup tie has to produce a winner. Level after ninety and you play the
+       extra half hour; level after that and it is the spot. */
+    const cup = fix.comp === 'cup' ? cupById(g, fix.cup) : null;
+    let aet = false, pens = null;
+    if (cup && gf === ga) {
+      aet = true;
+      gf += U.poisson(la * 0.34);
+      ga += U.poisson(lb * 0.34);
+      if (gf === ga) pens = shootout(mine - theirs);
+    }
 
     // who scored them
     const xi = xiPlayers(g);
@@ -11255,33 +11475,84 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     });
     benchPlayers(g).forEach(s => { s.fit = U.clamp(s.fit + U.rnd(6, 14), 25, 100); });
 
-    // the rest of the division plays too
+    /* The rest of the division plays too — but only on a league weekend. A cup
+       tie does not move the table, yours or anybody else's. */
     const league = State.league(me.league);
-    const round = g.mgr.rounds[g.mgr.round] || [];
-    round.forEach(pair => {
-      const [A, B] = pair;
-      if (A === g.mgr.club || B === g.mgr.club) {
-        Engine.Season.applyTable(g.tables[league.id], fix.home ? g.mgr.club : fix.oppId,
-          fix.home ? fix.oppId : g.mgr.club, fix.home ? gf : ga, fix.home ? ga : gf);
-        return;
-      }
-      const ca = State.club(A), cb = State.club(B);
-      const d = (ca.rating + 2.5) - cb.rating;
-      const x = U.poisson(U.clamp(1.35 + d * 0.05, 0.2, 4.4));
-      const y = U.poisson(U.clamp(1.35 - d * 0.05, 0.2, 4.4));
-      Engine.Season.applyTable(g.tables[league.id], A, B, x, y);
-    });
+    if (!cup) {
+      const slot = (g.mgr.calendar || [])[g.mgr.round] || {};
+      const round = g.mgr.rounds[slot.idx != null ? slot.idx : g.mgr.round] || [];
+      round.forEach(pair => {
+        const [A, B] = pair;
+        if (A === g.mgr.club || B === g.mgr.club) {
+          Engine.Season.applyTable(g.tables[league.id], fix.home ? g.mgr.club : fix.oppId,
+            fix.home ? fix.oppId : g.mgr.club, fix.home ? gf : ga, fix.home ? ga : gf);
+          return;
+        }
+        const ca = State.club(A), cb = State.club(B);
+        const d = (ca.rating + 2.5) - cb.rating;
+        const x = U.poisson(U.clamp(1.35 + d * 0.05, 0.2, 4.4));
+        const y = U.poisson(U.clamp(1.35 - d * 0.05, 0.2, 4.4));
+        Engine.Season.applyTable(g.tables[league.id], A, B, x, y);
+      });
+    }
 
-    const result = gf > ga ? 'W' : gf === ga ? 'D' : 'L';
+    const through = pens ? pens[0] > pens[1] : gf > ga;
+    const result = cup ? (through ? 'W' : 'L') : gf > ga ? 'W' : gf === ga ? 'D' : 'L';
     const entry = { round: g.mgr.round, oppId: fix.oppId, home: fix.home, gf, ga, result,
-                    scorers: scorers.map(s => s.name), talk: t.id };
+                    scorers: scorers.map(s => s.name), talk: t.id,
+                    comp: fix.comp, compName: fix.compName };
+
+    /* Through, or out. There is no third thing, and that is why the cups are
+       worth playing: a season in the league is thirty-eight chances, a cup tie
+       is one. */
+    if (cup) {
+      const stages = CUP_STAGES[cup.kind];
+      entry.cup = cup.id;
+      entry.stageName = fix.stageName;
+      entry.neutral = !!fix.neutral;
+      if (aet) entry.aet = true;
+      if (pens) entry.pens = pens;
+      if (through) {
+        cup.beaten = (cup.beaten || []).concat(opp.id);
+        cup.stage++;
+        if (cup.stage >= stages.length) {
+          cup.alive = false;
+          cup.won = true;
+          entry.lifted = cup.name;
+          g.mgr.trophies.push({ name: cup.name, year: g.world.year + 1, kind: 'cup' });
+          g.mgr.log.unshift({ t: `Won the ${cup.name}`, k: 'in' });
+          State.news(`${me.name} win the ${cup.name}`, 'good', null, 'trophy');
+          g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + 9, 0, 100);
+        }
+      } else {
+        cup.alive = false;
+        cup.outAt = fix.stageName;
+        entry.out = true;
+        g.mgr.log.unshift({ t: `Out of the ${cup.name} — beaten by ${opp.name} in the ${fix.stageName.toLowerCase()}`, k: 'out' });
+      }
+      // whatever happens next is a fresh draw
+      cup.oppId = null;
+      cup.drawStage = -1;
+    }
     entry.moments = matchMoments(g, entry, xi, scorers);
     g.mgr.results.push(entry);
     // the week's talking points, newest first
     g.mgr.news = (entry.moments.map(m => Object.assign({
       round: g.mgr.round + 1, year: g.world.year, opp: State.club(fix.oppId).name,
-      score: (fix.home ? gf : ga) + '-' + (fix.home ? ga : gf), result
+      score: (fix.home ? gf : ga) + '-' + (fix.home ? ga : gf), result,
+      comp: cup ? cup.short : null
     }, m))).concat(g.mgr.news || []).slice(0, 60);
+    if (cup) {
+      g.mgr.news = [entry.lifted
+        ? { k: 'good', t: `${me.name} lift the ${cup.name}.`, round: g.mgr.round + 1,
+            year: g.world.year, opp: opp.name, comp: cup.short }
+        : entry.out
+          ? { k: 'bad', t: `Out of the ${cup.name}, beaten by ${opp.name} in the ${fix.stageName.toLowerCase()}.`,
+              round: g.mgr.round + 1, year: g.world.year, opp: opp.name, comp: cup.short }
+          : { k: 'good', t: `Through to the ${(CUP_STAGES[cup.kind][cup.stage] || 'next round').toLowerCase()} of the ${cup.name}.`,
+              round: g.mgr.round + 1, year: g.world.year, opp: opp.name, comp: cup.short }
+      ].concat(g.mgr.news).slice(0, 60);
+    }
     g.mgr.round++;
 
     // The board are watching, but they judge you on the table rather than on
@@ -11296,7 +11567,8 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     marketTick(g);
     me.form = (me.form || []).concat(result).slice(-5);
-    State.news(`${fix.home ? me.name : opp.name} ${fix.home ? gf : ga}-${fix.home ? ga : gf} ${fix.home ? opp.name : me.name}`,
+    State.news(`${fix.home ? me.name : opp.name} ${fix.home ? gf : ga}-${fix.home ? ga : gf} ${fix.home ? opp.name : me.name}`
+      + (cup ? ` · ${cup.short} ${fix.stageName.toLowerCase()}${pens ? ` (${pens[0]}-${pens[1]} on pens)` : aet ? ' (aet)' : ''}` : ''),
       result === 'W' ? 'good' : result === 'L' ? 'bad' : 'info', null, 'whistle');
     return entry;
   }
@@ -11506,7 +11778,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     { t: 'The floodlights flickered in the second half and nobody blinked', w: 1, plain: true },
     { t: 'It finished with eleven players in the opposition box', w: 2, plain: true, when: e => e.result !== 'W' },
     { t: 'The referee\'s watch was the only thing anyone was interested in by the end', w: 2, plain: true, when: e => e.result === 'W' },
-    { t: 'A cold night, a thin crowd, and three points is three points', w: 2, plain: true, when: e => e.result === 'W' }
+    { t: 'A cold night, a thin crowd, and three points is three points', w: 2, plain: true, lg: true, when: e => e.result === 'W' }
   ];
 
   const SHAPE_LINES = [
@@ -11520,7 +11792,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     { t: 'Beaten by the only shot on target they had', when: e => e.result === 'L' && e.ga === 1, k: 'bad' },
     { t: 'Battered them and still only won by one', when: e => e.result === 'W' && e.gf - e.ga === 1 && e.gf >= 2, k: 'note' },
     { t: 'A clean sheet away from home is worth more than it looks', when: e => e.ga === 0 && !e.home, k: 'good' },
-    { t: 'Three points and not a single moment of comfort', when: e => e.result === 'W' && e.ga >= 1, k: 'good' },
+    { t: 'Three points and not a single moment of comfort', lg: true, when: e => e.result === 'W' && e.ga >= 1, k: 'good' },
     { t: 'The kind of defeat that costs managers their jobs', when: e => e.result === 'L' && e.ga - e.gf >= 3, k: 'bad' },
     { t: 'Held at home by a side who came for a point and got one', when: e => e.result === 'D' && e.home, k: 'bad' },
     { t: 'Won away and made it look routine', when: e => e.result === 'W' && !e.home && e.ga === 0, k: 'good' },
@@ -11539,7 +11811,18 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     { t: 'Every shot on target went in. Every single one', when: e => e.gf >= 3 && e.result === 'W', k: 'good' },
     { t: 'A hammering, and nobody can pretend otherwise', when: e => e.ga - e.gf >= 4, k: 'bad' },
     { t: 'Seven goals in one afternoon, and the defending was optional', when: e => e.gf + e.ga >= 7, k: 'note' },
-    { t: 'Not pretty, not close, but three points', when: e => e.result === 'W' && e.gf >= 2 && e.ga === 0, k: 'good' }
+    { t: 'Not pretty, not close, but three points', lg: true, when: e => e.result === 'W' && e.gf >= 2 && e.ga === 0, k: 'good' },
+
+    /* A cup tie is a different night out. Nobody talks about points. */
+    { t: 'A cup tie, and it felt like one from the first whistle', cup: true, when: e => true, k: 'note' },
+    { t: 'Through, and it did not much matter how', cup: true, when: e => e.result === 'W', k: 'good' },
+    { t: 'Somebody has to go out, and tonight it was not you', cup: true, when: e => e.result === 'W' && e.ga >= 1, k: 'good' },
+    { t: 'Thirty extra minutes, and the legs went before the nerve did', cup: true, when: e => !!e.aet, k: 'note' },
+    { t: 'It came down to penalties, which is no way to lose and no way to win', cup: true, when: e => !!e.pens, k: 'note' },
+    { t: 'One night, one chance, and it is gone for another year', cup: true, when: e => e.result === 'L', k: 'bad' },
+    { t: 'Out of the cup, and the dressing room was silent for a long time', cup: true, when: e => e.result === 'L', k: 'bad' },
+    { t: 'A cup run ends the way they all end, in the end', cup: true, when: e => e.result === 'L', k: 'bad' },
+    { t: 'They will remember this one for years around here', cup: true, when: e => e.result === 'W' && e.gf >= 3, k: 'good' }
   ];
 
   function pickWeighted(list, filter) {
@@ -11597,8 +11880,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         : who === 'bench' ? (bench.length ? U.pick(bench) : null)
         : (outfield.length ? U.pick(outfield) : xi[0]);
 
+      const isCup = entry.comp === 'cup';
       const pool = ODD_MOMENTS.filter(m =>
-        (!m.when || m.when(entry)) && (m.plain || !!subjectFor(m.who)));
+        !(m.lg && isCup) && (!m.when || m.when(entry)) && (m.plain || !!subjectFor(m.who)));
       const m = pickWeighted(pool);
       if (m) {
         const subject = m.plain ? null : subjectFor(m.who);
@@ -11609,7 +11893,10 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     // and the shape of the game itself
     if (U.chance(0.45)) {
-      const fits = SHAPE_LINES.filter(m => m.when(entry));
+      // a cup night has its own lines, and none of the league's talk of points
+      const isCupTie = entry.comp === 'cup';
+      const fits = SHAPE_LINES.filter(m =>
+        (isCupTie ? !m.lg : !m.cup) && m.when(entry));
       const m = fits.length ? U.pick(fits) : null;
       if (m) out.push({ k: m.k, t: m.t.replace('{gf}', entry.gf).replace('{ga}', entry.ga) });
     }
@@ -11624,7 +11911,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     return table.findIndex(r => r.id === club.id) + 1;
   }
 
-  function seasonOver(g) { return g.mgr.round >= (g.mgr.rounds || []).length; }
+  function seasonOver(g) { return !nextFixture(g); }
 
   /* ---------------- the market ---------------- */
 
@@ -12087,7 +12374,16 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     // players start answering the phone, and the board start expecting more
     const over = target.pos - pos;
     club.drift = U.clamp((club.drift || 0) + U.clamp(over * 0.45, -2, 2), -6, 8);
-    if (champion) g.mgr.trophies.push({ name: State.league(club.league).name + ' Title', year: g.world.year + 1 });
+    if (champion) g.mgr.trophies.push({ name: State.league(club.league).name + ' Title', year: g.world.year + 1, kind: 'league' });
+
+    /* What you did in the cups decides which ones you are in next year, so it
+       has to be written down before the season is torn up. */
+    const cups = g.mgr.cups || [];
+    const lifted = cups.filter(c => c.won);
+    const wonDom = cups.some(c => c.id === 'dom' && c.won);
+    const wonCont = cups.some(c => c.id === 'cont' && c.won);
+    g.mgr.lastSeason = { pos, wonLeague: champion, wonDom, wonCont,
+                         lifted: lifted.map(c => c.name) };
 
     // Nobody is sacked after one year unless it was a disaster and the board
     // have stopped defending you. After that, the confidence is the job — and
@@ -12115,7 +12411,11 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
        are managing and whatever the club was worth when you walked in. The
        wage ceiling has to move with it or the budget is a number you cannot
        spend — a superstar's problem is always the weekly, not the fee. */
-    const titles = (g.mgr.trophies || []).length;
+    /* League titles are what the board really count. A cup is worth having and
+       worth money, but two of them are not a championship. */
+    const cabinet = g.mgr.trophies || [];
+    const leagues = cabinet.filter(t => t.kind !== 'cup').length;
+    const titles = leagues + Math.floor(cabinet.filter(t => t.kind === 'cup').length / 2);
     let backed = false;
     if (titles >= 1) {
       const floor = titles >= 2 ? TITLE_FLOOR + (titles - 2) * 75000000 : 200000000;
@@ -12133,7 +12433,17 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       }
     }
 
+    /* A season is not only a finishing position any more. */
+    if (lifted.length) {
+      verdict += ' ' + (lifted.length === 1
+        ? `And you won the ${lifted[0].name}.`
+        : `And the ${lifted.map(c => c.name).join(' and the ')} are in the cabinet.`);
+      g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + lifted.length * 6, 0, 100);
+    }
+
     return { pos, met, champion, verdict, sacked, warned, table, titles,
+             cups: cups.map(c => ({ name: c.name, short: c.short, won: !!c.won, outAt: c.outAt || null })),
+             lifted: lifted.map(c => c.name),
              confidence: Math.round(g.mgr.board.confidence) };
   }
 
@@ -12244,6 +12554,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, TITLE_FLOOR, TOP_TARGET, bid, sell, squadWages, valueFor, wageFor,
+    CUP_STAGES, cupById, cupsForSeason,
     matchMoments, GOAL_WAYS, ODD_MOMENTS, SHAPE_LINES,
     traitOf, traitBonus, TRAIT_GOALS,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
@@ -12352,15 +12663,22 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       }
 
       if (!fix) {
+        const lifted = (g.mgr.cups || []).filter(c => c.won);
         html += `<div class="card center"><h3>${ico('trophy')} Season over</h3>
-          <p class="dim" style="margin:0 0 12px">Thirty-something games, and the table does not lie.</p>
+          <p class="dim" style="margin:0 0 12px">${lifted.length
+            ? `Every game played, and the ${lifted.map(c => esc(c.name)).join(' and the ')} came home with you.`
+            : 'Every game played, the cups are gone, and the table does not lie.'}</p>
           <button class="btn btn-primary btn-lg" data-act="mgrReview">See the board</button></div>`;
-        return html + MUI.formCard(g);
+        return html + MUI.cupsCard(g) + MUI.formCard(g);
       }
 
       const opp = State().club(fix.oppId);
-      html += `<div class="card fixture-card">
-        <div class="fx-comp">${esc(State().league(club.league).name)} · Match ${g.mgr.round + 1} of ${g.mgr.rounds.length}</div>
+      const played = (g.mgr.results || []).filter(r => r.comp === 'cup').length;
+      const compLine = fix.comp === 'cup'
+        ? `${esc(fix.compName)} · ${esc(fix.stageName)}`
+        : `${esc(State().league(club.league).name)} · Match ${(g.mgr.results || []).length - played + 1} of ${g.mgr.rounds.length}`;
+      html += `<div class="card fixture-card${fix.comp === 'cup' ? ' fx-cup' : ''}">
+        <div class="fx-comp">${fix.comp === 'cup' ? ico('trophy') + ' ' : ''}${compLine}</div>
         <div class="fx-teams">
           <div class="fx-t">${crest(fix.home ? club.name : opp.name, 'crest-lg')}
             <span>${esc(fix.home ? club.name : opp.name)}</span></div>
@@ -12368,8 +12686,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
           <div class="fx-t">${crest(fix.home ? opp.name : club.name, 'crest-lg')}
             <span>${esc(fix.home ? opp.name : club.name)}</span></div>
         </div>
-        <div class="fx-meta">${fix.home ? ico('home') + ' Home' : ico('away') + ' Away'} ·
-          opposition rated ${opp.rating}</div>
+        <div class="fx-meta">${fix.neutral ? ico('trophy') + ' Neutral ground'
+          : fix.home ? ico('home') + ' Home' : ico('away') + ' Away'} ·
+          opposition rated ${opp.rating}${fix.comp === 'cup' ? ' · one match, no replay' : ''}</div>
       </div>`;
 
       html += `<div class="card"><h3>${ico('tactics')} Your plan</h3>
@@ -12390,7 +12709,35 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
         </div>
       </div>`;
 
-      return html + MUI.newsCard(g) + MUI.formCard(g);
+      return html + MUI.cupsCard(g) + MUI.newsCard(g) + MUI.formCard(g);
+    },
+
+    /* ---------------- the cups you are in this year ----------------
+       A league season is a long argument you can always win back. A cup is one
+       night. This is the board that tells you which ones are still alive. */
+    cupsCard(g) {
+      const cups = g.mgr.cups || [];
+      if (!cups.length) return '';
+      const stages = M().CUP_STAGES;
+      return `<div class="card"><h3>${ico('trophy')} The cups</h3>
+        ${cups.map(c => {
+          const list = stages[c.kind] || [];
+          const at = c.won ? 'Won it' : !c.alive ? `Out — ${esc(String(c.outAt || '').toLowerCase())}`
+            : list[c.stage] ? esc(list[c.stage]) : 'To come';
+          const k = c.won ? 'won' : !c.alive ? 'out' : 'alive';
+          const dots = list.map((nm, i) => {
+            const st = c.won || i < c.stage ? 'on' : (!c.alive && i >= c.stage) ? 'gone' : '';
+            return `<i class="cup-dot ${st}" title="${esc(nm)}"></i>`;
+          }).join('');
+          return `<div class="cup-row cup-${k}">
+            <span class="cup-ic">${ico(c.won ? 'trophy' : c.alive ? 'whistle' : 'exit')}</span>
+            <span class="cup-n">${esc(c.name)}</span>
+            <span class="cup-dots">${dots}</span>
+            <span class="cup-st">${at}</span>
+          </div>`;
+        }).join('')}
+        <p class="dim tiny" style="margin:8px 0 0">Win the ${esc((State().league(State().club(g.mgr.club).league).cup) || 'Cup')} or finish in the top four and you are in Europe next year. Win Europe and the Club World Cup follows.</p>
+      </div>`;
     },
 
     /* What people are actually talking about — the hat-trick, the one from
@@ -12433,10 +12780,13 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       return `<div class="card"><h3>${ico('table')} Recent results</h3>
         ${res.map(r => {
           const opp = State().club(r.oppId);
-          return `<div class="res-row res-${r.result}">
+          const tag = r.comp === 'cup'
+            ? `<span class="res-cup">${esc(r.stageName || 'Cup')}${r.pens ? ` · ${r.pens[0]}-${r.pens[1]} pens` : r.aet ? ' · aet' : ''}</span>`
+            : '';
+          return `<div class="res-row res-${r.result}${r.comp === 'cup' ? ' res-iscup' : ''}">
             <span class="res-b">${r.result}</span>
             ${crest(opp.name, 'crest-sm')}
-            <span class="res-n">${r.home ? 'v' : 'at'} ${esc(opp.name)}</span>
+            <span class="res-n">${r.neutral ? 'v' : r.home ? 'v' : 'at'} ${esc(opp.name)}${tag}</span>
             <b>${r.gf}–${r.ga}</b>
           </div>`;
         }).join('')}</div>`;
@@ -15434,7 +15784,9 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       const opp = State.club(fix.oppId);
       UI.modal({
         title: 'Team talk',
-        html: `<p class="muted">${U.esc(opp.name)}, ${fix.home ? 'at home' : 'away'}. The room is quiet and looking at you.</p>
+        html: `<p class="muted">${U.esc(opp.name)}, ${fix.neutral ? 'on neutral ground' : fix.home ? 'at home' : 'away'}.${
+            fix.comp === 'cup' ? ` ${U.esc(fix.stageName)} of the ${U.esc(fix.compName)} — win it or the year is over.` : ''
+          } The room is quiet and looking at you.</p>
           <div class="list">${global.Manager.TALKS.map(t => `
             <div class="item click" data-talk="${t.id}"><div class="ic">${ico('microphone')}</div>
               <div class="tx"><b>${U.esc(t.label)}</b><span>${U.esc(t.hint)}</span></div></div>`).join('')}</div>`,
@@ -15454,17 +15806,37 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       State.save();
       global.MUI.render();
       if (!r) return;
+      /* You do not get told you won a cup in a paragraph. You lift it. */
+      if (r.lifted) {
+        Game.trophyLift(r.lifted, 'Cup winners', () => Game.mgrMatchModal(r));
+        return;
+      }
+      Game.mgrMatchModal(r);
+    },
+
+    mgrMatchModal(r) {
+      const g = State.game;
       const opp = State.club(r.oppId);
       const club = State.club(g.mgr.club);
+      const cupLine = r.comp !== 'cup' ? '' : r.lifted
+        ? `<p class="mgr-cupline good">${ico('trophy')} ${U.esc(r.lifted)} — won.</p>`
+        : r.out
+          ? `<p class="mgr-cupline bad">Out of the ${U.esc(r.compName)} at the ${U.esc(String(r.stageName).toLowerCase())}.</p>`
+          : `<p class="mgr-cupline good">Through in the ${U.esc(r.compName)}.</p>`;
       UI.modal({
-        title: r.result === 'W' ? 'Win' : r.result === 'D' ? 'Draw' : 'Defeat',
-        html: `<div class="fx-teams" style="margin-bottom:10px">
+        title: r.lifted ? 'CUP WINNERS'
+          : r.comp === 'cup' ? (r.result === 'W' ? 'Through' : 'Knocked out')
+          : r.result === 'W' ? 'Win' : r.result === 'D' ? 'Draw' : 'Defeat',
+        html: `${r.comp === 'cup' ? `<p class="dim" style="text-align:center;margin:0 0 6px">${U.esc(r.compName)} · ${U.esc(r.stageName)}${
+            r.pens ? ` · ${r.pens[0]}-${r.pens[1]} on penalties` : r.aet ? ' · after extra time' : ''}</p>` : ''}
+          <div class="fx-teams" style="margin-bottom:10px">
             <div class="fx-t">${global.Crest.svg(r.home ? club.name : opp.name, 'crest-lg')}
               <span>${U.esc(r.home ? club.name : opp.name)}</span></div>
             <div class="fx-v" style="font-size:26px">${r.home ? r.gf : r.ga}–${r.home ? r.ga : r.gf}</div>
             <div class="fx-t">${global.Crest.svg(r.home ? opp.name : club.name, 'crest-lg')}
               <span>${U.esc(r.home ? opp.name : club.name)}</span></div>
           </div>
+          ${cupLine}
           ${r.scorers.length ? `<p class="muted" style="text-align:center">${U.esc(r.scorers.join(', '))}</p>` : ''}
           ${(r.moments || []).length ? `<div class="mn-modal">${r.moments.map(m =>
             `<div class="mnews mn-${U.esc(m.k)}"><span class="mn-t">${U.esc(m.t)}</span></div>`).join('')}</div>` : ''}
@@ -15478,7 +15850,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     mgrSimSeason() {
       const g = State.game;
       let n = 0;
-      while (!global.Manager.seasonOver(g) && n++ < 60) global.Manager.playRound(g, 'calm');
+      while (!global.Manager.seasonOver(g) && n++ < 90) global.Manager.playRound(g, 'calm');
       State.save();
       global.MUI.render();
       Game.mgrReview();
@@ -15498,6 +15870,12 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
             <div class="stat"><b>${r.confidence}</b><span>Board</span></div>
             <div class="stat"><b>${U.cash(g.mgr.budget)}</b><span>Next budget</span></div>
           </div>
+          ${(r.cups || []).length ? `<div class="cup-tally">${r.cups.map(c =>
+            `<div class="cup-row cup-${c.won ? 'won' : 'out'}">
+              <span class="cup-ic">${ico(c.won ? 'trophy' : 'exit')}</span>
+              <span class="cup-n">${U.esc(c.name)}</span>
+              <span class="cup-st">${c.won ? 'Won' : c.outAt ? U.esc(String(c.outAt).toLowerCase()) : '—'}</span>
+            </div>`).join('')}</div>` : ''}
           <p class="muted" style="margin-top:12px">${U.esc(r.verdict)}</p>`,
         actions: [{ label: r.sacked ? 'Clear your desk' : 'Into next season', onClick: () => {
           if (r.sacked) { global.MUI.render(); return; }

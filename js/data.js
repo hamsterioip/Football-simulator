@@ -1451,9 +1451,19 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.9';
-  const BUILD = '30 August 2026';
+  const VERSION = '3.0';
+  const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.0', when: '31 Aug', items: [
+      'The cups. A season is not just a league any more \u2014 there is a domestic cup every year, a continental one you have to qualify for, the Club World Cup, and a Super Cup to open the season',
+      'Every tie is one match. Level after ninety and you play the extra half hour; level after that and it is penalties. Win and you are through, lose and it is over for the year',
+      'Qualifying is earned: finish in the top four or win a cup and you are in Europe. Win Europe and the Club World Cup follows. Win the league or a cup and you open the next season with the Super Cup',
+      'The draw firms up as the rounds go on \u2014 an early round can be anybody, a final rarely is \u2014 and a side you have already knocked out is not in the hat again',
+      'Cup ties are dropped in between league rounds and do not touch the table. The matchday card, the recent results and The Talk all know which competition you are in',
+      'The board notice. A cup in the cabinet lifts their confidence, and two of them count toward the money they will back you with',
+      'You lift a cup rather than read about it \u2014 winning a final opens the trophy the same way winning the league does',
+      'The Talk knows which night it is: nine new lines for a cup tie, extra time and penalties among them, and not a word about three points on one'
+    ] },
     { v: '2.9', when: '30 Aug', items: [
       'The Talk now has 224 different things to say — 71 ways of scoring a goal, 123 things that happened around it, and 30 lines about the shape of the match itself',
       'Seventy-one goals: knuckleballs, rabonas, backheels, headers at the back post, sixty-yard carries, toe-pokes, one off the shin he will take, and one that went in off the crossbar and was eventually given',

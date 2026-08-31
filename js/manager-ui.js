@@ -96,15 +96,22 @@
       }
 
       if (!fix) {
+        const lifted = (g.mgr.cups || []).filter(c => c.won);
         html += `<div class="card center"><h3>${ico('trophy')} Season over</h3>
-          <p class="dim" style="margin:0 0 12px">Thirty-something games, and the table does not lie.</p>
+          <p class="dim" style="margin:0 0 12px">${lifted.length
+            ? `Every game played, and the ${lifted.map(c => esc(c.name)).join(' and the ')} came home with you.`
+            : 'Every game played, the cups are gone, and the table does not lie.'}</p>
           <button class="btn btn-primary btn-lg" data-act="mgrReview">See the board</button></div>`;
-        return html + MUI.formCard(g);
+        return html + MUI.cupsCard(g) + MUI.formCard(g);
       }
 
       const opp = State().club(fix.oppId);
-      html += `<div class="card fixture-card">
-        <div class="fx-comp">${esc(State().league(club.league).name)} · Match ${g.mgr.round + 1} of ${g.mgr.rounds.length}</div>
+      const played = (g.mgr.results || []).filter(r => r.comp === 'cup').length;
+      const compLine = fix.comp === 'cup'
+        ? `${esc(fix.compName)} · ${esc(fix.stageName)}`
+        : `${esc(State().league(club.league).name)} · Match ${(g.mgr.results || []).length - played + 1} of ${g.mgr.rounds.length}`;
+      html += `<div class="card fixture-card${fix.comp === 'cup' ? ' fx-cup' : ''}">
+        <div class="fx-comp">${fix.comp === 'cup' ? ico('trophy') + ' ' : ''}${compLine}</div>
         <div class="fx-teams">
           <div class="fx-t">${crest(fix.home ? club.name : opp.name, 'crest-lg')}
             <span>${esc(fix.home ? club.name : opp.name)}</span></div>
@@ -112,8 +119,9 @@
           <div class="fx-t">${crest(fix.home ? opp.name : club.name, 'crest-lg')}
             <span>${esc(fix.home ? opp.name : club.name)}</span></div>
         </div>
-        <div class="fx-meta">${fix.home ? ico('home') + ' Home' : ico('away') + ' Away'} ·
-          opposition rated ${opp.rating}</div>
+        <div class="fx-meta">${fix.neutral ? ico('trophy') + ' Neutral ground'
+          : fix.home ? ico('home') + ' Home' : ico('away') + ' Away'} ·
+          opposition rated ${opp.rating}${fix.comp === 'cup' ? ' · one match, no replay' : ''}</div>
       </div>`;
 
       html += `<div class="card"><h3>${ico('tactics')} Your plan</h3>
@@ -134,7 +142,35 @@
         </div>
       </div>`;
 
-      return html + MUI.newsCard(g) + MUI.formCard(g);
+      return html + MUI.cupsCard(g) + MUI.newsCard(g) + MUI.formCard(g);
+    },
+
+    /* ---------------- the cups you are in this year ----------------
+       A league season is a long argument you can always win back. A cup is one
+       night. This is the board that tells you which ones are still alive. */
+    cupsCard(g) {
+      const cups = g.mgr.cups || [];
+      if (!cups.length) return '';
+      const stages = M().CUP_STAGES;
+      return `<div class="card"><h3>${ico('trophy')} The cups</h3>
+        ${cups.map(c => {
+          const list = stages[c.kind] || [];
+          const at = c.won ? 'Won it' : !c.alive ? `Out — ${esc(String(c.outAt || '').toLowerCase())}`
+            : list[c.stage] ? esc(list[c.stage]) : 'To come';
+          const k = c.won ? 'won' : !c.alive ? 'out' : 'alive';
+          const dots = list.map((nm, i) => {
+            const st = c.won || i < c.stage ? 'on' : (!c.alive && i >= c.stage) ? 'gone' : '';
+            return `<i class="cup-dot ${st}" title="${esc(nm)}"></i>`;
+          }).join('');
+          return `<div class="cup-row cup-${k}">
+            <span class="cup-ic">${ico(c.won ? 'trophy' : c.alive ? 'whistle' : 'exit')}</span>
+            <span class="cup-n">${esc(c.name)}</span>
+            <span class="cup-dots">${dots}</span>
+            <span class="cup-st">${at}</span>
+          </div>`;
+        }).join('')}
+        <p class="dim tiny" style="margin:8px 0 0">Win the ${esc((State().league(State().club(g.mgr.club).league).cup) || 'Cup')} or finish in the top four and you are in Europe next year. Win Europe and the Club World Cup follows.</p>
+      </div>`;
     },
 
     /* What people are actually talking about — the hat-trick, the one from
@@ -177,10 +213,13 @@
       return `<div class="card"><h3>${ico('table')} Recent results</h3>
         ${res.map(r => {
           const opp = State().club(r.oppId);
-          return `<div class="res-row res-${r.result}">
+          const tag = r.comp === 'cup'
+            ? `<span class="res-cup">${esc(r.stageName || 'Cup')}${r.pens ? ` · ${r.pens[0]}-${r.pens[1]} pens` : r.aet ? ' · aet' : ''}</span>`
+            : '';
+          return `<div class="res-row res-${r.result}${r.comp === 'cup' ? ' res-iscup' : ''}">
             <span class="res-b">${r.result}</span>
             ${crest(opp.name, 'crest-sm')}
-            <span class="res-n">${r.home ? 'v' : 'at'} ${esc(opp.name)}</span>
+            <span class="res-n">${r.neutral ? 'v' : r.home ? 'v' : 'at'} ${esc(opp.name)}${tag}</span>
             <b>${r.gf}–${r.ga}</b>
           </div>`;
         }).join('')}</div>`;

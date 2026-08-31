@@ -547,7 +547,9 @@
       const opp = State.club(fix.oppId);
       UI.modal({
         title: 'Team talk',
-        html: `<p class="muted">${U.esc(opp.name)}, ${fix.home ? 'at home' : 'away'}. The room is quiet and looking at you.</p>
+        html: `<p class="muted">${U.esc(opp.name)}, ${fix.neutral ? 'on neutral ground' : fix.home ? 'at home' : 'away'}.${
+            fix.comp === 'cup' ? ` ${U.esc(fix.stageName)} of the ${U.esc(fix.compName)} — win it or the year is over.` : ''
+          } The room is quiet and looking at you.</p>
           <div class="list">${global.Manager.TALKS.map(t => `
             <div class="item click" data-talk="${t.id}"><div class="ic">${ico('microphone')}</div>
               <div class="tx"><b>${U.esc(t.label)}</b><span>${U.esc(t.hint)}</span></div></div>`).join('')}</div>`,
@@ -567,17 +569,37 @@
       State.save();
       global.MUI.render();
       if (!r) return;
+      /* You do not get told you won a cup in a paragraph. You lift it. */
+      if (r.lifted) {
+        Game.trophyLift(r.lifted, 'Cup winners', () => Game.mgrMatchModal(r));
+        return;
+      }
+      Game.mgrMatchModal(r);
+    },
+
+    mgrMatchModal(r) {
+      const g = State.game;
       const opp = State.club(r.oppId);
       const club = State.club(g.mgr.club);
+      const cupLine = r.comp !== 'cup' ? '' : r.lifted
+        ? `<p class="mgr-cupline good">${ico('trophy')} ${U.esc(r.lifted)} — won.</p>`
+        : r.out
+          ? `<p class="mgr-cupline bad">Out of the ${U.esc(r.compName)} at the ${U.esc(String(r.stageName).toLowerCase())}.</p>`
+          : `<p class="mgr-cupline good">Through in the ${U.esc(r.compName)}.</p>`;
       UI.modal({
-        title: r.result === 'W' ? 'Win' : r.result === 'D' ? 'Draw' : 'Defeat',
-        html: `<div class="fx-teams" style="margin-bottom:10px">
+        title: r.lifted ? 'CUP WINNERS'
+          : r.comp === 'cup' ? (r.result === 'W' ? 'Through' : 'Knocked out')
+          : r.result === 'W' ? 'Win' : r.result === 'D' ? 'Draw' : 'Defeat',
+        html: `${r.comp === 'cup' ? `<p class="dim" style="text-align:center;margin:0 0 6px">${U.esc(r.compName)} · ${U.esc(r.stageName)}${
+            r.pens ? ` · ${r.pens[0]}-${r.pens[1]} on penalties` : r.aet ? ' · after extra time' : ''}</p>` : ''}
+          <div class="fx-teams" style="margin-bottom:10px">
             <div class="fx-t">${global.Crest.svg(r.home ? club.name : opp.name, 'crest-lg')}
               <span>${U.esc(r.home ? club.name : opp.name)}</span></div>
             <div class="fx-v" style="font-size:26px">${r.home ? r.gf : r.ga}–${r.home ? r.ga : r.gf}</div>
             <div class="fx-t">${global.Crest.svg(r.home ? opp.name : club.name, 'crest-lg')}
               <span>${U.esc(r.home ? opp.name : club.name)}</span></div>
           </div>
+          ${cupLine}
           ${r.scorers.length ? `<p class="muted" style="text-align:center">${U.esc(r.scorers.join(', '))}</p>` : ''}
           ${(r.moments || []).length ? `<div class="mn-modal">${r.moments.map(m =>
             `<div class="mnews mn-${U.esc(m.k)}"><span class="mn-t">${U.esc(m.t)}</span></div>`).join('')}</div>` : ''}
@@ -591,7 +613,7 @@
     mgrSimSeason() {
       const g = State.game;
       let n = 0;
-      while (!global.Manager.seasonOver(g) && n++ < 60) global.Manager.playRound(g, 'calm');
+      while (!global.Manager.seasonOver(g) && n++ < 90) global.Manager.playRound(g, 'calm');
       State.save();
       global.MUI.render();
       Game.mgrReview();
@@ -611,6 +633,12 @@
             <div class="stat"><b>${r.confidence}</b><span>Board</span></div>
             <div class="stat"><b>${U.cash(g.mgr.budget)}</b><span>Next budget</span></div>
           </div>
+          ${(r.cups || []).length ? `<div class="cup-tally">${r.cups.map(c =>
+            `<div class="cup-row cup-${c.won ? 'won' : 'out'}">
+              <span class="cup-ic">${ico(c.won ? 'trophy' : 'exit')}</span>
+              <span class="cup-n">${U.esc(c.name)}</span>
+              <span class="cup-st">${c.won ? 'Won' : c.outAt ? U.esc(String(c.outAt).toLowerCase()) : '—'}</span>
+            </div>`).join('')}</div>` : ''}
           <p class="muted" style="margin-top:12px">${U.esc(r.verdict)}</p>`,
         actions: [{ label: r.sacked ? 'Clear your desk' : 'Into next season', onClick: () => {
           if (r.sacked) { global.MUI.render(); return; }
