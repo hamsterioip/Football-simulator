@@ -2868,9 +2868,15 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.8';
+  const VERSION = '2.9';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.9', when: '30 Aug', items: [
+      'The Talk now has 224 different things to say — 71 ways of scoring a goal, 123 things that happened around it, and 30 lines about the shape of the match itself',
+      'Seventy-one goals: knuckleballs, rabonas, backheels, headers at the back post, sixty-yard carries, toe-pokes, one off the shin he will take, and one that went in off the crossbar and was eventually given',
+      'And everything else: penalties over the bar, boots lost in tackles, arguments with the referee the crowd sang about, six stitches and wanting to come back on, a keeper going up for a corner at the end',
+      'About one match in seven still says nothing at all'
+    ] },
     { v: '2.8', when: '30 Aug', items: [
       'Both Ronaldo peak cards are 99 now — 2008 at United and 2014 at Madrid — and Messi\u2019s 2012 is a 99 as well',
       'The Talk: a news feed of what actually happened out there. Hat-tricks, one from thirty yards, a header at the back post, a free kick over the wall, a penalty put over the bar, a keeper who kept them out on his own, a red card, a hamstring. Seventy-odd different things and rising',
@@ -11306,57 +11312,234 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
   const GOAL_WAYS = [
     { t: 'from fully thirty yards, and the net is still shaking', w: 6, trait: 'Power Shot' },
     { t: 'with a knuckleball from distance that moved twice in the air', w: 4, trait: 'Knuckleball Power Shot' },
+    { t: 'from outside the box with the outside of his boot', w: 4, trait: 'Power Shot' },
+    { t: 'with a shot so hard the keeper only heard it', w: 3, trait: 'Power Shot' },
+    { t: 'from thirty-five yards after spotting the keeper off his line', w: 3, trait: 'Power Shot' },
+    { t: 'with a half-volley from the edge of the D', w: 5, trait: 'Power Shot' },
+    { t: 'off the underside of the bar from twenty-five yards', w: 4, trait: 'Power Shot' },
+    { t: 'with a dipping effort that beat the keeper\'s fingertips', w: 4, trait: 'Knuckleball Power Shot' },
+    { t: 'from distance, and nobody in the ground thought he would shoot', w: 4 },
     { t: 'after beating three men on the way into the box', w: 6, trait: 'Dribbler Expert' },
+    { t: 'having carried it sixty yards from his own half', w: 4, trait: 'Dribbler Expert' },
+    { t: 'after nutmegging the last defender on the way through', w: 3, trait: 'Dribbler Expert' },
+    { t: 'off a drop of the shoulder that sent two of them the wrong way', w: 4, trait: 'Dribbler Expert' },
+    { t: 'after riding a tackle that should have ended it', w: 4, trait: 'Dribbler Expert' },
+    { t: 'having gone past the same full-back twice in one move', w: 3, trait: 'Dribbler Expert' },
     { t: 'with a free kick up and over the wall', w: 5, trait: 'Set-Piece Specialist' },
+    { t: 'from a free kick that went under the wall as they jumped', w: 3, trait: 'Set-Piece Specialist' },
+    { t: 'with a corner that nobody got a touch on', w: 2, trait: 'Set-Piece Specialist' },
+    { t: 'from twenty yards with a free kick into the top corner', w: 4, trait: 'Set-Piece Specialist' },
+    { t: 'off a short corner routine they must have worked on all week', w: 3, trait: 'Set-Piece Specialist' },
     { t: 'with a header at the back post nobody went with him for', w: 6, trait: 'Aerial Threat' },
+    { t: 'with a header he hung in the air for', w: 4, trait: 'Aerial Threat' },
+    { t: 'with a downward header from six yards', w: 4, trait: 'Aerial Threat' },
+    { t: 'with a glancing header at the near post', w: 4, trait: 'Aerial Threat' },
+    { t: 'with a header from a corner, entirely unmarked', w: 4, trait: 'Aerial Threat' },
     { t: 'racing clear of the last man and finishing calmly', w: 6, trait: 'Blistering Pace' },
+    { t: 'after outrunning two of them from the halfway line', w: 4, trait: 'Blistering Pace' },
+    { t: 'on the counter, three seconds from their corner to his', w: 4, trait: 'Blistering Pace' },
+    { t: 'beating the offside trap by half a yard', w: 4, trait: 'Blistering Pace' },
     { t: 'arriving late in the box the way he always does', w: 5, trait: 'Late Runs' },
-    { t: 'with a first-time volley on the turn', w: 5 },
+    { t: 'ghosting in at the back post while they watched the ball', w: 4, trait: 'Late Runs' },
+    { t: 'timing his run so well the linesman had to think about it', w: 3, trait: 'Late Runs' },
     { t: 'from two yards, because that is where he lives', w: 5, trait: 'Poacher' },
+    { t: 'with a tap-in after the keeper spilled it', w: 4, trait: 'Poacher' },
+    { t: 'by being first to a rebound nobody else read', w: 4, trait: 'Poacher' },
+    { t: 'off his shin, and he will take it', w: 3, trait: 'Poacher' },
+    { t: 'with a toe-poke from close range', w: 3, trait: 'Poacher' },
+    { t: 'after a one-two on the edge of the box', w: 5, trait: 'Playmaker' },
+    { t: 'finishing a move that went through eleven passes', w: 3, trait: 'Playmaker' },
+    { t: 'after a through ball that split them in two', w: 4, trait: 'Playmaker' },
+    { t: 'with a backheel he had no right to try', w: 2, trait: 'Flair' },
+    { t: 'with an overhead kick that will be on every highlight reel', w: 1, trait: 'Flair' },
+    { t: 'with a rabona from the byline, of all things', w: 1, trait: 'Flair' },
+    { t: 'with a chip he barely looked up for', w: 3, trait: 'Flair' },
+    { t: 'with the sort of finish that makes it look easy', w: 5, trait: 'Finisher' },
+    { t: 'into the far corner without breaking stride', w: 5, trait: 'Finisher' },
+    { t: 'first time, across the keeper, from twelve yards', w: 4, trait: 'Finisher' },
+    { t: 'with a first-time volley on the turn', w: 5 },
     { t: 'with a chip over the keeper from the edge of the area', w: 4 },
     { t: 'off the underside of the bar from a tight angle', w: 4 },
-    { t: 'after a one-two on the edge of the box', w: 5, trait: 'Playmaker' },
-    { t: 'with a backheel he had no right to try', w: 2, trait: 'Flair' },
     { t: 'from the penalty spot, straight down the middle', w: 4 },
-    { t: 'with an overhead kick that will be on every highlight reel', w: 1 },
-    { t: 'through the keeper’s legs from twelve yards', w: 3 },
+    { t: 'from the spot, sending the keeper the wrong way', w: 4 },
+    { t: 'through the keeper\'s legs from twelve yards', w: 3 },
     { t: 'off a deflection he will claim for the rest of his life', w: 3 },
-    { t: 'on the break, three passes from their corner flag to his', w: 4 }
+    { t: 'on the break, three passes from their corner flag to his', w: 4 },
+    { t: 'after the keeper came for a cross and got nowhere near it', w: 3 },
+    { t: 'with his weaker foot, which surprised everyone including him', w: 3 },
+    { t: 'from an impossible angle by the byline', w: 3 },
+    { t: 'after the ball broke to him off a defender\'s knee', w: 3 },
+    { t: 'with a shot that went in off the post', w: 4 },
+    { t: 'in the ninety-fourth minute, from the last attack of the game', w: 3 },
+    { t: 'straight from the kick-off, inside forty seconds', w: 2 },
+    { t: 'with a low drive the keeper should probably have kept out', w: 3 },
+    { t: 'after a scramble nobody could describe afterwards', w: 3 },
+    { t: 'from a rebound off the crossbar', w: 3 },
+    { t: 'with a lob from thirty yards as the keeper backpedalled', w: 2 },
+    { t: 'after being put clean through by a pass off the goalkeeper', w: 2 },
+    { t: 'with a finish so calm it looked like a training drill', w: 4 },
+    { t: 'having missed two easier ones in the first half', w: 3 },
+    { t: 'with a shot that took a wicked bounce in front of the keeper', w: 3 },
+    { t: 'off the crossbar and down over the line, eventually given', w: 2 }
   ];
 
-  /* `who` decides who the line is about, and `when` whether it can be said at
-     all. Both matter: a hat-trick scorer has not "still not scored", and
-     nobody saves a point in a defeat. */
   const ODD_MOMENTS = [
-    { t: '{p} hit the bar twice and still has not scored this month', w: 3, who: 'blank' },
+    { t: '{p} made a save in the last minute that won the point', w: 4, who: 'keeper', when: e => e.result === 'D' },
+    { t: '{p} made a save at the end to keep it to one', w: 3, who: 'keeper', when: e => e.result === 'L' && e.ga <= 2 },
+    { t: '{p} kept them out on his own for an hour', w: 4, who: 'keeper', when: e => e.ga === 0 },
+    { t: '{p} had almost nothing to do and still looked the part', w: 2, who: 'keeper', when: e => e.ga === 0 && e.gf >= 3 },
+    { t: '{p} saved a penalty and made sure everybody knew about it', w: 3, who: 'keeper' },
+    { t: '{p} came for a cross he was never getting to', w: 3, who: 'keeper', when: e => e.ga > 0 },
+    { t: '{p} tipped one onto the bar in the first minute', w: 3, who: 'keeper' },
+    { t: '{p} made three saves in the same passage of play', w: 3, who: 'keeper' },
+    { t: '{p} will not want to see the second goal again', w: 3, who: 'keeper', when: e => e.ga >= 2 },
+    { t: '{p} played it out from the back like a midfielder all afternoon', w: 3, who: 'keeper' },
+    { t: '{p} was beaten at his near post and knew it straight away', w: 2, who: 'keeper', when: e => e.ga > 0 },
+    { t: '{p} kept a clean sheet and barely got his shorts dirty', w: 2, who: 'keeper', when: e => e.ga === 0 },
+    { t: '{p} punched clear when he should have caught it, twice', w: 2, who: 'keeper' },
+    { t: '{p} went up for a corner at the end. It nearly worked', w: 2, who: 'keeper', when: e => e.result === 'L' },
     { t: '{p} was booked for taking his shirt off. Worth it, he said', w: 2, who: 'scorer' },
+    { t: '{p} got the standing ovation when he came off', w: 3, who: 'scorer' },
+    { t: '{p} pointed at the away end and said nothing', w: 2, who: 'scorer' },
+    { t: '{p} refused to celebrate against his old club', w: 2, who: 'scorer' },
+    { t: '{p} took the ball off the designated penalty taker and scored anyway', w: 2, who: 'scorer' },
+    { t: '{p} has now scored in five straight games', w: 3, who: 'scorer' },
+    { t: '{p} celebrated in front of the wrong supporters and got a booking', w: 2, who: 'scorer' },
+    { t: '{p} scored and immediately asked for the ball back', w: 2, who: 'scorer', when: e => e.result === 'L' },
+    { t: '{p} has more goals than anyone else in the division', w: 2, who: 'scorer' },
+    { t: '{p} was carried off the pitch by his own team-mates', w: 2, who: 'scorer', when: e => e.result === 'W' },
+    { t: '{p} hit the bar twice and still has not scored this month', w: 3, who: 'blank' },
     { t: '{p} put a penalty over the bar and could not look up', w: 3, who: 'blank' },
+    { t: '{p} played the pass of the season and nobody gambled on it', w: 3, who: 'blank' },
+    { t: '{p} missed one from four yards with the goal empty', w: 3, who: 'blank' },
+    { t: '{p} hit the post twice in the same half', w: 3, who: 'blank' },
+    { t: '{p} had two cleared off the line and could not believe it', w: 3, who: 'blank' },
+    { t: '{p} was denied by three separate saves', w: 3, who: 'blank' },
+    { t: '{p} has gone nine games without a goal and it is starting to show', w: 3, who: 'blank' },
+    { t: '{p} had one ruled out for offside by the length of a boot', w: 3, who: 'blank' },
+    { t: '{p} made four assists\' worth of chances and got none of them', w: 2, who: 'blank' },
+    { t: '{p} was hauled off after an hour and did not applaud anyone', w: 2, who: 'blank' },
+    { t: '{p} skied one so badly it came back with frost on it', w: 2, who: 'blank' },
+    { t: '{p} came off the bench and changed it inside ninety seconds', w: 3, who: 'bench', when: e => e.result !== 'L' },
+    { t: '{p} warmed up for forty minutes and never got on', w: 3, who: 'bench' },
+    { t: '{p} came on for the last ten and looked lively', w: 3, who: 'bench' },
+    { t: '{p} was the only substitute not used, again', w: 2, who: 'bench' },
+    { t: '{p} came on and was booked within a minute', w: 2, who: 'bench' },
     { t: '{p} went off holding his hamstring. It does not look good', w: 3 },
     { t: '{p} was sent off for a second yellow with twenty minutes left', w: 2 },
     { t: '{p} cleared one off the line with the keeper beaten', w: 4 },
-    { t: '{p} made a save in the last minute that won the point', w: 4, who: 'keeper',
-      when: e => e.result === 'D' },
-    { t: '{p} made a save at the end to keep it to one', w: 3, who: 'keeper',
-      when: e => e.result === 'L' && e.ga <= 2 },
-    { t: '{p} had almost nothing to do and still looked the part', w: 2, who: 'keeper',
-      when: e => e.ga === 0 && e.gf >= 3 },
-    { t: '{p} kept them out on his own for an hour', w: 4, who: 'keeper',
-      when: e => e.ga === 0 },
-    { t: '{p} played the pass of the season and nobody gambled on it', w: 3, who: 'blank' },
     { t: '{p} argued with the referee for so long the crowd started singing about it', w: 2 },
-    { t: '{p} came off the bench and changed it inside ninety seconds', w: 3, who: 'bench',
-      when: e => e.result !== 'L' },
-    { t: '{p} gave the ball away for their goal and did not hide afterwards', w: 3,
-      when: e => e.ga > 0 },
+    { t: '{p} gave the ball away for their goal and did not hide afterwards', w: 3, when: e => e.ga > 0 },
     { t: '{p} won every header he went for', w: 3 },
     { t: '{p} ran further than anyone on the pitch', w: 3 },
     { t: '{p} limped through the last twenty minutes with everything used up', w: 2 },
-    { t: '{p} got the standing ovation when he came off', w: 3, who: 'scorer' },
+    { t: '{p} played the full ninety with a bandage round his head', w: 2 },
+    { t: '{p} made a tackle in his own box that was worth a goal', w: 4 },
+    { t: '{p} completed every pass he attempted', w: 3 },
+    { t: '{p} was booked inside two minutes and had to be careful all game', w: 3 },
+    { t: '{p} blocked three shots with his body in one minute', w: 3 },
+    { t: '{p} shouted at his own goalkeeper for ten minutes straight', w: 2 },
+    { t: '{p} played out of position and was the best man on the pitch', w: 3 },
+    { t: '{p} gave away a penalty and got away with it', w: 2 },
+    { t: '{p} was caught offside six times', w: 2 },
+    { t: '{p} lost his boot and carried on for a full minute without it', w: 2 },
+    { t: '{p} took a knock early and played through it', w: 3 },
+    { t: '{p} won the ball back inside their half nine times', w: 3 },
+    { t: '{p} kicked the advertising hoarding and hurt himself doing it', w: 2 },
+    { t: '{p} put in a cross so good it deserved better', w: 3 },
+    { t: '{p} chased a lost cause into the corner and won a throw. The crowd loved it', w: 3 },
+    { t: '{p} spent the whole game marking their best player out of it', w: 3 },
+    { t: '{p} was substituted at half time and nobody explained why', w: 2 },
+    { t: '{p} slipped at the worst possible moment', w: 2 },
+    { t: '{p} needed six stitches and wanted to come back on', w: 2 },
+    { t: '{p} refused to come off when the board went up', w: 2 },
+    { t: '{p} left the pitch to a standing ovation from both ends', w: 2, when: e => e.result === 'W' },
+    { t: '{p} had a shocker and will know it before anyone tells him', w: 3, when: e => e.result === 'L' },
+    { t: '{p} was the only one who came out of it with any credit', w: 3, when: e => e.result === 'L' },
+    { t: '{p} played every minute of every game this season so far', w: 2 },
+    { t: '{p} got the captain\'s armband for the first time', w: 2 },
+    { t: '{p} celebrated the final whistle like it was a cup final', w: 2, when: e => e.result === 'W' },
+    { t: '{p} threw his shirt into the away end afterwards', w: 2 },
+    { t: '{p} stayed out on the pitch long after everyone else had gone in', w: 2, when: e => e.result === 'L' },
+    { t: '{p} nutmegged the same defender three times and got booked for the fourth attempt', w: 2 },
+    { t: '{p} had a goal disallowed for a foul nobody saw', w: 3 },
+    { t: '{p} hit the corner flag from twelve yards', w: 2 },
+    { t: '{p} got a standing ovation from the opposition supporters', w: 2 },
+    { t: '{p} spent more time talking to the referee than to his team-mates', w: 2 },
+    { t: '{p} tracked back sixty yards to make a tackle in the last minute', w: 3 },
+    { t: '{p} put in the sort of shift you cannot coach', w: 3 },
+    { t: '{p} was booed by his own supporters and answered it in the second half', w: 2 },
+    { t: '{p} broke his nose in the first half and finished the game', w: 2 },
+    { t: '{p} played a backpass that took ten years off everyone', w: 2 },
+    { t: '{p} tried the same trick four times and it worked once', w: 2 },
+    { t: '{p} looked like he had been playing there for years', w: 3 },
+    { t: '{p} spent the last ten minutes at centre-half and did a job', w: 2, when: e => e.result !== 'L' },
+    { t: '{p} won a free kick by falling over nothing at all', w: 2 },
+    { t: '{p} took a corner so badly the ball went out for a throw', w: 2 },
+    { t: '{p} came out for the second half a different player', w: 3 },
+    { t: '{p} was still sprinting in the ninety-fourth minute', w: 3 },
+    { t: '{p} shook hands with every ball boy on the way off', w: 2 },
+    { t: '{p} left the pitch limping and waved away the physio', w: 2 },
+    { t: '{p} got away with a handball on the goal line', w: 2 },
+    { t: '{p} switched play twice in the same move and both worked', w: 3 },
+    { t: '{p} lost a boot, a shinpad and the ball, all in the same tackle', w: 2 },
+    { t: '{p} did not touch the ball for the first twenty minutes and did not sulk', w: 2 },
+    { t: '{p} played a pass that had three people on their feet before it arrived', w: 3 },
+    { t: '{p} was fouled eight times and never once stayed down', w: 3 },
+    { t: '{p} made the run that created the space, and nobody will notice', w: 3 },
+    { t: '{p} got the shirt of their best player at the whistle', w: 2 },
+    { t: '{p} argued for a corner that was clearly a goal kick and won it', w: 2 },
     { t: 'Nothing much happened. Some weeks are like that', w: 4, plain: true },
     { t: 'A flat afternoon that nobody will remember by Tuesday', w: 3, plain: true },
     { t: 'The referee was the busiest man on the pitch', w: 2, plain: true },
-    { t: 'Ninety minutes, no shots worth the name, and a point each', w: 2, plain: true,
-      when: e => e.result === 'D' && e.gf === 0 }
+    { t: 'Ninety minutes, no shots worth the name, and a point each', w: 2, plain: true, when: e => e.result === 'D' && e.gf === 0 },
+    { t: 'The away end sang for ninety minutes regardless', w: 2, plain: true },
+    { t: 'It rained from the first whistle to the last', w: 2, plain: true },
+    { t: 'The pitch cut up badly and neither side could play on it', w: 2, plain: true },
+    { t: 'Four minutes of stoppage time, and it felt like forty', w: 2, plain: true },
+    { t: 'The linesman\'s flag decided more than either manager did', w: 2, plain: true },
+    { t: 'A game of very little football and a great deal of shouting', w: 2, plain: true },
+    { t: 'The crowd were on their feet at the end, for once', w: 2, plain: true, when: e => e.result === 'W' },
+    { t: 'Boos at half time, applause at full time', w: 2, plain: true, when: e => e.result === 'W' },
+    { t: 'You could hear the away supporters from the car park', w: 2, plain: true, when: e => e.result === 'L' },
+    { t: 'Both benches were up for most of the second half', w: 2, plain: true },
+    { t: 'The floodlights flickered in the second half and nobody blinked', w: 1, plain: true },
+    { t: 'It finished with eleven players in the opposition box', w: 2, plain: true, when: e => e.result !== 'W' },
+    { t: 'The referee\'s watch was the only thing anyone was interested in by the end', w: 2, plain: true, when: e => e.result === 'W' },
+    { t: 'A cold night, a thin crowd, and three points is three points', w: 2, plain: true, when: e => e.result === 'W' }
+  ];
+
+  const SHAPE_LINES = [
+    { t: '{gf}-0. They never got out of their half', when: e => e.gf >= 4 && e.ga === 0, k: 'good' },
+    { t: 'Four conceded. That will take some explaining', when: e => e.ga >= 4, k: 'bad' },
+    { t: 'Won it with the last kick of the game', when: e => e.result === 'W' && e.gf - e.ga === 1, k: 'good' },
+    { t: 'Two goals down and level by the end. They did not stop', when: e => e.result === 'D' && e.gf >= 2, k: 'note' },
+    { t: 'Comfortable in the end, though it did not look it at half time', when: e => e.result === 'W' && e.gf - e.ga >= 2, k: 'good' },
+    { t: 'A goalless draw that both sides will be quietly happy with', when: e => e.result === 'D' && e.gf === 0, k: 'note' },
+    { t: 'Six goals, and it could have been ten', when: e => e.gf + e.ga >= 6, k: 'note' },
+    { t: 'Beaten by the only shot on target they had', when: e => e.result === 'L' && e.ga === 1, k: 'bad' },
+    { t: 'Battered them and still only won by one', when: e => e.result === 'W' && e.gf - e.ga === 1 && e.gf >= 2, k: 'note' },
+    { t: 'A clean sheet away from home is worth more than it looks', when: e => e.ga === 0 && !e.home, k: 'good' },
+    { t: 'Three points and not a single moment of comfort', when: e => e.result === 'W' && e.ga >= 1, k: 'good' },
+    { t: 'The kind of defeat that costs managers their jobs', when: e => e.result === 'L' && e.ga - e.gf >= 3, k: 'bad' },
+    { t: 'Held at home by a side who came for a point and got one', when: e => e.result === 'D' && e.home, k: 'bad' },
+    { t: 'Won away and made it look routine', when: e => e.result === 'W' && !e.home && e.ga === 0, k: 'good' },
+    { t: 'Everything went in. Some days that happens', when: e => e.gf >= 5, k: 'good' },
+    { t: 'Nine shots, one goal, and a nervous finish', when: e => e.result === 'W' && e.gf === 1, k: 'note' },
+    { t: 'They scored with their first attack and defended for the rest of it', when: e => e.result === 'L' && e.gf === 0, k: 'bad' },
+    { t: 'Two down at the break, level within ten minutes of the restart', when: e => e.result !== 'L' && e.ga >= 2, k: 'note' },
+    { t: 'A point away from home, and the bus back will be a quiet one anyway', when: e => e.result === 'D' && !e.home, k: 'note' },
+    { t: 'Scored three away from home and nobody saw it coming', when: e => e.gf >= 3 && !e.home, k: 'good' },
+    { t: 'Conceded twice in four minutes and never recovered', when: e => e.result === 'L' && e.ga >= 2, k: 'bad' },
+    { t: 'The clean sheet mattered more than the goal', when: e => e.result === 'W' && e.gf === 1 && e.ga === 0, k: 'good' },
+    { t: 'A draw that felt like a defeat', when: e => e.result === 'D' && e.home && e.gf >= 1, k: 'bad' },
+    { t: 'A draw that felt like a win', when: e => e.result === 'D' && !e.home && e.ga >= 1, k: 'good' },
+    { t: 'Outplayed for an hour and won it anyway', when: e => e.result === 'W' && e.gf - e.ga === 1, k: 'good' },
+    { t: 'They had eleven behind the ball and it very nearly worked', when: e => e.result === 'W' && e.gf === 1, k: 'note' },
+    { t: 'Every shot on target went in. Every single one', when: e => e.gf >= 3 && e.result === 'W', k: 'good' },
+    { t: 'A hammering, and nobody can pretend otherwise', when: e => e.ga - e.gf >= 4, k: 'bad' },
+    { t: 'Seven goals in one afternoon, and the defending was optional', when: e => e.gf + e.ga >= 7, k: 'note' },
+    { t: 'Not pretty, not close, but three points', when: e => e.result === 'W' && e.gf >= 2 && e.ga === 0, k: 'good' }
   ];
 
   function pickWeighted(list, filter) {
@@ -11391,7 +11574,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
 
     // one goal described properly, if anybody scored
     const soloScorers = scored.filter(s => (tally[s.id] || 0) === 1);
-    if (soloScorers.length && U.chance(0.72)) {
+    if (soloScorers.length && U.chance(0.66)) {
       const who = U.pick(soloScorers);
       const trait = traitOf(who);
       // his trait makes its own kind of goal far likelier
@@ -11401,7 +11584,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     }
 
     // and something that was not a goal
-    if (U.chance(0.6)) {
+    if (U.chance(0.5)) {
       const scoredIds = {};
       scored.forEach(s => { scoredIds[s.id] = true; });
       const outfield = xi.filter(x => x.pos !== 'GK');
@@ -11424,13 +11607,12 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
       }
     }
 
-    // the shape of the game itself
-    if (entry.gf >= 4 && entry.ga === 0) out.push({ k: 'good', t: `${entry.gf}-0. They never got out of their half` });
-    else if (entry.ga >= 4) out.push({ k: 'bad', t: `Four conceded. That will take some explaining` });
-    else if (entry.result === 'W' && entry.gf - entry.ga === 1 && U.chance(0.4))
-      out.push({ k: 'good', t: 'Won it with the last kick of the game' });
-    else if (entry.result === 'D' && entry.gf >= 2 && U.chance(0.5))
-      out.push({ k: 'note', t: 'Two goals down and level by the end. They did not stop' });
+    // and the shape of the game itself
+    if (U.chance(0.45)) {
+      const fits = SHAPE_LINES.filter(m => m.when(entry));
+      const m = fits.length ? U.pick(fits) : null;
+      if (m) out.push({ k: m.k, t: m.t.replace('{gf}', entry.gf).replace('{ga}', entry.ga) });
+    }
 
     return out.slice(0, 3);
   }
@@ -12062,7 +12244,7 @@ table.tbl .crest-sm{width:26px;height:26px;vertical-align:middle;margin-right:9p
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, TITLE_FLOOR, TOP_TARGET, bid, sell, squadWages, valueFor, wageFor,
-    matchMoments, GOAL_WAYS, ODD_MOMENTS,
+    matchMoments, GOAL_WAYS, ODD_MOMENTS, SHAPE_LINES,
     traitOf, traitBonus, TRAIT_GOALS,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
     seasonReview, nextSeason, squadFor

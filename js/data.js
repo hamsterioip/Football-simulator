@@ -1451,9 +1451,15 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '2.8';
+  const VERSION = '2.9';
   const BUILD = '30 August 2026';
   const CHANGELOG = [
+    { v: '2.9', when: '30 Aug', items: [
+      'The Talk now has 224 different things to say — 71 ways of scoring a goal, 123 things that happened around it, and 30 lines about the shape of the match itself',
+      'Seventy-one goals: knuckleballs, rabonas, backheels, headers at the back post, sixty-yard carries, toe-pokes, one off the shin he will take, and one that went in off the crossbar and was eventually given',
+      'And everything else: penalties over the bar, boots lost in tackles, arguments with the referee the crowd sang about, six stitches and wanting to come back on, a keeper going up for a corner at the end',
+      'About one match in seven still says nothing at all'
+    ] },
     { v: '2.8', when: '30 Aug', items: [
       'Both Ronaldo peak cards are 99 now — 2008 at United and 2014 at Madrid — and Messi\u2019s 2012 is a 99 as well',
       'The Talk: a news feed of what actually happened out there. Hat-tricks, one from thirty yards, a header at the back post, a free kick over the wall, a penalty put over the bar, a keeper who kept them out on his own, a red card, a hamstring. Seventy-odd different things and rising',
