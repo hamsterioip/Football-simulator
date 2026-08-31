@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
 """build-badge-imgs.py — generate js/badge-imgs.js
 
-Downloads every club badge named in js/badges.js, trims transparent
-margins, centres each crest on a square canvas at a crisp fixed height
-and ships the lot as data URIs inside the game — no hotlink pop-in, no
-broken links, uniform framing. Run from the repo root:
+Every club the game can name gets one badge, embedded as a data URI. Each is
+trimmed of its transparent margin, re-padded evenly, sized to a fixed height
+and palette-reduced, so the whole set is one consistent format and about a
+quarter of the bytes a full-colour PNG would cost. Nothing is fetched at
+runtime — crest.js draws no fallback shield, and build.js fails if a club in
+data.js or a player's timeline has no badge here.
 
-    .venv/Scripts/python tools/build-badge-imgs.py
+Badges are read from local checkouts of public logo collections rather than
+hotlinked, so a build is reproducible and the game never waits on a request.
+Clone the sources listed in SOURCES, then run from the repo root:
 
-Reuses the audit cache in .tmp-badges/all when the source URL matches
-the earlier download; js/badges.js stays as the online fallback.
+    python3 tools/build-badge-imgs.py
+
+Re-running is safe: a club already in js/badge-imgs.js keeps its badge unless
+SOURCES names a file for it, so the set only ever grows or gets replaced
+deliberately.
 """
 import base64
 import io
@@ -17,36 +24,45 @@ import json
 import os
 import re
 import sys
-import time
-import urllib.request
 
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CACHE = os.path.join(ROOT, '.tmp-badges', 'all')
-REPORT = os.path.join(ROOT, '.tmp-badges', 'report.json')
 OUT = os.path.join(ROOT, 'js', 'badge-imgs.js')
-UA = {'User-Agent': 'football-life-badge-builder/1.0 (personal game project)'}
-HEIGHT = 144  # 2x+ the biggest display size (.crest-xl = 64px)
+HEIGHT = 144        # 2x+ the biggest display size (.crest-xl = 64px)
+COLORS = 255        # palette size; the 256th slot is transparency
+
+# Where the logo checkouts live. Override with BADGE_SRC_<KEY> in the
+# environment if yours are somewhere else.
+SOURCES = {
+    'luuk':   '/home/user/luukhopman/football-logos',   # github.com/luukhopman/football-logos
+    'fclogo': '/home/user/fclogo',                      # github.com/FCLOGO/fclogo.top
+    'ligamx': '/home/user/ligamx',                      # github.com/david0malr/Logos-Liga-MX
+    'escudo': '/home/user/escudos',                     # github.com/damiansilvero/EscudosLigaMX
+}
+# club name -> path relative to one of the SOURCES roots, as "<key>:<path>"
+MAP = os.path.join(ROOT, 'tools', 'badge-sources.json')
 
 
-def slug(club):
-    return re.sub(r'[^\w]+', '_', club)
+def root(key):
+    return os.environ.get('BADGE_SRC_' + key.upper(), SOURCES[key])
 
 
-def fetch(url):
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read()
+def resolve(spec):
+    key, rel = spec.split(':', 1)
+    return os.path.join(root(key), rel)
 
 
-def load_badges():
-    src = open(os.path.join(ROOT, 'js', 'badges.js'), encoding='utf-8').read()
-    return json.loads(re.search(r'global\.BADGES = (\{[\s\S]*?\n\});', src).group(1))
-
-
-def process(raw):
-    img = Image.open(io.BytesIO(raw)).convert('RGBA')
+def normalise(img):
+    """Trim the transparent margin, re-pad evenly, size to a fixed height."""
+    if img.getchannel('A').getextrema()[0] == 255:
+        # a source with no transparency at all: drop a white background
+        px = img.load()
+        w, h = img.size
+        corners = [px[0, 0], px[w - 1, 0], px[0, h - 1], px[w - 1, h - 1]]
+        if all(c[0] > 235 and c[1] > 235 and c[2] > 235 for c in corners):
+            img.putdata([(r, g, b, 0) if (r > 238 and g > 238 and b > 238) else (r, g, b, a)
+                         for (r, g, b, a) in img.getdata()])
     bbox = img.getchannel('A').getbbox()
     if bbox:
         img = img.crop(bbox)
@@ -55,59 +71,63 @@ def process(raw):
     canvas = Image.new('RGBA', (w + pad * 2, h + pad * 2), (0, 0, 0, 0))
     canvas.paste(img, (pad, pad))
     ratio = HEIGHT / canvas.size[1]
-    canvas = canvas.resize((max(1, round(canvas.size[0] * ratio)), HEIGHT), Image.LANCZOS)
+    return canvas.resize((max(1, round(canvas.size[0] * ratio)), HEIGHT), Image.LANCZOS)
+
+
+def encode(im):
     buf = io.BytesIO()
-    canvas.save(buf, 'PNG', optimize=True)
-    return canvas, buf.getvalue()
+    im.save(buf, 'PNG', optimize=True)
+    return buf.getvalue()
+
+
+def compress(im):
+    """Displayed at 64px or less, a 255-colour palette is indistinguishable
+    from the full-colour original and roughly a quarter of the bytes."""
+    small = encode(im.quantize(colors=COLORS, method=Image.FASTOCTREE,
+                               dither=Image.FLOYDSTEINBERG))
+    full = encode(im)
+    return small if len(small) < len(full) else full
+
+
+def load_existing():
+    if not os.path.exists(OUT):
+        return {}
+    src = open(OUT, encoding='utf-8').read()
+    m = re.search(r'global\.BADGE_IMGS = (\{[\s\S]*?\});\n', src)
+    return json.loads(m.group(1)) if m else {}
 
 
 def main():
-    badges = load_badges()
-    old_report = {}
-    if os.path.exists(REPORT):
-        old_report = json.load(open(REPORT, encoding='utf-8'))
-    os.makedirs(CACHE, exist_ok=True)
-    out = {}
-    for club, url in badges.items():
-        path = os.path.join(CACHE, slug(club) + '.png')
-        raw = None
-        # reuse the audit download when the URL has not changed
-        if os.path.exists(path) and old_report.get(club, {}).get('url') == url:
-            raw = open(path, 'rb').read()
-        for attempt in range(4):
-            if raw:
-                break
-            try:
-                raw = fetch(url)
-                open(path, 'wb').write(raw)
-                break
-            except Exception as e:
-                print(f'{club}: fetch retry ({e})', file=sys.stderr, flush=True)
-                time.sleep(4 * (attempt + 1))
-        if not raw:
-            print(f'{club}: SKIPPED (download failed)', file=sys.stderr)
-            continue
-        try:
-            img, png = process(raw)
-            img.save(path)  # cache the trimmed version too
-            out[club] = 'data:image/png;base64,' + base64.b64encode(png).decode('ascii')
-            print(f'{club}: {len(png) // 1024}KB', flush=True)
-        except Exception as e:
-            print(f'{club}: FAILED ({e})', file=sys.stderr, flush=True)
-        time.sleep(0.6)
-    js = ('/* ==========================================================================\n'
-          '   badge-imgs.js — GENERATED by tools/build-badge-imgs.py. Do not edit.\n\n'
-          '   Trimmed, normalised transparent PNGs of every club badge, embedded\n'
-          '   as data URIs so the game never waits on (or misses) a hotlink.\n'
-          '   js/badges.js remains the online source list and fallback.\n'
-          '   ========================================================================== */\n'
-          '(function (global) {\n'
-          "  'use strict';\n"
-          '  global.BADGE_IMGS = ' + json.dumps(out, ensure_ascii=False) + ';\n'
-          '})(window);\n')
-    with open(OUT, 'w', encoding='utf-8') as f:
-        f.write(js)
-    print(f'js/badge-imgs.js written — {len(out)} badges, {os.path.getsize(OUT) // 1024}KB')
+    out = load_existing()
+    kept = len(out)
+    sources = json.load(open(MAP, encoding='utf-8'))
+    built = 0
+    for club in sorted(sources):
+        path = resolve(sources[club])
+        if not os.path.exists(path):
+            sys.exit('missing source for %s: %s' % (club, path))
+        data = compress(normalise(Image.open(path).convert('RGBA')))
+        out[club] = 'data:image/png;base64,' + base64.b64encode(data).decode('ascii')
+        built += 1
+
+    body = ',\n'.join('  %s: %s' % (json.dumps(k, ensure_ascii=False), json.dumps(out[k]))
+                      for k in sorted(out))
+    head = '''/* ==========================================================================
+   badge-imgs.js — GENERATED by tools/build-badge-imgs.py. Do not edit.
+
+   Every club in the game, one badge each: trimmed of its transparent margin,
+   centred, sized to a fixed height and palette-reduced, then embedded as a
+   data URI. Nothing is fetched at runtime, so a badge can never fail to load
+   and there is no hotlink to go stale — which is why crest.js draws no
+   fallback shield any more.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  global.BADGE_IMGS = {
+'''
+    open(OUT, 'w', encoding='utf-8').write(head + body + '\n};\n})(window);\n')
+    print('js/badge-imgs.js written — %d badges (%d rebuilt, %d carried over)'
+          % (len(out), built, kept - built if kept > built else 0))
 
 
 if __name__ == '__main__':

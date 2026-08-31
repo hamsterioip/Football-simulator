@@ -1451,9 +1451,16 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.0';
+  const VERSION = '3.1';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.1', when: '31 Aug', items: [
+      'Every club in the game now has its real badge \u2014 all 194 of them. Turkey, Scotland, Belgium, Mexico, Saudi Arabia and Japan had none at all and were showing a drawn shield with two letters on it; they have proper crests now',
+      'The old badges are gone completely: no drawn shield underneath, no hot-linked images that could arrive late or not at all. The badge is the crest, and it is built into the game',
+      'Every badge was rebuilt to one format \u2014 trimmed, centred, sized alike \u2014 so a Japanese crest sits next to an English one without looking like it came from somewhere else',
+      'The game is 1.9MB smaller and loads noticeably faster despite carrying 74 more badges',
+      'The build now refuses to ship a club without a badge, so a new league can never quietly leave holes in the table'
+    ] },
     { v: '3.0', when: '31 Aug', items: [
       'The cups. A season is not just a league any more \u2014 there is a domestic cup every year, a continental one you have to qualify for, the Club World Cup, and a Super Cup to open the season',
       'Every tie is one match. Level after ninety and you play the extra half hour; level after that and it is penalties. Win and you are through, lose and it is over for the year',

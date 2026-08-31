@@ -8,12 +8,13 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const ROOT = __dirname;
 const read = p => fs.readFileSync(path.join(ROOT, p), 'utf8');
 
 const CSS = ['css/styles.css'];
-const JS = ['js/icons.js', 'js/data.js', 'js/badges.js', 'js/badge-imgs.js', 'js/trophy-imgs.js', 'js/crest.js', 'js/pitch.js', 'js/trophies.js', 'js/util.js', 'js/state.js', 'js/scenarios.js',
+const JS = ['js/icons.js', 'js/data.js', 'js/badge-imgs.js', 'js/trophy-imgs.js', 'js/crest.js', 'js/pitch.js', 'js/trophies.js', 'js/util.js', 'js/state.js', 'js/scenarios.js',
             'js/engine.js', 'js/career.js', 'js/status.js', 'js/timeline.js', 'js/manager.js', 'js/manager-ui.js', 'js/social.js', 'js/ui.js', 'js/main.js'];
 
 // An inline emoji favicon keeps the build dependency-free (no icon files needed).
@@ -31,6 +32,7 @@ function guard(src, file) {
    to them, so a fresh deploy can be served from a stale cache and look exactly
    like the old one. Stamping every URL with the version means a release always
    fetches new files. */
+let BADGE_COUNT = 0;
 const VERSION = (read('js/data.js').match(/const VERSION = '([^']+)'/) || [])[1];
 if (!VERSION) throw new Error('could not read VERSION out of js/data.js');
 
@@ -69,6 +71,29 @@ function stampAssets(html) {
     console.error('\nbuild failed — index.html and build.js disagree:\n  ' + problems.join('\n  ') + '\n');
     process.exit(1);
   }
+}
+
+/* ---------- every club must have a badge ----------
+   crest.js draws no fallback shield any more: the badge in js/badge-imgs.js
+   is the crest. A club added to data.js (or a club named in a player's
+   timeline) without a badge would render a hole, so the build refuses it.
+   Fix by adding the source to tools/build-badge-imgs.py and re-running it. */
+{
+  const sandbox = { window: null };
+  sandbox.window = sandbox;
+  vm.createContext(sandbox);
+  ['js/data.js', 'js/timeline.js', 'js/badge-imgs.js']
+    .forEach(f => vm.runInContext(read(f), sandbox, { filename: f }));
+  const need = new Set();
+  sandbox.DATA.LEAGUES.forEach(l => l.clubs.forEach(c => need.add(c[0])));
+  Object.keys(sandbox.Timeline.PLAYER_ERAS).forEach(name =>
+    sandbox.Timeline.PLAYER_ERAS[name].forEach(row => { if (row[1]) need.add(row[1]); }));
+  const missing = [...need].filter(n => !sandbox.BADGE_IMGS[n]);
+  if (missing.length) {
+    console.error('\nbuild failed — these clubs have no badge:\n  ' + missing.join('\n  ') + '\n');
+    process.exit(1);
+  }
+  BADGE_COUNT = need.size;
 }
 
 const styles = CSS.map(f => `/* ${f} */\n` + read(f)).join('\n');
@@ -124,6 +149,6 @@ fs.mkdirSync(path.join(ROOT, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'dist/artifact.html'), embedded);
 
 const kb = n => (n / 1024).toFixed(0) + 'KB';
-console.log('v' + VERSION);
+console.log('v' + VERSION + ' — ' + BADGE_COUNT + ' club badges');
 console.log('play.html          ' + kb(standalone.length));
 console.log('dist/artifact.html ' + kb(embedded.length));
