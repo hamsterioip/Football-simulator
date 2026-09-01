@@ -423,6 +423,7 @@
         case 'mgrReview': return Game.mgrReview();
         case 'mgrRehire': return Game.mgrRehire();
         case 'mgrOffers': return Game.mgrOffersModal();
+        case 'mgrPost': return Game.mgrPost();
         case 'mgrResign': return Game.mgrResign();
         case 'mgrQuit': return Game.quit();
         case 'titles': return Game.titleMenu();
@@ -556,6 +557,7 @@
       const cb = $('btn-continue'); if (cb) { cb.disabled = false; cb.textContent = 'Continue Managing'; }
       State.game = g;
       global.Manager.start(g, clubId);
+      if (global.MSocial) { try { global.MSocial.arrived(g); } catch (e) {} }
       const club = State.club(clubId);
       UI.closeModal();
       UI.show('game');
@@ -664,6 +666,8 @@
       if (!global.Manager.seasonOver(g)) return;
       const r = global.Manager.seasonReview(g);
       const club = State.club(g.mgr.club);
+      if (global.MSocial) { try { global.MSocial.season(g, r); } catch (e) {} }
+      if (r.sacked && global.MSocial) { try { global.MSocial.sacked(g); } catch (e) {} }
       State.save();
 
       const meetTheBoard = () => UI.modal({
@@ -740,6 +744,41 @@
             ${w.tier === 'century' ? '<div class="gos-stamp">One of those. Nobody here will forget it.</div>' : ''}
           </div>`,
         actions: [{ label: 'And the season itself', onClick: then }]
+      });
+    },
+
+    /* ---------------- you, on the timeline ----------------
+       A manager gets one line a week and everyone reads it. Say the right
+       thing and the dressing room hears it too. */
+    mgrPost() {
+      const g = State.game;
+      const MS = global.MSocial;
+      if (!MS) return;
+      if (!MS.canPost(g)) return UI.toast('You have already posted since the last game.', '');
+      const kinds = [
+        { k: 'calm', label: 'Keep it calm', hint: 'One game at a time. Nothing to see here.' },
+        { k: 'fire', label: 'Fire them up', hint: 'Answer the doubters. The room will hear it.' },
+        { k: 'honest', label: 'Take it on the chin', hint: 'That was not good enough and it starts with me.' },
+        { k: 'praise', label: 'Praise a player', hint: 'Put somebody\u2019s name up in lights.' },
+        { k: 'defiant', label: 'Stand your ground', hint: 'You have read what is written. It changes nothing.' }
+      ];
+      UI.modal({
+        title: 'Say something',
+        html: `<p class="muted">Everyone is reading. Pick your tone.</p>
+          <div class="list">${kinds.map(t => `
+            <div class="item click" data-say="${t.k}"><div class="ic">${ico('microphone')}</div>
+              <div class="tx"><b>${U.esc(t.label)}</b><span>${U.esc(t.hint)}</span></div></div>`).join('')}</div>`,
+        actions: [{ label: 'Not now', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-say]').forEach(el => el.onclick = () => {
+            UI.closeModal();
+            const post = MS.postAs(g, el.dataset.say);
+            State.save();
+            global.MUI.tab = 'mbuzz';
+            global.MUI.render();
+            if (post) UI.toast('Posted.', 'good');
+          });
+        }
       });
     },
 

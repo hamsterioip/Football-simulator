@@ -1451,9 +1451,17 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.3';
+  const VERSION = '3.4';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.4', when: '1 Sep', items: [
+      'Buzz: a social feed for Manager Mode. Six hundred and thirty-one different things the timeline can say, and every one of them tied to something that actually happened in your season',
+      'Five hundred and thirteen posts across thirty-nine situations \u2014 a thrashing, a one-goal grind, a cup exit, a wonder goal, a signing, an injury, a sack watch, a title race \u2014 plus eighty replies underneath and thirty-eight things you can say yourself',
+      'The cast is the same one that follows a player: the club account, the fan channel, the local reporter, the tactics pundit, the stats account, your own supporters and the rival ones. They remember you, and they follow you when you change clubs',
+      'You get one post between games. Fire them up, take it on the chin, praise a player, stand your ground \u2014 and the dressing room hears it too',
+      'Nothing in the feed is invented. A post about a clean sheet cannot appear in a game you conceded in, and a stats account will not claim you are in the bottom half while you are top of the table',
+      'The transfer log is capped now \u2014 it had quietly grown past two hundred rows in a save nobody could see'
+    ] },
     { v: '3.3', when: '1 Sep', items: [
       'Goals worth remembering. Most goals are goals; a few are not. Three tiers above the ordinary \u2014 a Worldie every few weeks, a Wonder Goal most seasons, and a Goal of the Century about once a decade, if you have somebody capable of it',
       'Sixty different ways of scoring one, and quality decides how often: a ninety-nine produces these, an eighty-two mostly does not. Buying the great players finally buys you the moments as well as the goals',

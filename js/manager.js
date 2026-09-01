@@ -328,6 +328,7 @@
   function moveTo(g, clubId, how) {
     const State = global.State;
     const from = State.club(g.mgr.club);
+    if (global.MSocial) global.MSocial.leaving(g, State.club(clubId).name);
     const car = career(g);
     car.trophies = car.trophies.concat(g.mgr.trophies || []);
     car.wonders = car.wonders.concat(g.mgr.wonders || []);
@@ -341,7 +342,8 @@
     start(g, clubId);
     const to = State.club(g.mgr.club);
     State.news(`${to.name} appoint their new manager`, 'good', null, 'manager');
-    g.mgr.log.unshift({ t: `Left ${from.name} for ${to.name}`, k: 'in' });
+    logAdd(g, `Left ${from.name} for ${to.name}`, 'in');
+    if (global.MSocial) global.MSocial.arrived(g);
     return g;
   }
 
@@ -505,6 +507,16 @@
     return career(g).wonders.concat((g.mgr && g.mgr.wonders) || []);
   }
 
+  /* The log is only ever shown a dozen entries deep, but it was never
+     trimmed — injuries and returns pushed it past two hundred rows in a save
+     nobody could see. Cap it where it stops being useful. */
+  const LOG_CAP = 60;
+  function logAdd(g, t, k) {
+    g.mgr.log = g.mgr.log || [];
+    g.mgr.log.unshift({ t, k });
+    if (g.mgr.log.length > LOG_CAP) g.mgr.log.length = LOG_CAP;
+  }
+
   function available(s) {
     return !(s.out && s.out.games > 0) && !(s.ban > 0);
   }
@@ -580,7 +592,7 @@
     if (kids.length) {
       State.news(`${club.name} call up ${kids.length} from the youth team — the treatment room is full`,
         'info', null, 'academy');
-      g.mgr.log.unshift({ t: `${kids.length} called up from the youth team (injury crisis)`, k: 'in' });
+      logAdd(g, `${kids.length} called up from the youth team (injury crisis)`, 'in');
     }
     return kids;
   }
@@ -603,7 +615,7 @@
       }
     });
     back.forEach(s => {
-      g.mgr.log.unshift({ t: `${s.name} is fit again`, k: 'in' });
+      logAdd(g, `${s.name} is fit again`, 'in');
     });
     return back;
   }
@@ -899,7 +911,7 @@
           cup.won = true;
           entry.lifted = cup.name;
           g.mgr.trophies.push({ name: cup.name, year: g.world.year + 1, kind: 'cup' });
-          g.mgr.log.unshift({ t: `Won the ${cup.name}`, k: 'in' });
+          logAdd(g, `Won the ${cup.name}`, 'in');
           State.news(`${me.name} win the ${cup.name}`, 'good', null, 'trophy');
           g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + 9, 0, 100);
         }
@@ -907,7 +919,7 @@
         cup.alive = false;
         cup.outAt = fix.stageName;
         entry.out = true;
-        g.mgr.log.unshift({ t: `Out of the ${cup.name} — beaten by ${opp.name} in the ${fix.stageName.toLowerCase()}`, k: 'out' });
+        logAdd(g, `Out of the ${cup.name} — beaten by ${opp.name} in the ${fix.stageName.toLowerCase()}`, 'out');
       }
       // whatever happens next is a fresh draw
       cup.oppId = null;
@@ -937,7 +949,7 @@
       g.mgr.wonders = (g.mgr.wonders || []).concat(w);
       State.news(`${w.name}: ${w.label.toLowerCase()} against ${opp.name}`, 'good', null, 'goal');
       if (w.tier !== 'worldie') {
-        g.mgr.log.unshift({ t: `${w.name} — ${w.label} v ${opp.name}`, k: 'in' });
+        logAdd(g, `${w.name} — ${w.label} v ${opp.name}`, 'in');
       }
     }
 
@@ -946,18 +958,23 @@
     cas.hurt.forEach(p => {
       const wk = p.out.games === 1 ? 'the next game' : `the next ${p.out.games} games`;
       State.news(`${p.name} out for ${wk} — ${p.out.label}`, 'bad', null, 'injury');
-      g.mgr.log.unshift({ t: `${p.name} out for ${wk} (${p.out.label})`, k: 'out' });
+      logAdd(g, `${p.name} out for ${wk} (${p.out.label})`, 'out');
     });
     cas.banned.forEach(b => {
       State.news(`${b.p.name} suspended for ${b.games === 1 ? 'one game' : b.games + ' games'} — ${b.why}`,
         'bad', null, 'card');
-      g.mgr.log.unshift({ t: `${b.p.name} banned ${b.games} (${b.why})`, k: 'out' });
+      logAdd(g, `${b.p.name} banned ${b.games} (${b.why})`, 'out');
     });
     const felled = {};
     cas.hurt.forEach(p => { felled[p.id] = true; });
     cas.banned.forEach(b => { felled[b.p.id] = true; });
     tickAvailability(g, felled);
     repairXI(g);
+
+    // the timeline finds out at the same time you do
+    if (global.MSocial) {
+      try { global.MSocial.afterMatch(g, entry, fix); } catch (e) { /* never break a match */ }
+    }
     // the week's talking points, newest first
     g.mgr.news = (entry.moments.map(m => Object.assign({
       round: g.mgr.round + 1, year: g.world.year, opp: State.club(fix.oppId).name,
@@ -1825,8 +1842,11 @@
     State.news(player.elite
       ? `${State.club(g.mgr.club).name} have signed ${player.name}. ${U.cash(fee)}. Nobody saw it coming.`
       : `${State.club(g.mgr.club).name} sign ${player.name} for ${U.cash(fee)}`, 'good', null, 'transfer');
-    g.mgr.log.unshift({ t: `Signed ${player.name} (${player.pos} ${player.ovr}) for ${U.cash(fee)}`, k: 'in' });
+    logAdd(g, `Signed ${player.name} (${player.pos} ${player.ovr}) for ${U.cash(fee)}`, 'in');
     g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + (player.ovr > teamRating(g) ? 3 : 0.5), 0, 100);
+    if (global.MSocial) {
+      try { global.MSocial.signing(g, joined, fee, !!player.elite); } catch (e) {}
+    }
     return { ok: true, player: joined };
   }
 
@@ -1850,7 +1870,8 @@
     g.mgr.xi = (g.mgr.xi || []).filter(x => x !== id);
     if (g.mgr.xi.length < 11) g.mgr.xi = autoPick(g).map(x => x.id);
     State.news(`${s.name} leaves ${State.club(g.mgr.club).name} for ${U.cash(fee)}`, 'info', null, 'transfer');
-    g.mgr.log.unshift({ t: `Sold ${s.name} (${s.pos} ${s.ovr}) for ${U.cash(fee)}`, k: 'out' });
+    logAdd(g, `Sold ${s.name} (${s.pos} ${s.ovr}) for ${U.cash(fee)}`, 'out');
+    if (global.MSocial) { try { global.MSocial.sale(g, s, fee); } catch (e) {} }
     return { ok: true, fee };
   }
 
@@ -1921,7 +1942,7 @@
     s.value = era.ovr >= ELITE ? eliteFee(era.ovr, era.age) : valueFor(s);
     if (price > 0) {
       State.news(`${State.club(g.mgr.club).name} unveil the ${era.year} ${s.name}`, 'good', null, 'star');
-      g.mgr.log.unshift({ t: `Brought back the ${era.year} ${s.name} (${era.ovr}) for ${U.cash(price)}`, k: 'in' });
+      logAdd(g, `Brought back the ${era.year} ${s.name} (${era.ovr}) for ${U.cash(price)}`, 'in');
     }
     return { ok: true, price, wage };
   }
@@ -2091,7 +2112,7 @@
     g.mgr.hungUp = g.mgr.hungUp || [];
     retiring.forEach(s => {
       State.news(`${s.name} retires at ${s.age}`, 'info', null, 'legacy');
-      g.mgr.log.unshift({ t: `${s.name} (${s.pos} ${s.ovr}) retired, aged ${s.age}`, k: 'out' });
+      logAdd(g, `${s.name} (${s.pos} ${s.ovr}) retired, aged ${s.age}`, 'out');
       // he has hung up his boots — he does not turn up for sale again next summer
       if (g.mgr.hungUp.indexOf(s.name) < 0) g.mgr.hungUp.push(s.name);
     });
@@ -2132,7 +2153,8 @@
       if (young.length) {
         State.news(`${young.length} from the ${club.name} academy step up to the first team`,
           'info', null, 'academy');
-        g.mgr.log.unshift({ t: `${young.length} promoted from the academy`, k: 'in' });
+        logAdd(g, `${young.length} promoted from the academy`, 'in');
+        if (global.MSocial) global.MSocial.youth(g, young.map(s => s.name));
       }
     }
     Object.values(g.world.clubs).forEach(c => {

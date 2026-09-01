@@ -15,7 +15,7 @@ const read = p => fs.readFileSync(path.join(ROOT, p), 'utf8');
 
 const CSS = ['css/styles.css'];
 const JS = ['js/icons.js', 'js/data.js', 'js/badge-imgs.js', 'js/trophy-imgs.js', 'js/crest.js', 'js/pitch.js', 'js/trophies.js', 'js/util.js', 'js/state.js', 'js/scenarios.js',
-            'js/engine.js', 'js/career.js', 'js/status.js', 'js/timeline.js', 'js/manager.js', 'js/manager-ui.js', 'js/social.js', 'js/ui.js', 'js/main.js'];
+            'js/engine.js', 'js/career.js', 'js/status.js', 'js/timeline.js', 'js/manager.js', 'js/manager-ui.js', 'js/social.js', 'js/social-mgr.js', 'js/ui.js', 'js/main.js'];
 
 // An inline emoji favicon keeps the build dependency-free (no icon files needed).
 const FAVICON = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"

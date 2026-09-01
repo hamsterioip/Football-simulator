@@ -21,6 +21,7 @@
     { id: 'msquad', icon: 'squad', label: 'Squad' },
     { id: 'mmarket', icon: 'transfer', label: 'Market' },
     { id: 'mtable', icon: 'table', label: 'Table' },
+    { id: 'mbuzz', icon: 'feed', label: 'Buzz' },
     { id: 'moffice', icon: 'contract', label: 'Office' }
   ];
 
@@ -732,6 +733,39 @@
         </div>`).join('')}
         <p class="dim" style="margin:10px 0 0">The board asked for ${U().ordinal(target.pos)} or better.</p>
       </div>`;
+    },
+
+    /* ---------------- the timeline ----------------
+       Football is only half the sport; the other half is everyone arguing
+       about it. Every post here is tied to something that actually happened
+       in your season — 513 of them, plus what you say back. */
+    tab_mbuzz() {
+      const g = State().game;
+      const MS = global.MSocial;
+      if (!MS) return '<div class="card"><p class="dim" style="margin:0">Timeline unavailable.</p></div>';
+      const me = MS.meAccount(g);
+      const posts = g.mgr.feed || [];
+      const trend = MS.trending(g);
+      const can = MS.canPost(g);
+      let html = `<div class="card tight me-card">
+        <div class="post-h">
+          ${global.UI.avatar(me.n, me.h, 'you')}
+          <div class="post-who"><div class="post-n"><b>${esc(me.n)}</b>${me.v ? global.UI.tick() : ''}</div>
+            <div class="post-sub">${esc(me.h)} · ${global.Social.compact(MS.followers(g))} followers</div></div>
+        </div>
+        <button class="btn btn-ghost btn-post${can ? '' : ' spent'}" data-act="mgrPost">
+          ${ico('send')} ${can ? 'Say something' : 'You have posted since the last game'}</button>
+      </div>`;
+      if (trend.length) {
+        html += `<div class="card tight"><div class="trend-h">${ico('trend')} Trending</div>
+          <div class="trend">${trend.map(t => `<span class="hash">${esc(t)}</span>`).join('')}</div></div>`;
+      }
+      if (!posts.length) {
+        return html + `<div class="card center"><p class="dim" style="margin:0">Quiet in here.
+          Play some football and they will find you.</p></div>`;
+      }
+      posts.forEach(post => html += global.UI.post(g, post));
+      return html;
     },
 
     /* ---------------- office ---------------- */
