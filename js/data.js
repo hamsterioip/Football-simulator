@@ -1451,9 +1451,19 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.2';
+  const VERSION = '3.3';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.3', when: '1 Sep', items: [
+      'Goals worth remembering. Most goals are goals; a few are not. Three tiers above the ordinary \u2014 a Worldie every few weeks, a Wonder Goal most seasons, and a Goal of the Century about once a decade, if you have somebody capable of it',
+      'Sixty different ways of scoring one, and quality decides how often: a ninety-nine produces these, an eighty-two mostly does not. Buying the great players finally buys you the moments as well as the goals',
+      'Goal of the Season: the best one you scored all year, given the whole screen before the board get their turn',
+      'Every one of them is kept \u2014 who, against whom, in what competition, in what year \u2014 on a board in your office, for the rest of your career',
+      'You can manage other clubs now. Do well and clubs ring you in the summer: who they are, what they will spend, and why they want you. Nobody makes you go',
+      'Or resign whenever you like and go looking. Your squad and your budget stay behind; your trophies, your goals and your CV come with you',
+      'Reputation is a real number on a real screen: what you have won, where you have finished, and exactly how many clubs in the world would take your call today',
+      'The cabinet is now a career cabinet. Win the league at Newcastle, take the Real Madrid job, and both are still yours'
+    ] },
     { v: '3.2', when: '31 Aug', items: [
       'Injuries and suspensions are real. The Talk has always told you a man went off holding his hamstring and he has always played the following week \u2014 that was the one thing in here that was never true. Now he misses games',
       'Most of it is nothing: a dead leg, a tight calf, back for the weekend. But a torn hamstring is a month, ankle ligaments are a winter, and a cruciate is his season',

@@ -1340,3 +1340,60 @@ em.unav.ban{color:var(--gold)}
 .fx-out .ic{width:12px;height:12px;vertical-align:-2px;margin-right:3px}
 .mgr-cas{margin:8px 0 2px;text-align:center;font-size:12px;font-weight:700;color:var(--red)}
 .mgr-cas .ic{width:12px;height:12px;vertical-align:-2px;margin-right:3px}
+
+/* ---------------- the ones they still talk about ----------------
+   A worldie is worth a colour. A Goal of the Century is worth the screen. */
+.mnews.mn-wonder{background:linear-gradient(90deg,rgba(255,201,77,.14),rgba(255,201,77,0));
+  border-left:2px solid var(--gold);padding-left:8px;border-radius:0 8px 8px 0}
+.mnews.mn-wonder .mn-ic .ic{color:var(--gold)}
+.mnews.mn-wonder .mn-t{font-weight:700}
+
+.wg{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.wg:last-of-type{border-bottom:0}
+.wg-head{display:flex;align-items:baseline;gap:8px;justify-content:space-between}
+.wg-tier{font-size:9.5px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--muted)}
+.wg-worldie .wg-tier{color:var(--blue)}
+.wg-wonder .wg-tier{color:var(--gold)}
+.wg-century .wg-tier{color:var(--purple)}
+.wg-when{font-size:10px;color:var(--dim);white-space:nowrap}
+.wg-who{font-size:13px;font-weight:800;margin-top:2px}
+.wg-t{font-size:12px;color:var(--muted);line-height:1.38;margin-top:2px}
+.wg-century{background:linear-gradient(100deg,rgba(180,131,255,.12),transparent 70%);
+  border-radius:8px;padding:9px 9px 9px 10px;border-left:2px solid var(--purple)}
+
+/* the season's best, given the whole modal */
+.gos{text-align:center;padding:6px 0 2px}
+.gos-tier{font-size:10.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--gold)}
+.gos-tier .ic{width:13px;height:13px;vertical-align:-2px;margin-right:4px}
+.gos-century .gos-tier{color:var(--purple)}
+.gos-who{font:900 30px var(--font-d),system-ui,sans-serif;line-height:1.05;margin:6px 0 2px;
+  letter-spacing:.5px}
+.gos-meta{font-size:11px;color:var(--dim)}
+.gos-txt{font-size:14.5px;line-height:1.45;margin:14px 0 0;color:var(--txt)}
+.gos-century .gos-txt{font-size:15px}
+.gos-stamp{margin-top:12px;font-size:11px;font-weight:800;letter-spacing:.6px;
+  text-transform:uppercase;color:var(--purple)}
+.gos-worldie{--glow:rgba(90,168,255,.16)}
+.gos-wonder{--glow:rgba(255,201,77,.18)}
+.gos-century{--glow:rgba(180,131,255,.22)}
+.gos{background:radial-gradient(120% 70% at 50% 0%, var(--glow,transparent), transparent 70%);
+  border-radius:12px;margin:-6px -6px 0}
+
+/* reputation, and who would take your call */
+.rep-bar{height:7px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+.rep-bar i{display:block;height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--green-d),var(--green))}
+.rep-top{display:flex;align-items:baseline;gap:9px;margin-top:7px}
+.rep-top b{font:900 24px var(--font-d),system-ui,sans-serif;line-height:1}
+.rep-top span{font-size:12px;color:var(--muted)}
+
+/* a job offer reads as a pitch, not a row in a table */
+.item.offer .tx b{display:flex;align-items:center;gap:7px}
+.item.offer .tx b .pill{flex:0 0 auto;width:auto;display:inline-block;
+  font-size:10px;padding:1px 7px}
+.item.offer .tx b .pill.up{background:rgba(42,230,126,.16);color:var(--green)}
+.item.offer .tx b .pill.down{background:rgba(255,90,106,.16);color:var(--red)}
+.offer-pitch{display:block;margin-top:3px;font-size:11.5px;line-height:1.35;
+  color:var(--dim);white-space:normal}

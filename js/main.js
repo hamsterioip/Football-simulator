@@ -414,12 +414,16 @@
         case 'mgrFilter': return Game.mgrFilter(arg);
         case 'mgrTopMore': return Game.mgrTopMore();
         case 'mgrNewsMore': return Game.mgrNewsMore();
+        case 'mgrWondersMore': return (State.game.mgr.wondersOpen = !State.game.mgr.wondersOpen,
+          global.MUI.render());
         case 'mgrCard': return Game.mgrPlayerCard(arg);
         case 'mgrEra': return Game.mgrEra(arg);
         case 'mgrBid': return Game.mgrBid(arg);
         case 'mgrSell': return Game.mgrSell(arg);
         case 'mgrReview': return Game.mgrReview();
         case 'mgrRehire': return Game.mgrRehire();
+        case 'mgrOffers': return Game.mgrOffersModal();
+        case 'mgrResign': return Game.mgrResign();
         case 'mgrQuit': return Game.quit();
         case 'titles': return Game.titleMenu();
         case 'matchLength': return Game.matchLengthMenu();
@@ -471,7 +475,8 @@
           <div class="list">${leagues.map(id => {
             const L = world.leagues.find(x => x.id === id) || State.league(id);
             const cap = Game._mgrCeiling || 99;
-            const open = Object.values(world.clubs).filter(c => c.league === id && c.rating <= cap).length;
+            const open = Object.values(world.clubs).filter(c =>
+              c.league === id && c.rating <= cap && c.id !== Game._mgrLeftClub).length;
             return `<div class="item click" data-lg="${id}"><div class="ic">${global.Icons.flag(L.country)}</div>
               <div class="tx"><b>${U.esc(L.name)}</b><span>${U.esc(L.country)}${
                 Game._mgrCeiling ? ' · ' + (open ? open + ' club' + (open === 1 ? '' : 's') + ' would have you'
@@ -488,7 +493,8 @@
     managerClubs(leagueId) {
       const world = Game._mgrWorld;
       const cap = Game._mgrCeiling || 99;
-      const all = Object.values(world.clubs).filter(c => c.league === leagueId)
+      const all = Object.values(world.clubs)
+        .filter(c => c.league === leagueId && c.id !== Game._mgrLeftClub)
         .sort((a, b) => b.rating - a.rating);
       const clubs = all.filter(c => c.rating <= cap);
       const snubs = all.length - clubs.length;
@@ -513,15 +519,40 @@
 
     managerBegin(clubId) {
       const world = Game._mgrWorld;
+      /* Leaving one job for another: the outgoing club goes on the CV, and
+         what you won there joins the career cabinet. This runs here rather
+         than when you resigned so that backing out of the job market leaves
+         you exactly where you were. */
+      const prev = State.game;
+      if (Game._mgrLeaving && prev && prev.mgr) {
+        const car = global.Manager.career(prev);
+        car.trophies = car.trophies.concat(prev.mgr.trophies || []);
+        car.wonders = car.wonders.concat(prev.mgr.wonders || []);
+        car.seasons = (car.seasons || 0) + (prev.mgr.board.seasons || 0);
+        prev.mgrHistory = (prev.mgrHistory || []).concat({
+          club: State.club(prev.mgr.club).name,
+          seasons: prev.mgr.board.seasons,
+          finishes: (prev.mgr.board.finishes || []).slice(),
+          trophies: (prev.mgr.trophies || []).length,
+          sacked: Game._mgrLeaving === 'sacked',
+          left: Game._mgrLeaving === 'left'
+        });
+        Game._mgrLeaving = null;
+      }
       const past = (State.game && State.game.mgrHistory) || [];
+      // what you have won and the goals worth remembering are yours, not the
+      // club's — they follow you out of the door and into the next job
+      const carried = (Game._mgrRehire && State.game && State.game.career) || null;
       const g = {
         version: 1, world, era: Game._mgrEra || 'modern', mode: 'manager',
         log: [], headlines: [], newsSeen: 0, tables: {}, world_year: world.year,
         mgrHistory: Game._mgrRehire ? past : [],
+        career: carried || undefined,
         settings: {}
       };
       Game._mgrRehire = false;
       Game._mgrCeiling = 0;
+      Game._mgrLeftClub = null;
       const cb = $('btn-continue'); if (cb) { cb.disabled = false; cb.textContent = 'Continue Managing'; }
       State.game = g;
       global.Manager.start(g, clubId);
@@ -651,6 +682,7 @@
           <p class="muted" style="margin-top:12px">${U.esc(r.verdict)}</p>`,
         actions: [{ label: r.sacked ? 'Clear your desk' : 'Into next season', onClick: () => {
           if (r.sacked) { global.MUI.render(); return; }
+          Game._mgrOffers = r.offers || [];
           global.Manager.nextSeason(g);
           State.save();
           global.MUI.tab = 'mmarket';
@@ -667,11 +699,21 @@
                 </div>`).join('')}</div>
                 <p class="muted">${gone.length === 1 ? 'That is him done.' : 'That is them done.'}
                   You will need to replace ${gone.length === 1 ? 'him' : 'them'}.</p>`,
-              actions: [{ label: 'Into the window' }]
+              actions: [{ label: 'Into the window', onClick: () => {
+                if (Game._mgrOffers && Game._mgrOffers.length) Game.mgrOffersModal();
+              } }]
             });
-          } else UI.toast('Transfer window is open.', 'good');
+          } else if (Game._mgrOffers && Game._mgrOffers.length) Game.mgrOffersModal();
+          else UI.toast('Transfer window is open.', 'good');
         } }]
       });
+
+      /* Before any of it: the best thing anybody did all year. */
+      const boardThen = () => {
+        if (r.champion) Game.trophyLift(State.league(club.league).name + ' Title', 'Champions', meetTheBoard);
+        else meetTheBoard();
+      };
+      if (r.goalOfSeason) return Game.mgrGoalOfSeason(r.goalOfSeason, boardThen);
 
       // Lift it first, then go and see them. There is only one modal, so the
       // trophy used to open on top of the review and take the button that
@@ -683,27 +725,126 @@
       }
     },
 
+    /* ---------------- goal of the season ----------------
+       One goal a year is worth stopping the game for. */
+    mgrGoalOfSeason(w, then) {
+      const g = State.game;
+      UI.modal({
+        title: 'Goal of the Season',
+        html: `<div class="gos gos-${U.esc(w.tier)}">
+            <div class="gos-tier">${ico('goal')} ${U.esc(w.label)}</div>
+            <div class="gos-who">${U.esc(w.name)}</div>
+            <div class="gos-meta">${U.esc(w.club)} ${U.esc(w.line)} ${U.esc(w.opp)}
+              · ${U.esc(w.comp)}${w.stage ? ' · ' + U.esc(w.stage) : ''} · ${w.year}</div>
+            <p class="gos-txt">${U.esc(w.text.charAt(0).toUpperCase() + w.text.slice(1))}.</p>
+            ${w.tier === 'century' ? '<div class="gos-stamp">One of those. Nobody here will forget it.</div>' : ''}
+          </div>`,
+        actions: [{ label: 'And the season itself', onClick: then }]
+      });
+    },
+
+    /* ---------------- the phone rings ----------------
+       Being sacked was the only way out of a job. Now there is another. */
+    mgrOffersModal() {
+      const g = State.game;
+      const offers = Game._mgrOffers || [];
+      if (!offers.length) return;
+      const here = State.club(g.mgr.club);
+      UI.modal({
+        title: offers.length === 1 ? 'Somebody wants you' : `${offers.length} clubs want you`,
+        html: `<p class="muted">You are under contract at ${U.esc(here.name)} (rated ${here.rating}).
+            Nobody is forcing you anywhere — but this is who called.</p>
+          <div class="list">${offers.map((o, i) => {
+            /* Ratings drift over the summer, between the board meeting that
+               generated the offer and this screen. Read them live so the step
+               up or down is the one you would actually be taking. */
+            const c = State.club(o.clubId) || { rating: o.rating };
+            const step = c.rating - here.rating;
+            return `<div class="item click offer" data-offer="${i}">
+              <div class="ic">${global.Crest.svg(o.name, 'crest-md')}</div>
+              <div class="tx"><b>${U.esc(o.name)}<span class="pill${
+                  step > 0 ? ' up' : step < 0 ? ' down' : ''}">${
+                  step > 0 ? '+' + step : step}</span></b>
+                <span>${U.esc(o.league)} · rated ${c.rating} · ${U.cash(o.budget)} to spend</span>
+                <span class="offer-pitch">${U.esc(o.pitch)}</span></div>
+            </div>`; }).join('')}</div>`,
+        actions: [{ label: `Stay at ${here.name}`, cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-offer]').forEach(el => el.onclick = () =>
+            Game.mgrTakeJob(offers[+el.dataset.offer]));
+          UI.modalScrollHint && UI.modalScrollHint(m);
+        }
+      });
+    },
+
+    mgrTakeJob(o) {
+      const g = State.game;
+      const from = State.club(g.mgr.club);
+      UI.modal({
+        title: 'Leave?',
+        html: `<p class="muted">You would be leaving ${U.esc(from.name)} for ${U.esc(o.name)}.
+            Your squad, your budget and this club's board stay behind. What you have won,
+            and the goals worth remembering, come with you.</p>
+          <p class="muted">${U.esc(o.target)}</p>`,
+        actions: [
+          { label: `Take the ${o.name} job`, onClick: () => {
+            Game._mgrOffers = [];
+            global.Manager.moveTo(g, o.clubId, 'left');
+            State.save();
+            global.MUI.tab = 'mhome';
+            global.MUI.render();
+            const to = State.club(g.mgr.club);
+            UI.toast(`You are the manager of ${to.name}.`, 'good');
+          } },
+          { label: 'Stay where you are', cls: 'btn-ghost', onClick: () => Game.mgrOffersModal() }
+        ]
+      });
+    },
+
+    /* You can also just walk. There is no offer on the table, and the job
+       market will judge you on what you have actually done. */
+    mgrResign() {
+      const g = State.game;
+      const club = State.club(g.mgr.club);
+      const cap = global.Manager.ceilingFor(g);
+      const open = Object.values(g.world.clubs).filter(c => c.id !== club.id && c.rating <= cap).length;
+      UI.modal({
+        title: 'Resign?',
+        html: `<p class="muted">You would be walking out on ${U.esc(club.name)} with
+            ${g.mgr.board.seasons} season${g.mgr.board.seasons === 1 ? '' : 's'} behind you.
+            Your squad and your budget stay here. Your record comes with you.</p>
+          <p class="muted">On what you have done so far, ${open} club${open === 1 ? '' : 's'}
+            around the world would consider you.</p>`,
+        actions: [
+          { label: 'Resign and look for a job', cls: 'btn-danger', onClick: () => {
+            // nothing is folded into the career until you have actually taken
+            // another job — back out of the market here and you are still the
+            // manager, with the cabinet counted exactly once
+            Game._mgrLeaving = 'left';
+            Game._mgrLeftClub = club.id;
+            Game._mgrCeiling = cap;
+            Game._mgrRehire = true;
+            Game._mgrWorld = g.world;
+            Game.managerStart();
+          } },
+          { label: 'Stay', cls: 'btn-ghost' }
+        ]
+      });
+    },
+
     /* Sacked is not the end of a managerial career, it is most of one. You keep
        the world and the record; what you lose is who will have you. */
     mgrRehire() {
       const g = State.game;
       const club = State.club(g.mgr.club);
-      const won = (g.mgr.trophies || []).length;
-      g.mgrHistory = (g.mgrHistory || []).concat({
-        club: club.name, seasons: g.mgr.board.seasons,
-        finishes: (g.mgr.board.finishes || []).slice(),
-        trophies: won, sacked: true
-      });
       // a trophy buys you another shot at that level; a sacking without one
-      // drops you a rung, and a second drops you further
-      const sackings = g.mgrHistory.filter(j => j.sacked).length;
-      // there is always somebody desperate enough, so never price yourself out
-      // of the whole game — the floor is the worst club in the world
+      // drops you a rung, and a second drops you further. There is always
+      // somebody desperate enough, so never price yourself out of the whole
+      // game — the floor is the worst club in the world.
       const floor = Math.min.apply(null, Object.values(g.world.clubs).map(c => c.rating));
-      const best = Math.min.apply(null, (g.mgrHistory.map(j =>
-        Math.min.apply(null, (j.finishes || []).concat(99)))).concat(99));
-      Game._mgrCeiling = Math.max(floor, Math.round(
-        club.rating + (won ? 3 : 0) + (best <= 3 ? 2 : 0) - sackings * 3));
+      Game._mgrCeiling = Math.max(floor, global.Manager.ceilingFor(g));
+      Game._mgrLeaving = 'sacked';
+      Game._mgrLeftClub = club.id;
       Game._mgrRehire = true;
       Game._mgrWorld = g.world;
       Game.managerStart();

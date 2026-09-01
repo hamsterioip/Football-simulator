@@ -180,7 +180,7 @@
     newsCard(g) {
       const feed = (g.mgr.news || []).slice(0, g.mgr.newsOpen ? 24 : 6);
       if (!feed.length) return '';
-      const dot = k => k === 'goal' ? 'goal' : k === 'good' ? 'up'
+      const dot = k => k === 'goal' || k === 'wonder' ? 'goal' : k === 'good' ? 'up'
         : k === 'bad' ? 'down' : k === 'flat' ? 'clock' : 'quote';
       return `<div class="card"><h3>${ico('news')} The talk</h3>
         ${feed.map(n => `<div class="mnews mn-${esc(n.k)}">
@@ -759,16 +759,74 @@
       ${scorers.length ? `<div class="card"><h3>${ico('goal')} Top scorers</h3>
         ${scorers.map(s => `<div class="res-row"><span class="sq-pos">${esc(s.pos)}</span>
           <span class="res-n">${esc(s.name)}</span><b>${s.goals}</b></div>`).join('')}</div>` : ''}
-      ${g.mgr.trophies.length ? `<div class="card"><h3>${ico('trophy')} Won as manager</h3>
-        ${g.mgr.trophies.map(t => `<span class="trophy">${global.Trophies.svg(global.Trophies.classify(t.name).art, 'tiny')} ${esc(t.name)} ${t.year}</span>`).join('')}</div>` : ''}
+      ${MUI.repCard(g)}
+      ${(() => { const all = M().cabinet(g); return all.length
+        ? `<div class="card"><h3>${ico('trophy')} Won as manager
+            ${(g.career && g.career.trophies || []).length ? '<span class="pill">whole career</span>' : ''}</h3>
+          ${all.map(t => `<span class="trophy">${global.Trophies.svg(global.Trophies.classify(t.name).art, 'tiny')} ${esc(t.name)} ${t.year}</span>`).join('')}</div>`
+        : ''; })()}
+      ${MUI.wonderCard(g)}
       ${g.mgr.log.length ? `<div class="card"><h3>${ico('transfer')} Transfer log</h3>
         ${g.mgr.log.slice(0, 12).map(l => `<div class="res-row"><span class="res-b ${l.k === 'in' ? 'res-W' : 'res-L'}">${l.k === 'in' ? '↓' : '↑'}</span>
           <span class="res-n">${esc(l.t)}</span></div>`).join('')}</div>` : ''}
       ${MUI.cvCard(g)}
       <div class="card"><h3>Options</h3><div class="row wrap">
         <button class="btn btn-ghost" data-act="save">${ico('disk')} Save now</button>
+        ${(g.mgr.offers || []).length ? `<button class="btn btn-ghost" data-act="mgrOffers">${
+          ico('manager')} ${g.mgr.offers.length} offer${g.mgr.offers.length === 1 ? '' : 's'}</button>` : ''}
+        <button class="btn btn-ghost" data-act="mgrResign">${ico('exit')} Resign</button>
         <button class="btn btn-danger" data-act="mgrQuit">${ico('exit')} Quit to menu</button>
       </div></div>`;
+    },
+
+    /* ---------------- your name in the game ----------------
+       Reputation is not decoration: it is the list of clubs who would take
+       your call, so it belongs on a screen where you can see it move. */
+    repCard(g) {
+      const rep = M().reputation(g);
+      const cap = M().ceilingFor(g);
+      const here = State().club(g.mgr.club);
+      const would = Object.values(g.world.clubs).filter(c => c.id !== here.id && c.rating <= cap);
+      const best = would.slice().sort((a, b) => b.rating - a.rating)[0];
+      const band = rep >= 88 ? 'One of the great managers' : rep >= 74 ? 'A name that opens doors'
+        : rep >= 58 ? 'Well thought of' : rep >= 42 ? 'Known, if not much more'
+        : 'Nobody is talking about you yet';
+      const jobs = (g.mgrHistory || []).length + 1;
+      return `<div class="card"><h3>${ico('manager')} Your name</h3>
+        <div class="rep-bar"><i style="width:${rep}%"></i></div>
+        <div class="rep-top"><b>${rep}</b><span>${esc(band)}</span></div>
+        <div class="stat-grid" style="margin-top:10px">
+          <div class="stat"><b>${jobs}</b><span>${jobs === 1 ? 'Club' : 'Clubs'}</span></div>
+          <div class="stat"><b>${M().cabinet(g).length}</b><span>Trophies</span></div>
+          <div class="stat"><b>${would.length}</b><span>Would have you</span></div>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">${best
+          ? `The biggest club that would consider you today is ${esc(best.name)} (${best.rating}).`
+          : 'Nobody would consider you today.'}</p>
+      </div>`;
+    },
+
+    /* ---------------- the goals worth keeping ----------------
+       A season's worth of scorelines is a table. These are the three or four
+       moments you would actually describe to somebody. */
+    wonderCard(g) {
+      const all = M().wonders(g).slice().sort((a, b) => b.year - a.year || b.score - a.score);
+      if (!all.length) return '';
+      const open = g.mgr.wondersOpen;
+      const show = all.slice(0, open ? 24 : 5);
+      return `<div class="card"><h3>${ico('goal')} Goals worth remembering
+          <span class="pill">${all.length}</span></h3>
+        ${show.map(w => `<div class="wg wg-${esc(w.tier)}">
+          <div class="wg-head">
+            <span class="wg-tier">${esc(w.label)}</span>
+            <span class="wg-when">${esc(w.opp)} · ${w.year}</span>
+          </div>
+          <div class="wg-who">${esc(w.name)}</div>
+          <div class="wg-t">${esc(w.text.charAt(0).toUpperCase() + w.text.slice(1))}.</div>
+        </div>`).join('')}
+        ${all.length > 5 ? `<button class="btn btn-ghost grow" style="margin-top:8px" data-act="mgrWondersMore">${
+          open ? 'Show fewer' : `All ${all.length}`}</button>` : ''}
+      </div>`;
     }
   };
 

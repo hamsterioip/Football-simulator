@@ -1356,6 +1356,63 @@ em.unav.ban{color:var(--gold)}
 .mgr-cas{margin:8px 0 2px;text-align:center;font-size:12px;font-weight:700;color:var(--red)}
 .mgr-cas .ic{width:12px;height:12px;vertical-align:-2px;margin-right:3px}
 
+/* ---------------- the ones they still talk about ----------------
+   A worldie is worth a colour. A Goal of the Century is worth the screen. */
+.mnews.mn-wonder{background:linear-gradient(90deg,rgba(255,201,77,.14),rgba(255,201,77,0));
+  border-left:2px solid var(--gold);padding-left:8px;border-radius:0 8px 8px 0}
+.mnews.mn-wonder .mn-ic .ic{color:var(--gold)}
+.mnews.mn-wonder .mn-t{font-weight:700}
+
+.wg{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.wg:last-of-type{border-bottom:0}
+.wg-head{display:flex;align-items:baseline;gap:8px;justify-content:space-between}
+.wg-tier{font-size:9.5px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--muted)}
+.wg-worldie .wg-tier{color:var(--blue)}
+.wg-wonder .wg-tier{color:var(--gold)}
+.wg-century .wg-tier{color:var(--purple)}
+.wg-when{font-size:10px;color:var(--dim);white-space:nowrap}
+.wg-who{font-size:13px;font-weight:800;margin-top:2px}
+.wg-t{font-size:12px;color:var(--muted);line-height:1.38;margin-top:2px}
+.wg-century{background:linear-gradient(100deg,rgba(180,131,255,.12),transparent 70%);
+  border-radius:8px;padding:9px 9px 9px 10px;border-left:2px solid var(--purple)}
+
+/* the season's best, given the whole modal */
+.gos{text-align:center;padding:6px 0 2px}
+.gos-tier{font-size:10.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--gold)}
+.gos-tier .ic{width:13px;height:13px;vertical-align:-2px;margin-right:4px}
+.gos-century .gos-tier{color:var(--purple)}
+.gos-who{font:900 30px var(--font-d),system-ui,sans-serif;line-height:1.05;margin:6px 0 2px;
+  letter-spacing:.5px}
+.gos-meta{font-size:11px;color:var(--dim)}
+.gos-txt{font-size:14.5px;line-height:1.45;margin:14px 0 0;color:var(--txt)}
+.gos-century .gos-txt{font-size:15px}
+.gos-stamp{margin-top:12px;font-size:11px;font-weight:800;letter-spacing:.6px;
+  text-transform:uppercase;color:var(--purple)}
+.gos-worldie{--glow:rgba(90,168,255,.16)}
+.gos-wonder{--glow:rgba(255,201,77,.18)}
+.gos-century{--glow:rgba(180,131,255,.22)}
+.gos{background:radial-gradient(120% 70% at 50% 0%, var(--glow,transparent), transparent 70%);
+  border-radius:12px;margin:-6px -6px 0}
+
+/* reputation, and who would take your call */
+.rep-bar{height:7px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+.rep-bar i{display:block;height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--green-d),var(--green))}
+.rep-top{display:flex;align-items:baseline;gap:9px;margin-top:7px}
+.rep-top b{font:900 24px var(--font-d),system-ui,sans-serif;line-height:1}
+.rep-top span{font-size:12px;color:var(--muted)}
+
+/* a job offer reads as a pitch, not a row in a table */
+.item.offer .tx b{display:flex;align-items:center;gap:7px}
+.item.offer .tx b .pill{flex:0 0 auto;width:auto;display:inline-block;
+  font-size:10px;padding:1px 7px}
+.item.offer .tx b .pill.up{background:rgba(42,230,126,.16);color:var(--green)}
+.item.offer .tx b .pill.down{background:rgba(255,90,106,.16);color:var(--red)}
+.offer-pitch{display:block;margin-top:3px;font-size:11.5px;line-height:1.35;
+  color:var(--dim);white-space:normal}
+
 </style>
 </head>
 <body>
@@ -2940,9 +2997,19 @@ em.unav.ban{color:var(--gold)}
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.2';
+  const VERSION = '3.3';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.3', when: '1 Sep', items: [
+      'Goals worth remembering. Most goals are goals; a few are not. Three tiers above the ordinary \u2014 a Worldie every few weeks, a Wonder Goal most seasons, and a Goal of the Century about once a decade, if you have somebody capable of it',
+      'Sixty different ways of scoring one, and quality decides how often: a ninety-nine produces these, an eighty-two mostly does not. Buying the great players finally buys you the moments as well as the goals',
+      'Goal of the Season: the best one you scored all year, given the whole screen before the board get their turn',
+      'Every one of them is kept \u2014 who, against whom, in what competition, in what year \u2014 on a board in your office, for the rest of your career',
+      'You can manage other clubs now. Do well and clubs ring you in the summer: who they are, what they will spend, and why they want you. Nobody makes you go',
+      'Or resign whenever you like and go looking. Your squad and your budget stay behind; your trophies, your goals and your CV come with you',
+      'Reputation is a real number on a real screen: what you have won, where you have finished, and exactly how many clubs in the world would take your call today',
+      'The cabinet is now a career cabinet. Win the league at Newcastle, take the Real Madrid job, and both are still yours'
+    ] },
     { v: '3.2', when: '31 Aug', items: [
       'Injuries and suspensions are real. The Talk has always told you a man went off holding his hamstring and he has always played the following week \u2014 that was the one thing in here that was never true. Now he misses games',
       'Most of it is nothing: a dead leg, a tight calf, back for the weekend. But a torn hamstring is a month, ankle ligaments are a winter, and a cruciate is his season',
@@ -11262,6 +11329,135 @@ em.unav.ban{color:var(--gold)}
     return out;
   }
 
+  /* ---------------- your name in the game ----------------
+     Until now the only way out of a job was to be sacked. That is not a
+     career, it is a sentence. Reputation is what other clubs think of you:
+     what you have won, where you have finished, and how big the last club to
+     employ you was. It decides who rings, and who will not take your call. */
+
+  /* Where you have finished, across every job you have had. */
+  function finishAvg(g) {
+    // `a.concat.apply([], rows)` throws `a` away — it was doing exactly that,
+    // so every finish you had ever managed was being ignored
+    const past = [].concat.apply([], (g.mgrHistory || []).map(j => j.finishes || []));
+    const all = (g.mgr.board.finishes || []).concat(past);
+    return all.length ? all.reduce((a, b) => a + b, 0) / all.length : 8;
+  }
+  function honours(g) {
+    const cab = cabinet(g);
+    return { leagues: cab.filter(t => t.kind !== 'cup').length,
+             cups: cab.filter(t => t.kind === 'cup').length };
+  }
+
+  function reputation(g) {
+    const U = global.U, State = global.State;
+    const h = honours(g);
+    const club = State.club(g.mgr.club);
+    let rep = 40
+      + Math.min(club.rating - 60, 26) * 0.55        // the club you are at counts
+      + h.leagues * 7 + h.cups * 2.6                 // and what you have won at it
+      + U.clamp((9 - finishAvg(g)) * 2.2, -12, 14)
+      + Math.min((g.mgr.board.seasons || 0), 8) * 0.7;
+    (g.mgrHistory || []).forEach(j => { if (j.sacked) rep -= 4.5; });
+    return Math.round(U.clamp(rep, 5, 99));
+  }
+
+  /* The best club that would seriously consider you. This is measured against
+     where you already are rather than in the abstract: a man doing well at an
+     eighty-rated club gets calls from clubs at that level and above, and every
+     trophy moves the ceiling up a rung. A sacking moves it down one. */
+  function ceilingFor(g) {
+    const U = global.U, State = global.State;
+    const here = State.club(g.mgr.club).rating;
+    const h = honours(g);
+    const sackings = (g.mgrHistory || []).filter(j => j.sacked).length;
+    const climb = h.leagues * 3.2 + h.cups * 1.1
+      + U.clamp((9 - finishAvg(g)) * 0.85, -4, 4.5) - sackings * 3.2;
+    const rep = reputation(g);
+    return Math.round(U.clamp(Math.max(here + climb, 56 + (rep - 40) * 0.5), 56, 94));
+  }
+
+  const PITCHES = [
+    'They have sacked their manager and want somebody who has actually won something.',
+    'A wealthy new owner, a blank sheet of paper, and a great deal of money.',
+    'They are two points off the bottom and out of ideas.',
+    'A big club that has not been a big club for a decade. They want that back.',
+    'Their manager walked out on Tuesday. They would like an answer by Friday.',
+    'They watched what you did last season and have not stopped talking about it.',
+    'A patient board, a good academy, and no expectation of an instant title.',
+    'They are in Europe next year and do not believe their current manager can handle it.',
+    'A club with money, ambition and absolutely no patience.',
+    'They want the football you play, and they will pay for it.',
+    'A proud club in a bad way. Whoever fixes it will never buy a drink there again.',
+    'Their supporters have been chanting your name for a month.',
+    'A rebuild from the ground up, with three years and nobody looking over your shoulder.',
+    'They finished above you and still think you are the better manager.',
+    'A dressing room full of talent that nobody has been able to organise.',
+    'They have run out of managers to sack and started making a list of ones to hire.'
+  ];
+
+  /* Who wants you this summer. Bigger names come with a better reputation;
+     an approach from a club worse than the one you are at does not happen. */
+  function jobOffers(g) {
+    const U = global.U, State = global.State;
+    const here = State.club(g.mgr.club);
+    const rep = reputation(g);
+    const cap = ceilingFor(g);
+    // a manager nobody rates gets nobody ringing
+    const howMany = rep >= 80 ? U.int(2, 4) : rep >= 62 ? U.int(1, 3)
+      : rep >= 46 ? U.int(0, 2) : U.chance(0.35) ? 1 : 0;
+    if (!howMany) return [];
+
+    /* Nobody offers a treble winner a job two divisions below him. The floor
+       sits just under where you already are, and only drops when your own
+       ceiling has dropped — which is what a bad year does to you. */
+    const floor = Math.min(here.rating - 2, cap - 4);
+    const worthLeaving = Object.values(g.world.clubs).filter(c =>
+      c.id !== here.id && c.rating <= cap && c.rating >= floor);
+    if (!worthLeaving.length) return [];
+
+    const picked = [], seen = {};
+    for (let i = 0; i < howMany * 4 && picked.length < howMany; i++) {
+      // the better your name, the higher up the list the phone rings from
+      const c = U.weighted(worthLeaving.map(x =>
+        [x, Math.pow(Math.max(x.rating - 52, 1), 0.6 + rep / 55)]));
+      if (!c || seen[c.id]) continue;
+      seen[c.id] = true;
+      const L = State.league(c.league);
+      picked.push({
+        clubId: c.id, name: c.name, rating: c.rating,
+        league: L.name, country: L.country, cont: L.cont,
+        pitch: U.pick(PITCHES),
+        target: boardTarget(c, L).text,
+        budget: Math.round(Math.pow(Math.max(c.rating - 50, 3), 2.6) * 9000 / 500000) * 500000,
+        step: c.rating - here.rating
+      });
+    }
+    return picked.sort((a, b) => b.rating - a.rating);
+  }
+
+  /* Walk out of one job and into another, keeping everything that is yours:
+     the world, the cabinet, the goals, and the list of clubs on your CV. */
+  function moveTo(g, clubId, how) {
+    const State = global.State;
+    const from = State.club(g.mgr.club);
+    const car = career(g);
+    car.trophies = car.trophies.concat(g.mgr.trophies || []);
+    car.wonders = car.wonders.concat(g.mgr.wonders || []);
+    car.seasons = (car.seasons || 0) + (g.mgr.board.seasons || 0);
+    g.mgrHistory = (g.mgrHistory || []).concat({
+      club: from.name, seasons: g.mgr.board.seasons,
+      finishes: (g.mgr.board.finishes || []).slice(),
+      trophies: (g.mgr.trophies || []).length,
+      sacked: how === 'sacked', left: how === 'left'
+    });
+    start(g, clubId);
+    const to = State.club(g.mgr.club);
+    State.news(`${to.name} appoint their new manager`, 'good', null, 'manager');
+    g.mgr.log.unshift({ t: `Left ${from.name} for ${to.name}`, k: 'in' });
+    return g;
+  }
+
   function buildSeason(g) {
     const State = global.State, Engine = global.Engine, U = global.U;
     const club = State.club(g.mgr.club);
@@ -11400,6 +11596,27 @@ em.unav.ban{color:var(--gold)}
   const BOOKINGS_BAN = 4;          // a fourth yellow and he sits one out
                                  // (a shorter season than the real thing, so a
                                  //  lower bar — a ban a year, roughly)
+
+  /* ---------------- the career ----------------
+     A job is not a career. Trophies, the goals worth remembering and the list
+     of clubs you have worked at belong to you, not to the club you happen to
+     be at — so they live here and survive the move. */
+  function career(g) {
+    if (!g.career) g.career = { trophies: [], wonders: [], seasons: 0, started: g.world.year };
+    if (!g.career.wonders) g.career.wonders = [];
+    if (!g.career.trophies) g.career.trophies = [];
+    return g.career;
+  }
+
+  /* Everything you have won, this job and every job before it. */
+  function cabinet(g) {
+    return career(g).trophies.concat(g.mgr && g.mgr.trophies || []);
+  }
+
+  /* Every goal worth keeping, in the order they were scored. */
+  function wonders(g) {
+    return career(g).wonders.concat((g.mgr && g.mgr.wonders) || []);
+  }
 
   function available(s) {
     return !(s.out && s.out.games > 0) && !(s.ban > 0);
@@ -11683,6 +11900,9 @@ em.unav.ban{color:var(--gold)}
        Both before the team is rated, so what you are rated on is who actually
        plays. The count of games missed comes down after the match, not before,
        or a one-game injury would cost nobody anything. */
+    // the summer's offers stand until a ball is kicked; after that those clubs
+    // have appointed somebody else
+    if (g.mgr.round === 0 && (g.mgr.offers || []).length) g.mgr.offers = [];
     emergencyCallUps(g);
     const forced = repairXI(g);
 
@@ -11815,6 +12035,24 @@ em.unav.ban{color:var(--gold)}
     };
     entry.moments = matchMoments(g, entry, xi, scorers, cas);
     g.mgr.results.push(entry);
+
+    /* A goal like that is not a line in a feed you scroll past next week. It
+       goes on the record, with where and when, and stays there for the rest of
+       your career. */
+    if (entry.wonder) {
+      const w = Object.assign({}, entry.wonder, {
+        year: g.world.year, club: me.name, opp: opp.name,
+        comp: fix.comp === 'cup' ? fix.compName : State.league(me.league).name,
+        stage: fix.comp === 'cup' ? fix.stageName : null,
+        score: entry.wonder.score,
+        line: (fix.home ? gf : ga) + '-' + (fix.home ? ga : gf)
+      });
+      g.mgr.wonders = (g.mgr.wonders || []).concat(w);
+      State.news(`${w.name}: ${w.label.toLowerCase()} against ${opp.name}`, 'good', null, 'goal');
+      if (w.tier !== 'worldie') {
+        g.mgr.log.unshift({ t: `${w.name} — ${w.label} v ${opp.name}`, k: 'in' });
+      }
+    }
 
     /* Put it in the log while it is news, and hand the eleven back legal so
        the squad screen never shows a man who cannot play in it. */
@@ -12162,6 +12400,101 @@ em.unav.ban{color:var(--gold)}
              '{p} has done {l}. He will be back next year, if you are lucky']
   };
 
+  /* ---------------- the ones they still talk about ----------------
+     Most goals are goals. A few are not. There are three tiers above the
+     ordinary here, and they get rarer and louder as you go up: a worldie is
+     the best thing you will see most months, a wonder goal is the best thing
+     you will see most seasons, and a Goal of the Century turns up once in a
+     career if you are lucky and have somebody capable of it.
+
+     Rarity is not pure luck. A ninety-nine with the ball at his feet scores
+     these; an eighty-two mostly does not. */
+
+  const WONDERS = {
+    worldie: { score: 62, label: 'Worldie', lines: [
+      'from thirty-five yards, first time, without breaking stride',
+      'with an outside-of-the-boot curler into the far top corner',
+      'off a first-time volley from the edge of the box that never rose above the crossbar',
+      'after a one-two on the run and a finish taken at full pace',
+      'with a chip from twenty-five yards after one look up',
+      'off a turn and a shot in the same movement, before anyone had set themselves',
+      'with a header powered in from the edge of the six-yard box, hanging in the air to get it',
+      'from an impossible angle by the byline, in off the far post',
+      'with a free kick that went over the wall and down again inside the post',
+      'after a run from halfway that nobody laid a hand on',
+      'with a shot from the corner of the box that went in off the underside',
+      'off the outside of his weaker foot, which he does not have',
+      'with a backheel from six yards while facing entirely the wrong way',
+      'after nutmegging the last man and rolling it past the keeper without looking',
+      'from a volley over his shoulder that he could not see going in',
+      'with a low drive from thirty yards that never got more than a foot off the grass',
+      'after dragging it back through two of them and finishing across the keeper',
+      'with a lob from forty yards after the keeper took two steps too many',
+      'off a half-volley struck so cleanly the net barely moved',
+      'from a corner, direct, and the keeper never moved',
+      'with a scissor kick from ten yards that had no business going in',
+      'after beating three in a phone box and squeezing it in at the near post',
+      'from a cross he met on the full at the back post',
+      'with a curling shot from the D that hit the same square inch every keeper fears',
+      'after a flick over the centre-half and a finish before it bounced',
+      'off a pass he took on the half-turn and buried in one touch',
+      'with the outside of his foot from a standing start',
+      'after a stepover, a stop, and a finish while three of them were still turning',
+      'from a rebound he hit on the volley from twenty-two yards',
+      'with a header from a corner he attacked from the edge of the box'
+    ] },
+    wonder: { score: 84, label: 'Wonder goal', lines: [
+      'after picking it up in his own half and going past four of them before finishing on the run',
+      'with a volley from forty yards, over the keeper, into the top corner, first time',
+      'after a run down the touchline that beat three men and a finish across the goalkeeper from a yard of space',
+      'with a shot from just inside his own half that the keeper watched all the way in',
+      'off a first-time strike from the halfway line that dropped under the bar',
+      'after a one-man counter-attack from his own box, ninety yards, nobody near him at the end',
+      'with an overhead kick from twelve yards with his back to goal and two men on him',
+      'after beating the same defender three times in one move and finishing with the outside of his boot',
+      'with a free kick from thirty-five yards that went in off the angle of post and bar',
+      'after a dribble from the halfway line where he changed direction four times without touching a man',
+      'with a chip from forty yards taken while running at full speed',
+      'after nutmegging two of them in the same second and finishing with the keeper on the floor',
+      'off a rabona from the byline that curled inside the far post',
+      'after cutting in from the left and bending it into the top corner from twenty-five, with everyone knowing it was coming',
+      'with a strike from distance so hard the crossbar was still ringing a minute later',
+      'after a flick over the last defender and a volley before it landed',
+      'with a shot he took while falling backwards and still found the corner',
+      'after collecting it on the touchline, beating the full-back twice, and finishing at the near post from nothing',
+      'off a bicycle kick at the back post that he had no right to reach',
+      'with a curling effort from the corner of the box that went in off the far post at a hundred miles an hour'
+    ] },
+    century: { score: 99, label: 'Goal of the Century', lines: [
+      'from inside his own half. Six men, sixty yards, eleven seconds, and the whole ground stood up at the same moment. People will describe this one to their children',
+      'after taking the ball in his own box and running the length of the pitch with it. Nobody got close enough to foul him. There has not been a goal like it in years',
+      'with a volley from fifty yards, on the turn, over a keeper who was exactly where he should have been. It should not be possible, and there it is',
+      'after beating five in a run that started on the halfway line, then rounding the goalkeeper and walking it in. Nobody in the stadium sat down for a full minute',
+      'off an overhead kick from eighteen yards, struck at the height of his own head, into the top corner. Even the away end applauded it',
+      'after a dribble through the entire midfield and back four that lasted fourteen seconds and beat seven men. The commentator ran out of words halfway through',
+      'from ten yards inside his own half, first time, with the keeper five yards off his line and no chance whatsoever. It is already the goal of the decade',
+      'with a run from his own corner flag, past the full-back, past two midfielders, past both centre-halves, and a finish so calm it was almost rude',
+      'after a first touch that took three defenders out of the game and a strike from twenty-five that went in like a rifle shot. That is the best goal this ground has seen',
+      'off a scorpion kick from twelve yards after a cross behind him. He tried it. It went in. Nobody has stopped watching it since'
+    ] }
+  };
+
+  /* How likely a goal is to be one of those. Quality does most of the work,
+     the right trait helps, and the rest is the same luck everyone gets. */
+  function wonderTier(s) {
+    const U = global.U;
+    const t = traitOf(s);
+    const flair = ({ 'Dribbler Expert': 2.2, 'Flair': 2.0, 'Knuckleball Power Shot': 1.9,
+                     'Power Shot': 1.7, 'Set-Piece Specialist': 1.4, 'Blistering Pace': 1.3,
+                     'Finisher': 1.15, 'Aerial Threat': 1.1 })[t] || 1;
+    // an 82 is on the bottom rung of this; a 99 is on another ladder entirely
+    const q = Math.pow(U.clamp((s.ovr - 72) / 26, 0, 1), 1.5);
+    if (U.chance(0.005 * q * flair)) return 'century';
+    if (U.chance(0.055 * q * flair)) return 'wonder';
+    if (U.chance(0.20 * (0.35 + q) * flair)) return 'worldie';
+    return null;
+  }
+
   function matchMoments(g, entry, xi, scored, cas) {
     const U = global.U, State = global.State;
     const out = [];
@@ -12184,9 +12517,28 @@ em.unav.ban{color:var(--gold)}
         : `${m.p.name} scored twice` });
     });
 
-    // one goal described properly, if anybody scored
+    /* One goal described properly, if anybody scored — and once in a while it
+       is not an ordinary one, in which case it is written down and kept. */
     const soloScorers = scored.filter(s => (tally[s.id] || 0) === 1);
-    if (soloScorers.length && U.chance(0.66)) {
+    let wonder = null;
+    if (scored.length) {
+      // the best man on the pitch is likeliest to be the one who produced it,
+      // which is the whole reason you paid what you paid for him
+      const cand = U.weighted(scored.map(x => [x, Math.pow(Math.max(x.ovr - 58, 1), 2)]));
+      const tier = wonderTier(cand);
+      if (tier) {
+        const bank = WONDERS[tier];
+        wonder = {
+          name: cand.name, ovr: cand.ovr, pos: cand.pos, tier: tier,
+          label: bank.label, text: U.pick(bank.lines),
+          score: bank.score + U.int(0, 12) + Math.round((cand.ovr - 80) * 0.4)
+        };
+      }
+    }
+    if (wonder) {
+      out.unshift({ k: 'wonder', tier: wonder.tier, t: `${wonder.name} scored ${wonder.text}` });
+      entry.wonder = wonder;
+    } else if (soloScorers.length && U.chance(0.66)) {
       const who = U.pick(soloScorers);
       const trait = traitOf(who);
       // his trait makes its own kind of goal far likelier
@@ -12762,10 +13114,13 @@ em.unav.ban{color:var(--gold)}
        wage ceiling has to move with it or the budget is a number you cannot
        spend — a superstar's problem is always the weekly, not the fee. */
     /* League titles are what the board really count. A cup is worth having and
-       worth money, but two of them are not a championship. */
-    const cabinet = g.mgr.trophies || [];
-    const leagues = cabinet.filter(t => t.kind !== 'cup').length;
-    const titles = leagues + Math.floor(cabinet.filter(t => t.kind === 'cup').length / 2);
+       worth money, but two of them are not a championship.
+
+       What you won somewhere else does not open this club's safe: this is what
+       you have won *here*, which is why the money starts again when you move. */
+    const won = g.mgr.trophies || [];
+    const leagues = won.filter(t => t.kind !== 'cup').length;
+    const titles = leagues + Math.floor(won.filter(t => t.kind === 'cup').length / 2);
     let backed = false;
     if (titles >= 1) {
       const floor = titles >= 2 ? TITLE_FLOOR + (titles - 2) * 75000000 : 200000000;
@@ -12783,6 +13138,11 @@ em.unav.ban{color:var(--gold)}
       }
     }
 
+    /* The best thing anybody did all year. Worth a moment of its own. */
+    const seasonGoals = (g.mgr.wonders || []).filter(w => w.year === g.world.year);
+    const best = seasonGoals.slice().sort((a, b) => b.score - a.score)[0] || null;
+    if (best) best.goalOfSeason = true;
+
     /* A season is not only a finishing position any more. */
     if (lifted.length) {
       verdict += ' ' + (lifted.length === 1
@@ -12791,7 +13151,13 @@ em.unav.ban{color:var(--gold)}
       g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + lifted.length * 6, 0, 100);
     }
 
+    /* And who else was watching. A good season is not only what the board
+       think of you — it is who rings you in the summer. */
+    g.mgr.offers = sacked ? [] : jobOffers(g);
+
     return { pos, met, champion, verdict, sacked, warned, table, titles,
+             goalOfSeason: best, wonderCount: seasonGoals.length,
+             offers: g.mgr.offers, reputation: reputation(g),
              cups: cups.map(c => ({ name: c.name, short: c.short, won: !!c.won, outAt: c.outAt || null })),
              lifted: lifted.map(c => c.name),
              confidence: Math.round(g.mgr.board.confidence) };
@@ -12914,6 +13280,8 @@ em.unav.ban{color:var(--gold)}
     market, marketTick, topPlayers, ELITE, TITLE_FLOOR, TOP_TARGET, bid, sell, squadWages, valueFor, wageFor,
     CUP_STAGES, cupById, cupsForSeason,
     matchMoments, GOAL_WAYS, ODD_MOMENTS, SHAPE_LINES, RED_LINES, HURT_LINES,
+    WONDERS, wonderTier, career, cabinet, wonders,
+    reputation, ceilingFor, jobOffers, moveTo, PITCHES,
     available, unavailablePlayers, unavailableWhy, availablePlayers, repairXI,
     INJURIES, BOOKINGS_BAN,
     traitOf, traitBonus, TRAIT_GOALS, worth,
@@ -13107,7 +13475,7 @@ em.unav.ban{color:var(--gold)}
     newsCard(g) {
       const feed = (g.mgr.news || []).slice(0, g.mgr.newsOpen ? 24 : 6);
       if (!feed.length) return '';
-      const dot = k => k === 'goal' ? 'goal' : k === 'good' ? 'up'
+      const dot = k => k === 'goal' || k === 'wonder' ? 'goal' : k === 'good' ? 'up'
         : k === 'bad' ? 'down' : k === 'flat' ? 'clock' : 'quote';
       return `<div class="card"><h3>${ico('news')} The talk</h3>
         ${feed.map(n => `<div class="mnews mn-${esc(n.k)}">
@@ -13686,16 +14054,74 @@ em.unav.ban{color:var(--gold)}
       ${scorers.length ? `<div class="card"><h3>${ico('goal')} Top scorers</h3>
         ${scorers.map(s => `<div class="res-row"><span class="sq-pos">${esc(s.pos)}</span>
           <span class="res-n">${esc(s.name)}</span><b>${s.goals}</b></div>`).join('')}</div>` : ''}
-      ${g.mgr.trophies.length ? `<div class="card"><h3>${ico('trophy')} Won as manager</h3>
-        ${g.mgr.trophies.map(t => `<span class="trophy">${global.Trophies.svg(global.Trophies.classify(t.name).art, 'tiny')} ${esc(t.name)} ${t.year}</span>`).join('')}</div>` : ''}
+      ${MUI.repCard(g)}
+      ${(() => { const all = M().cabinet(g); return all.length
+        ? `<div class="card"><h3>${ico('trophy')} Won as manager
+            ${(g.career && g.career.trophies || []).length ? '<span class="pill">whole career</span>' : ''}</h3>
+          ${all.map(t => `<span class="trophy">${global.Trophies.svg(global.Trophies.classify(t.name).art, 'tiny')} ${esc(t.name)} ${t.year}</span>`).join('')}</div>`
+        : ''; })()}
+      ${MUI.wonderCard(g)}
       ${g.mgr.log.length ? `<div class="card"><h3>${ico('transfer')} Transfer log</h3>
         ${g.mgr.log.slice(0, 12).map(l => `<div class="res-row"><span class="res-b ${l.k === 'in' ? 'res-W' : 'res-L'}">${l.k === 'in' ? '↓' : '↑'}</span>
           <span class="res-n">${esc(l.t)}</span></div>`).join('')}</div>` : ''}
       ${MUI.cvCard(g)}
       <div class="card"><h3>Options</h3><div class="row wrap">
         <button class="btn btn-ghost" data-act="save">${ico('disk')} Save now</button>
+        ${(g.mgr.offers || []).length ? `<button class="btn btn-ghost" data-act="mgrOffers">${
+          ico('manager')} ${g.mgr.offers.length} offer${g.mgr.offers.length === 1 ? '' : 's'}</button>` : ''}
+        <button class="btn btn-ghost" data-act="mgrResign">${ico('exit')} Resign</button>
         <button class="btn btn-danger" data-act="mgrQuit">${ico('exit')} Quit to menu</button>
       </div></div>`;
+    },
+
+    /* ---------------- your name in the game ----------------
+       Reputation is not decoration: it is the list of clubs who would take
+       your call, so it belongs on a screen where you can see it move. */
+    repCard(g) {
+      const rep = M().reputation(g);
+      const cap = M().ceilingFor(g);
+      const here = State().club(g.mgr.club);
+      const would = Object.values(g.world.clubs).filter(c => c.id !== here.id && c.rating <= cap);
+      const best = would.slice().sort((a, b) => b.rating - a.rating)[0];
+      const band = rep >= 88 ? 'One of the great managers' : rep >= 74 ? 'A name that opens doors'
+        : rep >= 58 ? 'Well thought of' : rep >= 42 ? 'Known, if not much more'
+        : 'Nobody is talking about you yet';
+      const jobs = (g.mgrHistory || []).length + 1;
+      return `<div class="card"><h3>${ico('manager')} Your name</h3>
+        <div class="rep-bar"><i style="width:${rep}%"></i></div>
+        <div class="rep-top"><b>${rep}</b><span>${esc(band)}</span></div>
+        <div class="stat-grid" style="margin-top:10px">
+          <div class="stat"><b>${jobs}</b><span>${jobs === 1 ? 'Club' : 'Clubs'}</span></div>
+          <div class="stat"><b>${M().cabinet(g).length}</b><span>Trophies</span></div>
+          <div class="stat"><b>${would.length}</b><span>Would have you</span></div>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">${best
+          ? `The biggest club that would consider you today is ${esc(best.name)} (${best.rating}).`
+          : 'Nobody would consider you today.'}</p>
+      </div>`;
+    },
+
+    /* ---------------- the goals worth keeping ----------------
+       A season's worth of scorelines is a table. These are the three or four
+       moments you would actually describe to somebody. */
+    wonderCard(g) {
+      const all = M().wonders(g).slice().sort((a, b) => b.year - a.year || b.score - a.score);
+      if (!all.length) return '';
+      const open = g.mgr.wondersOpen;
+      const show = all.slice(0, open ? 24 : 5);
+      return `<div class="card"><h3>${ico('goal')} Goals worth remembering
+          <span class="pill">${all.length}</span></h3>
+        ${show.map(w => `<div class="wg wg-${esc(w.tier)}">
+          <div class="wg-head">
+            <span class="wg-tier">${esc(w.label)}</span>
+            <span class="wg-when">${esc(w.opp)} · ${w.year}</span>
+          </div>
+          <div class="wg-who">${esc(w.name)}</div>
+          <div class="wg-t">${esc(w.text.charAt(0).toUpperCase() + w.text.slice(1))}.</div>
+        </div>`).join('')}
+        ${all.length > 5 ? `<button class="btn btn-ghost grow" style="margin-top:8px" data-act="mgrWondersMore">${
+          open ? 'Show fewer' : `All ${all.length}`}</button>` : ''}
+      </div>`;
     }
   };
 
@@ -16048,12 +16474,16 @@ em.unav.ban{color:var(--gold)}
         case 'mgrFilter': return Game.mgrFilter(arg);
         case 'mgrTopMore': return Game.mgrTopMore();
         case 'mgrNewsMore': return Game.mgrNewsMore();
+        case 'mgrWondersMore': return (State.game.mgr.wondersOpen = !State.game.mgr.wondersOpen,
+          global.MUI.render());
         case 'mgrCard': return Game.mgrPlayerCard(arg);
         case 'mgrEra': return Game.mgrEra(arg);
         case 'mgrBid': return Game.mgrBid(arg);
         case 'mgrSell': return Game.mgrSell(arg);
         case 'mgrReview': return Game.mgrReview();
         case 'mgrRehire': return Game.mgrRehire();
+        case 'mgrOffers': return Game.mgrOffersModal();
+        case 'mgrResign': return Game.mgrResign();
         case 'mgrQuit': return Game.quit();
         case 'titles': return Game.titleMenu();
         case 'matchLength': return Game.matchLengthMenu();
@@ -16105,7 +16535,8 @@ em.unav.ban{color:var(--gold)}
           <div class="list">${leagues.map(id => {
             const L = world.leagues.find(x => x.id === id) || State.league(id);
             const cap = Game._mgrCeiling || 99;
-            const open = Object.values(world.clubs).filter(c => c.league === id && c.rating <= cap).length;
+            const open = Object.values(world.clubs).filter(c =>
+              c.league === id && c.rating <= cap && c.id !== Game._mgrLeftClub).length;
             return `<div class="item click" data-lg="${id}"><div class="ic">${global.Icons.flag(L.country)}</div>
               <div class="tx"><b>${U.esc(L.name)}</b><span>${U.esc(L.country)}${
                 Game._mgrCeiling ? ' · ' + (open ? open + ' club' + (open === 1 ? '' : 's') + ' would have you'
@@ -16122,7 +16553,8 @@ em.unav.ban{color:var(--gold)}
     managerClubs(leagueId) {
       const world = Game._mgrWorld;
       const cap = Game._mgrCeiling || 99;
-      const all = Object.values(world.clubs).filter(c => c.league === leagueId)
+      const all = Object.values(world.clubs)
+        .filter(c => c.league === leagueId && c.id !== Game._mgrLeftClub)
         .sort((a, b) => b.rating - a.rating);
       const clubs = all.filter(c => c.rating <= cap);
       const snubs = all.length - clubs.length;
@@ -16147,15 +16579,40 @@ em.unav.ban{color:var(--gold)}
 
     managerBegin(clubId) {
       const world = Game._mgrWorld;
+      /* Leaving one job for another: the outgoing club goes on the CV, and
+         what you won there joins the career cabinet. This runs here rather
+         than when you resigned so that backing out of the job market leaves
+         you exactly where you were. */
+      const prev = State.game;
+      if (Game._mgrLeaving && prev && prev.mgr) {
+        const car = global.Manager.career(prev);
+        car.trophies = car.trophies.concat(prev.mgr.trophies || []);
+        car.wonders = car.wonders.concat(prev.mgr.wonders || []);
+        car.seasons = (car.seasons || 0) + (prev.mgr.board.seasons || 0);
+        prev.mgrHistory = (prev.mgrHistory || []).concat({
+          club: State.club(prev.mgr.club).name,
+          seasons: prev.mgr.board.seasons,
+          finishes: (prev.mgr.board.finishes || []).slice(),
+          trophies: (prev.mgr.trophies || []).length,
+          sacked: Game._mgrLeaving === 'sacked',
+          left: Game._mgrLeaving === 'left'
+        });
+        Game._mgrLeaving = null;
+      }
       const past = (State.game && State.game.mgrHistory) || [];
+      // what you have won and the goals worth remembering are yours, not the
+      // club's — they follow you out of the door and into the next job
+      const carried = (Game._mgrRehire && State.game && State.game.career) || null;
       const g = {
         version: 1, world, era: Game._mgrEra || 'modern', mode: 'manager',
         log: [], headlines: [], newsSeen: 0, tables: {}, world_year: world.year,
         mgrHistory: Game._mgrRehire ? past : [],
+        career: carried || undefined,
         settings: {}
       };
       Game._mgrRehire = false;
       Game._mgrCeiling = 0;
+      Game._mgrLeftClub = null;
       const cb = $('btn-continue'); if (cb) { cb.disabled = false; cb.textContent = 'Continue Managing'; }
       State.game = g;
       global.Manager.start(g, clubId);
@@ -16285,6 +16742,7 @@ em.unav.ban{color:var(--gold)}
           <p class="muted" style="margin-top:12px">${U.esc(r.verdict)}</p>`,
         actions: [{ label: r.sacked ? 'Clear your desk' : 'Into next season', onClick: () => {
           if (r.sacked) { global.MUI.render(); return; }
+          Game._mgrOffers = r.offers || [];
           global.Manager.nextSeason(g);
           State.save();
           global.MUI.tab = 'mmarket';
@@ -16301,11 +16759,21 @@ em.unav.ban{color:var(--gold)}
                 </div>`).join('')}</div>
                 <p class="muted">${gone.length === 1 ? 'That is him done.' : 'That is them done.'}
                   You will need to replace ${gone.length === 1 ? 'him' : 'them'}.</p>`,
-              actions: [{ label: 'Into the window' }]
+              actions: [{ label: 'Into the window', onClick: () => {
+                if (Game._mgrOffers && Game._mgrOffers.length) Game.mgrOffersModal();
+              } }]
             });
-          } else UI.toast('Transfer window is open.', 'good');
+          } else if (Game._mgrOffers && Game._mgrOffers.length) Game.mgrOffersModal();
+          else UI.toast('Transfer window is open.', 'good');
         } }]
       });
+
+      /* Before any of it: the best thing anybody did all year. */
+      const boardThen = () => {
+        if (r.champion) Game.trophyLift(State.league(club.league).name + ' Title', 'Champions', meetTheBoard);
+        else meetTheBoard();
+      };
+      if (r.goalOfSeason) return Game.mgrGoalOfSeason(r.goalOfSeason, boardThen);
 
       // Lift it first, then go and see them. There is only one modal, so the
       // trophy used to open on top of the review and take the button that
@@ -16317,27 +16785,126 @@ em.unav.ban{color:var(--gold)}
       }
     },
 
+    /* ---------------- goal of the season ----------------
+       One goal a year is worth stopping the game for. */
+    mgrGoalOfSeason(w, then) {
+      const g = State.game;
+      UI.modal({
+        title: 'Goal of the Season',
+        html: `<div class="gos gos-${U.esc(w.tier)}">
+            <div class="gos-tier">${ico('goal')} ${U.esc(w.label)}</div>
+            <div class="gos-who">${U.esc(w.name)}</div>
+            <div class="gos-meta">${U.esc(w.club)} ${U.esc(w.line)} ${U.esc(w.opp)}
+              · ${U.esc(w.comp)}${w.stage ? ' · ' + U.esc(w.stage) : ''} · ${w.year}</div>
+            <p class="gos-txt">${U.esc(w.text.charAt(0).toUpperCase() + w.text.slice(1))}.</p>
+            ${w.tier === 'century' ? '<div class="gos-stamp">One of those. Nobody here will forget it.</div>' : ''}
+          </div>`,
+        actions: [{ label: 'And the season itself', onClick: then }]
+      });
+    },
+
+    /* ---------------- the phone rings ----------------
+       Being sacked was the only way out of a job. Now there is another. */
+    mgrOffersModal() {
+      const g = State.game;
+      const offers = Game._mgrOffers || [];
+      if (!offers.length) return;
+      const here = State.club(g.mgr.club);
+      UI.modal({
+        title: offers.length === 1 ? 'Somebody wants you' : `${offers.length} clubs want you`,
+        html: `<p class="muted">You are under contract at ${U.esc(here.name)} (rated ${here.rating}).
+            Nobody is forcing you anywhere — but this is who called.</p>
+          <div class="list">${offers.map((o, i) => {
+            /* Ratings drift over the summer, between the board meeting that
+               generated the offer and this screen. Read them live so the step
+               up or down is the one you would actually be taking. */
+            const c = State.club(o.clubId) || { rating: o.rating };
+            const step = c.rating - here.rating;
+            return `<div class="item click offer" data-offer="${i}">
+              <div class="ic">${global.Crest.svg(o.name, 'crest-md')}</div>
+              <div class="tx"><b>${U.esc(o.name)}<span class="pill${
+                  step > 0 ? ' up' : step < 0 ? ' down' : ''}">${
+                  step > 0 ? '+' + step : step}</span></b>
+                <span>${U.esc(o.league)} · rated ${c.rating} · ${U.cash(o.budget)} to spend</span>
+                <span class="offer-pitch">${U.esc(o.pitch)}</span></div>
+            </div>`; }).join('')}</div>`,
+        actions: [{ label: `Stay at ${here.name}`, cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-offer]').forEach(el => el.onclick = () =>
+            Game.mgrTakeJob(offers[+el.dataset.offer]));
+          UI.modalScrollHint && UI.modalScrollHint(m);
+        }
+      });
+    },
+
+    mgrTakeJob(o) {
+      const g = State.game;
+      const from = State.club(g.mgr.club);
+      UI.modal({
+        title: 'Leave?',
+        html: `<p class="muted">You would be leaving ${U.esc(from.name)} for ${U.esc(o.name)}.
+            Your squad, your budget and this club's board stay behind. What you have won,
+            and the goals worth remembering, come with you.</p>
+          <p class="muted">${U.esc(o.target)}</p>`,
+        actions: [
+          { label: `Take the ${o.name} job`, onClick: () => {
+            Game._mgrOffers = [];
+            global.Manager.moveTo(g, o.clubId, 'left');
+            State.save();
+            global.MUI.tab = 'mhome';
+            global.MUI.render();
+            const to = State.club(g.mgr.club);
+            UI.toast(`You are the manager of ${to.name}.`, 'good');
+          } },
+          { label: 'Stay where you are', cls: 'btn-ghost', onClick: () => Game.mgrOffersModal() }
+        ]
+      });
+    },
+
+    /* You can also just walk. There is no offer on the table, and the job
+       market will judge you on what you have actually done. */
+    mgrResign() {
+      const g = State.game;
+      const club = State.club(g.mgr.club);
+      const cap = global.Manager.ceilingFor(g);
+      const open = Object.values(g.world.clubs).filter(c => c.id !== club.id && c.rating <= cap).length;
+      UI.modal({
+        title: 'Resign?',
+        html: `<p class="muted">You would be walking out on ${U.esc(club.name)} with
+            ${g.mgr.board.seasons} season${g.mgr.board.seasons === 1 ? '' : 's'} behind you.
+            Your squad and your budget stay here. Your record comes with you.</p>
+          <p class="muted">On what you have done so far, ${open} club${open === 1 ? '' : 's'}
+            around the world would consider you.</p>`,
+        actions: [
+          { label: 'Resign and look for a job', cls: 'btn-danger', onClick: () => {
+            // nothing is folded into the career until you have actually taken
+            // another job — back out of the market here and you are still the
+            // manager, with the cabinet counted exactly once
+            Game._mgrLeaving = 'left';
+            Game._mgrLeftClub = club.id;
+            Game._mgrCeiling = cap;
+            Game._mgrRehire = true;
+            Game._mgrWorld = g.world;
+            Game.managerStart();
+          } },
+          { label: 'Stay', cls: 'btn-ghost' }
+        ]
+      });
+    },
+
     /* Sacked is not the end of a managerial career, it is most of one. You keep
        the world and the record; what you lose is who will have you. */
     mgrRehire() {
       const g = State.game;
       const club = State.club(g.mgr.club);
-      const won = (g.mgr.trophies || []).length;
-      g.mgrHistory = (g.mgrHistory || []).concat({
-        club: club.name, seasons: g.mgr.board.seasons,
-        finishes: (g.mgr.board.finishes || []).slice(),
-        trophies: won, sacked: true
-      });
       // a trophy buys you another shot at that level; a sacking without one
-      // drops you a rung, and a second drops you further
-      const sackings = g.mgrHistory.filter(j => j.sacked).length;
-      // there is always somebody desperate enough, so never price yourself out
-      // of the whole game — the floor is the worst club in the world
+      // drops you a rung, and a second drops you further. There is always
+      // somebody desperate enough, so never price yourself out of the whole
+      // game — the floor is the worst club in the world.
       const floor = Math.min.apply(null, Object.values(g.world.clubs).map(c => c.rating));
-      const best = Math.min.apply(null, (g.mgrHistory.map(j =>
-        Math.min.apply(null, (j.finishes || []).concat(99)))).concat(99));
-      Game._mgrCeiling = Math.max(floor, Math.round(
-        club.rating + (won ? 3 : 0) + (best <= 3 ? 2 : 0) - sackings * 3));
+      Game._mgrCeiling = Math.max(floor, global.Manager.ceilingFor(g));
+      Game._mgrLeaving = 'sacked';
+      Game._mgrLeftClub = club.id;
       Game._mgrRehire = true;
       Game._mgrWorld = g.world;
       Game.managerStart();
