@@ -1451,9 +1451,16 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.5';
+  const VERSION = '3.6';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.6', when: '2 Sep', items: [
+      'Another thousand and eight. Buzz now holds 2,646 different messages \u2014 2,308 posts across 92 situations, 238 replies and 100 things you can say yourself',
+      'Twenty-five new situations, and most of them are about people rather than results: the captain, the veteran nobody wanted to keep, the lad who never gets on, the crowd favourite, the player coming back from a long injury, the one who wants to leave, the ones out on loan, and the ex-pros with opinions',
+      'And the club as an institution \u2014 owners and takeover talk, the stadium, sponsors and kits, the coaching staff, the academy, pre-season, the trophy parade, and the managerial merry-go-round at everybody else\u2019s club',
+      'Plus the things supporters actually talk about: the weather, the cost of following a team, fantasy leagues, betting odds, what the television schedulers have done to your Saturday, the tunnel at half time, and the app itself',
+      'Still nothing invented. 8,888 posts across 41 seasons with no line describing something that had not happened'
+    ] },
     { v: '3.5', when: '2 Sep', items: [
       'A thousand and seven more things the timeline can say. Buzz now holds 1,638 different messages \u2014 1,395 posts across 67 situations, 168 replies and 75 things you can say yourself',
       'Twenty-eight new situations: comebacks, debuts, retirements, contract talks, the night before a game, the international break, a cold Tuesday in December, fixture pile-ups, and the referee',

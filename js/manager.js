@@ -617,6 +617,9 @@
     back.forEach(s => {
       logAdd(g, `${s.name} is fit again`, 'in');
     });
+    if (back.length && global.MSocial) {
+      try { global.MSocial.backFromInjury(g, back.map(s => s.name)); } catch (e) {}
+    }
     return back;
   }
 

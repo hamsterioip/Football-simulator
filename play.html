@@ -2997,9 +2997,16 @@ em.unav.ban{color:var(--gold)}
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.5';
+  const VERSION = '3.6';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.6', when: '2 Sep', items: [
+      'Another thousand and eight. Buzz now holds 2,646 different messages \u2014 2,308 posts across 92 situations, 238 replies and 100 things you can say yourself',
+      'Twenty-five new situations, and most of them are about people rather than results: the captain, the veteran nobody wanted to keep, the lad who never gets on, the crowd favourite, the player coming back from a long injury, the one who wants to leave, the ones out on loan, and the ex-pros with opinions',
+      'And the club as an institution \u2014 owners and takeover talk, the stadium, sponsors and kits, the coaching staff, the academy, pre-season, the trophy parade, and the managerial merry-go-round at everybody else\u2019s club',
+      'Plus the things supporters actually talk about: the weather, the cost of following a team, fantasy leagues, betting odds, what the television schedulers have done to your Saturday, the tunnel at half time, and the app itself',
+      'Still nothing invented. 8,888 posts across 41 seasons with no line describing something that had not happened'
+    ] },
     { v: '3.5', when: '2 Sep', items: [
       'A thousand and seven more things the timeline can say. Buzz now holds 1,638 different messages \u2014 1,395 posts across 67 situations, 168 replies and 75 things you can say yourself',
       'Twenty-eight new situations: comebacks, debuts, retirements, contract talks, the night before a game, the international break, a cold Tuesday in December, fixture pile-ups, and the referee',
@@ -11746,6 +11753,9 @@ em.unav.ban{color:var(--gold)}
     back.forEach(s => {
       logAdd(g, `${s.name} is fit again`, 'in');
     });
+    if (back.length && global.MSocial) {
+      try { global.MSocial.backFromInjury(g, back.map(s => s.name)); } catch (e) {}
+    }
     return back;
   }
 
@@ -17149,6 +17159,1231 @@ em.unav.ban{color:var(--gold)}
   Object.keys(MORE_YOU).forEach(k => {
     YOU_POSTS[k] = (YOU_POSTS[k] || []).concat(MORE_YOU[k]);
   });
+  const MORE3 = {};
+
+  /* ---- the people in the squad, individually ---- */
+  MORE3.captainTalk = [
+    { k: 'fan', tone: 'good', t: c => `${c.star} dragged that team through the last twenty minutes on his own.` },
+    { k: 'pundit', tone: 'good', t: 'A captain who talks all game is worth a yard to everybody around him.' },
+    { k: 'journo', tone: 'info', t: c => `The armband at ${c.clubName} has settled. It took a while, and it matters.` },
+    { k: 'fan', tone: 'good', t: 'He went to the away end on his own after the final whistle. Nobody asked him to.' },
+    { k: 'fantv', tone: 'good', t: c => `Doing a video on what ${c.star} actually does when we do not have the ball. It is a lot.` },
+    { k: 'stats', tone: 'info', t: c => `${c.star} has started more games than anyone in this squad.` },
+    { k: 'fan', tone: 'bad', t: 'A captain should be dragging people up, not shouting at them for the cameras.' },
+    { k: 'pundit', tone: 'info', t: 'The best captains are not always the loudest. Sometimes they are just first to every loose ball.' },
+    { k: 'club', tone: 'good', t: c => `Leading from the front. 💙 ${c.star}.` },
+    { k: 'fan', tone: 'good', t: 'Watched him spend ten minutes with the young lads after training. That is a captain.' }
+  ];
+
+  MORE3.veteran = [
+    { k: 'fan', tone: 'good', t: 'He cannot run any more and he does not need to. He just knows where everything is going.' },
+    { k: 'pundit', tone: 'good', t: 'Thirty-four and he has not been beaten in a foot race all season, because he never gets into one.' },
+    { k: 'journo', tone: 'info', t: c => `The senior players at ${c.clubName} have been credited with holding the dressing room together.` },
+    { k: 'fantv', tone: 'good', t: 'Everyone wanted him gone in the summer. Everyone was wrong. Me included.' },
+    { k: 'fan', tone: 'info', t: 'Give him a coaching badge and a contract. He is already half a coach.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have one of the more experienced spines in this division.` },
+    { k: 'fan', tone: 'bad', t: 'Playing a thirty-five-year-old twice a week in November is not a plan.' },
+    { k: 'pundit', tone: 'info', t: 'Experience is only worth something if the young players are listening. Here, they are.' }
+  ];
+
+  MORE3.benchWarmer = [
+    { k: 'fan', tone: 'bad', t: 'He has not started since August. Either play him or let him go somewhere he will play.' },
+    { k: 'journo', tone: 'info', t: c => `Two players at ${c.clubName} are understood to be unhappy with their minutes.` },
+    { k: 'pundit', tone: 'info', t: 'Every squad has four players who think they should be starting. The trick is keeping them working.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a video on our forgotten men. Some of these are genuinely good players.' },
+    { k: 'fan', tone: 'good', t: 'Came on for eleven minutes and changed the game. Then went straight back to the bench.' },
+    { k: 'stats', tone: 'info', t: c => `Several ${c.clubName} squad players are under two hundred minutes for the season.` },
+    { k: 'fan', tone: 'info', t: 'Warming up for forty minutes in the rain and not getting on is a specific kind of misery.' },
+    { k: 'club', tone: 'info', t: 'Everybody in this squad has a part to play. 💙' }
+  ];
+
+  MORE3.crowdFavourite = [
+    { k: 'fan', tone: 'good', t: 'He is not our best player and he is my favourite player. Those are different jobs.' },
+    { k: 'fantv', tone: 'good', t: 'The song about him is the best one in the ground and it is not close.' },
+    { k: 'journo', tone: 'info', t: c => `Certain players get a reaction at ${c.clubName} that has nothing to do with their statistics.` },
+    { k: 'fan', tone: 'good', t: 'Every time he touches it the whole ground lifts. Cannot coach that.' },
+    { k: 'pundit', tone: 'info', t: 'Crowd favourites give a manager a substitution that is worth more than the player.' },
+    { k: 'fan', tone: 'good', t: 'Whole ground on their feet when he came on. He had not kicked it yet.' },
+    { k: 'club', tone: 'good', t: 'You know the song. 🎵' }
+  ];
+
+  MORE3.returning = [
+    { k: 'club', tone: 'good', t: c => `Back in the squad. 💙 Good to have you, ${c.player}.` },
+    { k: 'fan', tone: 'good', t: c => `${c.player} back on the bench. Feels like a new signing and it did not cost anything.` },
+    { k: 'journo', tone: 'good', t: c => `${c.player} returns for ${c.clubName} after a long spell out. The manager will not rush him.` },
+    { k: 'pundit', tone: 'info', t: 'Getting a player back is not the same as having him back. Six weeks of match sharpness to find.' },
+    { k: 'fantv', tone: 'good', t: c => `${c.player.toUpperCase()} IS BACK. Best news of the month by miles.` },
+    { k: 'fan', tone: 'good', t: 'Whole ground stood up when he came on. He looked like he might cry.' },
+    { k: 'stats', tone: 'info', t: c => `${c.player} available again for ${c.clubName}.` },
+    { k: 'fan', tone: 'info', t: 'Do not throw him straight back in. Please. We have done this before.' }
+  ];
+
+  MORE3.transferRequest = [
+    { k: 'journo', tone: 'hot', t: c => `Understand a ${c.clubName} player has asked to leave. The club's position is that he is not for sale.` },
+    { k: 'fan', tone: 'bad', t: 'If he does not want to be here, get him out and get somebody who does.' },
+    { k: 'fantv', tone: 'bad', t: 'The badge kissing in the announcement video has aged like milk.' },
+    { k: 'pundit', tone: 'info', t: 'Players ask to leave every summer. Most of them are still there in September.' },
+    { k: 'fan', tone: 'info', t: 'He has given us three good years. He is allowed to want a bigger stage.' },
+    { k: 'club', tone: 'info', t: 'We do not comment on individual contract matters.' },
+    { k: 'rival', tone: 'good', t: c => `${c.clubName} losing another one. It is basically their business model.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have sold their top scorer in several recent summers.` }
+  ];
+
+  MORE3.loanTalk = [
+    { k: 'journo', tone: 'info', t: c => `A ${c.clubName} youngster has gone out on loan. The manager wants him playing every week.` },
+    { k: 'fan', tone: 'info', t: 'Sending him out is the right call. He needs games, not a seat on a bench.' },
+    { k: 'fantv', tone: 'info', t: 'Loan watch is back. Following six of ours across four divisions. Send help.' },
+    { k: 'pundit', tone: 'good', t: 'Clubs who use loans properly develop players. Clubs who use them to dump problems do not.' },
+    { k: 'fan', tone: 'good', t: 'Our lad scored again on loan. Bring him home in the summer.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have several players out on loan this season.` },
+    { k: 'club', tone: 'good', t: 'Great to see one of our own scoring for his loan club this weekend. 👏' }
+  ];
+
+  MORE3.exPlayer = [
+    { k: 'pundit', tone: 'info', t: c => `I played for ${c.clubName}. That dressing room is a good place to be right now, you can tell.` },
+    { k: 'fan', tone: 'good', t: 'Our old midfielder was in the stand today. Got a standing ovation. Deserved.' },
+    { k: 'journo', tone: 'info', t: c => `A former ${c.clubName} player has been critical of the current side. It has not gone down well.` },
+    { k: 'fantv', tone: 'bad', t: 'Ex-players who left for money do not get to lecture us about commitment.' },
+    { k: 'pundit', tone: 'good', t: 'People forget how hard it is to play for a club under this kind of pressure. I do not.' },
+    { k: 'fan', tone: 'good', t: 'He came back for a testimonial and the ground was full. Says everything.' },
+    { k: 'club', tone: 'good', t: 'Lovely to welcome a club legend back to the ground today. 💙' },
+    { k: 'fan', tone: 'bad', t: 'Being an ex-player does not make your opinion correct. It makes it louder.' }
+  ];
+
+  MORE3.awards = [
+    { k: 'club', tone: 'good', t: c => `Player of the Month: ${c.topScorer}. 🏅 Voted for by you.` },
+    { k: 'fan', tone: 'good', t: c => `${c.topScorer} for Player of the Season and I will hear nothing else.` },
+    { k: 'journo', tone: 'info', t: c => `Two ${c.clubName} players are on the divisional team of the season shortlist.` },
+    { k: 'fantv', tone: 'info', t: 'My awards video. Player of the season, moment of the season, and worst take of the season. Mine.' },
+    { k: 'pundit', tone: 'good', t: 'Individual awards are a nonsense and everybody wants one. Both things are true.' },
+    { k: 'stats', tone: 'info', t: c => `${c.topScorer} leads the club for goals with ${c.topGoals}.`, when: c => c.topGoals > 0 },
+    { k: 'fan', tone: 'bad', t: 'Player of the Month goes to whoever scored the prettiest goal. Every time.' },
+    { k: 'club', tone: 'good', t: 'Awards night details are on the site. Black tie optional, arguments guaranteed. 🎩' }
+  ];
+  /* ---- the club as an institution ---- */
+  MORE3.ownership = [
+    { k: 'journo', tone: 'hot', t: c => `Understand there has been contact regarding a possible investment in ${c.clubName}.` },
+    { k: 'fan', tone: 'bad', t: 'Do not want new owners. Want the current ones to spend what they already have.' },
+    { k: 'fantv', tone: 'info', t: 'Takeover talk video. Ninety percent speculation, ten percent me reading a companies register.' },
+    { k: 'fan', tone: 'good', t: 'Any owner who turns up, sits in the stand and says nothing is fine by me.' },
+    { k: 'pundit', tone: 'info', t: 'Ownership decides everything and supporters get no say in it. That is the sport now.' },
+    { k: 'club', tone: 'info', t: 'The club has no comment to make on ownership speculation.' },
+    { k: 'fan', tone: 'bad', t: 'Every takeover rumour costs us three signings and six months.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName}'s accounts are published this week. Nobody will read them and everybody will have an opinion.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName}'s wage-to-turnover ratio is healthier than most in this division.` },
+    { k: 'fan', tone: 'info', t: 'Owners come and go. We are the club. Sounds cheesy. Is true.' }
+  ];
+
+  MORE3.stadium = [
+    { k: 'club', tone: 'good', t: 'Plans for the new stand have been submitted. 🏗️ More soon.' },
+    { k: 'fan', tone: 'bad', t: 'Do not touch the ground. It is the only thing about this club that has never let me down.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} are exploring an expansion. Demand has outstripped capacity for two seasons.` },
+    { k: 'fan', tone: 'good', t: 'More seats means more people. That is a good problem and I will take it.' },
+    { k: 'fantv', tone: 'info', t: 'Walked the whole ground with a camera before they change it. For the archive.' },
+    { k: 'pundit', tone: 'info', t: 'Atmosphere does not survive a rebuild automatically. It has to be designed in.' },
+    { k: 'fan', tone: 'info', t: 'They are finally fixing the roof on the away end. Only took a decade.' },
+    { k: 'club', tone: 'info', t: 'Pitch relaying work begins after the last home game. 🌱' },
+    { k: 'fan', tone: 'bad', t: 'New seats, same leg room. Whoever designed this has never had legs.' }
+  ];
+
+  MORE3.commercial = [
+    { k: 'club', tone: 'good', t: 'New shirt sponsor announced. 👕 A three-year deal.' },
+    { k: 'fan', tone: 'bad', t: 'Another sponsor nobody has heard of on a shirt nobody can afford.' },
+    { k: 'fantv', tone: 'info', t: 'Ranking every shirt sponsor we have ever had. Some of them were companies. Allegedly.' },
+    { k: 'journo', tone: 'info', t: c => `A commercial deal at ${c.clubName} will fund academy investment.` },
+    { k: 'fan', tone: 'good', t: 'The new home kit is genuinely lovely. First time I have said that in years.' },
+    { k: 'fan', tone: 'bad', t: 'Sixty-five quid for a shirt and they change it every season. Do the maths on a family of four.' },
+    { k: 'pundit', tone: 'info', t: 'Commercial growth is the only lever most clubs have. It is dull and it is the whole game.' },
+    { k: 'club', tone: 'good', t: 'The new away kit drops on Friday. You are going to want this one. 👀' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} shirt sales are reportedly up on last season.` }
+  ];
+
+  MORE3.staff = [
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have appointed a new assistant. The manager pushed for him.` },
+    { k: 'fan', tone: 'good', t: 'Whoever coaches our set pieces deserves a pay rise and a parking space.' },
+    { k: 'pundit', tone: 'info', t: 'A manager is only as good as the three people he trusts most. Ask any of them.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a video on the backroom staff. Nobody knows their names. They should.' },
+    { k: 'club', tone: 'good', t: 'Welcome to the coaching team. 👋 A really strong addition.' },
+    { k: 'fan', tone: 'info', t: 'The fitness coach has been here through four managers. He is the actual constant.' },
+    { k: 'journo', tone: 'info', t: c => `A member of ${c.clubName}'s staff has been approached by a bigger club. He is staying.` },
+    { k: 'pundit', tone: 'good', t: 'The analysts do more to win football matches now than half the coaching staff did twenty years ago.' }
+  ];
+
+  MORE3.academy = [
+    { k: 'club', tone: 'good', t: 'Our under-18s are through to the next round. 🌱 Well played, lads.' },
+    { k: 'fan', tone: 'good', t: 'Went to watch the youth team. Two of them are going to play for the first team. Calling it now.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName}'s academy has produced more first-team minutes this season than in the previous three combined.` },
+    { k: 'fantv', tone: 'good', t: 'Academy watch is back. I have opinions about sixteen-year-olds and that is probably unhealthy.' },
+    { k: 'pundit', tone: 'good', t: 'A club that trusts its academy has a floor under it forever. Very few actually do.' },
+    { k: 'fan', tone: 'bad', t: 'We produce them and then sell them at nineteen. Same story every generation.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have handed academy graduates significant minutes this season.` },
+    { k: 'club', tone: 'good', t: 'Scholarship offers have gone out to six young players today. 📝' },
+    { k: 'fan', tone: 'good', t: 'A local lad in the first team is worth more to this ground than any signing.' }
+  ];
+
+  MORE3.preseason = [
+    { k: 'club', tone: 'good', t: 'Back in. ☀️ First day of pre-season, and everybody reported in good shape.' },
+    { k: 'fan', tone: 'good', t: 'Pre-season friendlies are meaningless and I have watched all of them.' },
+    { k: 'fantv', tone: 'good', t: 'Pre-season predictions video. I will be wrong about everything by October.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have started pre-season with a clear plan and, unusually, most of their signings already done.` },
+    { k: 'pundit', tone: 'info', t: 'Nothing you see in July means anything. Except the fitness. The fitness means everything.' },
+    { k: 'fan', tone: 'info', t: 'Optimism is at an all-time high and it will last until roughly the second Saturday.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} begin the new campaign after a full pre-season together.` },
+    { k: 'fan', tone: 'good', t: 'The fixture list is out. Already planned four away days I cannot afford.' },
+    { k: 'club', tone: 'good', t: 'Season tickets have sold out for the first time in years. Thank you. 💙' }
+  ];
+
+  MORE3.parade = [
+    { k: 'club', tone: 'hot', t: 'The bus sets off at two. 🚌 Come and fill these streets.' },
+    { k: 'fan', tone: 'hot', t: 'Took the day off. Whole family coming. Never doing anything else with a Sunday again.' },
+    { k: 'journo', tone: 'good', t: c => `Tens of thousands expected on the streets for ${c.clubName} today.` },
+    { k: 'fantv', tone: 'hot', t: 'Filming the whole parade. My battery will not survive and I do not care.' },
+    { k: 'fan', tone: 'hot', t: 'My dad has waited his entire life for this. He has not stopped smiling.' },
+    { k: 'pundit', tone: 'good', t: 'Days like this are what all of it is for. Everything else is just build-up.' },
+    { k: 'club', tone: 'good', t: 'Thank you to every single person who came out today. 💙' }
+  ];
+
+  MORE3.merry = [
+    { k: 'journo', tone: 'info', t: 'Three managers have gone in this division in a fortnight. It is that time of year.' },
+    { k: 'fan', tone: 'info', t: 'Every club sacking their manager makes ours look more valuable.' },
+    { k: 'pundit', tone: 'info', t: 'Nobody gets time any more. The average tenure in this league is under eighteen months.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a video on the managerial merry-go-round. It is depressing and you will love it.' },
+    { k: 'rival', tone: 'bad', t: 'We have had four managers since their bloke arrived. Four.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName}'s manager is now among the longer-serving in this division.`, when: c => c.seasons >= 2 },
+    { k: 'fan', tone: 'good', t: 'Watching other clubs implode is a spectator sport and I am a season ticket holder.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName}'s manager has been mentioned in connection with two vacancies this week.` }
+  ];
+  /* ---- weather, betting, numbers, and the rest of the noise ---- */
+  MORE3.weather = [
+    { k: 'fan', tone: 'bad', t: 'Wind so strong the corner flags were horizontal. Football was not played today, it was survived.' },
+    { k: 'pundit', tone: 'info', t: 'You cannot play through a gale. Both managers knew it by the tenth minute.' },
+    { k: 'fan', tone: 'good', t: 'Snow on the pitch, orange ball, freezing. Best conditions there are.' },
+    { k: 'club', tone: 'info', t: 'The pitch has passed an inspection. The game goes ahead. ❄️' },
+    { k: 'fan', tone: 'bad', t: 'Soaked to the bone by the fifteenth minute. Stayed for all ninety. Obviously.' },
+    { k: 'journo', tone: 'info', t: 'Driving rain, a heavy pitch and two managers rethinking everything at half time.' },
+    { k: 'fantv', tone: 'bad', t: 'My camera got wet. My notes got wet. I got wet. Video is delayed.' },
+    { k: 'fan', tone: 'info', t: 'Thirty degrees and a three o clock kick off. Somebody explain the scheduling.' },
+    { k: 'pundit', tone: 'info', t: 'In heat like that the pressing goes first. Watch who stops running and when.' },
+    { k: 'club', tone: 'info', t: 'Please bring water and take advantage of the cooling breaks today. ☀️' },
+    { k: 'fan', tone: 'good', t: 'Sunny day, cold pint, three points on the way. Cannot beat it.' },
+    { k: 'fan', tone: 'bad', t: 'Postponed at two hours notice. I was already on the motorway.' }
+  ];
+
+  MORE3.betting = [
+    { k: 'fan', tone: 'info', t: c => `Had ${c.clubName} at long odds in August. Not looking as stupid as it did.`, when: c => c.pos <= 6 },
+    { k: 'stats', tone: 'info', t: c => `The models still have ${c.clubName} finishing lower than they currently are.` },
+    { k: 'fantv', tone: 'info', t: 'Doing a prediction video. My record is dreadful and you keep watching anyway.' },
+    { k: 'fan', tone: 'bad', t: 'Backed us to win, went two up, lost 3-2. Football is a personal attack.' },
+    { k: 'pundit', tone: 'info', t: 'The market has been slow to catch up with this side all season.' },
+    { k: 'fan', tone: 'info', t: 'Put a fiver on the manager to still be here in May. Feels like the safest money in the league.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have beaten their projected points total for three months running.` },
+    { k: 'fantv', tone: 'info', t: 'Your predictions from August, read out loud. Some of you should be ashamed.' }
+  ];
+
+  MORE3.deepStats = [
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} rank near the top for passes into the penalty area per possession.` },
+    { k: 'stats', tone: 'info', t: c => `Only two sides in the ${c.leagueName} recover the ball higher up the pitch than ${c.clubName}.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName}'s shot quality has improved every month since the start of the season.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} give up fewer shots from central areas than almost anybody.` },
+    { k: 'stats', tone: 'info', t: c => `The average starting position of ${c.clubName}'s defensive line has moved up five yards this season.` },
+    { k: 'pundit', tone: 'info', t: 'The numbers say they are better than the table. The table says the numbers are missing something.' },
+    { k: 'fan', tone: 'bad', t: 'Do not show me expected goals. Show me actual goals. I was there.' },
+    { k: 'fan', tone: 'good', t: 'The stats accounts have been saying we are good for months. Nice of the results to catch up.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} concede the fewest counter-attacking chances in the division.` },
+    { k: 'pundit', tone: 'info', t: 'Numbers do not tell you why. They tell you where to look, which is not nothing.' },
+    { k: 'fantv', tone: 'info', t: 'Explaining expected goals for the eleventh time. I will keep doing it until you stop asking.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} take a higher share of their shots with their first touch than most.` }
+  ];
+
+  MORE3.fantasy = [
+    { k: 'fan', tone: 'info', t: c => `Captained ${c.topScorer} and he was substituted at half time. Cheers, boss.`, when: c => c.topGoals > 0 },
+    { k: 'fantv', tone: 'info', t: 'Fantasy tips video. I have never won my own mini league. Take the advice anyway.' },
+    { k: 'fan', tone: 'good', t: c => `${c.star} is in every fantasy team in the country now and it is our fault.` },
+    { k: 'fan', tone: 'bad', t: 'Sold him last week. Of course I did. Of course.' },
+    { k: 'stats', tone: 'info', t: c => `${c.topScorer} is among the highest-scoring fantasy picks in the division.`, when: c => c.topGoals >= 6 },
+    { k: 'fan', tone: 'info', t: 'Twelve of us in the mini league. Eleven of us support this club. Guess who is winning.' },
+    { k: 'fantv', tone: 'info', t: 'Wildcard time. My team is a disgrace. Rebuilding live tonight.' }
+  ];
+
+  MORE3.tunnel = [
+    { k: 'journo', tone: 'info', t: 'A lively tunnel at half time, by all accounts. Neither manager wanted to discuss it.' },
+    { k: 'fan', tone: 'good', t: 'The gaffer was giving somebody an earful going down the tunnel and I have never loved him more.' },
+    { k: 'pundit', tone: 'info', t: 'Half time is forty-five seconds of message and fourteen minutes of everything else.' },
+    { k: 'fantv', tone: 'info', t: 'Somebody filmed the tunnel. It is very loud and completely inaudible. Uploading anyway.' },
+    { k: 'fan', tone: 'info', t: 'Both managers shook hands at the end like nothing happened. Professionals.' },
+    { k: 'journo', tone: 'info', t: 'The two benches had words. It was over before anybody got there.' },
+    { k: 'fan', tone: 'bad', t: 'Whatever was said at half time did not work. Second half was worse.' },
+    { k: 'pundit', tone: 'good', t: 'Second half performance like that tells you the message got through.' }
+  ];
+
+  MORE3.money = [
+    { k: 'fan', tone: 'bad', t: 'Worked out what I spend on this club a year. Then stopped working it out.' },
+    { k: 'fan', tone: 'bad', t: 'Train, ticket, pint, pie. Eighty quid to watch a goalless draw in the rain.' },
+    { k: 'journo', tone: 'info', t: 'Ticket prices across the division are up again. Supporters groups are not happy.' },
+    { k: 'club', tone: 'good', t: 'Under-16s go free with a paying adult for the next home game. 🧒' },
+    { k: 'fan', tone: 'good', t: 'Concession pricing actually being sensible for once. Credit where it is due.' },
+    { k: 'fantv', tone: 'bad', t: 'Doing a video on what it now costs to follow this club home and away. It is grim.' },
+    { k: 'fan', tone: 'info', t: 'Cancelled everything else to keep the season ticket. Priorities.' },
+    { k: 'pundit', tone: 'info', t: 'The people who fill these grounds are the last thing anybody thinks about in the boardroom.' },
+    { k: 'club', tone: 'info', t: 'A hardship fund for supporters is now open. Details on the site. 💙' }
+  ];
+
+  MORE3.socialMeta = [
+    { k: 'fan', tone: 'info', t: 'This app is unbearable after a defeat and unbearable after a win. Never leaving.' },
+    { k: 'fantv', tone: 'info', t: 'Reminder that everyone on here is a stranger with a strong opinion, me included.' },
+    { k: 'fan', tone: 'bad', t: 'The replies to that club post are a war zone. Stay out of there.' },
+    { k: 'pundit', tone: 'info', t: 'Nobody has ever changed their mind about a substitution because of a quote tweet.' },
+    { k: 'fan', tone: 'good', t: 'Made three genuine friends through this club and an app. Football is strange.' },
+    { k: 'fantv', tone: 'info', t: 'Muted the words "expected goals" for my own health.' },
+    { k: 'fan', tone: 'info', t: 'Somebody quoted my post from November back at me. Fair play, I was wrong.' },
+    { k: 'rival', tone: 'info', t: 'Following their fan accounts purely for the meltdowns. Great content.' },
+    { k: 'fan', tone: 'bad', t: 'Every fanbase has a hundred people who ruin it for the rest. Ours are very loud.' },
+    { k: 'fan', tone: 'good', t: 'Best thing on here is the bloke who posts the same photo of the ground every matchday.' }
+  ];
+
+  MORE3.tv = [
+    { k: 'fan', tone: 'bad', t: 'Moved to a Monday night for television. Two hundred miles. On a Monday.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} are on television again. That is the third time this month.`, when: c => c.pos <= 6 },
+    { k: 'fan', tone: 'good', t: 'On the telly and I am going anyway. Would not watch it at home if you paid me.' },
+    { k: 'fantv', tone: 'bad', t: 'The commentary team clearly did not know who half our players were.' },
+    { k: 'pundit', tone: 'info', t: 'This is a side worth putting on television. Not everybody in this league is.' },
+    { k: 'club', tone: 'info', t: 'Saturday has been selected for broadcast. New kick off time on the site. 📺' },
+    { k: 'fan', tone: 'info', t: 'Watched it in a pub with forty strangers. Better than the sofa every time.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have appeared on broadcast more this season than last.` }
+  ];
+  MORE3.win = [
+    { k: 'fan', tone: 'good', t: 'Won it in the manner of a team that expects to win. That is new.' },
+    { k: 'pundit', tone: 'good', t: 'Two goals from set pieces. Somebody has been working very hard on a training ground.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} take care of ${c.opp}. The manager described it as "a professional afternoon".` },
+    { k: 'fantv', tone: 'good', t: 'Three points and I did not shout at anybody. Growth.' },
+    { k: 'fan', tone: 'good', t: 'The bloke who moans every week said nothing today. Highest praise available.' },
+    { k: 'club', tone: 'good', t: c => `⚽ ${c.us}-${c.them}. Well played, everyone.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} win again and stay ${c.posOrd}.` },
+    { k: 'fan', tone: 'good', t: 'Won without our best player. That has not been possible for years.' },
+    { k: 'pundit', tone: 'info', t: 'A good side finds four different ways to win. They have found three of them this month.' },
+    { k: 'rival', tone: 'bad', t: 'They keep grinding out wins and it is deeply irritating.' },
+    { k: 'journo', tone: 'good', t: 'Not a goal of the season contender among them and nobody in that end cared.' },
+    { k: 'fan', tone: 'good', t: 'Sang all the way home on the train. Whole carriage joined in eventually.' },
+    { k: 'fantv', tone: 'good', t: 'Player ratings up. Two nines. I have never given a nine before.' },
+    { k: 'club', tone: 'good', t: 'Another three. 📈 Onto the next.' },
+    { k: 'stats', tone: 'info', t: c => `${c.wins} wins from ${c.played} for ${c.clubName} this season.` },
+    { k: 'fan', tone: 'good', t: 'Nothing beats the walk back to the car after a win. Nothing.' }
+  ];
+
+  MORE3.loss = [
+    { k: 'fan', tone: 'bad', t: 'We had the ball for an hour and did nothing with it. That is a plan failing, not bad luck.' },
+    { k: 'pundit', tone: 'info', t: 'They were beaten by a side who defended better and ran further. No mystery in it.' },
+    { k: 'journo', tone: 'bad', t: c => `A flat afternoon for ${c.clubName}. ${c.opp} did the simple things better all game.` },
+    { k: 'fantv', tone: 'bad', t: 'I have watched it back. It was worse the second time.' },
+    { k: 'fan', tone: 'info', t: 'You cannot win them all. Some of you genuinely think you can.' },
+    { k: 'club', tone: 'bad', t: 'A disappointing result. We regroup and we go again. 💙' },
+    { k: 'fan', tone: 'bad', t: 'Two hundred miles for that. My own fault for expecting anything.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} slip to ${c.posOrd} after the defeat.` },
+    { k: 'pundit', tone: 'bad', t: 'Nobody took responsibility on the ball in the second half. That is a confidence problem.' },
+    { k: 'rival', tone: 'good', t: c => `Three points at ${c.clubName}. Do not mind if I do.` },
+    { k: 'fan', tone: 'good', t: 'Away end sang for the last twenty minutes losing. Proud of that, whatever the score.' },
+    { k: 'journo', tone: 'info', t: 'The manager was calm afterwards. Too calm, some will say. Others will call it perspective.' },
+    { k: 'fantv', tone: 'bad', t: 'Not one player came over at the end. Noticed. Not impressed.' },
+    { k: 'fan', tone: 'bad', t: 'Same soft goal. Same corner. Same everything.' }
+  ];
+
+  MORE3.draw = [
+    { k: 'fan', tone: 'info', t: 'A point at their place is fine and I will not be told otherwise.' },
+    { k: 'pundit', tone: 'info', t: 'Neither manager gambled. Neither will lose their job over it either.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} share the points. It felt like a draw from about the twentieth minute.` },
+    { k: 'fantv', tone: 'bad', t: 'Drawing games we should win is how seasons quietly disappear.' },
+    { k: 'club', tone: 'info', t: c => `Full time: ${c.us}-${c.them}. Thanks for the support today. 💙` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} draw again and remain ${c.posOrd}.` },
+    { k: 'fan', tone: 'good', t: 'Equalised in the ninetieth. Feels like a win. It is not, but it feels like one.' },
+    { k: 'fan', tone: 'bad', t: 'Threw away a lead again. It is becoming a personality trait.' },
+    { k: 'pundit', tone: 'info', t: 'The substitutions were designed to hold a point. They held a point. Nobody has to like it.' },
+    { k: 'rival', tone: 'info', t: 'Point each and everybody goes home mildly annoyed. Perfect football match.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a video on our draws. There are too many of them for one video.' }
+  ];
+
+  MORE3.bigWin = [
+    { k: 'fan', tone: 'hot', t: 'Every single one of them was outstanding. Every single one.' },
+    { k: 'pundit', tone: 'good', t: 'That is what happens when a well-coached side meets one with no plan.' },
+    { k: 'journo', tone: 'good', t: c => `${c.clubName} were irresistible. ${c.opp} will not want to see the video.` },
+    { k: 'fantv', tone: 'hot', t: 'I ran out of superlatives on the livestream and started just shouting names.' },
+    { k: 'club', tone: 'hot', t: c => `${c.us}. ⚽⚽⚽ What a day at our place.` },
+    { k: 'fan', tone: 'hot', t: 'The away end emptied on the hour. Cannot blame them.' },
+    { k: 'stats', tone: 'info', t: c => `${c.us} goals for ${c.clubName}, and it could comfortably have been more.` },
+    { k: 'rival', tone: 'bad', t: 'Refunds. We want refunds. That was an insult.' },
+    { k: 'pundit', tone: 'good', t: 'The second goal was the best team move you will see in this division all year.' },
+    { k: 'fan', tone: 'hot', t: 'Lost my voice by half time. Second half was purely mimed.' },
+    { k: 'journo', tone: 'good', t: 'The manager apologised to the opposition bench afterwards. Nobody has ever done that here.' }
+  ];
+
+  MORE3.heavyLoss = [
+    { k: 'fan', tone: 'bad', t: 'That is the angriest I have ever been walking out of that ground.' },
+    { k: 'pundit', tone: 'bad', t: 'After the second there was no organisation at all. That is what should worry the board.' },
+    { k: 'journo', tone: 'bad', t: c => `${c.opp} scored ${c.them} and were coasting. ${c.clubName} have serious questions to answer.` },
+    { k: 'fantv', tone: 'bad', t: 'I have been shouting for eleven years and I could not get a word out at full time.' },
+    { k: 'club', tone: 'bad', t: 'We apologise to every supporter who travelled today.' },
+    { k: 'fan', tone: 'bad', t: 'Applauded them off out of habit. Regretted it immediately.' },
+    { k: 'stats', tone: 'info', t: c => `${c.them} conceded. That is not a performance, that is a warning.` },
+    { k: 'rival', tone: 'hot', t: 'Never enjoyed a football match more in my life.' },
+    { k: 'pundit', tone: 'info', t: 'One result does not tell you much. The manner of it tells you plenty.' },
+    { k: 'fan', tone: 'info', t: 'Stay behind, clap them, come back next week. That is what we do.' }
+  ];
+
+  MORE3.cupThrough = [
+    { k: 'fan', tone: 'good', t: 'One round closer. That is all any of this is.' },
+    { k: 'club', tone: 'good', t: 'Into the hat again. 🎩' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} come through the ${c.stageName.toLowerCase()} without alarm.` },
+    { k: 'pundit', tone: 'good', t: 'Doing the job on a cold night against a side with nothing to lose is harder than it looks.' },
+    { k: 'fantv', tone: 'good', t: 'Cup runs make seasons. I will keep saying it until somebody stops me.' },
+    { k: 'fan', tone: 'hot', t: 'I have already checked how many rounds are left. Twice.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} progress in the ${c.comp}.` },
+    { k: 'rival', tone: 'info', t: 'Good luck to them in it. It keeps them distracted from the league.' }
+  ];
+
+  MORE3.cupOut = [
+    { k: 'fan', tone: 'bad', t: 'Gone. And it was there for us. That is what makes it hurt.' },
+    { k: 'journo', tone: 'bad', t: c => `${c.clubName} are out. ${c.opp} deserved it over the ninety minutes.` },
+    { k: 'pundit', tone: 'info', t: 'That is the cups. One bad half an hour and you wait a year.' },
+    { k: 'fantv', tone: 'bad', t: 'Deleting the draw video I had already half made. Devastating.' },
+    { k: 'club', tone: 'bad', t: 'Our run ends. Thank you to everyone who followed it. 💙' },
+    { k: 'fan', tone: 'info', t: 'League it is then. Ninety percent of the season is still there.' },
+    { k: 'rival', tone: 'good', t: c => `Knocked ${c.clubName} out. Best night of my season.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} eliminated from the ${c.comp}.` }
+  ];
+
+  MORE3.worldie = [
+    { k: 'fan', tone: 'hot', t: c => `${c.scorer}. From THERE. On a Tuesday.` },
+    { k: 'club', tone: 'good', t: c => `Take a bow. 👏 ${c.scorer}.` },
+    { k: 'pundit', tone: 'good', t: 'The best players make the difficult thing look like the obvious thing.' },
+    { k: 'stats', tone: 'info', t: c => `A low-probability finish from ${c.scorer}. He specialises in those.` },
+    { k: 'fantv', tone: 'hot', t: 'That is on the channel intro from now on. Decision made.' },
+    { k: 'journo', tone: 'good', t: c => `${c.scorer} lit up an otherwise forgettable afternoon.` },
+    { k: 'fan', tone: 'good', t: 'My phone recording is entirely of my own reaction. Worth nothing. Keeping it forever.' }
+  ];
+
+  MORE3.wonderGoal = [
+    { k: 'fan', tone: 'hot', t: 'Twenty-six years watching this club. Top three goals I have seen live.' },
+    { k: 'club', tone: 'hot', t: c => `Just watch it. 🔁 ${c.scorer}.` },
+    { k: 'pundit', tone: 'good', t: 'He had one option and it was the hardest one, and he took it without thinking.' },
+    { k: 'journo', tone: 'good', t: c => `An extraordinary goal from ${c.scorer}. The whole press box asked to see it again.` },
+    { k: 'fantv', tone: 'hot', t: 'Uploading it on its own, no commentary, no music. It does not need me.' },
+    { k: 'stats', tone: 'info', t: c => `${c.scorer}: one of the lowest-probability finishes recorded in this competition.` },
+    { k: 'fan', tone: 'hot', t: 'The bloke behind me hugged me. I have never met him. I would die for him now.' },
+    { k: 'rival', tone: 'good', t: 'Conceding that is almost a privilege. Almost.' }
+  ];
+
+  MORE3.hattrick = [
+    { k: 'fan', tone: 'hot', t: c => `${c.scorer} has the match ball and the freedom of the city as far as I am concerned.` },
+    { k: 'club', tone: 'good', t: c => `Three for the man of the moment. 🎩 ${c.scorer}.` },
+    { k: 'journo', tone: 'good', t: c => `Three goals for ${c.scorer}, and each one was different.` },
+    { k: 'pundit', tone: 'good', t: 'Hat-tricks are about staying in the game after you miss. He missed two early on.' },
+    { k: 'fantv', tone: 'hot', t: 'HE HAS THE BALL. HE HAS THE BALL UNDER HIS ARM.' },
+    { k: 'stats', tone: 'info', t: c => `${c.scorer} now on ${c.topGoals} for the season.` },
+    { k: 'fan', tone: 'good', t: 'Whole ground chanting his name as he came off. Deserved every second of it.' }
+  ];
+  MORE3.weekly = [
+    { k: 'fan', tone: 'info', t: 'Spent the whole train home arguing about a substitution that did not happen.' },
+    { k: 'club', tone: 'info', t: 'Squad numbers for the new season are confirmed. 📋' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have been quietly excellent at the boring parts of running a football club.` },
+    { k: 'pundit', tone: 'info', t: 'The hardest thing in this job is doing nothing when everybody wants you to do something.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a video nobody asked for about our third choice goalkeeper. He is fascinating.' },
+    { k: 'fan', tone: 'good', t: 'The bloke who runs the supporters coach has done it for thirty years. Never taken a penny.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have won more games away than at home this season.` },
+    { k: 'fan', tone: 'bad', t: 'Programme notes are written by somebody who has clearly never watched us play.' },
+    { k: 'club', tone: 'good', t: 'Great turnout at the youth game last night. 🌱 Thank you.' },
+    { k: 'rival', tone: 'info', t: 'Their manager is the only reason they are where they are. Everybody knows it.' },
+    { k: 'journo', tone: 'info', t: c => `A scout from abroad was at ${c.clubName} on Saturday. That is happening more.` },
+    { k: 'fan', tone: 'info', t: 'Woke up and checked the table before I checked anything else. Every day.' },
+    { k: 'pundit', tone: 'good', t: 'Watch how quickly they get bodies behind the ball after a corner. Drilled.' },
+    { k: 'fantv', tone: 'good', t: 'Hit a milestone on the channel. All because of a football club I did not choose.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have scored more late goals than most in the ${c.leagueName}.` },
+    { k: 'fan', tone: 'bad', t: 'The queue for the ladies at half time is a disgrace and has been for twenty years.' },
+    { k: 'club', tone: 'info', t: 'Reminder that the club shop is open until five on matchdays. 🛍️' },
+    { k: 'journo', tone: 'info', t: 'The manager was seen at a reserve game on Tuesday night. He goes to most of them.' },
+    { k: 'fan', tone: 'good', t: 'A stranger gave my son his programme because we could not get one. Small kindness.' },
+    { k: 'pundit', tone: 'info', t: 'A team that presses this hard needs a January break and there is not one.' },
+    { k: 'fantv', tone: 'bad', t: 'Somebody asked if I have ever been positive. Yes. Twice. In 2019.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have the best conversion rate from headers in the division.` },
+    { k: 'fan', tone: 'info', t: 'The half time draw has been won by the same family three times. Rigged.' },
+    { k: 'club', tone: 'good', t: 'Our disability supporters association raised a huge amount this month. 💙' },
+    { k: 'journo', tone: 'info', t: c => `Recruitment meetings at ${c.clubName} now include the manager. That was not always the case.` },
+    { k: 'fan', tone: 'good', t: 'The pitch looked perfect. Whoever cut those stripes, well done.' },
+    { k: 'pundit', tone: 'info', t: 'This side plays with more courage away from home than at home. That is unusual and interesting.' },
+    { k: 'fantv', tone: 'info', t: 'Video on our best signings under a hundred grand. There are more than you think.' },
+    { k: 'fan', tone: 'bad', t: 'They have moved the away end. Again. For no reason.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} commit fewer fouls than most sides who press this high.` },
+    { k: 'club', tone: 'info', t: 'Bag policy has changed for the next home game. Check the site first. 🎒' },
+    { k: 'journo', tone: 'info', t: 'Two clubs have asked about the manager. Both were told no conversation would happen.' },
+    { k: 'fan', tone: 'good', t: 'Twenty-two years and I still get nervous walking up the steps into the stand.' },
+    { k: 'pundit', tone: 'good', t: 'You can tell a coached side by what they do in the ten seconds after losing the ball.' },
+    { k: 'fantv', tone: 'good', t: 'The comments on the last video were actually lovely. What has happened to you all.' },
+    { k: 'fan', tone: 'info', t: 'Half the ground wants us to play out. The other half wants it in row Z. Both are right sometimes.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have used the fewest goalkeepers of any side in this division.` },
+    { k: 'club', tone: 'good', t: 'Christmas party for the academy families this week. 🎄' },
+    { k: 'journo', tone: 'info', t: c => `A settled backroom staff at ${c.clubName} for a third season running.` },
+    { k: 'fan', tone: 'bad', t: 'Eight pounds for a pie and a Bovril. Eight!' },
+    { k: 'pundit', tone: 'info', t: 'His teams get better in the second half of seasons. That is fitness planning, not luck.' },
+    { k: 'fantv', tone: 'info', t: 'Ranking every stadium we have visited this season. Ours is not first. Sorry.' },
+    { k: 'fan', tone: 'good', t: 'Someone in the away end started a song about the bus driver. He waved. Magic.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have conceded fewer goals in the last fifteen minutes than anyone.` },
+    { k: 'club', tone: 'info', t: 'Matchday parking has changed. Please read the notes before you travel. 🚗' },
+    { k: 'journo', tone: 'info', t: 'The manager rarely gives anything away. This week he gave away that he is enjoying it.' },
+    { k: 'fan', tone: 'info', t: 'Went to an away game with my dad and did not speak for three hours. Perfect day.' },
+    { k: 'pundit', tone: 'info', t: 'The full backs are the whole system. If one of them goes down it is a different team.' },
+    { k: 'fantv', tone: 'good', t: 'Somebody sent me a photo of them watching my video in the away end. Made my year.' },
+    { k: 'fan', tone: 'bad', t: 'Turnstile operator scanned my ticket four times and then blamed me.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have gone behind fewer times this season than last.` },
+    { k: 'club', tone: 'good', t: 'A club record for season ticket renewals. Thank you all. 💙' },
+    { k: 'journo', tone: 'info', t: c => `The mood inside ${c.clubName} is described as calm and quietly ambitious.` },
+    { k: 'fan', tone: 'good', t: 'Watched the warm up properly for once. You learn a lot in twenty minutes.' },
+    { k: 'pundit', tone: 'info', t: 'Every manager says they want a settled side. Very few have the nerve to have one.' },
+    { k: 'fantv', tone: 'info', t: 'Long form video on our worst season. It was cathartic and I will not do it again.' },
+    { k: 'fan', tone: 'info', t: 'Nobody in this fanbase agrees on the best XI and everybody is certain.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have picked up more points from losing positions than at any point in five years.` },
+    { k: 'club', tone: 'info', t: 'Ticket exchange is now live for the sold-out fixture. 🎟️' },
+    { k: 'journo', tone: 'info', t: c => `A club that was rudderless three years ago now has a plan, a manager and a squad that fits both.` },
+    { k: 'fan', tone: 'good', t: 'Bumped into the kitman in a chip shop. Best twenty minutes of conversation this year.' },
+    { k: 'pundit', tone: 'info', t: 'The improvement here has been gradual and unglamorous. That is why it might last.' },
+    { k: 'fantv', tone: 'bad', t: 'Three people unsubscribed after the last one. Worth it.' },
+    { k: 'fan', tone: 'info', t: 'Sat in the home end at an away game once. Never again. Never.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} rank in the top half for both goals scored and goals prevented.`, when: c => c.pos <= 10 },
+    { k: 'club', tone: 'good', t: 'Players visited the childrens ward this morning. Not for the cameras. 💙' },
+    { k: 'journo', tone: 'info', t: 'Nothing has leaked out of that training ground all season, which itself says something.' },
+    { k: 'fan', tone: 'good', t: 'The old fella next to me has not missed a game since his wife passed. We look out for him.' },
+    { k: 'pundit', tone: 'good', t: 'Watch the goalkeeper start the attacks. That is the manager, not the keeper.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a video about why we all keep doing this. It got a bit emotional. Sorry.' },
+    { k: 'fan', tone: 'bad', t: 'Eleven pounds for a scarf that fell apart in the rain.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have kept more clean sheets away from home than at home.` },
+    { k: 'club', tone: 'info', t: 'The next fans forum is in three weeks. Submit your questions now. 🎤' },
+    { k: 'journo', tone: 'info', t: c => `Two directors at ${c.clubName} attended the away game. Small signal, noticed inside the club.` },
+    { k: 'fan', tone: 'good', t: 'Everyone in my life thinks I am mad. Everyone at the ground thinks I am normal.' },
+    { k: 'pundit', tone: 'info', t: 'A settled side breeds understanding. Understanding is worth more than talent over thirty-eight games.' },
+    { k: 'fantv', tone: 'good', t: 'Made a video with my dad about his first game. Most watched thing I have ever done.' },
+    { k: 'fan', tone: 'info', t: 'The steward on my gate knows my name and my order. Fifteen years.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have made fewer errors leading to goals than any side around them.` },
+    { k: 'club', tone: 'good', t: 'Thank you for another full away allocation. Best support in the league. 💙' },
+    { k: 'journo', tone: 'info', t: 'The manager turned down a media appearance to watch a youth game. That is who he is.' },
+    { k: 'fan', tone: 'good', t: 'The floodlights coming on at half four in December. Nothing better in sport.' },
+    { k: 'pundit', tone: 'info', t: 'What he has built here is repeatable, which is more than most managers can say.' }
+  ];
+  MORE3.weekly2 = [
+    { k: 'fan', tone: 'info', t: 'I have watched more football this season than I have slept. Not a joke.' },
+    { k: 'pundit', tone: 'info', t: 'The interesting sides are the ones doing something specific. This one is.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} continue to punch at their weight, which sounds like faint praise and is not.` },
+    { k: 'fantv', tone: 'info', t: 'Been asked to do a podcast with a rival channel. Considering it. Reluctantly.' },
+    { k: 'club', tone: 'good', t: 'Behind the scenes footage from the week. 🎥 Out now.' },
+    { k: 'fan', tone: 'good', t: 'Two of the lads stayed behind signing for an hour after training. Class.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} attempt more progressive passes than the divisional average.` },
+    { k: 'rival', tone: 'bad', t: 'Their fans have started calling their manager a genius. It has been six months.' },
+    { k: 'fan', tone: 'bad', t: 'Kick off at twelve thirty on a Sunday. Who is this for?' },
+    { k: 'pundit', tone: 'info', t: 'The most underrated skill in management is picking the same team when you are being told not to.' },
+    { k: 'journo', tone: 'info', t: 'Nothing dramatic to report, which after the last few years is quite the headline.' },
+    { k: 'fantv', tone: 'good', t: 'Doing a video on the best atmospheres this season. Ours features twice.' },
+    { k: 'fan', tone: 'good', t: 'Whole family in the same row for the first time. Cost a fortune. Worth every penny.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have improved their goal difference every month this season.` },
+    { k: 'club', tone: 'info', t: 'Away travel for the next round is now open to members. 🚌' },
+    { k: 'pundit', tone: 'good', t: 'This is a well-coached football team and there is no more useful sentence in the sport.' },
+    { k: 'fan', tone: 'info', t: 'Argued with my brother about the formation until two in the morning. Neither of us plays football.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have quietly built one of the better scouting operations at this level.` },
+    { k: 'fantv', tone: 'bad', t: 'The algorithm hates tactical videos. I am making them anyway. Out of spite.' },
+    { k: 'fan', tone: 'good', t: 'Bought a programme for the first time in years. Actually good. Somebody has tried.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have taken the lead in more matches than they have trailed.` },
+    { k: 'club', tone: 'good', t: 'A thousand school children at the ground today for our community day. 🧒' },
+    { k: 'pundit', tone: 'info', t: 'Nobody notices a good back four until it is not there any more.' },
+    { k: 'fan', tone: 'bad', t: 'Turnstiles opened late again. Missed the first five minutes with a thousand others.' },
+    { k: 'journo', tone: 'info', t: 'The training ground has been described as the calmest it has been in a decade.' },
+    { k: 'fantv', tone: 'good', t: 'Somebody stopped me at the ground to say the videos helped them through a bad year. Floored me.' },
+    { k: 'fan', tone: 'info', t: 'My group chat is 90% football and 10% arranging to watch football.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} allow fewer shots per game than at any point in this manager's tenure.` },
+    { k: 'club', tone: 'info', t: 'Kick off has been confirmed as three o clock. No change. ⏰' },
+    { k: 'rival', tone: 'info', t: 'Their away end genuinely does not stop. Give them that.' },
+    { k: 'pundit', tone: 'info', t: 'You judge a squad by its eighteenth best player. Theirs is decent, which is rare here.' },
+    { k: 'fan', tone: 'good', t: 'Somebody handed my daughter a pennant at the end. She has it on her wall.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have not had an off-field story all season. That is the story.` },
+    { k: 'fantv', tone: 'info', t: 'Doing a "where are they now" on the squad from five years ago. Some surprises.' },
+    { k: 'fan', tone: 'bad', t: 'Whoever picks the goal music needs a serious conversation with somebody.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have the highest share of minutes given to homegrown players in the division.` },
+    { k: 'club', tone: 'good', t: 'Our women’s side are top of their league. Get down and support them. 💙' },
+    { k: 'pundit', tone: 'info', t: 'There is a version of this team that gets relegated and a version that gets promoted. Coaching decides which.' },
+    { k: 'fan', tone: 'info', t: 'The bloke who does the half time draw has the same three jokes. I know them by heart.' },
+    { k: 'journo', tone: 'info', t: 'Two of the coaching staff have been offered contract extensions.' },
+    { k: 'fantv', tone: 'good', t: 'The best thing about this job is that strangers argue with me about a club we both love.' },
+    { k: 'fan', tone: 'good', t: 'Been going for thirty years. Missed one game. Still annoyed about it.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have improved on their points total at this stage in each of the last three seasons.` },
+    { k: 'club', tone: 'info', t: 'Please respect the local residents when parking. Thank you. 🏘️' },
+    { k: 'pundit', tone: 'good', t: 'Consistency of selection, consistency of message, consistency of shape. It is not complicated. It is just hard.' },
+    { k: 'fan', tone: 'bad', t: 'Away game on a Thursday night three hundred miles away. Whoever did that, I hope your tea is cold.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have been credited by opposing managers three times this month.` },
+    { k: 'fantv', tone: 'info', t: 'Doing a video on the worst refereeing decisions of the season. It is thirty-five minutes.' },
+    { k: 'fan', tone: 'good', t: 'The atmosphere before kick off gave me goosebumps and we were playing nobody.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} are among the least-changed starting elevens in the division.` },
+    { k: 'club', tone: 'good', t: 'Two hundred volunteers made today happen. Thank you, every one. 💙' },
+    { k: 'pundit', tone: 'info', t: 'The thing about identity is that it survives a bad month. Style does not.' },
+    { k: 'fan', tone: 'info', t: 'Have never once left a game early and I never will. It is a principle.' },
+    { k: 'journo', tone: 'info', t: 'The manager has been notably generous about his opposite numbers all season.' },
+    { k: 'fantv', tone: 'bad', t: 'Filmed for four hours and the audio was broken the whole time. I want to lie down.' },
+    { k: 'fan', tone: 'good', t: 'Away end sang the manager’s name unprompted. Whole ground turned round.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have conceded the fewest set-piece goals of any side in the bottom half.`, when: c => c.pos > 8 },
+    { k: 'club', tone: 'info', t: 'Programme collectors: the archive is now digitised and free. 📚' },
+    { k: 'pundit', tone: 'info', t: 'A manager who can coach a defence is worth two who can only inspire one.' },
+    { k: 'fan', tone: 'info', t: 'The pub before the game is half the reason I go. The other half is complaining afterwards.' },
+    { k: 'journo', tone: 'info', t: c => `A rare thing at ${c.clubName}: everybody inside and outside the club wants the same thing.` },
+    { k: 'fantv', tone: 'good', t: 'Ten thousand of you watched a video about a goal kick. I love this fanbase.' },
+    { k: 'fan', tone: 'good', t: 'Nothing in my week is as certain as this and I need that more than I admit.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName}: ${c.wins} wins, ${c.posOrd}, and trending upwards.`, when: c => c.wins >= 5 },
+    { k: 'club', tone: 'good', t: 'Congratulations to our academy graduate on his international call-up. 🌍' },
+    { k: 'pundit', tone: 'info', t: 'The clubs who get this right spend years being called boring first.' },
+    { k: 'fan', tone: 'bad', t: 'Nothing about modern football is designed for the people who actually go.' },
+    { k: 'journo', tone: 'info', t: 'A quiet, competent week. In this league that is worth writing down.' },
+    { k: 'fantv', tone: 'info', t: 'Answering the question I get most: no, I will not be nicer about the referee.' },
+    { k: 'fan', tone: 'good', t: 'My season ticket is the best money I spend and the worst investment I make.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have led at half time more often than any side outside the top three.`, when: c => c.pos >= 4 },
+    { k: 'club', tone: 'info', t: 'Supporter liaison drop-in sessions start next week. 💬' },
+    { k: 'pundit', tone: 'info', t: 'If you want to know whether a manager has a squad with him, watch the substitutes warm up.' },
+    { k: 'fan', tone: 'info', t: 'Whole family supports a different club. I chose this one at six and never looked back.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} are becoming a club other clubs copy. That has never been said here.` },
+    { k: 'fantv', tone: 'good', t: 'Doing a fan Q and A. You have already sent four hundred questions. Calm down.' },
+    { k: 'fan', tone: 'good', t: 'Best thing about this season is that I look forward to Saturdays again.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have had fewer players sent off than most in this division.` },
+    { k: 'club', tone: 'good', t: 'A record crowd for a league game at this ground. Thank you. 🎫' },
+    { k: 'pundit', tone: 'info', t: 'Nobody is going to make a documentary about a well organised midfield. They should.' },
+    { k: 'fan', tone: 'info', t: 'Watched a game on my phone at a wedding. Not proud. Would do it again.' },
+    { k: 'journo', tone: 'info', t: 'The manager has stopped being asked whether he can do it. Now he is asked how far he can go.' }
+  ];
+  const M4 = {};
+  M4.win = [
+    { k: 'fan', tone: 'good', t: 'Controlled it from the first whistle. Have not been able to say that in years.' },
+    { k: 'pundit', tone: 'good', t: 'They scored the goal the game needed at the moment the game needed it.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} do enough. In this division doing enough is a skill.` },
+    { k: 'fantv', tone: 'good', t: 'Went in expecting nothing. Came out singing. That is the whole hobby.' },
+    { k: 'club', tone: 'good', t: 'Three more. 💙 Same again, please.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} move to ${c.wins} wins for the campaign.` },
+    { k: 'fan', tone: 'good', t: 'Somebody in the away end had a trumpet and by the end everybody loved him.' },
+    { k: 'rival', tone: 'info', t: 'Deserved winners. Do not want to type it but there it is.' },
+    { k: 'pundit', tone: 'info', t: 'Not much in it, but they had the clearer idea. That was the difference.' },
+    { k: 'fan', tone: 'good', t: 'My mate said we would lose. He has bought the drinks. Justice.' }
+  ];
+  M4.loss = [
+    { k: 'fan', tone: 'bad', t: 'Never got going. Never looked like getting going. Worst kind of defeat.' },
+    { k: 'pundit', tone: 'info', t: 'It was the sort of afternoon where nothing they tried came off. It happens to everybody.' },
+    { k: 'journo', tone: 'bad', t: c => `${c.opp} were braver and it was that simple.` },
+    { k: 'fantv', tone: 'bad', t: 'Did the reaction video in the car. It is thirty seconds long and mostly sighing.' },
+    { k: 'club', tone: 'bad', t: 'Not good enough today. We know. 💙' },
+    { k: 'fan', tone: 'info', t: 'Take the defeat, learn from it, go again Saturday. Simple as that.' },
+    { k: 'stats', tone: 'info', t: c => `Defeat leaves ${c.clubName} ${c.posOrd}.` },
+    { k: 'rival', tone: 'good', t: 'Long drive home and I have not stopped smiling once.' },
+    { k: 'fan', tone: 'bad', t: 'Somebody explain why we changed a system that was working.' },
+    { k: 'pundit', tone: 'bad', t: 'They were passive without the ball and that is not like them at all.' }
+  ];
+  M4.draw = [
+    { k: 'fan', tone: 'info', t: 'Not brilliant, not terrible. Football has a lot of these and nobody talks about them.' },
+    { k: 'pundit', tone: 'info', t: 'A point that neither manager will complain about in public and both will privately.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} could not find the goal the game was asking for.` },
+    { k: 'fantv', tone: 'info', t: 'A draw. My least favourite content. There is nothing to say.' },
+    { k: 'club', tone: 'info', t: 'A point on the road. 💙' },
+    { k: 'fan', tone: 'bad', t: 'We do not draw enough of the ones we should lose and we draw all of the ones we should win.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} remain ${c.posOrd} after sharing the points.` }
+  ];
+  M4.signing = [
+    { k: 'fan', tone: 'good', t: 'Watched all his highlights twice. Convinced. Completely convinced. Ask me in November.' },
+    { k: 'journo', tone: 'info', t: c => `${c.player} becomes ${c.clubName}'s latest addition. Quiet business, done early.` },
+    { k: 'pundit', tone: 'info', t: 'A player who fits the system beats a better player who does not. Every time.' },
+    { k: 'fantv', tone: 'good', t: c => `Deep dive on ${c.player}. I watched four games so you do not have to.` },
+    { k: 'club', tone: 'good', t: c => `He is one of us now. 💙 ${c.player}.` },
+    { k: 'stats', tone: 'info', t: c => `${c.player} arrives rated ${c.ovr} at ${c.age}.` },
+    { k: 'fan', tone: 'bad', t: 'Another one for the future. We have eleven for the future and none for Saturday.' },
+    { k: 'rival', tone: 'info', t: 'Decent signing that. Annoyingly sensible club.' },
+    { k: 'fan', tone: 'good', t: 'First interview and he already said the right things about the supporters. In.' }
+  ];
+  M4.sale = [
+    { k: 'fan', tone: 'bad', t: 'Selling him in January is how you turn a good season into a bad one.' },
+    { k: 'journo', tone: 'info', t: c => `${c.player} departs for ${c.fee}. The manager said he would not stand in his way.` },
+    { k: 'fantv', tone: 'info', t: 'Genuinely gutted. He was one of my favourites and I did not expect that.' },
+    { k: 'pundit', tone: 'info', t: 'Every club sells. The good ones replace before they sell.' },
+    { k: 'club', tone: 'info', t: c => `Thank you and good luck, ${c.player}. 💙` },
+    { k: 'fan', tone: 'good', t: 'Right money at the right time. We have to be sensible sometimes.' },
+    { k: 'stats', tone: 'info', t: c => `${c.fee} received. ${c.clubName}'s budget updated accordingly.` }
+  ];
+  M4.injury = [
+    { k: 'fan', tone: 'bad', t: 'You could hear the gasp round the whole ground when he went down.' },
+    { k: 'pundit', tone: 'info', t: 'Losing him for a month reshapes the next six games completely.' },
+    { k: 'journo', tone: 'info', t: c => `${c.player} is facing a spell out. ${c.clubName} will not put a date on it.` },
+    { k: 'club', tone: 'info', t: c => `Get well soon, ${c.player}. 💙 We will be waiting.` },
+    { k: 'fantv', tone: 'bad', t: 'Every time we build momentum somebody breaks. Every single time.' },
+    { k: 'fan', tone: 'info', t: 'Somebody in that squad is about to get a run of games. Take it with both hands.' },
+    { k: 'stats', tone: 'info', t: c => `${c.player} out — ${c.label}, roughly ${c.games} games.` }
+  ];
+  M4.redCard = [
+    { k: 'fan', tone: 'bad', t: 'Reckless, needless, and it cost us the game. No defending that.' },
+    { k: 'pundit', tone: 'info', t: 'The referee had no choice. None whatsoever.' },
+    { k: 'journo', tone: 'info', t: c => `${c.player} walks. ${c.clubName} finished with ten and stayed in the game longer than they should have.` },
+    { k: 'fantv', tone: 'bad', t: 'Somebody in that dressing room needs to have a word with him.' },
+    { k: 'fan', tone: 'info', t: 'Honestly? Harsh. Watch it back. Genuinely harsh.' },
+    { k: 'club', tone: 'info', t: 'We will review the incident with the player.' }
+  ];
+  M4.sackWatch = [
+    { k: 'fan', tone: 'info', t: 'Four managers in six years has got us here. Doing it again will not get us out.' },
+    { k: 'journo', tone: 'bad', t: c => `Pressure is building at ${c.clubName}. The next two results look decisive.` },
+    { k: 'pundit', tone: 'info', t: 'The board have a decision and neither option is obviously right. That is the worst kind.' },
+    { k: 'fantv', tone: 'bad', t: 'Doing a video about the situation. It gives me no pleasure and it will get a lot of views.' },
+    { k: 'fan', tone: 'bad', t: 'The football has been unwatchable for two months. Somebody has to say it.' },
+    { k: 'club', tone: 'info', t: 'The board met today as they do every month. No further comment.' },
+    { k: 'stats', tone: 'info', t: c => `Board confidence has fallen to ${c.conf}.` },
+    { k: 'fan', tone: 'good', t: 'Whole ground sang for him at half time. Whatever happens, that was something.' }
+  ];
+  M4.champions = [
+    { k: 'fan', tone: 'hot', t: 'I have supported this club for thirty-one years for this exact afternoon.' },
+    { k: 'journo', tone: 'hot', t: c => `${c.clubName} are champions. Nobody outside that dressing room saw it coming in August.` },
+    { k: 'pundit', tone: 'good', t: 'A title built on a defence, a shape and a manager who never blinked.' },
+    { k: 'fantv', tone: 'hot', t: 'CHAMPIONS. I have said it two hundred times and I will say it two hundred more.' },
+    { k: 'club', tone: 'hot', t: '🏆 Say it with us. CHAMPIONS.' },
+    { k: 'fan', tone: 'hot', t: 'Rang everybody I know. Half of them do not like football. Told them anyway.' },
+    { k: 'stats', tone: 'info', t: c => `Champions of the ${c.leagueName}: ${c.clubName}.` },
+    { k: 'rival', tone: 'bad', t: 'Fair play. Genuinely. Now please be quiet for six weeks.' }
+  ];
+  M4.arrived = [
+    { k: 'fan', tone: 'info', t: 'Cautiously optimistic, which for me is basically a parade.' },
+    { k: 'journo', tone: 'info', t: c => `The new man at ${c.clubName} inherits a squad and a fanbase both waiting to be convinced.` },
+    { k: 'pundit', tone: 'info', t: 'He will get four months of goodwill. What he does with them decides everything.' },
+    { k: 'fantv', tone: 'good', t: 'First impressions: he answered every question and did not once mention a project. Good start.' },
+    { k: 'club', tone: 'good', t: 'A new chapter begins. ✍️' },
+    { k: 'fan', tone: 'good', t: 'Whatever happens, at least it is something different.' },
+    { k: 'rival', tone: 'info', t: 'Underwhelming appointment. Which usually means he is very good.' }
+  ];
+  M4.leaving = [
+    { k: 'fan', tone: 'bad', t: 'The best three years I have had following this club and it ends on a Tuesday afternoon.' },
+    { k: 'journo', tone: 'info', t: c => `The ${c.clubName} manager departs. The club now face the hardest appointment they have made in years.` },
+    { k: 'pundit', tone: 'info', t: 'Replacing a manager who overachieved is the trap almost every board walks into.' },
+    { k: 'fantv', tone: 'bad', t: 'Not making a video. Not today.' },
+    { k: 'club', tone: 'info', t: 'We thank him for everything. Nobody here will forget it. 💙' },
+    { k: 'fan', tone: 'good', t: 'Give him a standing ovation if he ever comes back. He earned it.' }
+  ];
+  M4.linked = [
+    { k: 'fan', tone: 'info', t: 'Every good thing at this club has an expiry date. Enjoying it while it lasts.' },
+    { k: 'journo', tone: 'hot', t: c => `${c.suitor} are said to be admirers. No formal approach has been made.` },
+    { k: 'fantv', tone: 'bad', t: 'Refreshing this app every four minutes like a lunatic.' },
+    { k: 'pundit', tone: 'info', t: 'He will weigh it up properly. That is what people who are good at this do.' },
+    { k: 'club', tone: 'info', t: 'The manager is under contract and fully focused on the next fixture.' },
+    { k: 'fan', tone: 'bad', t: 'If he goes I am not sure I can be bothered with the rebuild again.' }
+  ];
+  const M5 = {};
+  M5.weekly = [
+    { k: 'fan', tone: 'info', t: 'Told a colleague I was in a bad mood because of a corner. He did not understand.' },
+    { k: 'pundit', tone: 'info', t: 'The best thing about this league is that four clubs are trying genuinely different things.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have had one of the quietest injury records in the division this season.` },
+    { k: 'fantv', tone: 'info', t: 'Rating every pie I have eaten this season. Data driven. Deeply serious.' },
+    { k: 'club', tone: 'good', t: 'Sold out again. 🎫 See you Saturday.' },
+    { k: 'fan', tone: 'good', t: 'Took a mate who had never been. He has bought a shirt already.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have made fewer defensive errors than any side in the division this season.` },
+    { k: 'fan', tone: 'bad', t: 'Cannot hear the tannoy in half the ground. Never could.' },
+    { k: 'pundit', tone: 'info', t: 'Watch the midfielders point before they receive it. That is a coached team.' },
+    { k: 'journo', tone: 'info', t: 'The manager has been described by three opposing coaches this month as the best in this league.' },
+    { k: 'fantv', tone: 'good', t: 'Made a video about my dad taking me to my first game. He has watched it eleven times.' },
+    { k: 'fan', tone: 'info', t: 'There are four hundred of us who have the same argument every single week and I love them all.' },
+    { k: 'club', tone: 'info', t: 'Turnstiles will open earlier for the next fixture. ⏰' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} average more touches in the opposition box than at any point in five seasons.` },
+    { k: 'rival', tone: 'bad', t: 'Every single one of their fans is now a tactical analyst. Every one.' },
+    { k: 'fan', tone: 'good', t: 'Somebody gave me their spare ticket for nothing. Would not take a penny.' },
+    { k: 'pundit', tone: 'info', t: 'The manager has aged five years in two seasons and looks like he is enjoying every one of them.' },
+    { k: 'journo', tone: 'info', t: c => `A second consecutive season without significant off-field disruption at ${c.clubName}.` },
+    { k: 'fantv', tone: 'bad', t: 'Filmed a whole preview and then the team news made it useless.' },
+    { k: 'fan', tone: 'good', t: 'Best part of an away day is the bit where nothing has gone wrong yet.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} concede from set pieces less often than any of their nearest rivals.` },
+    { k: 'club', tone: 'good', t: 'Our supporters raised enough to fund a minibus for the academy. Incredible. 💙' },
+    { k: 'fan', tone: 'bad', t: 'The bloke behind me has booed every backwards pass since 2011.' },
+    { k: 'pundit', tone: 'info', t: 'This side does not need the ball to be dangerous, which is the hardest thing to coach.' },
+    { k: 'journo', tone: 'info', t: 'No new injuries, no suspensions, no drama. The manager will take that every week.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a video on the goalkeeper. Nobody will watch it and he deserves it.' },
+    { k: 'fan', tone: 'info', t: 'Somebody asked me to explain why I care this much. Still working on an answer.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have used fewer than twenty players in league games this season.` },
+    { k: 'club', tone: 'info', t: 'Match tickets are now available to all members. 🎟️' },
+    { k: 'fan', tone: 'good', t: 'The kid in front of me got a wave from a player at the warm up. Made his entire life.' },
+    { k: 'pundit', tone: 'info', t: 'The gap between a well-drilled side and a talented one narrows every week of a long season.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have started planning for next summer already. That is new here.` },
+    { k: 'fantv', tone: 'good', t: 'Best comments section on this app and I will fight anyone who says otherwise.' },
+    { k: 'fan', tone: 'bad', t: 'Three quid for a cup of tea in a paper cup that dissolves.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have won more points in the second half of games than the first.` },
+    { k: 'club', tone: 'good', t: 'Nine hundred of you at the away game on a Tuesday. Remarkable. 💙' },
+    { k: 'fan', tone: 'info', t: 'Been to ninety grounds. Ours is not the nicest. It is the only one that matters.' },
+    { k: 'pundit', tone: 'info', t: 'The clever bit is not the shape. It is that all eleven of them agree on what to do next.' },
+    { k: 'journo', tone: 'info', t: 'The manager gave a coaching session to local youth coaches this week. Nobody asked him to.' },
+    { k: 'fantv', tone: 'info', t: 'A hundred episodes of this podcast. I have said the same six things a hundred times.' },
+    { k: 'fan', tone: 'good', t: 'Away end and home end applauded each other at the end. Rare and lovely.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} rank top ten for chances created from open play.` },
+    { k: 'club', tone: 'info', t: 'The pitch inspection has passed. The game is on. ✅' },
+    { k: 'fan', tone: 'bad', t: 'Nobody sings in the new stand. Nobody. It is a library with a roof.' },
+    { k: 'pundit', tone: 'good', t: 'They have gone from a team that hopes to a team that expects. That is a manager doing his job.' },
+    { k: 'journo', tone: 'info', t: c => `Everybody at ${c.clubName} is now pointing in the same direction, which took a very long time.` },
+    { k: 'fantv', tone: 'good', t: 'Somebody made a banner from one of my thumbnails. I am never getting over this.' },
+    { k: 'fan', tone: 'info', t: 'My whole social life is arranged around a fixture list published in June.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} give the ball away in their own third less than almost anyone.` },
+    { k: 'club', tone: 'good', t: 'Thank you for filling this place again. It makes a difference. 💙' }
+  ];
+  M5.tacticsTalk = [
+    { k: 'pundit', tone: 'info', t: 'They never have fewer than three players within ten yards of the ball. That is deliberate.' },
+    { k: 'pundit', tone: 'info', t: 'The striker drops in and the winger goes beyond. Same move, twenty times a game, still unstoppable.' },
+    { k: 'fan', tone: 'info', t: 'The whole system depends on one midfielder being fit. That is terrifying.' },
+    { k: 'fantv', tone: 'info', t: 'Drew the shape on a whiteboard. Realised halfway through I had eleven and a half players.' },
+    { k: 'pundit', tone: 'good', t: 'They defend the halfway line better than most sides defend their own box.' },
+    { k: 'fan', tone: 'bad', t: 'We have no way of hurting a side that sits deep and we play three of them a month.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} switch play more often than the divisional average.` },
+    { k: 'pundit', tone: 'info', t: 'The goalkeeper is the first attacker and the last defender. He has coached both halves of that.' },
+    { k: 'fan', tone: 'good', t: 'The rotations on the left are genuinely lovely to watch when they come off.' },
+    { k: 'fantv', tone: 'info', t: 'Explaining a rest defence with cutlery on a kitchen table. This is my life now.' }
+  ];
+  M5.fanCulture = [
+    { k: 'fan', tone: 'good', t: 'Our songs are better than yours and that is the only trophy some clubs get.' },
+    { k: 'fan', tone: 'good', t: 'Two thousand of us on a Tuesday, four hours each way, and the noise never dropped.' },
+    { k: 'fantv', tone: 'good', t: 'Filmed the away end for ninety minutes. Not one person sat down.' },
+    { k: 'club', tone: 'good', t: 'That is what a full house sounds like. 🔊 💙' },
+    { k: 'fan', tone: 'info', t: 'Somebody has been bringing the same flag since 1998. It has been repaired forty times.' },
+    { k: 'fan', tone: 'good', t: 'A stranger bought my son a hot chocolate because he was cold. I never got his name.' },
+    { k: 'rival', tone: 'info', t: 'Their fans were class with our lot after the game. Credit to them.' },
+    { k: 'fan', tone: 'bad', t: 'Somebody threw a pie. A whole pie. At nobody in particular.' },
+    { k: 'fantv', tone: 'good', t: 'Doing a video on the songs and where they came from. Some of them are older than me.' },
+    { k: 'fan', tone: 'good', t: 'Standing with the same twelve people for fifteen years. That is a family, basically.' }
+  ];
+  M5.mediaTalk = [
+    { k: 'fantv', tone: 'info', t: 'Got asked for a quote by a national paper. They used one word of it.' },
+    { k: 'journo', tone: 'info', t: c => `Interest in ${c.clubName} from the national press has picked up noticeably.` },
+    { k: 'pundit', tone: 'good', t: 'I would happily watch this side every week and I do not say that about many.' },
+    { k: 'fan', tone: 'bad', t: 'The studio panel spent four minutes on us and got two names wrong.' },
+    { k: 'fantv', tone: 'good', t: 'A national outlet nicked my analysis without credit. Flattered and furious.' },
+    { k: 'journo', tone: 'info', t: 'The manager remains one of the more thoughtful interviews in this division.' },
+    { k: 'fan', tone: 'info', t: 'Radio commentary is better than television and I will not be arguing about it.' },
+    { k: 'pundit', tone: 'info', t: 'We spend all our airtime on four clubs and miss the most interesting football in the country.' }
+  ];
+  M5.history = [
+    { k: 'fan', tone: 'good', t: 'My grandad watched this club for sixty years and saw us win one thing. I think about that a lot.' },
+    { k: 'club', tone: 'good', t: 'On this day, one of the great comebacks at this ground. 📅' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have not been in this position for a very long time.`, when: c => c.pos <= 3 },
+    { k: 'fantv', tone: 'good', t: 'Watched an old game on tape. The pitch was mud. The football was better than I remembered.' },
+    { k: 'fan', tone: 'info', t: 'Found a ticket stub from 1996 in a coat. Whole afternoon gone.' },
+    { k: 'pundit', tone: 'info', t: 'Clubs like this go decades between good sides. You savour them when they arrive.' },
+    { k: 'fan', tone: 'good', t: 'My dad still talks about a game from 1989. I have finally got one of my own.' },
+    { k: 'club', tone: 'good', t: 'Fifty years since that famous night. We remember. 💙' }
+  ];
+  M5.awayDays = [
+    { k: 'fan', tone: 'good', t: 'Six of us, one car, four hundred miles, no radio. Best day of the season.' },
+    { k: 'fan', tone: 'bad', t: 'Coach broke down on the way home. Sang for two hours on a hard shoulder.' },
+    { k: 'fantv', tone: 'good', t: 'Away day series continues. This one has a train, a taxi and a wrong turn.' },
+    { k: 'club', tone: 'info', t: 'Away coaches depart at nine. Please be on time. 🚌' },
+    { k: 'fan', tone: 'good', t: 'Got there four hours early and had the best day out I have had all year.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} take another full allocation. Their away support has been extraordinary all season.` },
+    { k: 'fan', tone: 'info', t: 'Away end had a roof for the first time in about six trips. Felt like luxury.' },
+    { k: 'rival', tone: 'info', t: 'Their away fans were the best we have had here this season by a distance.' }
+  ];
+  M5.squadTalk = [
+    { k: 'fan', tone: 'good', t: 'The squad looks like a squad now. Not eleven players and a lot of hoping.' },
+    { k: 'pundit', tone: 'info', t: 'They have two players for every position except one, and everybody knows which one.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} will look to add depth rather than a marquee name.` },
+    { k: 'fantv', tone: 'info', t: 'Ranked the squad. Number one was obvious. Numbers eight to fourteen caused a war.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have five players over thirty in the squad.` },
+    { k: 'fan', tone: 'bad', t: 'One injury in midfield and this whole thing falls apart.' },
+    { k: 'pundit', tone: 'good', t: 'The bench changed the last two games. That is what a squad is for.' },
+    { k: 'fan', tone: 'good', t: 'Nobody in that squad looks like they do not want to be there. Rare.' }
+  ];
+  const M6 = {};
+  M6.weekly = [
+    { k: 'fan', tone: 'info', t: 'Somebody at work asked how the team is doing. Forty minutes later he regretted it.' },
+    { k: 'pundit', tone: 'info', t: 'Watch which player the manager talks to first at full time. It tells you what he saw.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName}'s recruitment has been aimed at one profile all year. That is discipline.` },
+    { k: 'fantv', tone: 'info', t: 'Doing a video on the assistant manager. Nobody knows his name. He is running half of it.' },
+    { k: 'club', tone: 'good', t: 'Training ground open day was a sell-out. Thank you all. ☀️' },
+    { k: 'fan', tone: 'good', t: 'A kid asked me who my favourite player was. Realised I have four. Told him all of them.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have improved their expected goals difference every month.` },
+    { k: 'fan', tone: 'bad', t: 'Big screen has been broken since November and nobody has mentioned it.' },
+    { k: 'pundit', tone: 'info', t: 'A side with no obvious weakness is worth more than a side with two obvious strengths.' },
+    { k: 'journo', tone: 'info', t: 'The manager was seen at three different grounds this week. He watches everything.' },
+    { k: 'fantv', tone: 'good', t: 'The channel hit a milestone. Doing a giveaway. It is a scarf. Sorry.' },
+    { k: 'fan', tone: 'info', t: 'Every fanbase thinks it is the most long-suffering. Ours is objectively correct.' },
+    { k: 'club', tone: 'info', t: 'Please note the earlier kick off time this weekend. ⏰' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have been ahead for more total minutes than behind this season.` },
+    { k: 'rival', tone: 'bad', t: 'Cannot open this app without seeing their badge. Enough now.' },
+    { k: 'fan', tone: 'good', t: 'Whoever put the flags out in the away end, thank you. Looked brilliant.' },
+    { k: 'pundit', tone: 'info', t: 'Managers get sacked for the football and kept for the results. He has both, for now.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have not had a single leak from inside the club this season.` },
+    { k: 'fantv', tone: 'bad', t: 'Recorded a whole video and forgot to press record. Twice.' },
+    { k: 'fan', tone: 'good', t: 'The moment the teams come out. Every single week. Twenty-five years.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have the youngest bench in the division on most matchdays.` },
+    { k: 'club', tone: 'good', t: 'Well done to our under-16s, who won their cup last night. 🌱🏆' },
+    { k: 'fan', tone: 'bad', t: 'Away ticket ballot again. Twelve years of loyalty points and nothing.' },
+    { k: 'pundit', tone: 'good', t: 'The difference this season is that the substitutes make the team better, not just different.' },
+    { k: 'journo', tone: 'info', t: 'Everything about this club is calmer than it was. That is worth points on its own.' },
+    { k: 'fantv', tone: 'info', t: 'The most requested video is about a corner from November. I will make it.' },
+    { k: 'fan', tone: 'info', t: 'Told my wife I was going to one more game this season. That was in October.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} press more in the first fifteen minutes than any other period.` },
+    { k: 'club', tone: 'info', t: 'The club shop will open late after the game. 🛍️' },
+    { k: 'fan', tone: 'good', t: 'Somebody in the pub said our manager is the best thing to happen here in twenty years. Nobody argued.' },
+    { k: 'pundit', tone: 'info', t: 'It is easy to coach a press. It is very hard to coach when to stop pressing.' },
+    { k: 'fan', tone: 'bad', t: 'Steward told me to sit down in the ninetieth minute of a one-goal game. Genuinely.' },
+    { k: 'journo', tone: 'info', t: c => `Season ticket sales at ${c.clubName} have hit a modern record.` },
+    { k: 'fantv', tone: 'good', t: 'Doing a video about the tea lady. She has been here longer than anyone.' },
+    { k: 'fan', tone: 'info', t: 'Nothing has taken more of my money, time and emotional energy and I have no complaints.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have taken points off every side in the bottom six.`, when: c => c.pos <= 8 },
+    { k: 'club', tone: 'good', t: 'Our foodbank collection has doubled this season. Thank you. 💙' },
+    { k: 'pundit', tone: 'info', t: 'Give a good coach three years and a board that does not panic. That is the whole formula.' },
+    { k: 'fan', tone: 'good', t: 'I have never once regretted going. Not one game in thirty years.' },
+    { k: 'journo', tone: 'info', t: 'The manager thanked the ground staff, the kitman and the analysts by name today.' }
+  ];
+
+  const MORE_REPLIES2 = {
+    hype: [
+      'he is the best thing to happen to this club in my lifetime', 'we have a manager. an actual manager.',
+      'nobody works harder and nobody complains less', 'I would follow this side anywhere',
+      'give the man a statue and a stand named after him', 'this is what it feels like to be well run',
+      'the football is beautiful and the results back it up', 'never been prouder of a team I have no control over',
+      'we are not a big club and we play like one', 'he has changed what we think is possible here'
+    ],
+    doubt: [
+      'the second we lose three the mood changes and you all know it', 'we have not beaten anybody good yet',
+      'the shape falls apart against a proper press', 'looks great until somebody works it out',
+      'I have seen four managers get this reaction and none of them lasted', 'the squad is papering over the cracks',
+      'good, not great. there is a difference and it matters in April.', 'talk to me when we have won something'
+    ],
+    banter: [
+      'still cannot believe you are excited about this', 'we have won more this decade than you have this century',
+      'lovely little club you have there', 'setting a reminder to laugh in May',
+      'you are one bad month from the same meltdown as last year', 'nobody outside your postcode cares',
+      'imagine celebrating a point', 'best support in the league? you had two thousand empty seats'
+    ],
+    stat: [
+      'their expected goals against is the best in the division', 'nobody has more clean sheets since Christmas',
+      'points per game has doubled under this manager', 'the squad age has come down and the results have gone up',
+      'top of the league for shot quality, which nobody talks about', 'their set piece defending is statistically elite',
+      'fewest errors leading to goals of anyone around them', 'they have overperformed their model every single month'
+    ],
+    tactic: [
+      'the answer has been a proper six all season and everyone can see it', 'push the line up ten yards and this is a different team',
+      'stop taking the winger off on seventy minutes', 'we defend the box brilliantly and the edge of it terribly',
+      'the double pivot is why we look calm now', 'give the full backs licence and watch what happens',
+      'he changes it at half time better than anyone in this league'
+    ],
+    joke: [
+      'my heart rate monitor thinks I ran a marathon', 'have not slept properly since August',
+      'my partner has learned the offside rule out of self defence', 'named the wifi after him',
+      'watched it back with the sound off like a psychopath', 'my group chat is unusable on matchdays',
+      'have started dreaming about set pieces', 'told the dentist I support this club. he was sympathetic.'
+    ],
+    cope: [
+      'right. next week. clean slate.', 'it is one game in a long season',
+      'we have been worse and survived', 'nobody remembers a Tuesday in November',
+      'going for a walk. see you all Saturday.', 'football owes me nothing and I keep asking'
+    ],
+    wholesome: [
+      'my son asked if we could go again next week. that is all I need.',
+      'the players clapped the away end for a full minute. noticed.',
+      'somebody in the crowd was crying at full time. we all understood.',
+      'this club has been the best constant in a hard few years',
+      'took my grandad. first game since 2009. he sang every song.'
+    ],
+    hope: [
+      'we are two players and one summer away', 'the young ones are going to be special',
+      'first time in years the future looks better than the present', 'stick with him and see where this goes',
+      'we have a plan and a manager who believes in it. that is enough for now.'
+    ],
+    anger: [
+      'somebody has to be accountable and it is never the people upstairs',
+      'we have been let down by this club more times than I can count',
+      'I have paid for a season ticket for twenty years and I want an explanation',
+      'no fight. that is the bit I cannot forgive.',
+      'stop hiding behind the budget'
+    ]
+  };
+
+  const MORE_YOU2 = {
+    calm: [
+      c => `Nothing that happens on a phone changes what we do on a Tuesday morning.`,
+      c => `We will keep doing the same things. They tend to work.`,
+      c => `I am not interested in anybody's predictions, including my own.`,
+      c => `Quiet week, good week. That is how most of this job goes.`,
+      c => `Every player in that building knows what is expected. That is all I need.`
+    ],
+    fire: [
+      c => `We are going to be very hard to beat and everybody is going to find that out.`,
+      c => `Anybody who thinks this group will fold has not met this group.`,
+      c => `Bring whoever you like to our place. See how you get on.`,
+      c => `I have heard the word 'overachieving' a lot. We will see about that.`,
+      c => `Nobody is doing us any favours and nobody needs to.`
+    ],
+    honest: [
+      c => `That is on me. All of it. The players deserved better preparation.`,
+      c => `I picked it, I set it up, I got it wrong. Nothing else to say.`,
+      c => `We have not been at the level for a month and I am the one who has to fix it.`,
+      c => `Anybody who travelled today deserves an apology and they have mine.`,
+      c => `I will not pretend that was acceptable, because it was not.`
+    ],
+    praise: [
+      c => `Every one of those players ran until they could not run any more. That is all you can ask.`,
+      c => `${c.star2} has been the quietest, best thing about this season.`,
+      c => `The young lads have come in and looked like they have been here for years.`,
+      c => `Our supporters made that happen. I mean that literally.`,
+      c => `${c.topScorer} gets the headlines. The lad next to him does half his running.`
+    ],
+    defiant: [
+      c => `We will do this properly or not at all. Those are the only two options.`,
+      c => `Anybody who wants a different manager knows where the boardroom is.`,
+      c => `I will be here on Monday, doing the same job, the same way.`,
+      c => `Criticism is part of it. Panicking is not, and we will not be doing any.`,
+      c => `Judge me at the end. Not in October, not in February. At the end.`
+    ]
+  };
+
+  const M7 = {};
+  M7.weekly = [
+    { k: 'fan', tone: 'info', t: 'Booked a hotel for an away game in March. It is October.' },
+    { k: 'pundit', tone: 'info', t: 'The best sides make the pitch big with the ball and tiny without it. They do both.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName}'s medical team have been credited internally for the injury record.` },
+    { k: 'fantv', tone: 'info', t: 'Doing a video about our worst ever signing. It was a long shortlist.' },
+    { k: 'club', tone: 'good', t: 'Nine hundred kids at the community festival today. 🧒⚽' },
+    { k: 'fan', tone: 'good', t: 'A player signed my programme and asked how my season had been. Ten minutes of chat.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have won more aerial duels than at any point this decade.` },
+    { k: 'fan', tone: 'bad', t: 'Cannot see the far corner from my seat. Never could. Renewed anyway.' },
+    { k: 'pundit', tone: 'info', t: 'Every good manager has one idea he refuses to give up. His is the high line.' },
+    { k: 'journo', tone: 'info', t: 'A calm end to the week at the training ground. Everybody available.' },
+    { k: 'fantv', tone: 'good', t: 'Best question in the mailbag was from an eight-year-old. Better than most adults.' },
+    { k: 'fan', tone: 'info', t: 'The pre-match ritual has not changed since 2008. Same pub, same seat, same pint.' },
+    { k: 'club', tone: 'info', t: 'Digital tickets only from next month. Guides are on the website. 📱' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} take fewer shots but score more than most sides around them.` },
+    { k: 'rival', tone: 'info', t: 'Their ground on a night game is genuinely one of the better trips.' },
+    { k: 'fan', tone: 'good', t: 'Somebody at the ground remembered my son from last season. He has not stopped talking about it.' },
+    { k: 'pundit', tone: 'info', t: 'A side that defends the same way at 0-0 and 2-0 is a side that has been coached properly.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have made no changes to the coaching staff for two seasons.` },
+    { k: 'fantv', tone: 'bad', t: 'Somebody told me I should be more like the big channels. Absolutely not.' },
+    { k: 'fan', tone: 'good', t: 'Watched the warm-up with a coffee and nobody else in the ground. Peaceful.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have taken the most points from the bottom half of any side in the top half.`, when: c => c.pos <= 10 },
+    { k: 'club', tone: 'good', t: 'Twenty-five years of the supporters trust. Thank you for everything. 💙' },
+    { k: 'fan', tone: 'bad', t: 'Half time entertainment is a man with a T-shirt cannon and low expectations.' },
+    { k: 'pundit', tone: 'info', t: 'They have not been beaten by a side playing the same way as them all season.' },
+    { k: 'journo', tone: 'info', t: 'The manager spent Sunday watching a youth game in the rain. Nobody told him to.' },
+    { k: 'fantv', tone: 'info', t: 'Reviewing every kit since 1992. Some of them are hate crimes.' },
+    { k: 'fan', tone: 'info', t: 'The bloke who does the announcements got the goalscorer wrong and the whole ground corrected him.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have started the same eleven more often than anyone in the division.` },
+    { k: 'club', tone: 'info', t: 'The away end will be relocated for the next fixture. Details online. 🎟️' },
+    { k: 'fan', tone: 'good', t: 'Nothing feels as good as being right about a player nobody rated.' },
+    { k: 'pundit', tone: 'info', t: 'The bravest decision this manager makes every week is not changing anything.' },
+    { k: 'journo', tone: 'info', t: c => `Interest in ${c.clubName}'s coaching methods has come from outside the division.` },
+    { k: 'fantv', tone: 'good', t: 'Somebody sent me a photo of their newborn in a club babygro. This is why I do it.' },
+    { k: 'fan', tone: 'bad', t: 'They have changed the crest again. Third time in my life. Leave it alone.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have kept possession better in the final fifteen minutes than any side around them.` },
+    { k: 'club', tone: 'good', t: 'The players funded new kit for a local youth side this week. Quietly. 💙' },
+    { k: 'fan', tone: 'info', t: 'Argued with my dad about a substitution and neither of us has backed down in three days.' },
+    { k: 'pundit', tone: 'info', t: 'What he has done is unglamorous, repeatable and almost impossible to copy. That is the trick.' },
+    { k: 'journo', tone: 'info', t: 'Not a single player has publicly complained about minutes this season. Rare.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a video on the ten worst refereeing decisions against us. It is a series now.' },
+    { k: 'fan', tone: 'good', t: 'Thirty of us in a pub singing at eleven at night about a one nil win. Perfect.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have conceded first in fewer than a third of their games.` },
+    { k: 'club', tone: 'info', t: 'Please arrive early. We are expecting a full house. 🎫' },
+    { k: 'fan', tone: 'bad', t: 'Somebody spilled a full pint down my back at the equaliser and I hugged him anyway.' },
+    { k: 'pundit', tone: 'good', t: 'Every player knows exactly what the man next to him is going to do. That takes two years.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} are being talked about as a model club, which nobody would have written three years ago.` },
+    { k: 'fantv', tone: 'good', t: 'The away end sang my channel name once. I have never recovered.' },
+    { k: 'fan', tone: 'info', t: 'Cannot explain to anyone why a nil nil in the rain was one of my favourite days.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have used the fewest different centre-back pairings in the league.` },
+    { k: 'club', tone: 'good', t: 'A record number of you renewed before the deadline. Thank you. 💙' }
+  ];
+  M7.tacticsTalk = [
+    { k: 'pundit', tone: 'info', t: 'They funnel everything into one channel and then double up. It looks passive and it is a trap.' },
+    { k: 'pundit', tone: 'good', t: 'Nobody in this division defends a two-goal lead as calmly as they do now.' },
+    { k: 'fan', tone: 'info', t: 'We are the only side in this league who look like they have practised a throw-in.' },
+    { k: 'fantv', tone: 'info', t: 'Made a diagram. It has fourteen arrows. I regret everything.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} complete more passes in the opposition half than they did last season.` },
+    { k: 'pundit', tone: 'info', t: 'The number ten is doing a defensive job that nobody watching would notice.' },
+    { k: 'fan', tone: 'bad', t: 'The second striker drops so deep he is basically a midfielder. Pick a plan.' },
+    { k: 'pundit', tone: 'good', t: 'They win the ball back within eight seconds more often than anyone. That is the whole side.' }
+  ];
+  M7.fanCulture = [
+    { k: 'fan', tone: 'good', t: 'New song about the manager to the tune of something dreadful. It is perfect.' },
+    { k: 'fantv', tone: 'good', t: 'Filmed the tifo going up. Four hundred hours of work by twelve people.' },
+    { k: 'club', tone: 'good', t: 'What a display from the stands tonight. Thank you. 🎨' },
+    { k: 'fan', tone: 'good', t: 'Everyone stayed behind at full time and nobody knew why. Just did not want to leave.' },
+    { k: 'fan', tone: 'info', t: 'We have a song for the third choice goalkeeper. He has played twice in four years.' },
+    { k: 'rival', tone: 'info', t: 'Their tifo was better than ours and I am not happy about it.' },
+    { k: 'fan', tone: 'good', t: 'The bloke who leads the singing lost his voice in October and has not stopped.' },
+    { k: 'fantv', tone: 'good', t: 'Best moment of my season was six thousand people singing on a Tuesday.' }
+  ];
+  M7.deepStats = [
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have the best defensive record against the top six.`, when: c => c.pos <= 12 },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName}'s average possession has fallen and their results have improved.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} take a higher proportion of shots from inside the six-yard box than most.` },
+    { k: 'pundit', tone: 'info', t: 'The numbers say they should be higher. The numbers usually catch up.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have the lowest rate of shots conceded from counter-attacks.` },
+    { k: 'fan', tone: 'bad', t: 'If the underlying numbers were points we would have won the league four times.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} rank first for defensive actions in the opposition half.` },
+    { k: 'pundit', tone: 'info', t: 'You can build a model of what they do because what they do is consistent. That is the compliment.' }
+  ];
+  M7.pressure = [
+    { k: 'fan', tone: 'info', t: 'He has taken more abuse this month than anyone deserves for a job.' },
+    { k: 'journo', tone: 'info', t: 'A short press conference today. Nobody could blame him.' },
+    { k: 'pundit', tone: 'info', t: 'You can see it in his shoulders. That does not mean he is beaten.' },
+    { k: 'fantv', tone: 'info', t: 'Whatever happens, the man has been decent with every one of us all season.' },
+    { k: 'fan', tone: 'good', t: 'The whole ground stayed to applaud him off. First time I have seen that here.' },
+    { k: 'club', tone: 'info', t: 'The manager has our full support and will take training as normal tomorrow.' }
+  ];
+  M7.boardHappy = [
+    { k: 'journo', tone: 'good', t: c => `An improved deal has been offered at ${c.clubName}. The manager is said to be minded to sign.` },
+    { k: 'fan', tone: 'good', t: 'Tie him down for five years and give him a say in everything.' },
+    { k: 'club', tone: 'good', t: 'Delighted to confirm an extension. ✍️ 💙' },
+    { k: 'pundit', tone: 'good', t: 'Rewarding a manager who is doing well sounds obvious. Very few boards manage it.' },
+    { k: 'fantv', tone: 'good', t: 'Best news of the season and it is not close.' },
+    { k: 'stats', tone: 'info', t: c => `Board confidence at ${c.clubName} sits at ${c.conf}.` }
+  ];
+
+  // fold the v3.6 additions in alongside the earlier ones
+  const M8 = {};
+  M8.weekly = [
+    { k: 'fan', tone: 'good', t: 'Twelve years of misery and one good season wipes all of it. Football is a con and I am in.' },
+    { k: 'pundit', tone: 'info', t: 'A manager who trusts his goalkeeper changes what the other ten can do.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have not made a panic decision all season. It shows.` },
+    { k: 'fantv', tone: 'info', t: 'New series: bad tackles I still think about. Episode one is from 2004.' },
+    { k: 'club', tone: 'good', t: 'Thank you to the volunteers who ran the food drive today. 💙' },
+    { k: 'fan', tone: 'bad', t: 'Half the ground leaves on eighty-five and half the ground moans about atmosphere.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have completed more successful pressures than anyone in the bottom half.`, when: c => c.pos > 8 },
+    { k: 'fan', tone: 'good', t: 'Sat with my daughter and explained the offside rule badly for ninety minutes. Great day.' },
+    { k: 'pundit', tone: 'info', t: 'Everything good here started with deciding what they were not going to be.' },
+    { k: 'journo', tone: 'info', t: 'The manager has been in the building before seven every day for two years.' },
+    { k: 'fantv', tone: 'good', t: 'Somebody quoted one of my videos in the away end. I am insufferable now.' },
+    { k: 'fan', tone: 'info', t: 'Have watched four hundred games and understood maybe nine of them.' },
+    { k: 'club', tone: 'info', t: 'Full ticket details for the away trip are now live. 🎟️' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have gone unbeaten at home for longer than any side around them.`, when: c => c.pos <= 10 },
+    { k: 'rival', tone: 'bad', t: 'Would love one week without hearing about their culture.' },
+    { k: 'fan', tone: 'good', t: 'Someone brought a cake for the bloke who has sat behind us for twenty years. He cried.' },
+    { k: 'pundit', tone: 'info', t: 'The mark of a good squad is that the eighteenth man knows the plan as well as the first.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have avoided a single disciplinary issue this season.` },
+    { k: 'fantv', tone: 'bad', t: 'Two hours of editing and the file corrupted. I am going for a walk.' },
+    { k: 'fan', tone: 'good', t: 'Being at a game is the only time I am not thinking about anything else. Worth every penny.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have scored from more different players than most sides in the division.` },
+    { k: 'club', tone: 'good', t: 'The academy graduation ceremony was this evening. Proud night. 🌱' },
+    { k: 'fan', tone: 'bad', t: 'Nine quid to park half a mile away in a field. In February.' },
+    { k: 'pundit', tone: 'info', t: 'They win the games they are supposed to win. It sounds small. It is the whole thing.' },
+    { k: 'journo', tone: 'info', t: 'The manager has never once blamed a player publicly. Not once.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a video on the five best games at this ground. I will get all five wrong for somebody.' },
+    { k: 'fan', tone: 'info', t: 'My whole personality is a football club and a train timetable.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have conceded fewer shots on target than at any point in a decade.` },
+    { k: 'club', tone: 'info', t: 'Coach travel is sold out. Additional coaches have been added. 🚌' },
+    { k: 'fan', tone: 'good', t: 'Somebody in the away end lent me a coat because I was freezing. Never saw him again.' },
+    { k: 'pundit', tone: 'info', t: 'Watch how they take a throw-in when they are winning. Everything here is deliberate.' },
+    { k: 'journo', tone: 'info', t: c => `Two national outlets have asked to profile the manager. He has declined both.` },
+    { k: 'fantv', tone: 'good', t: 'Doing the end of season video early because I cannot wait.' },
+    { k: 'fan', tone: 'bad', t: 'Missed the winner because I went for a wee on eighty-eight minutes. Thirty years and I still do it.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have played more academy minutes than any club in this division.` },
+    { k: 'club', tone: 'good', t: 'Great to see so many of you at the memorial garden today. 💙' },
+    { k: 'fan', tone: 'good', t: 'The floodlights, the smell of the pies, the noise before kick off. That is it. That is the whole thing.' },
+    { k: 'pundit', tone: 'good', t: 'If he leaves, whoever comes next inherits the best-organised squad this club has had in twenty years.' },
+    { k: 'journo', tone: 'info', t: 'Nobody at that club has said a word out of turn all year, which is its own achievement.' },
+    { k: 'fantv', tone: 'info', t: 'Somebody asked for shorter videos. Here is a forty minute response.' },
+    { k: 'fan', tone: 'info', t: 'Every year I say never again and every June I renew within an hour.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have taken more points per pound of wage bill than anyone in this division.` },
+    { k: 'club', tone: 'info', t: 'Player appearance at the club shop on Saturday morning. ✍️' },
+    { k: 'fan', tone: 'good', t: 'A club is a place where a thousand strangers stand up at the same moment. Nothing else is like it.' },
+    { k: 'pundit', tone: 'info', t: 'They have made themselves boring to play against and interesting to watch. Very few manage both.' }
+  ];
+  M8.tacticsTalk = [
+    { k: 'pundit', tone: 'info', t: 'The centre-halves step out with the ball rather than passing it. That is a decision, not a habit.' },
+    { k: 'fan', tone: 'info', t: 'We commit six to the box on corners now. Terrifying. Effective.' },
+    { k: 'pundit', tone: 'good', t: 'Their shape without the ball has not changed all season and nobody has solved it.' },
+    { k: 'fantv', tone: 'info', t: 'One more video about the double pivot and then I will stop. I will not stop.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} press in a narrow shape and force play wide more than any side here.` },
+    { k: 'fan', tone: 'bad', t: 'The full backs are so high I have started watching them instead of the ball.' }
+  ];
+  M8.awards = [
+    { k: 'club', tone: 'good', t: 'Manager of the Month. 🏅 Fully deserved.' },
+    { k: 'fan', tone: 'good', t: 'Manager of the Month curse incoming. Worth it.' },
+    { k: 'journo', tone: 'info', t: c => `Recognition for ${c.clubName}'s manager after an excellent run.` },
+    { k: 'fantv', tone: 'good', t: 'He deserves it and he will hate the attention. Perfect.' },
+    { k: 'pundit', tone: 'good', t: 'These awards usually go to whoever won most. Occasionally they go to whoever did most. This is one of those.' },
+    { k: 'rival', tone: 'bad', t: 'Manager of the Month. Wonderful. We will hear about this for a decade.' }
+  ];
+  M8.milestone = [
+    { k: 'fan', tone: 'good', t: 'A hundred games in charge. Four managers in the ten years before him did not manage that between them.' },
+    { k: 'club', tone: 'good', t: 'A landmark for the boss today. 👏 💙' },
+    { k: 'journo', tone: 'info', t: c => `A milestone at ${c.clubName}, reached with the club in a far better place than he found it.` },
+    { k: 'pundit', tone: 'good', t: 'Longevity in this job is not luck. It is a hundred small correct decisions.' },
+    { k: 'fantv', tone: 'good', t: 'Doing a retrospective. Watching the early games back is genuinely emotional.' },
+    { k: 'stats', tone: 'info', t: c => `${c.seasons} seasons, ${c.trophies} trophies, reputation ${c.rep}.` }
+  ];
+
+
+  M8.fanCulture = [
+    { k: 'fan', tone: 'good', t: 'Sang the same song for eleven minutes without stopping. Nobody knows why. Everybody joined in.' },
+    { k: 'fan', tone: 'good', t: 'Away end unfurled a banner thanking the manager. He pointed at it for a full minute.' },
+    { k: 'fantv', tone: 'good', t: 'Filmed the walk to the ground. Twelve thousand people going the same way. Gets me every time.' },
+    { k: 'club', tone: 'good', t: 'That was some noise tonight. Thank you. 🔊💙' },
+    { k: 'fan', tone: 'info', t: 'The scarf my nan knitted in 1994 is still going. Two holes and a lot of memories.' },
+    { k: 'fan', tone: 'good', t: 'Whole away end applauded the home side off. Class from both.' },
+    { k: 'rival', tone: 'info', t: 'Have to hand it to them, that away support does not stop when they are losing.' },
+    { k: 'fan', tone: 'bad', t: 'Somebody started a chant about the chairman and the whole stand joined in. Awkward.' }
+  ];
+  M8.squadTalk = [
+    { k: 'fan', tone: 'good', t: 'Best squad we have had since I started going and I do not think it is close.' },
+    { k: 'pundit', tone: 'info', t: 'The squad has been built for one way of playing. Brave, and it only works if he stays.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} will not need to do much in the summer, which is a new experience here.` },
+    { k: 'fantv', tone: 'info', t: 'Ranking the squad by how much I would miss them. Controversial. Correct.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have given minutes to more than twenty players this season.` },
+    { k: 'fan', tone: 'bad', t: 'One centre half short and everybody in the ground can see it.' }
+  ];
+  M8.mediaTalk = [
+    { k: 'fantv', tone: 'good', t: 'A national paper quoted the channel. Mum is very proud. I am insufferable.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} are the most requested away trip among broadcasters this season.`, when: c => c.pos <= 6 },
+    { k: 'pundit', tone: 'good', t: 'I have watched every one of their games this season. Nobody made me. That is the review.' },
+    { k: 'fan', tone: 'bad', t: 'The pundits called us a long ball team. We have the second highest pass completion in the league.' },
+    { k: 'fantv', tone: 'info', t: 'Doing a media watch video. It is mostly me being annoyed at people with better jobs.' },
+    { k: 'journo', tone: 'info', t: 'The manager gave forty minutes to a local podcast and five to a national. Says a lot.' }
+  ];
+  M8.history = [
+    { k: 'fan', tone: 'good', t: 'Twenty-two years ago we nearly went out of business. Look where we are now.' },
+    { k: 'club', tone: 'good', t: 'A club legend turns seventy today. Happy birthday. 🎂💙' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} celebrate an anniversary this month. The old stand has stories in it.` },
+    { k: 'fantv', tone: 'good', t: 'Interviewed a supporter who has been coming since 1961. Two hours. Every minute worth it.' },
+    { k: 'fan', tone: 'info', t: 'My first shirt is in a frame. It cost my mum a week of wages.' },
+    { k: 'pundit', tone: 'info', t: 'Clubs like this measure time in managers, not years.' }
+  ];
+  M8.moneyTalk = [
+    { k: 'fan', tone: 'good', t: 'They have backed him with real money for the first time. Let us see what he does with it.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have made ${c.budget} available. The manager is not expected to spend it all.` },
+    { k: 'pundit', tone: 'info', t: 'The clubs that win at this level spend late and spend once.' },
+    { k: 'fantv', tone: 'bad', t: 'We have money and a shortlist and it is the middle of August.' },
+    { k: 'stats', tone: 'info', t: c => `Transfer budget remaining: ${c.budget}.` },
+    { k: 'fan', tone: 'bad', t: 'Money in the bank does not win football matches on a Tuesday.' }
+  ];
+
+
+  M8.deepStats = [
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have the best record in the division from goalless situations after the hour.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} concede fewer shots per opposition possession than anyone here.` },
+    { k: 'pundit', tone: 'info', t: 'Every number about this side has moved the right way for eighteen months. That is not variance.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} rank first for time spent in the opposition third without conceding a counter.` },
+    { k: 'fan', tone: 'info', t: 'The stats people have loved us for a year and the results finally agree.' }
+  ];
+  M8.betting = [
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} remain longer odds than their position suggests.`, when: c => c.pos <= 6 },
+    { k: 'fan', tone: 'info', t: 'Backed us at the start of the season out of loyalty. Loyalty is paying.' },
+    { k: 'fantv', tone: 'info', t: 'Predictions video. Last time I got two of ten. Expectations are appropriately low.' },
+    { k: 'pundit', tone: 'info', t: 'The market has underrated this manager since the day he arrived.' }
+  ];
+  M8.refs = [
+    { k: 'fan', tone: 'bad', t: 'Six added on and they blew it after four. With us pushing. Every time.' },
+    { k: 'pundit', tone: 'info', t: 'Consistency is all anybody asks for and it is the one thing nobody gets.' },
+    { k: 'journo', tone: 'info', t: 'The manager was asked four times about the officials and answered none of them.' },
+    { k: 'fan', tone: 'info', t: 'Watched it back. Correct decision. Furious about being wrong.' },
+    { k: 'fantv', tone: 'bad', t: 'The referee thread is now a series. I hate that it is a series.' }
+  ];
+  M8.congestion = [
+    { k: 'fan', tone: 'info', t: 'Four games in eleven days. This is what we asked for when we wanted cup runs.' },
+    { k: 'pundit', tone: 'info', t: 'Something has to give in a run like this, and it is usually a hamstring.' },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} face a punishing schedule. Rotation stops being optional.` },
+    { k: 'club', tone: 'info', t: 'Busy fortnight ahead. We will need every one of you. 💙' },
+    { k: 'fantv', tone: 'info', t: 'Fixture congestion video. Mostly me being worried about one midfielder.' }
+  ];
+
+  [MORE3, M4, M5, M6, M7, M8].forEach(bank => {
+    Object.keys(bank).forEach(k => { POSTS[k] = (POSTS[k] || []).concat(bank[k]); });
+  });
+  Object.keys(MORE_REPLIES2).forEach(k => {
+    MGR_REPLIES[k] = (MGR_REPLIES[k] || []).concat(MORE_REPLIES2[k]);
+  });
+  Object.keys(MORE_YOU2).forEach(k => {
+    YOU_POSTS[k] = (YOU_POSTS[k] || []).concat(MORE_YOU2[k]);
+  });
 
   /* ================= what sets it off =================
      Every call is fed the real event, so nothing in the feed describes
@@ -17265,6 +18500,10 @@ em.unav.ban{color:var(--gold)}
         fire(g, POSTS.congestion, c, { heat: 1 });
       // and the referee, when it went against you
       if (entry.result !== 'W' && U().chance(0.16)) fire(g, POSTS.refs, c, { heat: 1.1 });
+      // half time is a story of its own now and then
+      if (U().chance(0.09)) fire(g, POSTS.tunnel, c, { heat: 1 });
+      // and a captain gets talked about after the games he decides
+      if (entry.result === 'W' && U().chance(0.12)) fire(g, POSTS.captainTalk, c, { heat: 1 });
       // 250 games, 500 games — the round numbers
       if (c.played && (g.mgr.board.seasons >= 3) && U().chance(0.05))
         fire(g, POSTS.milestone, c, { heat: 1 });
@@ -17284,7 +18523,16 @@ em.unav.ban{color:var(--gold)}
         [0.18, POSTS.squadTalk], [0.16, POSTS.awayDays], [0.14, POSTS.history],
         [0.14, POSTS.defenceTalk], [0.13, POSTS.strikerTalk], [0.11, POSTS.keeperTalk],
         [0.12, POSTS.contrarian], [0.11, POSTS.contractTalk], [0.10, POSTS.matchdayEve],
-        [0.08, POSTS.intBreak], [0.08, POSTS.winter]
+        [0.08, POSTS.intBreak], [0.08, POSTS.winter],
+        // v3.6: the club as an institution, and the people in it
+        [0.13, POSTS.captainTalk], [0.11, POSTS.veteran], [0.11, POSTS.benchWarmer],
+        [0.10, POSTS.crowdFavourite], [0.10, POSTS.exPlayer], [0.10, POSTS.awards],
+        [0.09, POSTS.academy], [0.09, POSTS.staff], [0.08, POSTS.stadium],
+        [0.08, POSTS.commercial], [0.07, POSTS.ownership], [0.09, POSTS.deepStats],
+        [0.08, POSTS.socialMeta], [0.08, POSTS.tv], [0.07, POSTS.money],
+        [0.07, POSTS.betting], [0.06, POSTS.fantasy], [0.06, POSTS.weather],
+        [0.06, POSTS.merry], [0.05, POSTS.loanTalk], [0.05, POSTS.transferRequest],
+        [0.05, POSTS.preseason]
       ];
       side.forEach(pair => { if (U().chance(pair[0])) fire(g, pair[1], c, { heat: 0.9 }); });
       if (U().chance(0.5)) fire(g, POSTS.weekly2, c, { heat: 0.8, replies: U().int(0, 2) });
@@ -17308,7 +18556,10 @@ em.unav.ban{color:var(--gold)}
     season(g, review) {
       if (!g.mgr) return;
       const c = ctx(g, { replyBank: MGR_REPLIES });
-      if (review.champion) burst(g, [POSTS.champions], c, { heat: 3.2, tags: ['#' + c.tagName, '#Champions'] }, 4);
+      if (review.champion) {
+        burst(g, [POSTS.champions], c, { heat: 3.2, tags: ['#' + c.tagName, '#Champions'] }, 4);
+        burst(g, [POSTS.parade], c, { heat: 2.4 }, 2);
+      }
       else if (review.met) burst(g, [POSTS.seasonGood], c, { heat: 1.5 }, 2);
       else burst(g, [POSTS.seasonBad], c, { heat: 1.5 }, 2);
       (review.offers || []).slice(0, 1).forEach(o => {
@@ -17321,6 +18572,8 @@ em.unav.ban{color:var(--gold)}
       // nothing spent, and the timeline noticed
       if (g.mgr.budget > 40000000 && !(g.mgr.log || []).some(l => l.k === 'in'))
         fire(g, POSTS.windowQuiet, c, { heat: 1.3 });
+      fire(g, POSTS.preseason, c, { heat: 1 });
+      if (U().chance(0.4)) fire(g, POSTS.merry, c, { heat: 1 });
     },
 
     youth(g, names) {
@@ -17328,6 +18581,13 @@ em.unav.ban{color:var(--gold)}
       const c = ctx(g, { kid: names[0], replyBank: MGR_REPLIES });
       fire(g, POSTS.youth, c, { heat: 1.2 });
       if (U().chance(0.5)) fire(g, POSTS.debut, c, { heat: 1.1 });
+    },
+    /* Anybody whose absence has just run out. Called from the season roll and
+       after a match, so the timeline notices a return the way it noticed the
+       injury. */
+    backFromInjury(g, names) {
+      if (!g.mgr || !names || !names.length) return;
+      fire(g, POSTS.returning, ctx(g, { player: names[0], replyBank: MGR_REPLIES }), { heat: 1.2 });
     },
     retired(g, names) {
       if (!g.mgr || !names || !names.length) return;
