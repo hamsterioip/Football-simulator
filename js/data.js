@@ -1451,9 +1451,17 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.4';
+  const VERSION = '3.5';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.5', when: '2 Sep', items: [
+      'A thousand and seven more things the timeline can say. Buzz now holds 1,638 different messages \u2014 1,395 posts across 67 situations, 168 replies and 75 things you can say yourself',
+      'Twenty-eight new situations: comebacks, debuts, retirements, contract talks, the night before a game, the international break, a cold Tuesday in December, fixture pile-ups, and the referee',
+      'Whole new corners of the timeline: tactics threads with actual arrows, the local media, club history and anniversaries, away days and service stations, fan culture and new songs, and the contrarian who thinks everyone is getting carried away',
+      'The goalkeeper, the back four and the striker now get their own conversations after the games that earn them',
+      'Still nothing invented. Across 43 seasons and 7,485 posts the checker found no line describing something that had not happened \u2014 including a comeback post that had to be reworded because it read too much like a narrow-win one',
+      'Nine hundred posts that never look at the match are stored as plain text rather than as functions, which is nine hundred fewer things for the browser to compile before you can play'
+    ] },
     { v: '3.4', when: '1 Sep', items: [
       'Buzz: a social feed for Manager Mode. Six hundred and thirty-one different things the timeline can say, and every one of them tied to something that actually happened in your season',
       'Five hundred and thirteen posts across thirty-nine situations \u2014 a thrashing, a one-goal grind, a cup exit, a wonder goal, a signing, an injury, a sack watch, a title race \u2014 plus eighty replies underneath and thirty-eight things you can say yourself',

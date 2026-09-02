@@ -2116,6 +2116,9 @@
       // he has hung up his boots — he does not turn up for sale again next summer
       if (g.mgr.hungUp.indexOf(s.name) < 0) g.mgr.hungUp.push(s.name);
     });
+    if (retiring.length && global.MSocial) {
+      try { global.MSocial.retired(g, retiring.map(s => s.name)); } catch (e) {}
+    }
     if (retiring.length) {
       const ids = retiring.map(s => s.id);
       g.squad = g.squad.filter(s => ids.indexOf(s.id) < 0);
