@@ -1451,9 +1451,17 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.7';
-  const BUILD = '31 August 2026';
+  const VERSION = '3.8';
+  const BUILD = '7 September 2026';
   const CHANGELOG = [
+    { v: '3.8', when: '7 Sep', items: [
+      'You are not the only manager with a shortlist. Other clubs now come in for your players — a couple of offers over the summer, and the odd one mid-season after somebody of yours has scored a hat-trick or a goal people are still talking about',
+      'Every bid is a negotiation you can win. Take the money, or tell them what he is actually worth. Ask inside what they were willing to go to and they pay it; ask past it and they improve their offer instead; push a third time and they walk away and the deal is gone',
+      'Who comes for him depends on who he is. Clubs above you, clubs his level, young players and players in form draw the most interest, and the offers themselves open somewhere between two thirds and nine tenths of what he is worth',
+      'Saying no is not free. Turn down a club well above your own and he may not take it well — he loses form, his agent keeps the phone ringing, and the squad list says plainly that he wants to leave',
+      'The offers arrive as part of the close season, straight after the board meeting and your own job offers, and sit on the Market tab until you answer them',
+      'You still cannot go below fourteen players, however good the money looks'
+    ] },
     { v: '3.7', when: '7 Sep', items: [
       'Transfers are a negotiation now. You name the fee and you name the wage, and the selling club answers. Meet their asking price and they will almost always sell; go under and they come back with a number of their own rather than a flat no',
       'The player has his own opinion. Offer him a pay cut and he will not come whatever you pay his club, and for the very best players it is the size of your badge as much as the size of the wage',

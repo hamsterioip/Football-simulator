@@ -3649,6 +3649,14 @@
       if (!g.mgr || !names || !names.length) return;
       fire(g, POSTS.returning, ctx(g, { player: names[0], replyBank: MGR_REPLIES }), { heat: 1.2 });
     },
+    /* A player kept from a move he wanted. The timeline hears about it
+       before the dressing room has stopped talking about it. */
+    unsettled(g, playerName, suitorName) {
+      if (!g.mgr) return;
+      burst(g, [POSTS.transferRequest],
+        ctx(g, { player: playerName, suitor: suitorName, replyBank: MGR_REPLIES }),
+        { heat: 1.9 }, 2);
+    },
     retired(g, names) {
       if (!g.mgr || !names || !names.length) return;
       fire(g, POSTS.retirement, ctx(g, { player: names[0], replyBank: MGR_REPLIES }), { heat: 1.3 });

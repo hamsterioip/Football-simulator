@@ -419,10 +419,12 @@
         case 'mgrCard': return Game.mgrPlayerCard(arg);
         case 'mgrEra': return Game.mgrEra(arg);
         case 'mgrBid': return Game.mgrBid(arg);
+        case 'mgrBidIn': Game._bidChain = false; return Game.mgrBidIn(arg);
         case 'mgrSell': return Game.mgrSell(arg);
         case 'mgrReview': return Game.mgrReview();
         case 'mgrRehire': return Game.mgrRehire();
         case 'mgrOffers': return Game.mgrOffersModal();
+        case 'mgrBids': return Game.mgrBidsModal();
         case 'mgrPost': return Game.mgrPost();
         case 'mgrResign': return Game.mgrResign();
         case 'mgrQuit': return Game.quit();
@@ -798,12 +800,9 @@
                 </div>`).join('')}</div>
                 <p class="muted">${gone.length === 1 ? 'That is him done.' : 'That is them done.'}
                   You will need to replace ${gone.length === 1 ? 'him' : 'them'}.</p>`,
-              actions: [{ label: 'Into the window', onClick: () => {
-                if (Game._mgrOffers && Game._mgrOffers.length) Game.mgrOffersModal();
-              } }]
+              actions: [{ label: 'Into the window', onClick: () => Game._mgrWindowNext() }]
             });
-          } else if (Game._mgrOffers && Game._mgrOffers.length) Game.mgrOffersModal();
-          else UI.toast('Transfer window is open.', 'good');
+          } else Game._mgrWindowNext();
         } }]
       });
 
@@ -879,6 +878,57 @@
 
     /* ---------------- the phone rings ----------------
        Being sacked was the only way out of a job. Now there is another. */
+    /* What happens once the board meeting is over: your own job offers first,
+       because taking one makes everything else moot, then the offers other
+       clubs have put in for your players. */
+    _mgrWindowNext() {
+      if (Game._mgrOffers && Game._mgrOffers.length) return Game.mgrOffersModal();
+      return Game.mgrBidsModal();
+    },
+
+    /* Answering one offer should hand you straight back to the rest of them,
+       rather than dumping you on the market screen with three still open. */
+    _bidBack() {
+      const g = State.game;
+      if (!Game._bidChain) return;
+      if (((g.mgr && g.mgr.bids) || []).length) return Game.mgrBidsModal();
+      Game._bidChain = false;
+    },
+
+    /* ---------------- the phone rings for one of yours ----------------
+       You are not the only manager with a shortlist. */
+    mgrBidsModal() {
+      const g = State.game;
+      const bids = (g.mgr && g.mgr.bids) || [];
+      if (!bids.length) return UI.toast('Transfer window is open.', 'good');
+      const me = State.club(g.mgr.club);
+      UI.modal({
+        title: bids.length === 1 ? 'An offer for one of yours'
+          : `${bids.length} offers for your players`,
+        html: `<p class="muted">Clubs have come in for players of yours. Take the money, tell them what he is really worth, or say no — and saying no to a club well above ${U.esc(me.name)} is not always free.</p>
+          <div class="list">${bids.map(b => {
+            const p = g.squad.find(x => x.id === b.playerId);
+            const step = b.fromRating - me.rating;
+            return `<div class="item click offer" data-bid="${b.id}">
+              <div class="ic">${global.Crest.svg(b.fromName, 'crest-md')}</div>
+              <div class="tx"><b>${U.esc(b.name)}<span class="pill${
+                  step > 0 ? ' up' : step < 0 ? ' down' : ''}">${
+                  step > 0 ? '+' + step : step}</span></b>
+                <span>${U.esc(b.fromName)} · ${U.cash(b.fee)}${
+                  p ? ' · worth about ' + U.cash(p.value || 0) : ''}</span>
+                <span class="offer-pitch">${U.esc(b.line)}</span></div>
+            </div>`; }).join('')}</div>`,
+        actions: [{ label: 'Deal with it later', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-bid]').forEach(el => el.onclick = () => {
+            Game._bidChain = true;
+            Game.mgrBidIn(el.dataset.bid);
+          });
+          UI.modalScrollHint && UI.modalScrollHint(m);
+        }
+      });
+    },
+
     mgrOffersModal() {
       const g = State.game;
       const offers = Game._mgrOffers || [];
@@ -902,7 +952,8 @@
                 <span>${U.esc(o.league)} · rated ${c.rating} · ${U.cash(o.budget)} to spend</span>
                 <span class="offer-pitch">${U.esc(o.pitch)}</span></div>
             </div>`; }).join('')}</div>`,
-        actions: [{ label: `Stay at ${here.name}`, cls: 'btn-ghost' }],
+        actions: [{ label: `Stay at ${here.name}`, cls: 'btn-ghost',
+          onClick: () => { if ((g.mgr.bids || []).length) Game.mgrBidsModal(); } }],
         onRender(m) {
           m.querySelectorAll('[data-offer]').forEach(el => el.onclick = () =>
             Game.mgrTakeJob(offers[+el.dataset.offer]));
@@ -1211,6 +1262,109 @@
       const g = State.game;
       g.mgr.topOpen = !g.mgr.topOpen;
       global.MUI.render();
+    },
+
+    /* ---------------- somebody wants one of yours ----------------
+       The mirror of the offer sheet. Their number is on the table; you can
+       take it, tell them what he is actually worth, or say no — and saying no
+       to a club well above you is not free. */
+    mgrBidIn(bidId) {
+      const g = State.game;
+      const M = global.Manager;
+      const bid = (g.mgr.bids || []).find(b => b.id === bidId);
+      if (!bid) return;
+      const p = g.squad.find(x => x.id === bid.playerId);
+      if (!p) {
+        g.mgr.bids = (g.mgr.bids || []).filter(b => b.id !== bidId);
+        return global.MUI.render();
+      }
+      const me = State.club(g.mgr.club);
+      const step = bid.fromRating - me.rating;
+      Game._ask = Game._ask || {};
+      if (Game._ask.id !== bid.id) {
+        Game._ask = { id: bid.id, fee: Math.round((p.value || bid.fee) * 1.15 / 50000) * 50000 };
+      }
+      const askStep = Math.max(50000, Math.round((p.value || bid.fee) * 0.06 / 50000) * 50000);
+      const over = Game._ask.fee / Math.max(p.value || 1, 1);
+      const read = over < 1 ? 'Less than he is worth. They will take that instantly.'
+        : over < 1.2 ? 'A fair price for him. They should wear it.'
+        : over < 1.6 ? 'Well over the odds. Depends how badly they want him.'
+        : 'A silly number. Expect them to walk.';
+
+      UI.modal({
+        title: `${bid.fromName} want ${bid.name}`,
+        html: `<p class="muted">${U.esc(bid.pos)} · ${bid.age} · rated <b>${bid.ovr}</b> · worth about ${U.cash(p.value || 0)}<br>${U.esc(bid.line)}</p>
+          <div class="bid-head">
+            <div><span>Their offer</span><b>${U.cash(bid.fee)}</b></div>
+            <div><span>Wages there</span><b>${U.cash(bid.wage)}/w</b></div>
+            <div><span>Their standing</span><b class="${step > 2 ? 'up' : step < -2 ? 'down' : ''}">${
+              step > 0 ? '+' + step : step}</b></div>
+          </div>
+          ${step > 3 ? `<p class="offer-note">${U.esc(bid.name)} knows this is a step up.
+            Turning it down may not go down well with him.</p>` : ''}
+          <div class="offer-row">
+            <div class="offer-lab">Tell them what he is worth</div>
+            <div class="offer-ctl">
+              <button class="offer-btn" data-askstep="-1">−</button>
+              <b>${U.cash(Game._ask.fee)}</b>
+              <button class="offer-btn" data-askstep="1">+</button>
+            </div>
+            <div class="offer-read">${U.esc(read)}</div>
+          </div>`,
+        actions: [
+          { label: `Accept ${U.cash(bid.fee)}`, onClick: () => {
+            const res = M.acceptBid(g, bid);
+            Game._ask = null;
+            State.save(); global.MUI.render();
+            UI.toast(res.ok ? `${bid.name} sold for ${U.cash(res.fee)}.` : res.why,
+              res.ok ? 'good' : 'bad');
+            Game._bidBack();
+          } },
+          { label: 'Ask for more', keepOpen: true, cls: 'btn-ghost', onClick: () => {
+            const r = M.bidCounter(g, bid, Game._ask.fee);
+            State.save();
+            if (r.verdict === 'accept') {
+              const res = M.acceptBid(g, bid);
+              Game._ask = null;
+              global.MUI.render();
+              UI.closeModal();
+              UI.toast(res.ok ? `${bid.name} sold for ${U.cash(res.fee)}.` : res.why,
+                res.ok ? 'good' : 'bad');
+              return Game._bidBack();
+            }
+            if (r.verdict === 'walk') {
+              g.mgr.bids = (g.mgr.bids || []).filter(b => b.id !== bid.id);
+              Game._ask = null;
+              State.save(); global.MUI.render();
+              UI.closeModal();
+              UI.toast(r.why, 'bad');
+              return Game._bidBack();
+            }
+            global.MUI.render();
+            Game.mgrBidIn(bid.id);
+            UI.toast(r.why, '');
+          } },
+          { label: 'Not for sale', cls: 'btn-danger', onClick: () => {
+            const res = M.rejectBid(g, bid);
+            Game._ask = null;
+            State.save(); global.MUI.render();
+            UI.toast(res.unsettled
+              ? `${bid.name} is not happy about that.`
+              : `${bid.fromName} have been told no.`, res.unsettled ? 'bad' : '');
+            Game._bidBack();
+          } },
+          { label: 'Decide later', cls: 'btn-ghost', onClick: () => {
+            Game._ask = null;
+            Game._bidBack();
+          } }
+        ],
+        onRender(m) {
+          m.querySelectorAll('[data-askstep]').forEach(el => el.onclick = () => {
+            Game._ask.fee = Math.max(50000, Game._ask.fee + (+el.dataset.askstep) * askStep);
+            Game.mgrBidIn(bid.id);
+          });
+        }
+      });
     },
 
     /* ---------------- the negotiating table ----------------

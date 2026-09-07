@@ -974,7 +974,9 @@
       const r = U.clamp(6.4 + (gf - ga) * 0.28 + U.rnd(-0.8, 0.9) + (s.ovr - teamRating(g)) * 0.03, 3.5, 10);
       s.ratingSum += r;
       s.rating = U.round(s.ratingSum / s.apps, 2);
-      s.form = U.clamp(s.form * 0.75 + (r - 6.4) * 26 + 14, 5, 100);
+      // a man who wanted the move and did not get it does not shake it off
+      s.form = U.clamp(s.form * 0.75 + (r - 6.4) * 26 + 14
+        - Math.min(s.unsettled || 0, 3) * 4, 5, 100);
       // ninety minutes takes more out of a thirty-four-year-old
       s.fit = U.clamp(s.fit - U.rnd(9, 14) - (s.age >= 32 ? 3 : 0), 25, 100);
     });
@@ -1086,6 +1088,28 @@
     cas.banned.forEach(b => { felled[b.p.id] = true; });
     tickAvailability(g, felled);
     repairXI(g);
+
+    /* An offer does not sit on the table forever. Clubs that hear nothing back
+       go and buy somebody else. */
+    g.mgr.bids = (g.mgr.bids || []).filter(b => {
+      if (b.year !== g.world.year) return false;
+      if (g.mgr.round - (b.round || 0) < 6) return true;
+      State.news(`${b.fromName} have withdrawn their interest in ${b.name}`, 'info', null, 'transfer');
+      return false;
+    });
+
+    /* A man who has just done something remarkable gets watched. Nothing
+       advertises a player like a hat-trick or a goal people replay. */
+    const standout = entry.wonder
+      || (entry.scorers || []).some((n, i, a) => a.filter(x => x === n).length >= 3);
+    if (standout && U.chance(0.22) && (g.mgr.bids || []).length < 3) {
+      const fresh = incomingBids(g, 1);
+      if (fresh.length) {
+        g.mgr.bids = (g.mgr.bids || []).concat(fresh);
+        State.news(`${fresh[0].fromName} have made an offer for ${fresh[0].name}`,
+          'info', null, 'transfer');
+      }
+    }
 
     // the timeline finds out at the same time you do
     if (global.MSocial) {
@@ -2063,6 +2087,165 @@
     return { ok: true, fee };
   }
 
+  /* ---------------- clubs coming for your players ----------------
+     The other half of a transfer market. You have been able to go and buy
+     since the beginning; now other clubs come for what you have, and you
+     haggle from the other side of the table.
+
+     A bid opens below what the man is worth, because that is how a first bid
+     works. You can take it, tell them what he is actually worth, or say no —
+     and saying no to a club twice your size is not free, because he hears
+     about it. */
+
+  const BID_PATIENCE = 2;        // rounds of haggling before they walk
+
+  const BID_LINES = [
+    'They have been watching him since Christmas.',
+    'Their manager rates him personally.',
+    'They have just sold somebody and have the money burning a hole.',
+    'A new owner, and a list of names. He is on it.',
+    'They lost a player in his position to a long injury.',
+    'Their scouts have been at four of our games.',
+    'He is the profile they have been after for two windows.',
+    'They tried for him last summer and never went away.',
+    'Their director of football rang this morning.',
+    'They think he is the one signing that makes them contenders.',
+    'A club with money, ambition and a hole exactly his shape.',
+    'They want an answer before the window shuts.'
+  ];
+
+  /* Who would come for a player of his? Somebody bigger, or somebody rich
+     enough to think they are about to be. */
+  function bidderFor(g, s) {
+    const U = global.U, State = global.State;
+    const me = State.club(g.mgr.club);
+    const pool = Object.values(g.world.clubs).filter(c => {
+      if (c.id === me.id) return false;
+      // a club only comes for a player who would improve them, or who is a
+      // clear step up in stature for him
+      return c.rating >= s.ovr - 6 || c.rating >= me.rating + 5;
+    });
+    if (!pool.length) return null;
+    return U.weighted(pool.map(c => [c, Math.pow(Math.max(c.rating - 55, 1), 1.7)]));
+  }
+
+  /* How badly a player is wanted, 0..1. Quality first, then age and form. */
+  function desire(g, s) {
+    const U = global.U;
+    const me = global.State.club(g.mgr.club);
+    const q = U.clamp((s.ovr - (me.rating - 4)) / 16, 0, 1);
+    const age = s.age <= 23 ? 1.25 : s.age <= 28 ? 1 : s.age <= 31 ? 0.7 : 0.35;
+    const form = 0.75 + U.clamp(s.form / 100, 0, 1) * 0.5;
+    const scoring = s.goals >= 8 ? 1.25 : s.goals >= 4 ? 1.1 : 1;
+    // once he has been told no, his agent makes sure the phone keeps ringing
+    const restless = 1 + Math.min(s.unsettled || 0, 2) * 0.35;
+    return U.clamp(q * age * form * scoring * restless, 0, 1.9);
+  }
+
+  /* Generate the offers that land on your desk. */
+  function incomingBids(g, howMany) {
+    const U = global.U, State = global.State;
+    if (!g.squad || g.squad.length <= 15) return [];
+    const me = State.club(g.mgr.club);
+    const candidates = g.squad
+      .filter(s => !s.era && available(s))        // nobody bids on the injured
+      .map(s => ({ s, want: desire(g, s) }))
+      .filter(x => x.want > 0.22)
+      .sort((a, b) => b.want - a.want);
+    if (!candidates.length) return [];
+
+    const want = howMany != null ? howMany
+      : U.weighted([[0, 3], [1, 6], [2, 5], [3, 2]]);
+    const out = [], used = {};
+    for (let i = 0; i < want * 3 && out.length < want; i++) {
+      const pick = U.weighted(candidates.map(x => [x, x.want]));
+      if (!pick || used[pick.s.id]) continue;
+      const from = bidderFor(g, pick.s);
+      if (!from) continue;
+      used[pick.s.id] = true;
+      const worth = pick.s.ovr >= ELITE ? eliteFee(pick.s.ovr, pick.s.age) : valueFor(pick.s);
+      // a first bid is a test: under what he is worth, and they know it
+      const open = Math.round(worth * U.rnd(0.62, 0.92) / 50000) * 50000;
+      // what they would go to if you push. Bigger clubs have deeper pockets.
+      const ceiling = Math.round(worth * U.rnd(1.0, 1.05 + (from.rating - 70) * 0.02)
+        * (0.9 + pick.want * 0.35) / 50000) * 50000;
+      out.push({
+        id: U.id(), playerId: pick.s.id, name: pick.s.name, pos: pick.s.pos,
+        ovr: pick.s.ovr, age: pick.s.age,
+        fromId: from.id, fromName: from.name, fromRating: from.rating,
+        fee: open, ceiling: Math.max(ceiling, open),
+        wage: Math.round(Math.max(pick.s.wage * U.rnd(1.15, 1.7), pick.s.wage + 1000) / 1000) * 1000,
+        want: pick.want, line: U.pick(BID_LINES),
+        patience: BID_PATIENCE, year: g.world.year, round: g.mgr.round
+      });
+    }
+    return out;
+  }
+
+  /* You have named your price. Do they pay it? */
+  function bidCounter(g, bid, askFee) {
+    const U = global.U;
+    if (askFee <= bid.fee) return { verdict: 'accept', fee: askFee };
+    if (askFee <= bid.ceiling) {
+      // inside what they were willing to pay: they grumble and pay it
+      bid.fee = askFee;
+      return { verdict: 'accept', fee: askFee };
+    }
+    bid.patience--;
+    if (bid.patience <= 0) {
+      return { verdict: 'walk',
+        why: `${bid.fromName} have walked away. They will not go past what they offered.` };
+    }
+    // they split the difference toward their ceiling and try once more
+    const improved = Math.round(Math.min(bid.ceiling, bid.fee + (askFee - bid.fee) * U.rnd(0.35, 0.6))
+      / 50000) * 50000;
+    bid.fee = Math.max(bid.fee, improved);
+    return { verdict: 'counter', fee: bid.fee,
+      why: `${bid.fromName} will not go to ${U.cash(askFee)}. They have come back with ${U.cash(bid.fee)}.` };
+  }
+
+  /* Take the money. */
+  function acceptBid(g, bid) {
+    const U = global.U, State = global.State;
+    const idx = g.squad.findIndex(s => s.id === bid.playerId);
+    if (idx < 0) return { ok: false, why: 'He is not in your squad any more.' };
+    if (g.squad.length <= 14) return { ok: false, why: 'You cannot go below fourteen players.' };
+    const s = g.squad[idx];
+    g.squad.splice(idx, 1);
+    g.mgr.budget += bid.fee;
+    g.mgr.xi = (g.mgr.xi || []).filter(x => x !== bid.playerId);
+    if (g.mgr.xi.length < 11) g.mgr.xi = autoPick(g).map(x => x.id);
+    g.mgr.bids = (g.mgr.bids || []).filter(b => b.playerId !== bid.playerId);
+    State.news(`${s.name} joins ${bid.fromName} for ${U.cash(bid.fee)}`, 'info', null, 'transfer');
+    logAdd(g, `Sold ${s.name} (${s.pos} ${s.ovr}) to ${bid.fromName} for ${U.cash(bid.fee)}`, 'out');
+    if (global.MSocial) { try { global.MSocial.sale(g, s, bid.fee); } catch (e) {} }
+    return { ok: true, fee: bid.fee, player: s };
+  }
+
+  /* Say no. A man wanted by a club twice your size hears about it. */
+  function rejectBid(g, bid) {
+    const U = global.U, State = global.State;
+    const me = State.club(g.mgr.club);
+    const s = g.squad.find(x => x.id === bid.playerId);
+    g.mgr.bids = (g.mgr.bids || []).filter(b => b.id !== bid.id);
+    if (!s) return { ok: true };
+    const step = bid.fromRating - me.rating;
+    // turning down a lateral move costs you nothing; turning down a giant does
+    const odds = U.clamp((step - 2) * 0.055 + (bid.want - 0.5) * 0.25, 0, 0.65);
+    if (step > 2 && U.chance(odds)) {
+      s.unsettled = (s.unsettled || 0) + 1;
+      s.form = U.clamp(s.form - U.rnd(10, 26), 5, 100);
+      State.news(`${s.name} is unhappy at being kept from a move to ${bid.fromName}`,
+        'bad', null, 'transfer');
+      logAdd(g, `${s.name} unsettled after the ${bid.fromName} bid was turned down`, 'out');
+      if (global.MSocial) {
+        try { global.MSocial.unsettled(g, s.name, bid.fromName); } catch (e) {}
+      }
+      return { ok: true, unsettled: true, player: s };
+    }
+    return { ok: true };
+  }
+
   function squadWages(g) {
     return g.squad.reduce((a, s) => a + (s.wage || 0), 0);
   }
@@ -2262,12 +2445,14 @@
     }
 
     /* And who else was watching. A good season is not only what the board
-       think of you — it is who rings you in the summer. */
+       think of you — it is who rings you in the summer, about your job and
+       about your players. */
     g.mgr.offers = sacked ? [] : jobOffers(g);
+    g.mgr.bids = sacked ? [] : incomingBids(g);
 
     return { pos, met, champion, verdict, sacked, warned, table, titles,
              goalOfSeason: best, wonderCount: seasonGoals.length,
-             offers: g.mgr.offers, reputation: reputation(g),
+             offers: g.mgr.offers, bids: g.mgr.bids, reputation: reputation(g),
              cups: cups.map(c => ({ name: c.name, short: c.short, won: !!c.won, outAt: c.outAt || null })),
              lifted: lifted.map(c => c.name),
              confidence: Math.round(g.mgr.board.confidence) };
@@ -2285,6 +2470,7 @@
       s.value = s.ovr >= ELITE ? eliteFee(s.ovr, s.age) : valueFor(s);
       s.wage = Math.max(wageFor(s), s.ovr >= ELITE ? eliteWage(s.ovr) : 0);
       s.fit = 100;
+      if (s.unsettled) s.unsettled = Math.max(0, s.unsettled - 1);
       /* A summer fixes most things. Only the ones who did a cruciate in April
          are still limping in August, and they carry it into the new season. */
       if (s.out && s.out.games > 0) {
@@ -2393,6 +2579,7 @@
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, TITLE_FLOOR, TOP_TARGET, bid, sell, squadWages, valueFor, wageFor,
     offerOutcome, completeSigning, clubView, wagePull,
+    incomingBids, bidCounter, acceptBid, rejectBid, desire, bidderFor, BID_LINES,
     CUP_STAGES, cupById, cupsForSeason,
     matchMoments, GOAL_WAYS, ODD_MOMENTS, SHAPE_LINES, RED_LINES, HURT_LINES,
     WONDERS, wonderTier, career, cabinet, wonders,

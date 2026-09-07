@@ -346,7 +346,8 @@
         <span class="sq-pos">${esc(inXI ? shape[i] : s.pos)}</span>
         <span class="sq-sh">${s.shirt}</span>
         <span class="sq-n">${esc(s.name)}${inXI && s.pos !== shape[i] ? ' <em class="oop">out of position</em>' : ''}${
-          why ? `<em class="unav ${why.k}">${ico(why.k === 'ban' ? 'card' : 'injury')} ${esc(why.label)}</em>` : ''}</span>
+          why ? `<em class="unav ${why.k}">${ico(why.k === 'ban' ? 'card' : 'injury')} ${esc(why.label)}</em>` : ''}${
+          !why && s.unsettled ? `<em class="unrest">${ico('transfer')} wants to leave</em>` : ''}</span>
         <span class="sq-meta">${why
           ? `${why.games} game${why.games === 1 ? '' : 's'}`
           : `${s.age} · ${MUI.fitWord(s.fit)}`}</span>
@@ -404,6 +405,30 @@
         : fit >= 50 ? 'tiring' : 'running on empty';
     },
 
+    /* ---------------- clubs coming for yours ----------------
+       The other side of the market. An opening bid is always a bit less than
+       he is worth, so the number on the card is a starting point. */
+    bidsCard(g) {
+      const bids = g.mgr.bids || [];
+      if (!bids.length) return '';
+      return `<div class="card"><h3>${ico('transfer')} Offers for your players</h3>
+        ${bids.map(b => {
+          const p = g.squad.find(x => x.id === b.playerId);
+          const worth = p ? (p.value || 0) : 0;
+          const r = worth ? b.fee / worth : 1;
+          const read = !worth ? 'on the table' : r >= 1.05 ? 'over his value'
+            : r >= 0.92 ? 'about his value' : r >= 0.78 ? 'a little short' : 'well under value';
+          return `<div class="bid-row" data-act="mgrBidIn" data-arg="${b.id}">
+            ${crest(b.fromName, 'crest-sm')}
+            <span class="bid-n">${esc(b.name)}<em>${esc(b.pos)} ${b.ovr} · ${esc(b.fromName)} (${b.fromRating})</em></span>
+            <span class="bid-f">${U().cash(b.fee)}<small>${read}</small></span>
+          </div>`;
+        }).join('')}
+        <p class="dim tiny" style="margin:8px 0 0">${bids.length} club${
+          bids.length === 1 ? ' has' : 's have'} come in. Tap one to answer.</p>
+      </div>`;
+    },
+
     /* ---------------- market ---------------- */
     tab_mmarket() {
       const g = State().game;
@@ -411,7 +436,7 @@
       const wageRoom = g.mgr.wageBudget - M().squadWages(g);
       const positions = ['All'].concat(Object.keys(global.DATA.POSITIONS));
 
-      return `<div class="card tight">
+      return MUI.bidsCard(g) + `<div class="card tight">
         <div class="mk-money">
           <div><span class="dim">Transfer budget</span><b>${U().cash(g.mgr.budget)}</b></div>
           <div><span class="dim">Wage room</span><b class="${wageRoom < 0 ? 'bad' : ''}">${U().cash(wageRoom)}/w</b></div>
