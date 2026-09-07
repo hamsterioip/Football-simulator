@@ -111,8 +111,10 @@
       const compLine = fix.comp === 'cup'
         ? `${esc(fix.compName)} · ${esc(fix.stageName)}`
         : `${esc(State().league(club.league).name)} · Match ${(g.mgr.results || []).length - played + 1} of ${g.mgr.rounds.length}`;
-      html += `<div class="card fixture-card${fix.comp === 'cup' ? ' fx-cup' : ''}">
+      html += `<div class="card fixture-card${fix.comp === 'cup' ? ' fx-cup' : ''}${
+          fix.derby ? ' fx-derby' : ''}">
         <div class="fx-comp">${fix.comp === 'cup' ? ico('trophy') + ' ' : ''}${compLine}</div>
+        ${fix.derby ? `<div class="fx-derbytag">${ico('duel')} The derby</div>` : ''}
         <div class="fx-teams">
           <div class="fx-t">${crest(fix.home ? club.name : opp.name, 'crest-lg')}
             <span>${esc(fix.home ? club.name : opp.name)}</span></div>
@@ -123,6 +125,10 @@
         <div class="fx-meta">${fix.neutral ? ico('trophy') + ' Neutral ground'
           : fix.home ? ico('home') + ' Home' : ico('away') + ' Away'} ·
           opposition rated ${opp.rating}${fix.comp === 'cup' ? ' · one match, no replay' : ''}</div>
+        ${fix.derby ? (() => { const d = M().derbyRecord(g);
+          return `<div class="fx-out fx-dr">${d.played
+            ? `Your record against them: ${d.w}W ${d.d}D ${d.l}L`
+            : 'The one they will ask you about afterwards, whatever else happens.'}</div>`; })() : ''}
         ${(() => { const n = M().unavailablePlayers(g).length;
           return n ? `<div class="fx-out">${ico('hospital')} ${n} unavailable</div>` : ''; })()}
       </div>`;
@@ -347,7 +353,8 @@
         <span class="sq-sh">${s.shirt}</span>
         <span class="sq-n">${esc(s.name)}${inXI && s.pos !== shape[i] ? ' <em class="oop">out of position</em>' : ''}${
           why ? `<em class="unav ${why.k}">${ico(why.k === 'ban' ? 'card' : 'injury')} ${esc(why.label)}</em>` : ''}${
-          !why && s.unsettled ? `<em class="unrest">${ico('transfer')} wants to leave</em>` : ''}</span>
+          !why && s.unsettled ? `<em class="unrest">${ico('transfer')} wants to leave</em>`
+          : !why && M().dealOf(s) <= 1 ? `<em class="lastyr">${ico('contract')} final year</em>` : ''}</span>
         <span class="sq-meta">${why
           ? `${why.games} game${why.games === 1 ? '' : 's'}`
           : `${s.age} · ${MUI.fitWord(s.fit)}`}</span>
@@ -808,13 +815,18 @@
         </div>
       </div>
       <div class="card"><h3>${ico('value')} Finances</h3>
-        <div class="stat-grid">
+        <div class="stat-grid two">
           <div class="stat"><b>${U().cash(g.mgr.budget)}</b><span>Transfer budget</span></div>
-          <div class="stat"><b>${U().cash(wages)}</b><span>Wage bill /w</span></div>
-          <div class="stat"><b>${U().cash(g.mgr.wageBudget)}</b><span>Wage ceiling</span></div>
-          <div class="stat"><b>${g.squad.length}</b><span>Squad size</span></div>
+          <div class="stat"><b>${U().cash(wages)}<i>/w</i></b><span>Players</span></div>
+          <div class="stat"><b>${U().cash(M().staffWages(g))}<i>/w</i></b><span>Backroom</span></div>
+          <div class="stat"><b class="${M().wageRoom(g) < 0 ? 'bad' : ''}">${
+            U().cash(M().wageRoom(g))}<i>/w</i></b><span>Room left</span></div>
         </div>
       </div>
+      ${MUI.staffCard(g)}
+      ${MUI.contractsCard(g)}
+      ${MUI.derbyCard(g)}
+      ${MUI.awardsCard(g)}
       ${scorers.length ? `<div class="card"><h3>${ico('goal')} Top scorers</h3>
         ${scorers.map(s => `<div class="res-row"><span class="sq-pos">${esc(s.pos)}</span>
           <span class="res-n">${esc(s.name)}</span><b>${s.goals}</b></div>`).join('')}</div>` : ''}
@@ -836,6 +848,103 @@
         <button class="btn btn-ghost" data-act="mgrResign">${ico('exit')} Resign</button>
         <button class="btn btn-danger" data-act="mgrQuit">${ico('exit')} Quit to menu</button>
       </div></div>`;
+    },
+
+    /* ---------------- the backroom ----------------
+       Six jobs, each of them somebody's, each of them paid out of the same
+       weekly bill as the eleven. An empty one is not a bug; it is money you
+       have decided to spend on footballers instead. */
+    staffCard(g) {
+      const roles = M().STAFF_ROLES;
+      const staff = g.mgr.staff || {};
+      const filled = roles.filter(r => staff[r.id]).length;
+      const bill = M().staffWages(g);
+      return `<div class="card"><h3>${ico('manager')} The backroom
+          <span class="pill">${filled}/${roles.length}</span></h3>
+        ${roles.map(r => {
+          const p = staff[r.id];
+          return `<div class="st-row${p ? '' : ' empty'}" data-act="mgrStaff" data-arg="${r.id}">
+            <span class="st-ic">${ico(r.ic)}</span>
+            <span class="st-n">${esc(r.name)}<em>${p
+              ? esc(p.name) + ' · ' + esc(M().staffBand(p.rating))
+              : 'Nobody in the job'}</em></span>
+            ${p ? `<span class="st-r"><b>${p.rating}</b><small>${U().cash(p.wage)}/w</small></span>`
+                : `<span class="st-r st-hire">Hire</span>`}
+          </div>`;
+        }).join('')}
+        <div class="st-foot"><span>Backroom wages</span><b>${U().cash(bill)}/w</b></div>
+        <p class="dim tiny" style="margin:6px 0 0">${filled
+          ? 'They come out of the same wage bill as the players. Tap one to change him.'
+          : 'You are doing all six jobs yourself. Tap one to hire somebody who is better at it.'}</p>
+      </div>`;
+    },
+
+    /* ---------------- contracts ----------------
+       The list nobody looks at until somebody has gone for nothing. */
+    contractsCard(g) {
+      const rows = g.squad.slice().sort((a, b) =>
+        (M().dealOf(a) - M().dealOf(b)) || b.ovr - a.ovr);
+      const last = rows.filter(s => M().dealOf(s) <= 1);
+      return `<div class="card"><h3>${ico('contract')} Contracts
+          ${last.length ? `<span class="pill down">${last.length} running out</span>` : ''}</h3>
+        ${last.length
+          ? `<p class="dim tiny" style="margin:0 0 9px">${last.length === 1
+              ? 'One man is in the last year of his deal. Let it run and he leaves in the summer for nothing.'
+              : `${last.length} men are in the last year of their deals. Let them run and they leave in the summer for nothing.`}</p>`
+          : '<p class="dim tiny" style="margin:0 0 9px">Nobody is close to running out. Tap a name to talk to him anyway.</p>'}
+        ${rows.slice(0, 24).map(s => {
+          const y = M().dealOf(s);
+          return `<div class="ct-row${y <= 1 ? ' out' : ''}" data-act="mgrRenew" data-arg="${s.id}">
+            <span class="sq-pos">${esc(s.pos)}</span>
+            <span class="sq-n">${esc(s.name)}<em>${s.age} · ${U().cash(s.wage)}/w</em></span>
+            <span class="ct-y ${y <= 1 ? 'bad' : y === 2 ? 'warn' : ''}">${y <= 1 ? 'Final year' : y + ' years'}</span>
+            <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    },
+
+    /* ---------------- the derby ---------------- */
+    derbyCard(g) {
+      if (!g.mgr.rival) return '';
+      const rival = State().club(g.mgr.rival);
+      if (!rival) return '';
+      const d = M().derbyRecord(g);
+      return `<div class="card"><h3>${ico('duel')} The derby</h3>
+        <div class="dby-head">${crest(rival.name, 'crest-md')}
+          <div class="dby-t"><b>${esc(rival.name)}</b>
+            <span>Rated ${rival.rating} · ${esc(State().league(rival.league).name)}</span></div>
+        </div>
+        ${d.played ? `<div class="dby-rec">
+            <div class="stat"><b class="good">${d.w}</b><span>Won</span></div>
+            <div class="stat"><b>${d.d}</b><span>Drawn</span></div>
+            <div class="stat"><b class="bad">${d.l}</b><span>Lost</span></div>
+          </div>
+          ${d.rows.slice(0, 6).map(r => `<div class="res-row">
+            <span class="res-b res-${r.result}">${r.result}</span>
+            <span class="res-n">${r.year} · ${r.home ? 'home' : 'away'} · ${r.gf}-${r.ga}</span>
+          </div>`).join('')}`
+          : '<p class="dim" style="margin:0">You have not played them yet.</p>'}
+      </div>`;
+    },
+
+    /* ---------------- what they gave you ---------------- */
+    awardsCard(g) {
+      const all = M().honoursList(g).slice().reverse();
+      if (!all.length) return '';
+      const here = State().club(g.mgr.club).name;
+      const icOf = k => k === 'boot' ? 'goldenboot' : k === 'young' ? 'star'
+        : k === 'pots' ? 'medal' : k === 'mots' ? 'crown' : 'podium';
+      return `<div class="card"><h3>${ico('medal')} Awards
+          <span class="pill">${all.length}</span></h3>
+        ${all.slice(0, 12).map(a => `<div class="aw-row">
+          <span class="aw-ic aw-${esc(a.kind)}">${ico(icOf(a.kind))}</span>
+          <span class="aw-n">${esc(a.name)}<em>${a.who ? esc(a.who) + ' · ' : ''}${
+            a.club && a.club !== here ? esc(a.club) + ' ' : ''}${a.year}</em></span>
+          ${a.note ? `<span class="aw-note">${esc(a.note)}</span>` : ''}
+        </div>`).join('')}
+        ${all.length > 12 ? `<p class="dim tiny" style="margin:8px 0 0">and ${all.length - 12} more.</p>` : ''}
+      </div>`;
     },
 
     /* ---------------- your name in the game ----------------

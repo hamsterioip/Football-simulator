@@ -1471,3 +1471,98 @@ em.unav.ban{color:var(--gold)}
 em.unrest{display:block;font-style:normal;font-size:10px;font-weight:700;color:var(--gold);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 em.unrest .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
+
+/* ---------------- the backroom ----------------
+   Six jobs, six rows, and a wage bill at the bottom. */
+.st-row{display:flex;align-items:center;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--line);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.st-row:active{opacity:.65}
+.st-ic{flex:0 0 26px;height:26px;display:grid;place-items:center;border-radius:8px;
+  background:rgba(255,255,255,.06);color:var(--muted)}
+.st-ic .ic{width:15px;height:15px}
+.st-row.empty .st-ic{color:var(--dim);background:rgba(255,255,255,.03)}
+.st-n{flex:1;min-width:0;font-weight:700;font-size:13px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-n em{display:block;font-style:normal;font-weight:600;font-size:10.5px;color:var(--dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-row.empty .st-n em{color:var(--dim);font-style:italic}
+.st-r{flex:0 0 auto;text-align:right;font-size:12px;white-space:nowrap}
+.st-r b{font-size:14px;font-weight:800}
+.st-r small{display:block;font-size:9.5px;font-weight:700;color:var(--dim)}
+.st-hire{font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--green)}
+.st-foot{display:flex;justify-content:space-between;align-items:baseline;
+  margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:12px;color:var(--dim)}
+.st-foot b{font-size:14px;font-weight:800;color:var(--txt)}
+.st-have{display:flex;align-items:center;gap:11px;margin:0 0 12px;padding:10px 11px;
+  border-radius:var(--radius-s);background:var(--card2);border:1px solid var(--line)}
+.st-have .ic{width:20px;height:20px;flex:0 0 auto;color:var(--green)}
+.st-have b{display:block;font-size:14px}
+.st-have span{display:block;font-size:11px;color:var(--dim);margin-top:1px}
+.item.offer.cant{opacity:.45}
+
+/* ---------------- contracts ---------------- */
+.ct-row{display:flex;align-items:center;gap:9px;padding:8px 0;
+  border-bottom:1px solid var(--line);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ct-row:active{opacity:.65}
+.ct-row.out{background:rgba(255,201,77,.06)}
+.ct-y{flex:0 0 auto;font-size:10.5px;font-weight:800;letter-spacing:.3px;
+  color:var(--dim);white-space:nowrap}
+.ct-y.warn{color:var(--gold)}
+.ct-y.bad{color:var(--red)}
+.pill.down{background:rgba(255,90,106,.16);color:var(--red)}
+em.lastyr{display:block;font-style:normal;font-size:10px;font-weight:700;color:var(--gold);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
+
+/* ---------------- the derby ---------------- */
+.fx-derby{border-color:rgba(255,201,77,.45)}
+.fx-derbytag{margin:-2px 0 8px;text-align:center;font:800 10.5px var(--font);
+  letter-spacing:1.4px;text-transform:uppercase;color:var(--gold)}
+.fx-derbytag .ic{width:13px;height:13px;vertical-align:-2px;margin-right:4px}
+.fx-dr{color:var(--gold);text-transform:none;font-weight:600;letter-spacing:0;
+  font-size:11.5px;line-height:1.35}
+.dby-head{display:flex;align-items:center;gap:12px;margin-bottom:11px}
+.dby-t b{display:block;font-size:15px}
+.dby-t span{display:block;font-size:11.5px;color:var(--dim);margin-top:1px}
+.dby-rec{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.dby-rec .stat b.good{color:var(--green)}
+.dby-rec .stat b.bad{color:var(--red)}
+
+/* ---------------- awards ---------------- */
+.aw-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.aw-row:last-of-type{border-bottom:0}
+.aw-ic{flex:0 0 26px;height:26px;display:grid;place-items:center;border-radius:8px;
+  background:rgba(255,201,77,.13);color:var(--gold)}
+.aw-ic .ic{width:15px;height:15px}
+.aw-ic.aw-mots,.aw-ic.aw-motm{background:rgba(90,168,255,.14);color:var(--blue)}
+.aw-ic.aw-young{background:rgba(42,230,126,.13);color:var(--green)}
+.aw-n{flex:1;min-width:0;font-weight:700;font-size:12.5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aw-n em{display:block;font-style:normal;font-weight:600;font-size:10.5px;color:var(--dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aw-note{flex:0 0 auto;max-width:38%;font-size:10px;color:var(--dim);text-align:right;line-height:1.3}
+.aw-big{display:grid;gap:10px;margin:4px 0 2px}
+.aw-card{padding:14px 12px;border-radius:var(--radius-s);text-align:center;
+  background:linear-gradient(160deg,rgba(255,201,77,.13),rgba(255,201,77,.03));
+  border:1px solid rgba(255,201,77,.3)}
+.aw-card.aw-mots,.aw-card.aw-motm{background:linear-gradient(160deg,rgba(90,168,255,.13),rgba(90,168,255,.03));
+  border-color:rgba(90,168,255,.3)}
+.aw-card.aw-young{background:linear-gradient(160deg,rgba(42,230,126,.12),rgba(42,230,126,.03));
+  border-color:rgba(42,230,126,.3)}
+.aw-c-ic{color:var(--gold)}
+.aw-c-ic .ic{width:30px;height:30px}
+.aw-card.aw-mots .aw-c-ic,.aw-card.aw-motm .aw-c-ic{color:var(--blue)}
+.aw-card.aw-young .aw-c-ic{color:var(--green)}
+.aw-c-n{margin-top:5px;font:800 10.5px var(--font);letter-spacing:1.3px;
+  text-transform:uppercase;color:var(--muted)}
+.aw-c-w{font:900 21px var(--font-d),system-ui,sans-serif;letter-spacing:.4px;margin-top:3px}
+.aw-c-m{font-size:11.5px;color:var(--dim);margin-top:3px}
+/* four figures read better as a square than as three and a stray */
+.stat-grid.two{grid-template-columns:repeat(2,1fr)}
+.stat b i{font-style:normal;font-size:12px;font-weight:700;color:var(--dim);margin-left:1px}
+/* the month's award, announced where you find out about it */
+.aw-inline{margin:10px 0 2px;padding:9px 11px;border-radius:var(--radius-s);text-align:center;
+  background:rgba(90,168,255,.1);border:1px solid rgba(90,168,255,.25)}
+.aw-inline .ic{width:16px;height:16px;vertical-align:-3px;color:var(--blue);margin-right:5px}
+.aw-inline b{font-size:13px}
+.aw-inline span{display:block;font-size:11px;color:var(--dim);margin-top:2px}

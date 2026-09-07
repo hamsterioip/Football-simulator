@@ -1451,9 +1451,20 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.8';
+  const VERSION = '3.9';
   const BUILD = '7 September 2026';
   const CHANGELOG = [
+    { v: '3.9', when: '7 Sep', items: [
+      'Every player is on a contract now, with a number of years left on it that you can see. A man in his final year is worth less to anybody buying him, easier to unsettle, and gets phone calls — and if you let the year run out he leaves in the summer for nothing at all',
+      'So you negotiate. Set the money and the length and put it to him: the wage is most of it, but a player better than the club he is at wants a very good reason to stay, an older one has fewer places to go than he thinks, and a long deal suits the young and frightens the old. Say no to his number and his people come back with a bigger one',
+      'Squad players mostly re-sign on their own — you only really lose the men another club has a use for. Let one of those go and the board find a replacement themselves, usually a little worse and never the one you would have picked',
+      'A backroom staff of six, hired out of the same wage bill as the players: an assistant who can talk to a dressing room and a boardroom, a fitness coach, a physio, a chief scout, an academy coach and a set-piece coach',
+      'They do measurable things. A full backroom cuts injuries by about a quarter and lay-offs by a fifth, finds more names on the market every week, brings better players up from the youth team, and puts a few more goals on the board from set pieces. Good ones get poached by bigger clubs, and your assistant follows you when you move',
+      'Derbies. Thirty-five real ones — the two Manchesters, Arsenal and Tottenham, Madrid, Milan, the Old Firm, the Superclásico — and where there is no famous one, the nearest club of your own size becomes it. A derby swings the board twice as hard as any other result, moves the whole squad’s form, and goes on the office wall for as long as you are there',
+      'Awards. Manager of the Month for a good run of five, and in May a Player of the Season, a Young Player, a Golden Boot if your striker beat the division, and Manager of the Season for winning it or finishing well above what was asked',
+      'Eighty-eight more things the timeline can say about all of it. Buzz now holds 2,734 different messages',
+      'Old saves still open: anything this version added is filled in on the way through'
+    ] },
     { v: '3.8', when: '7 Sep', items: [
       'You are not the only manager with a shortlist. Other clubs now come in for your players — a couple of offers over the summer, and the odd one mid-season after somebody of yours has scored a hat-trick or a goal people are still talking about',
       'Every bid is a negotiation you can win. Take the money, or tell them what he is actually worth. Ask inside what they were willing to go to and they pay it; ask past it and they improve their offer instead; push a third time and they walk away and the deal is gone',

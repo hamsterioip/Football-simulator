@@ -3445,6 +3445,114 @@
     YOU_POSTS[k] = (YOU_POSTS[k] || []).concat(MORE_YOU2[k]);
   });
 
+  /* ---- v3.9: contracts, the backroom, the derby, and the awards ---- */
+  const M9 = {};
+  M9.renewed = [
+    { k: 'club', tone: 'good', t: c => `✍️ ${c.player} has signed a new ${c.years}-year deal. Here to stay. 💙` },
+    { k: 'fan', tone: 'good', t: c => `${c.player} signing again is worth more than any signing we could have made.` },
+    { k: 'journo', tone: 'info', t: c => `${c.player} has committed his future to ${c.clubName}, ending speculation that had been building for months.` },
+    { k: 'pundit', tone: 'good', t: c => `Keeping ${c.player} is the piece of business of the window and it did not cost a penny in fees.` },
+    { k: 'fan', tone: 'good', t: 'Contract news that is actually good news. I did not know that was allowed.' },
+    { k: 'stats', tone: 'info', t: c => `${c.player} is now tied to ${c.clubName} until ${c.year + c.years}.` },
+    { k: 'fantv', tone: 'good', t: c => `NEW DEAL FOR ${c.player.toUpperCase()}. Video up in ten minutes and I am delighted.` },
+    { k: 'rival', tone: 'bad', t: c => `Gutted, we were being linked with ${c.player} for about six weeks there.` },
+    { k: 'fan', tone: 'good', t: c => `Whoever talked ${c.player} into that deserves a pay rise of their own.` },
+    { k: 'journo', tone: 'info', t: c => `Understood to be an improved deal for ${c.player}. ${c.clubName} were not going to lose him for nothing.` },
+    { k: 'pundit', tone: 'info', t: 'Renewals never make the back page and they win you more seasons than signings do.' },
+    { k: 'fan', tone: 'good', t: c => `Been saying for a year we needed to sort ${c.player} out. Somebody was listening.` },
+    { k: 'journo', tone: 'info', t: c => `${c.player}'s representatives say he never seriously considered leaving. They would say that either way.` },
+    { k: 'club', tone: 'good', t: c => `${c.player}: "I never wanted to be anywhere else." 🖊️` },
+    { k: 'fantv', tone: 'info', t: 'Every summer I brace for the exit. This summer I did not have to.' },
+    { k: 'stats', tone: 'info', t: c => `${c.player} adds ${c.years} year${c.years === 1 ? '' : 's'} to a deal that was about to become a problem.` }
+  ];
+  M9.freeAgentOut = [
+    { k: 'journo', tone: 'bad', t: c => `${c.player} leaves ${c.clubName} on a free transfer. Not a penny comes back the other way.` },
+    { k: 'fan', tone: 'bad', t: c => `Letting ${c.player} run his contract down is the kind of thing that gets people sacked.` },
+    { k: 'pundit', tone: 'bad', t: c => `You can lose a player. Losing him for nothing is a decision somebody made months ago.` },
+    { k: 'fan', tone: 'bad', t: c => `${c.player} gone for free. FOR FREE. I am going for a walk.` },
+    { k: 'stats', tone: 'info', t: c => `${c.player} was valued at around ${c.worth}. ${c.clubName} receive nothing.` },
+    { k: 'rival', tone: 'good', t: c => `Free transfer of the summer and it is not even close. Thanks for that.` },
+    { k: 'club', tone: 'info', t: c => `${c.player} leaves the club at the end of his contract. We thank him for his service. 💙` },
+    { k: 'fantv', tone: 'bad', t: c => `The ${c.player} contract situation explained. Spoiler: badly.` },
+    { k: 'journo', tone: 'info', t: c => `${c.player} is understood to have had an offer on the table since the winter. He did not sign it.` },
+    { k: 'fan', tone: 'info', t: 'Every club has one of these every few years. It never stops being infuriating.' },
+    { k: 'pundit', tone: 'info', t: 'The contract department is not glamorous and it is the department that costs you most.' },
+    { k: 'journo', tone: 'info', t: c => `${c.player}'s camp say he explored his options and chose a new challenge. Nobody at ${c.clubName} is calling it that.` },
+    { k: 'fan', tone: 'bad', t: c => `We could have sold ${c.player} in January and bought two. Instead: nothing.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have now lost ${c.n} player${c.n === 1 ? '' : 's'} at the end of a contract this summer.` }
+  ];
+  M9.staffIn = [
+    { k: 'club', tone: 'good', t: c => `We are pleased to confirm ${c.person} has joined the coaching staff as ${c.roleLower}. 💙` },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} have appointed ${c.person} as ${c.roleLower}, adding to a backroom that had been thin.` },
+    { k: 'fan', tone: 'good', t: c => `Never thought I would be excited about a ${c.roleLower}. Here we are.` },
+    { k: 'pundit', tone: 'good', t: c => `Good appointment. The manager gets the headlines; the ${c.roleLower} gets the results in February.` },
+    { k: 'fan', tone: 'info', t: c => `Googling ${c.person}. Reports are encouraging. Cautiously optimistic.` },
+    { k: 'fantv', tone: 'info', t: c => `Who is ${c.person}? Explainer video up tonight.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have now filled ${c.filled} of six backroom roles.` },
+    { k: 'journo', tone: 'info', t: 'The kind of hire that never trends and shows up in the injury list six months later.' },
+    { k: 'pundit', tone: 'info', t: 'Every manager who lasts has somebody beside him doing the job he is worst at.' },
+    { k: 'fan', tone: 'good', t: 'Backroom staff news. I am not proud of how much I care about this.' }
+  ];
+  M9.derbyWin = [
+    { k: 'club', tone: 'good', t: c => `FULL TIME | THE DERBY IS OURS. ${c.us}-${c.them}. 💙` },
+    { k: 'fan', tone: 'good', t: c => `Beat ${c.suitor}. Nothing else that happens this season can take today away.` },
+    { k: 'fan', tone: 'good', t: 'I have work in the morning and I do not care in the slightest.' },
+    { k: 'journo', tone: 'good', t: c => `${c.clubName} take the derby, and take the bragging rights with it.` },
+    { k: 'pundit', tone: 'good', t: 'You could see what it meant to them from the first tackle. That is a manager getting a week right.' },
+    { k: 'fantv', tone: 'good', t: 'DERBY DAY REACTION. My voice has gone. Worth every second.' },
+    { k: 'rival', tone: 'bad', t: 'Embarrassing. Absolutely embarrassing. Do not speak to me.' },
+    { k: 'fan', tone: 'good', t: c => `Twelve months of quiet at work, guaranteed. Thank you, ${c.clubName}.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have now won ${c.dw} of their last ${c.dn} derbies.` },
+    { k: 'pundit', tone: 'info', t: 'Derbies are not about the table and everybody involved knows exactly what they are about.' },
+    { k: 'fan', tone: 'good', t: 'Songs are being written. Some of them are not printable.' },
+    { k: 'club', tone: 'good', t: 'The city is ours tonight. 🏙️💙' }
+  ];
+  M9.derbyLoss = [
+    { k: 'fan', tone: 'bad', t: c => `Losing to ${c.suitor}. Of all of them. I need a week.` },
+    { k: 'journo', tone: 'bad', t: c => `${c.suitor} take the derby, and ${c.clubName} will hear about it until the return fixture.` },
+    { k: 'pundit', tone: 'bad', t: 'They wanted it more for twenty minutes and twenty minutes is all a derby needs.' },
+    { k: 'fantv', tone: 'bad', t: 'Not doing a reaction video. Not tonight.' },
+    { k: 'rival', tone: 'good', t: 'Some of you were very confident this week. Where are you now?' },
+    { k: 'fan', tone: 'bad', t: 'Phone going in a drawer. See you all Thursday.' },
+    { k: 'club', tone: 'bad', t: c => `Not our night. ${c.us}-${c.them}. We will be back.` },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have now lost ${c.dl} of their last ${c.dn} derbies.` },
+    { k: 'journo', tone: 'info', t: 'The manager took the questions afterwards and did not hide behind any of them.' },
+    { k: 'fan', tone: 'bad', t: 'Beat anybody else. Any other week. Not them.' }
+  ];
+  M9.derbyDraw = [
+    { k: 'fan', tone: 'info', t: c => `A draw in the derby satisfies nobody and I am nobody, so here we are.` },
+    { k: 'journo', tone: 'info', t: c => `${c.clubName} and ${c.suitor} share the spoils and neither set of supporters is happy about it.` },
+    { k: 'pundit', tone: 'info', t: 'Two sides who were more frightened of losing it than interested in winning it.' },
+    { k: 'fan', tone: 'info', t: 'Not a defeat. That is genuinely all I have got.' },
+    { k: 'club', tone: 'info', t: c => `${c.us}-${c.them} in the derby. On to the next one. 💙` },
+    { k: 'fantv', tone: 'info', t: 'Derby draw video. Nine minutes of me shrugging.' }
+  ];
+  M9.awardPlayer = [
+    { k: 'club', tone: 'good', t: c => `🏅 ${c.player} is your ${c.award}. Nobody came close. 💙` },
+    { k: 'fan', tone: 'good', t: c => `${c.player} winning ${c.award} and it was not even a debate.` },
+    { k: 'journo', tone: 'good', t: c => `${c.player} takes ${c.award} at ${c.clubName} after a season that dragged the whole side along with it.` },
+    { k: 'pundit', tone: 'good', t: c => `Watch ${c.player} without the ball for ten minutes and you understand why he won it.` },
+    { k: 'stats', tone: 'info', t: c => `${c.player}: ${c.note}.` },
+    { k: 'fan', tone: 'good', t: c => `Whatever ${c.player} is on, give him more of it.` },
+    { k: 'fantv', tone: 'good', t: c => `${c.player} season review video. It is long. He earned a long one.` },
+    { k: 'rival', tone: 'info', t: c => `Grudging respect for ${c.player}. Only grudging, mind.` },
+    { k: 'journo', tone: 'info', t: c => `Awards night at ${c.clubName}, and the room knew the name before it was read out.` },
+    { k: 'fan', tone: 'good', t: 'Standing ovation at the awards do. Deserved every second of it.' }
+  ];
+  M9.awardManager = [
+    { k: 'club', tone: 'good', t: c => `🏆 The gaffer is ${c.award}. Well deserved. 💙` },
+    { k: 'journo', tone: 'good', t: c => `The ${c.clubName} manager is named ${c.award} after ${c.note}.` },
+    { k: 'fan', tone: 'good', t: 'Manager award. Say what you like about him, he has earned this one.' },
+    { k: 'pundit', tone: 'good', t: c => `You do not get ${c.award} for one result. You get it for a run nobody expected.` },
+    { k: 'fan', tone: 'info', t: 'Watch us lose the next four now. It is traditional.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} have picked up ${c.awards} award${c.awards === 1 ? '' : 's'} under this manager.` },
+    { k: 'rival', tone: 'bad', t: 'Curse incoming. Enjoy the trophy while it lasts.' },
+    { k: 'fantv', tone: 'good', t: 'Gaffer award video. Mostly just me being smug for six minutes.' },
+    { k: 'journo', tone: 'info', t: 'He gave the credit to his staff and the players, as they all do, and meant about half of it.' },
+    { k: 'pundit', tone: 'info', t: 'The month award is a nice thing to win and a terrible thing to be judged by.' }
+  ];
+  Object.keys(M9).forEach(k => { POSTS[k] = (POSTS[k] || []).concat(M9[k]); });
+
   /* ================= what sets it off =================
      Every call is fed the real event, so nothing in the feed describes
      something that did not happen. */
@@ -3681,6 +3789,42 @@
     },
 
     /* ---- you, posting ---- */
+    /* ---- v3.9 ---- */
+    renewed(g, playerName, years) {
+      if (!g.mgr) return;
+      burst(g, [POSTS.renewed],
+        ctx(g, { player: playerName, years, replyBank: MGR_REPLIES }), { heat: 1.3 }, 2);
+    },
+    freeAgents(g, list) {
+      if (!g.mgr || !list || !list.length) return;
+      const w = list.slice().sort((a, b) => b.ovr - a.ovr)[0];
+      burst(g, [POSTS.freeAgentOut],
+        ctx(g, { player: w.name, worth: U().cash(w.worth || 0), n: list.length,
+                 replyBank: MGR_REPLIES }), { heat: 1.8 }, list.length > 1 ? 3 : 2);
+    },
+    staffIn(g, person, roleName) {
+      if (!g.mgr) return;
+      const filled = Object.keys(g.mgr.staff || {}).length;
+      burst(g, [POSTS.staffIn],
+        ctx(g, { person, roleName, roleLower: String(roleName).toLowerCase(), filled,
+                 replyBank: MGR_REPLIES }), { heat: 0.9 }, 2);
+    },
+    derby(g, entry, rivalName) {
+      if (!g.mgr) return;
+      const d = global.Manager.derbyRecord(g);
+      const pool = entry.result === 'W' ? POSTS.derbyWin
+        : entry.result === 'L' ? POSTS.derbyLoss : POSTS.derbyDraw;
+      burst(g, [pool], ctx(g, { suitor: rivalName, us: entry.gf, them: entry.ga,
+        dw: d.w, dl: d.l, dn: d.played, replyBank: MGR_REPLIES }), { heat: 2.4 }, 3);
+    },
+    award(g, a) {
+      if (!g.mgr || !a) return;
+      burst(g, [a.who ? POSTS.awardPlayer : POSTS.awardManager],
+        ctx(g, { player: a.who || 'the manager', award: a.name, note: a.note || '',
+                 awards: (g.mgr.awards || []).length, replyBank: MGR_REPLIES }),
+        { heat: 1.5 }, 2);
+    },
+
     canPost(g) {
       return (g.mgr.lastPost == null) || (g.mgr.round - g.mgr.lastPost) >= 1;
     },

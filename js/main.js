@@ -119,6 +119,7 @@
       if (!g) { UI.toast('No saved game found.', 'bad'); return; }
       g._starMap = null;   // rebuild star lists through the living-world filter
       if (g.mode === 'manager') {
+        global.Manager.migrate(g);
         UI.show('game');
         global.MUI.tab = 'mhome';
         UI.render();
@@ -420,6 +421,8 @@
         case 'mgrEra': return Game.mgrEra(arg);
         case 'mgrBid': return Game.mgrBid(arg);
         case 'mgrBidIn': Game._bidChain = false; return Game.mgrBidIn(arg);
+        case 'mgrStaff': return Game.mgrStaff(arg);
+        case 'mgrRenew': Game._runThen = null; return Game.mgrRenew(arg);
         case 'mgrSell': return Game.mgrSell(arg);
         case 'mgrReview': return Game.mgrReview();
         case 'mgrRehire': return Game.mgrRehire();
@@ -740,6 +743,8 @@
             return bits.length
               ? `<p class="mgr-cas">${ico('hospital')} ${bits.join('<br>')}</p>` : '';
           })()}
+          ${r.award ? `<div class="aw-inline">${ico('podium')}
+            <b>${U.esc(r.award.name)}</b><span>${U.esc(r.award.note || '')}</span></div>` : ''}
           ${(r.moments || []).length ? `<div class="mn-modal">${r.moments.map(m =>
             `<div class="mnews mn-${U.esc(m.k)}"><span class="mn-t">${U.esc(m.t)}</span></div>`).join('')}</div>` : ''}
           <p class="dim" style="text-align:center;margin:0">Board confidence ${Math.round(g.mgr.board.confidence)}
@@ -784,34 +789,49 @@
         actions: [{ label: r.sacked ? 'Clear your desk' : 'Into next season', onClick: () => {
           if (r.sacked) { global.MUI.render(); return; }
           Game._mgrOffers = r.offers || [];
-          global.Manager.nextSeason(g);
-          State.save();
-          global.MUI.tab = 'mmarket';
-          global.MUI.render();
-          // losing a player has to be something you are told, not something you
-          // discover later by counting the bench
-          const gone = g.mgr.retired || [];
-          if (gone.length) {
-            UI.modal({
-              title: gone.length === 1 ? 'He has hung up his boots' : 'Hanging up their boots',
-              html: `<div class="list">${gone.map(r => `<div class="item">
-                  <div class="ic">${ico('legacy')}</div>
-                  <div class="tx"><b>${U.esc(r.name)}</b><span>Retired at ${r.age}, rated ${r.ovr}</span></div>
-                </div>`).join('')}</div>
-                <p class="muted">${gone.length === 1 ? 'That is him done.' : 'That is them done.'}
-                  You will need to replace ${gone.length === 1 ? 'him' : 'them'}.</p>`,
-              actions: [{ label: 'Into the window', onClick: () => Game._mgrWindowNext() }]
-            });
-          } else Game._mgrWindowNext();
+          /* The summer, in the order it matters. The contracts running out come
+             first and come *before* the year turns, because that is the last
+             week you can still do anything about them. */
+          const roll = () => {
+            global.Manager.nextSeason(g);
+            State.save();
+            global.MUI.tab = 'mmarket';
+            global.MUI.render();
+            // losing a player has to be something you are told, not something
+            // you discover later by counting the bench
+            const gone = g.mgr.retired || [];
+            const walked = g.mgr.walked || [];
+            const after = () => walked.length
+              ? Game.mgrWalkedModal(walked, () => Game._mgrWindowNext())
+              : Game._mgrWindowNext();
+            if (gone.length) {
+              UI.modal({
+                title: gone.length === 1 ? 'He has hung up his boots' : 'Hanging up their boots',
+                html: `<div class="list">${gone.map(x => `<div class="item">
+                    <div class="ic">${ico('legacy')}</div>
+                    <div class="tx"><b>${U.esc(x.name)}</b><span>Retired at ${x.age}, rated ${x.ovr}</span></div>
+                  </div>`).join('')}</div>
+                  <p class="muted">${gone.length === 1 ? 'That is him done.' : 'That is them done.'}
+                    You will need to replace ${gone.length === 1 ? 'him' : 'them'}.</p>`,
+                actions: [{ label: 'Anything else?', onClick: after }]
+              });
+            } else after();
+          };
+          Game._runMore = r.runningMore || 0;
+          if ((r.running || []).length) return Game.mgrRunningModal(r.running, roll);
+          roll();
         } }]
       });
 
-      /* Before any of it: the best thing anybody did all year. */
-      const boardThen = () => {
+      /* Before any of it: the best thing anybody did all year, and whatever
+         they handed out afterwards. */
+      const lift = () => {
         if (r.champion) Game.trophyLift(State.league(club.league).name + ' Title', 'Champions', meetTheBoard);
         else meetTheBoard();
       };
+      const boardThen = () => Game.mgrAwardsModal(r.awards || [], lift);
       if (r.goalOfSeason) return Game.mgrGoalOfSeason(r.goalOfSeason, boardThen);
+      if ((r.awards || []).length) return boardThen();
 
       // Lift it first, then go and see them. There is only one modal, so the
       // trophy used to open on top of the review and take the button that
@@ -1262,6 +1282,217 @@
       const g = State.game;
       g.mgr.topOpen = !g.mgr.topOpen;
       global.MUI.render();
+    },
+
+    /* ---------------- the backroom ----------------
+       Six jobs. You can do all of them badly yourself for nothing, or pay
+       somebody who is better at one of them out of the same wage bill that
+       buys footballers. */
+    mgrStaff(roleId) {
+      const g = State.game;
+      const M = global.Manager;
+      const role = M.staffRole(roleId);
+      const have = (g.mgr.staff || {})[roleId] || null;
+      Game._staffList = Game._staffList || {};
+      if (!Game._staffList[roleId] || Game._staffList[roleId].year !== g.world.year) {
+        Game._staffList[roleId] = { year: g.world.year, list: M.staffMarket(g, roleId) };
+      }
+      const list = Game._staffList[roleId].list;
+      const room = M.wageRoom(g) + (have ? have.wage : 0);
+      UI.modal({
+        title: role.name,
+        html: `<p class="muted">${U.esc(role.what)}</p>
+          ${have ? `<div class="st-have">${ico(role.ic)}
+              <div><b>${U.esc(have.name)}</b>
+                <span>${U.esc(M.staffBand(have.rating))} · rated ${have.rating} · ${U.cash(have.wage)}/w${
+                  have.since != null ? ' · since ' + have.since : ''}</span></div>
+            </div>` : ''}
+          <div class="offer-sum" style="margin-top:0"><span>Room in the wage bill</span>
+            <b class="${room < 0 ? 'bad' : ''}">${U.cash(Math.max(room, 0))}/w</b></div>
+          <div class="list" style="margin-top:12px">${list.map((c, i) => {
+            const afford = c.wage <= room;
+            return `<div class="item click offer${afford ? '' : ' cant'}" data-hire="${i}">
+              <div class="ic">${ico(role.ic)}</div>
+              <div class="tx"><b>${U.esc(c.name)}<span class="pill${
+                  c.rating >= 78 ? ' up' : c.rating < 55 ? ' down' : ''}">${c.rating}</span></b>
+                <span>${U.esc(M.staffBand(c.rating))} · ${U.cash(c.wage)}/w${
+                  afford ? '' : ' · more than you have'}</span></div>
+            </div>`; }).join('')}</div>`,
+        actions: (have ? [{ label: `Let ${have.name.split(' ').slice(-1)[0]} go`, cls: 'btn-danger', onClick: () => {
+            const r = M.sackStaff(g, roleId);
+            State.save(); global.MUI.render();
+            if (r.ok) UI.toast(`${r.name} has left the club.`, '');
+          } }] : []).concat([{ label: 'Leave it', cls: 'btn-ghost' }]),
+        onRender(m) {
+          m.querySelectorAll('[data-hire]').forEach(el => el.onclick = () => {
+            const cand = list[+el.dataset.hire];
+            const res = M.hireStaff(g, cand);
+            if (!res.ok) return UI.toast(res.why, 'bad');
+            Game._staffList[roleId].list = list.filter(c => c.id !== cand.id);
+            State.save(); global.MUI.render(); UI.closeModal();
+            UI.toast(`${cand.name} is your new ${role.name.toLowerCase()}.`, 'good');
+          });
+          UI.modalScrollHint && UI.modalScrollHint(m);
+        }
+      });
+    },
+
+    /* ---------------- a new deal ----------------
+       You set the money and the length. He decides. Leave it long enough and
+       somebody else has the conversation for you, in June, for free. */
+    mgrRenew(playerId, note) {
+      const g = State.game;
+      const M = global.Manager;
+      const s = g.squad.find(x => x.id === playerId);
+      if (!s) return;
+      const ask = M.renewalAsk(g, s);
+      Game._deal = Game._deal || {};
+      if (Game._deal.id !== playerId) {
+        Game._deal = { id: playerId, wage: Math.round(ask / 100) * 100,
+                       years: s.age >= 32 ? 2 : s.age <= 23 ? 5 : 3 };
+      }
+      const d = Game._deal;
+      const step = Math.max(100, Math.round(ask * 0.06 / 100) * 100);
+      const room = M.wageRoom(g) + (s.wage || 0);
+      const odds = M.renewOdds(g, s, d.wage, d.years);
+      const read = odds >= 0.85 ? 'He would sign that tomorrow.'
+        : odds >= 0.6 ? 'That is about right. He will think about it.'
+        : odds >= 0.35 ? 'Under what his people are asking. It might not be enough.'
+        : 'Nowhere near it. He will say no.';
+      const over = d.wage > room;
+      UI.modal({
+        title: `A new deal for ${s.name}`,
+        html: `<p class="muted">${U.esc(s.pos)} · ${s.age} · rated <b>${s.ovr}</b> · on ${U.cash(s.wage)}/w · ${M.dealOf(s) <= 1 ? 'in the final year of his deal' : M.dealOf(s) + ' years left'}</p>
+          ${note ? `<p class="offer-note">${U.esc(note)}</p>` : ''}
+          ${M.dealOf(s) <= 1 ? `<p class="offer-note">Do nothing and he leaves in the summer for nothing at all.
+            He is worth about ${U.cash(s.value || 0)}.</p>` : ''}
+          <div class="offer-row${over ? ' over' : ''}">
+            <div class="offer-lab">Weekly wage</div>
+            <div class="offer-ctl">
+              <button class="offer-btn" data-dwage="-1">−</button>
+              <b>${U.cash(d.wage)}<span class="per">/w</span></b>
+              <button class="offer-btn" data-dwage="1">+</button>
+            </div>
+            <div class="offer-read">${over ? '<span class="bad">More than your wage bill has room for.</span>'
+              : U.esc(read)}</div>
+          </div>
+          <div class="offer-row">
+            <div class="offer-lab">Length</div>
+            <div class="offer-ctl">
+              <button class="offer-btn" data-dyear="-1">−</button>
+              <b>${d.years} year${d.years === 1 ? '' : 's'}</b>
+              <button class="offer-btn" data-dyear="1">+</button>
+            </div>
+            <div class="offer-read">${s.age >= 32
+              ? `He turns ${s.age + d.years} before it is up. A long one at his age is a risk you are taking, not him.`
+              : s.age <= 23 ? 'A young player wants the long one. It says you mean it.'
+              : 'Long enough to matter, short enough to be worth something if he goes.'}</div>
+          </div>
+          <div class="offer-sum">
+            <span>His people are asking</span><b>${U.cash(ask)}/w</b>
+            <span>Room in the wage bill</span><b class="${room < 0 ? 'bad' : ''}">${U.cash(Math.max(room, 0))}/w</b>
+          </div>`,
+        actions: [
+          { label: 'Put it to him', onClick: () => {
+            const r = M.renew(g, s.id, d.wage, d.years);
+            State.save(); global.MUI.render();
+            if (r.ok) {
+              Game._deal = null;
+              UI.toast(`${s.name} has signed for ${d.years} more year${d.years === 1 ? '' : 's'}.`, 'good');
+              return Game._dealBack();
+            }
+            if (r.turned) {
+              Game._deal.wage = Math.max(d.wage, Math.round(r.ask / 100) * 100);
+              return Game.mgrRenew(s.id, r.why);
+            }
+            UI.toast(r.why, 'bad');
+            Game._dealBack();
+          } },
+          { label: 'Leave it for now', cls: 'btn-ghost',
+            onClick: () => { Game._deal = null; Game._dealBack(); } }
+        ],
+        onRender(m) {
+          m.querySelectorAll('[data-dwage]').forEach(el => el.onclick = () => {
+            Game._deal.wage = Math.max(100, Game._deal.wage + (+el.dataset.dwage) * step);
+            Game.mgrRenew(s.id, note);
+          });
+          m.querySelectorAll('[data-dyear]').forEach(el => el.onclick = () => {
+            Game._deal.years = U.clamp(Game._deal.years + (+el.dataset.dyear), 1, M.DEAL_LONG);
+            Game.mgrRenew(s.id, note);
+          });
+        }
+      });
+    },
+
+    /* Answering one contract hands you back the rest of them. */
+    _dealBack() {
+      const ctx = Game._runCtx;
+      if (!ctx) return;
+      Game._runCtx = null;
+      Game._runMore = ctx.more;
+      return Game.mgrRunningModal(ctx.list, ctx.then);
+    },
+
+    /* ---------------- the ones you are about to lose ---------------- */
+    mgrRunningModal(list, then, more) {
+      const g = State.game;
+      list = (list || []).filter(x => {
+        const s = g.squad.find(p => p.id === x.id);
+        return s && global.Manager.dealOf(s) <= 1;
+      });
+      if (!list.length) return then ? then() : null;
+      UI.modal({
+        title: list.length === 1 ? 'One deal is running out' : `${list.length} deals are running out`,
+        html: `<p class="muted">These men are into the last year of their contracts. Sign them again, sell them while they are still worth something, or watch them leave next summer for nothing.</p>
+          <div class="list">${list.map(x => `<div class="item click offer" data-run="${x.id}">
+            <div class="ic">${ico('contract')}</div>
+            <div class="tx"><b>${U.esc(x.name)}<span class="pill">${x.ovr}</span></b>
+              <span>${U.esc(x.pos)} · ${x.age} · worth about ${U.cash(x.worth)}</span></div>
+          </div>`).join('')}</div>
+          ${Game._runMore ? `<p class="dim tiny" style="margin:10px 0 0">${Game._runMore} more ${Game._runMore === 1 ? 'deal is' : 'deals are'} into a final year. Squad players mostly sign again on their own — the full list is on the contracts page in your office.</p>` : ''}`,
+        actions: [{ label: 'Deal with it later', cls: 'btn-ghost',
+          onClick: () => { Game._runCtx = null; if (then) then(); } }],
+        onRender(m) {
+          m.querySelectorAll('[data-run]').forEach(el => el.onclick = () => {
+            Game._runCtx = { list, then: then || null, more: Game._runMore };
+            Game.mgrRenew(el.dataset.run);
+          });
+          UI.modalScrollHint && UI.modalScrollHint(m);
+        }
+      });
+    },
+
+    /* ---------------- the ones who already have ---------------- */
+    mgrWalkedModal(list, then) {
+      if (!list || !list.length) return then ? then() : null;
+      UI.modal({
+        title: list.length === 1 ? 'Gone for nothing' : 'Gone for nothing',
+        html: `<p class="muted">${list.length === 1 ? 'His contract ran out and he has signed elsewhere.' : 'Their contracts ran out and they have signed elsewhere.'} You get nothing for ${list.length === 1 ? 'him' : 'them'}.</p>
+          <div class="list">${list.map(w => `<div class="item">
+            <div class="ic">${ico('contract')}</div>
+            <div class="tx"><b>${U.esc(w.name)}</b>
+              <span>${U.esc(w.pos)} ${w.ovr} · ${w.age} · to ${U.esc(w.to)} · was worth ${U.cash(w.worth)}</span></div>
+          </div>`).join('')}</div>`,
+        actions: [{ label: 'Nothing to be done now', onClick: then || null }],
+        onRender(m) { UI.modalScrollHint && UI.modalScrollHint(m); }
+      });
+    },
+
+    /* ---------------- May ---------------- */
+    mgrAwardsModal(list, then) {
+      if (!list || !list.length) return then ? then() : null;
+      const icOf = k => k === 'boot' ? 'goldenboot' : k === 'young' ? 'star'
+        : k === 'pots' ? 'medal' : k === 'mots' ? 'crown' : 'podium';
+      UI.modal({
+        title: list.length === 1 ? 'An award' : 'Awards',
+        html: `<div class="aw-big">${list.map(a => `<div class="aw-card aw-${U.esc(a.kind)}">
+            <div class="aw-c-ic">${ico(icOf(a.kind))}</div>
+            <div class="aw-c-n">${U.esc(a.name)}</div>
+            <div class="aw-c-w">${U.esc(a.who || 'You')}</div>
+            <div class="aw-c-m">${U.esc(a.note || '')}</div>
+          </div>`).join('')}</div>`,
+        actions: [{ label: 'And the season itself', onClick: then || null }]
+      });
     },
 
     /* ---------------- somebody wants one of yours ----------------

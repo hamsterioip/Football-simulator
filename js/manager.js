@@ -148,9 +148,14 @@
       log: [],
       results: [],
       trophies: [],
+      staff: {},
+      awards: [],
+      derbyLog: [],
       sacked: false
     };
     g.squad = squadFor(club, 22);
+    giveDeals(g);
+    setRival(g);
     // the ceiling has to sit above the bill you inherited, or you start the job
     // already over budget and can never sign anybody
     g.mgr.wageBudget = Math.max(g.mgr.wageBudget,
@@ -342,14 +347,23 @@
     const car = career(g);
     car.trophies = car.trophies.concat(g.mgr.trophies || []);
     car.wonders = car.wonders.concat(g.mgr.wonders || []);
+    car.awards = car.awards.concat(g.mgr.awards || []);
     car.seasons = (car.seasons || 0) + (g.mgr.board.seasons || 0);
     g.mgrHistory = (g.mgrHistory || []).concat({
       club: from.name, seasons: g.mgr.board.seasons,
       finishes: (g.mgr.board.finishes || []).slice(),
       trophies: (g.mgr.trophies || []).length,
+      awards: (g.mgr.awards || []).length,
       sacked: how === 'sacked', left: how === 'left'
     });
+    /* The coaching staff belong to the club and stay there — all but the one
+       man who is yours rather than theirs. An assistant follows his manager. */
+    const asst = (g.mgr.staff || {}).assistant || null;
     start(g, clubId);
+    if (asst && wageRoom(g) >= asst.wage) {
+      g.mgr.staff.assistant = asst;
+      logAdd(g, `${asst.name} came with you as assistant manager`, 'in');
+    }
     const to = State.club(g.mgr.club);
     State.news(`${to.name} appoint their new manager`, 'good', null, 'manager');
     logAdd(g, `Left ${from.name} for ${to.name}`, 'in');
@@ -520,8 +534,10 @@
         const round = g.mgr.rounds[slot.idx];
         const pair = round && round.find(p => p[0] === me || p[1] === me);
         if (pair) {
-          return { home: pair[0] === me, oppId: pair[0] === me ? pair[1] : pair[0],
-                   round: g.mgr.round, comp: 'league', compName: State.league(State.club(me).league).name };
+          const oppId = pair[0] === me ? pair[1] : pair[0];
+          return { home: pair[0] === me, oppId, round: g.mgr.round, comp: 'league',
+                   derby: isDerby(g, oppId),
+                   compName: State.league(State.club(me).league).name };
         }
         g.mgr.round++;
         continue;
@@ -604,9 +620,10 @@
      of clubs you have worked at belong to you, not to the club you happen to
      be at — so they live here and survive the move. */
   function career(g) {
-    if (!g.career) g.career = { trophies: [], wonders: [], seasons: 0, started: g.world.year };
+    if (!g.career) g.career = { trophies: [], wonders: [], awards: [], seasons: 0, started: g.world.year };
     if (!g.career.wonders) g.career.wonders = [];
     if (!g.career.trophies) g.career.trophies = [];
+    if (!g.career.awards) g.career.awards = [];
     return g.career;
   }
 
@@ -781,9 +798,12 @@
       const was = preFit && preFit[s.id] != null ? preFit[s.id] : s.fit;
       const tired = 1 + (100 - U.clamp(was, 0, 100)) / 100 * 2.2;
       const old = s.age >= 33 ? 1.5 : s.age >= 30 ? 1.2 : s.age <= 21 ? 1.1 : 1;
-      if (!U.chance(U.clamp(0.024 * tired * old, 0.004, 0.12))) return;
+      const coached = 1 - staffLevel(g, 'fitness') * 0.32;
+      if (!U.chance(U.clamp(0.024 * tired * old * coached, 0.003, 0.12))) return;
       const band = U.weighted(INJURIES.map(b => [b, b.w]));
-      const games = U.int(band.min, band.max);
+      // a good physio does not stop it happening, he shortens every one of them
+      const games = Math.max(1,
+        Math.round(U.int(band.min, band.max) * (1 - staffLevel(g, 'physio') * 0.35)));
       s.out = { games, kind: band.kind, label: U.pick(band.names) };
       s.fit = U.clamp(s.fit - U.rnd(10, 25), 15, 100);
       ev.hurt.push(s);
@@ -922,7 +942,10 @@
     const forced = repairXI(g);
 
     // a fired-up dressing room can also over-run itself
-    const talkSwing = t.boost - (t.risk ? U.rnd(0, t.risk) : 0);
+    /* A team talk is only as good as the man who knows what to say. */
+    const asst = staffLevel(g, 'assistant');
+    const talkSwing = (t.boost - (t.risk ? U.rnd(0, t.risk) * (1 - asst * 0.35) : 0))
+      * (1 + asst * 0.25);
     // a final on neutral ground belongs to neither of you
     const hb = fix.neutral ? 0 : 2.5;
     const mine = teamRating(g) + (fix.home ? hb : 0) + style.att * 0.35 + talkSwing;
@@ -935,7 +958,10 @@
        small clubs turn up. */
     const isCup = fix.comp === 'cup';
     const diff = (mine - theirs) * (isCup ? 0.8 : 1) + tr.att * 0.5 + tr.def * 0.5;
-    const la = U.clamp(1.35 + diff * 0.052 + style.att * 0.05 + tr.att * 0.055, 0.2, 4.6);
+    // somebody has to work on the corners, and it shows in the goals column
+    const setp = staffLevel(g, 'setpiece');
+    const la = U.clamp(1.35 + diff * 0.052 + style.att * 0.05 + tr.att * 0.055
+      + setp * 0.09, 0.2, 4.6);
     const lb = U.clamp(1.35 - diff * 0.052 - style.def * 0.05 - tr.def * 0.06, 0.15, 4.6);
     let gf = U.poisson(la), ga = U.poisson(lb);
 
@@ -977,8 +1003,10 @@
       // a man who wanted the move and did not get it does not shake it off
       s.form = U.clamp(s.form * 0.75 + (r - 6.4) * 26 + 14
         - Math.min(s.unsettled || 0, 3) * 4, 5, 100);
-      // ninety minutes takes more out of a thirty-four-year-old
-      s.fit = U.clamp(s.fit - U.rnd(9, 14) - (s.age >= 32 ? 3 : 0), 25, 100);
+      // ninety minutes takes more out of a thirty-four-year-old — and less out
+      // of anybody at a club with a fitness coach worth paying
+      s.fit = U.clamp(s.fit - (U.rnd(9, 14) + (s.age >= 32 ? 3 : 0))
+        * (1 - staffLevel(g, 'fitness') * 0.2), 25, 100);
     });
 
     // and what it cost you — judged on the legs he started the match with
@@ -1132,7 +1160,33 @@
               round: g.mgr.round + 1, year: g.world.year, opp: opp.name, comp: cup.short }
       ].concat(g.mgr.news).slice(0, 60);
     }
+    /* A derby is not three points. Win it and a bad month is forgiven; lose it
+       and a good one is not. It goes on the wall either way. */
+    if (fix.derby && !cup) {
+      entry.derby = true;
+      const rival = State.club(fix.oppId);
+      g.mgr.derbyLog = [{ year: g.world.year, opp: rival.name, home: fix.home,
+                          gf, ga, result }].concat(g.mgr.derbyLog || []).slice(0, 40);
+      const swing = result === 'W' ? U.rnd(5, 8) : result === 'L' ? -U.rnd(5, 8) : U.rnd(-1, 1);
+      g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + swing, 0, 100);
+      g.squad.forEach(s => {
+        if ((g.mgr.xi || []).indexOf(s.id) < 0) return;
+        s.form = U.clamp(s.form + (result === 'W' ? U.rnd(4, 9) : result === 'L' ? -U.rnd(4, 9) : 0), 5, 100);
+      });
+      State.news(result === 'W' ? `${me.name} beat ${rival.name} in the derby`
+        : result === 'L' ? `${rival.name} take the derby`
+        : `Honours even in the ${me.name} derby`,
+        result === 'W' ? 'good' : result === 'L' ? 'bad' : 'info', null, 'duel');
+      logAdd(g, `${result === 'W' ? 'Beat' : result === 'L' ? 'Lost to' : 'Drew with'} ${rival.name} ${gf}-${ga} in the derby`,
+        result === 'L' ? 'out' : 'in');
+      if (global.MSocial) { try { global.MSocial.derby(g, entry, rival.name); } catch (e) {} }
+    }
+
     g.mgr.round++;
+
+    /* Somebody hands out a small trophy every month. */
+    const monthly = monthAward(g);
+    if (monthly) entry.award = monthly;
 
     // The board are watching, but they judge you on the table rather than on
     // the last kick: confidence drifts toward what your position deserves, with
@@ -1143,7 +1197,9 @@
     // not against a target it was never going to hit
     const par = State.club(g.mgr.club).founded ? Math.max(g.mgr.board.target.pos - 2, 1)
       : g.mgr.board.target.pos;
-    const deserved = U.clamp(80 - (where - par) * 6.5, 14, 96);
+    // an assistant who can talk to a boardroom is worth a couple of points of
+    // patience when the table is not on your side
+    const deserved = U.clamp(80 - (where - par) * 6.5 + staffLevel(g, 'assistant') * 2.5, 14, 96);
     const kick = result === 'W' ? U.rnd(1.5, 3) : result === 'D' ? U.rnd(-0.5, 0.8) : -U.rnd(1.5, 3);
     g.mgr.board.confidence = U.clamp(
       g.mgr.board.confidence + (deserved - g.mgr.board.confidence) * 0.17 + kick, 0, 100);
@@ -1860,7 +1916,9 @@
 
     // rivals do their business too — the better he is, the likelier he goes
     U.shuffle(live).slice(0, U.int(2, 5)).forEach(s => {
-      const pull = U.clamp((0.09 + (s.ovr - 72) * 0.014) * pressure, 0.03, 0.5);
+      // a scout who saw him first buys you the week you need to decide
+      const pull = U.clamp((0.09 + (s.ovr - 72) * 0.014) * pressure
+        * (1 - staffLevel(g, 'scout') * 0.3), 0.02, 0.5);
       if (!U.chance(pull)) return;
       const buyer = U.pick(others.filter(c => c.id !== s.fromId && c.rating >= s.ovr - 9)) || U.pick(others);
       s.gone = true;
@@ -1870,7 +1928,8 @@
     });
 
     // and new names come onto it
-    const fresh = live.length > target ? U.int(0, 1) : U.int(1, 2);
+    const fresh = (live.length > target ? U.int(0, 1) : U.int(1, 2))
+      + (U.chance(staffLevel(g, 'scout') * 0.6) ? 1 : 0);
     for (let i = 0; i < fresh; i++) {
       const c = U.pick(others);
       const s = listFrom(g, c);
@@ -1895,7 +1954,9 @@
       const pool = [];
       const clubs = Object.values(g.world.clubs).filter(c => c.id !== me.id);
       g.mgr.marketNews = [];
-      U.shuffle(clubs).slice(0, 26).forEach(c => {
+      // a chief scout is the difference between a shortlist and a phone book
+      const reach = 26 + Math.round(staffLevel(g, 'scout') * 14);
+      U.shuffle(clubs).slice(0, reach).forEach(c => {
         // whoever they happen to be willing to listen on, not simply their best
         U.shuffle(global.Engine.Squad.generate(c)).slice(0, U.int(2, 4)).forEach(s => {
           s.value = valueFor(s);
@@ -2035,6 +2096,7 @@
     const joined = Object.assign({}, player, { apps: 0, goals: 0, assists: 0, ratingSum: 0,
       rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g),
       wage: wage != null ? wage : player.wage,
+      deal: player.age >= 32 ? U.int(1, 2) : player.age <= 23 ? U.int(3, 5) : U.int(2, 5),
       joined: g.world.year });
     if (global.Timeline) {
       const line = global.Timeline.for(joined);
@@ -2076,7 +2138,7 @@
     if (idx < 0) return null;
     const s = g.squad[idx];
     if (g.squad.length <= 14) return { ok: false, why: 'You cannot go below fourteen players.' };
-    const fee = Math.round(s.value * U.rnd(0.75, 1.15) / 50000) * 50000;
+    const fee = Math.round(s.value * dealPriceMul(s) * U.rnd(0.75, 1.15) / 50000) * 50000;
     g.squad.splice(idx, 1);
     g.mgr.budget += fee;
     g.mgr.xi = (g.mgr.xi || []).filter(x => x !== id);
@@ -2139,7 +2201,9 @@
     const scoring = s.goals >= 8 ? 1.25 : s.goals >= 4 ? 1.1 : 1;
     // once he has been told no, his agent makes sure the phone keeps ringing
     const restless = 1 + Math.min(s.unsettled || 0, 2) * 0.35;
-    return U.clamp(q * age * form * scoring * restless, 0, 1.9);
+    // and everybody knows when a contract is running out
+    const running = dealOf(s) <= 1 ? 1.4 : dealOf(s) === 2 ? 1.12 : 1;
+    return U.clamp(q * age * form * scoring * restless * running, 0, 2.2);
   }
 
   /* Generate the offers that land on your desk. */
@@ -2163,7 +2227,9 @@
       const from = bidderFor(g, pick.s);
       if (!from) continue;
       used[pick.s.id] = true;
-      const worth = pick.s.ovr >= ELITE ? eliteFee(pick.s.ovr, pick.s.age) : valueFor(pick.s);
+      // and nobody pays four years' money for a man with one year left
+      const worth = (pick.s.ovr >= ELITE ? eliteFee(pick.s.ovr, pick.s.age) : valueFor(pick.s))
+        * dealPriceMul(pick.s);
       // a first bid is a test: under what he is worth, and they know it
       const open = Math.round(worth * U.rnd(0.62, 0.92) / 50000) * 50000;
       // what they would go to if you push. Bigger clubs have deeper pockets.
@@ -2450,7 +2516,25 @@
     g.mgr.offers = sacked ? [] : jobOffers(g);
     g.mgr.bids = sacked ? [] : incomingBids(g);
 
+    /* And what May hands out. */
+    const awards = sacked ? [] : seasonAwards(g, pos, target, champion);
+    /* Who you are about to lose for nothing if you do nothing. Counted before
+       the summer rolls the deals on, so this is the men still in their last
+       year — the ones you have time to keep. */
+    const xi = {};
+    (g.mgr.xi || []).forEach(id => { xi[id] = true; });
+    const shortlist = expiringSoon(g)
+      // a fringe player re-signs on his own and does not need a modal about it
+      .filter(s => xi[s.id] || desire(g, s) >= 0.28 || s.ovr >= club.rating - 2)
+      .sort((a, b) => (b.value || 0) - (a.value || 0));
+    // five names is a summer's work; the rest are on the contracts page
+    const running = shortlist.slice(0, 5).map(s => ({
+      id: s.id, name: s.name, pos: s.pos, ovr: s.ovr, age: s.age, worth: s.value || 0
+    }));
+    const runningMore = Math.max(expiringSoon(g).length - running.length, 0);
+
     return { pos, met, champion, verdict, sacked, warned, table, titles,
+             awards, running, runningMore, derby: derbyRecord(g),
              goalOfSeason: best, wonderCount: seasonGoals.length,
              offers: g.mgr.offers, bids: g.mgr.bids, reputation: reputation(g),
              cups: cups.map(c => ({ name: c.name, short: c.short, won: !!c.won, outAt: c.outAt || null })),
@@ -2461,9 +2545,16 @@
   function nextSeason(g) {
     const U = global.U, State = global.State;
     g.world.year++;
+    /* First, whose deal has run out. He is gone before anybody ages a year,
+       because a contract expires in June and birthdays are not the point. */
+    contractsRoll(g);
+    staffPoaching(g);
     g.squad.forEach(s => {
       s.age++;
-      const peak = s.age <= 24 ? U.int(1, 3) : s.age <= 29 ? U.int(0, 1) : s.age <= 32 ? -U.int(0, 2) : -U.int(1, 4);
+      // an academy coach is worth a point a year to anybody still growing
+      const taught = s.age <= 24 && U.chance(staffLevel(g, 'youth') * 0.55) ? 1 : 0;
+      const peak = (s.age <= 24 ? U.int(1, 3) : s.age <= 29 ? U.int(0, 1)
+        : s.age <= 32 ? -U.int(0, 2) : -U.int(1, 4)) + taught;
       // 99, not 96: an era signing can be a 98 and must not be filed down to
       // the ceiling of an ordinary squad player the first time a year turns
       s.ovr = U.clamp(s.ovr + peak, 45, 99);
@@ -2531,12 +2622,14 @@
         if (young.length >= need) return;
         if (seen[s.name]) return;
         s.age = U.int(17, 21);
-        s.ovr = U.clamp(Math.round(club.rating - U.int(6, 14)), 45, 88);
+        s.ovr = U.clamp(Math.round(club.rating - U.int(6, 14)
+          + staffLevel(g, 'youth') * 6), 45, 88);
         s.value = valueFor(s); s.wage = wageFor(s);
         s.apps = 0; s.goals = 0; s.assists = 0; s.ratingSum = 0; s.fit = 100;
         s.shirt = freeShirt(g);
         s.academy = true;
         s.joined = g.world.year;
+        s.deal = U.int(2, 5);
         seen[s.name] = true;
         g.squad.push(s);
         young.push(s);
@@ -2572,6 +2665,463 @@
     buildSeason(g);
   }
 
+  /* ================= CONTRACTS =================
+     Every player in the building is on a deal with a number of years left on
+     it, and the number matters long before it runs out. A man in his last year
+     is worth less to anybody buying him, is easier to unsettle, and gets phone
+     calls. Let the year run out and he leaves in the summer for nothing at all.
+
+     Which is what makes the summer somebody bids for a player in his final
+     year the summer you actually have to decide something. */
+
+  const DEAL_LONG = 5;
+
+  function dealOf(s) { return s.deal == null ? 3 : s.deal; }
+
+  /* Nobody pays full price for eleven months of a footballer. */
+  function dealPriceMul(s) {
+    const y = dealOf(s);
+    return y >= 3 ? 1 : y === 2 ? 0.86 : y === 1 ? 0.58 : 0.2;
+  }
+
+  function giveDeals(g) {
+    const U = global.U;
+    g.squad.forEach(s => {
+      if (s.deal == null) s.deal = U.weighted([[1, 2], [2, 3], [3, 5], [4, 5], [5, 3]]);
+    });
+  }
+
+  function expiringSoon(g) {
+    return g.squad.filter(s => dealOf(s) <= 1).sort((a, b) => b.ovr - a.ovr);
+  }
+
+  /* What he would sign for. Minutes and form push it up; being told no once
+     already pushes it up again, because his people now know you want him. */
+  function renewalAsk(g, s) {
+    const base = Math.max(wageFor(s), s.wage || 0);
+    const played = s.apps >= 20 ? 1.2 : s.apps >= 10 ? 1.08 : 0.95;
+    const age = s.age <= 23 ? 1.14 : s.age >= 33 ? 0.78 : 1;
+    const restless = 1 + Math.min(s.unsettled || 0, 2) * 0.22;
+    const asked = 1 + (s.renewTries || 0) * 0.1;
+    return Math.max(1000,
+      Math.round(base * played * age * restless * asked * 1.16 / 100) * 100);
+  }
+
+  /* Whether he signs it. The wage is most of it — but a player who is better
+     than the club he is at wants a very good reason to stay, an older one has
+     fewer places to go than he thinks, and a long contract suits the young and
+     frightens the old. */
+  function renewOdds(g, s, wage, years) {
+    const U = global.U, State = global.State;
+    const me = State.club(g.mgr.club);
+    const ratio = wage / Math.max(renewalAsk(g, s), 1);
+    const gap = U.clamp((s.ovr - me.rating) / 12, -0.45, 0.9);
+    const settle = s.age >= 32 ? 0.32 : s.age >= 29 ? 0.14 : s.age <= 22 ? -0.08 : 0;
+    const restless = Math.min(s.unsettled || 0, 3) * 0.17;
+    const term = s.age >= 32
+      ? (years >= 4 ? -0.16 : years <= 2 ? 0.07 : 0)
+      : (years >= 4 ? 0.09 : years <= 1 ? -0.15 : 0);
+    // the size of the badge counts for something all on its own
+    const badge = U.clamp((me.rating - 70) / 60, -0.12, 0.2);
+    return U.clamp((ratio - 0.95) * 2.2 + 0.78 - gap + settle - restless + term + badge,
+      0.02, 0.97);
+  }
+
+  function renew(g, playerId, wage, years) {
+    const U = global.U, State = global.State;
+    const s = g.squad.find(x => x.id === playerId);
+    if (!s) return { ok: false, why: 'He is not in your squad any more.' };
+    const room = g.mgr.wageBudget - squadWages(g) - staffWages(g) + (s.wage || 0);
+    if (wage > room) {
+      return { ok: false, why: `There is no room in the wage bill. ${U.cash(Math.max(room, 0))}/w is all that is left.` };
+    }
+    if (U.chance(renewOdds(g, s, wage, years))) {
+      s.wage = wage;
+      s.deal = U.clamp(years, 1, DEAL_LONG);
+      s.unsettled = 0;
+      s.renewTries = 0;
+      State.news(`${s.name} signs a new ${years}-year deal at ${State.club(g.mgr.club).name}`,
+        'good', null, 'contract');
+      logAdd(g, `${s.name} re-signed — ${U.cash(wage)}/w until ${g.world.year + years}`, 'in');
+      if (global.MSocial) { try { global.MSocial.renewed(g, s.name, years); } catch (e) {} }
+      return { ok: true, player: s };
+    }
+    s.renewTries = (s.renewTries || 0) + 1;
+    return { ok: false, turned: true, ask: renewalAsk(g, s),
+      why: `${s.name} has turned it down. His people are talking about ${U.cash(renewalAsk(g, s))} a week.` };
+  }
+
+  /* The summer a deal runs out. Nobody makes you a last-minute offer and
+     nobody pays you a penny — he is simply not there in August. */
+  function contractsRoll(g) {
+    const U = global.U, State = global.State;
+    const club = State.club(g.mgr.club);
+    /* Whether anybody else wants him is settled before the deal runs out, on
+       the same test that decides who gets bid for. */
+    const wanted = {};
+    g.squad.forEach(s => { wanted[s.id] = s.unsettled ? 1.1 : desire(g, s); });
+    g.squad.forEach(s => { s.deal = dealOf(s) - 1; s.renewTries = 0; });
+    /* Most contracts renew themselves. A squad player with nowhere better to
+       go signs whatever is put in front of him in June and nobody writes about
+       it. You only really lose the men another club has a use for — which is
+       exactly the list you should have been renewing all season. */
+    g.squad.forEach(s => {
+      if (s.deal > 0) return;
+      if (U.chance(U.clamp(0.11 + wanted[s.id] * 0.5, 0.05, 0.7))) return;
+      s.deal = U.int(2, 4);
+    });
+    const out = g.squad.filter(s => s.deal <= 0);
+    const walked = out.map(s => {
+      const suitors = Object.values(g.world.clubs)
+        .filter(c => c.id !== club.id && c.rating >= s.ovr - 10);
+      const to = U.pick(suitors.length ? suitors : Object.values(g.world.clubs));
+      return { name: s.name, pos: s.pos, ovr: s.ovr, age: s.age,
+               to: to ? to.name : 'a club abroad', worth: s.value || 0 };
+    });
+    if (walked.length) {
+      const ids = {};
+      out.forEach(s => { ids[s.id] = true; });
+      g.squad = g.squad.filter(s => !ids[s.id]);
+      g.mgr.xi = (g.mgr.xi || []).filter(x => !ids[x]);
+      walked.forEach(w => {
+        State.news(`${w.name} leaves ${club.name} on a free transfer for ${w.to}`,
+          'bad', null, 'contract');
+        logAdd(g, `${w.name} (${w.pos} ${w.ovr}) left for nothing — contract expired`, 'out');
+      });
+      if (global.MSocial) { try { global.MSocial.freeAgents(g, walked); } catch (e) {} }
+      /* You are not the only person in the building. Let a first-teamer walk
+         and the board go out and find somebody — not the man you would have
+         chosen, usually not quite as good, and on the money you just freed up.
+         Which is the actual cost of not renewing him: not a hole in the squad,
+         a slightly worse player you had no say in. */
+      const pool = squadFor(club, 22);
+      const have = {};
+      g.squad.forEach(x => { have[x.name] = true; });
+      walked.forEach(w => {
+        if (w.ovr < club.rating - 9) return;      // nobody replaces a fringe man
+        const cand = pool.find(x => !have[x.name] && x.pos === w.pos)
+          || pool.find(x => !have[x.name]);
+        if (!cand) return;
+        have[cand.name] = true;
+        cand.ovr = U.clamp(w.ovr - U.int(0, 4), 45, 92);
+        cand.age = U.int(24, 29);
+        cand.value = valueFor(cand); cand.wage = wageFor(cand);
+        cand.apps = 0; cand.goals = 0; cand.assists = 0; cand.ratingSum = 0;
+        cand.rating = 0; cand.fit = 100; cand.form = U.int(48, 68);
+        cand.shirt = freeShirt(g);
+        cand.joined = g.world.year;
+        cand.deal = U.int(2, 5);
+        g.squad.push(cand);
+        State.news(`${club.name} sign ${cand.name} (${cand.pos} ${cand.ovr}) to replace ${w.name}`,
+          'info', null, 'transfer');
+        logAdd(g, `${cand.name} (${cand.pos} ${cand.ovr}) in for the departed ${w.name}`, 'in');
+      });
+    }
+    g.mgr.walked = walked;
+    return walked;
+  }
+
+  /* ================= THE BACKROOM =================
+     A manager is one man with an opinion. Everything else that makes a club
+     work — the legs, the treatment table, the kids, the corners, who is worth
+     watching in the division below — belongs to somebody you hire, paid out of
+     the same wage bill as the players. Which is the whole point of it: every
+     coach you take on is a footballer you cannot. */
+
+  const STAFF_ROLES = [
+    { id: 'assistant', name: 'Assistant manager', ic: 'manager',
+      what: 'Reads a dressing room better than you do. Team talks land, and the board hear your side of a bad month.' },
+    { id: 'fitness', name: 'Fitness coach', ic: 'fitness',
+      what: 'Ninety minutes takes less out of them — and tired legs are what most injuries actually are.' },
+    { id: 'physio', name: 'Head physio', ic: 'hospital',
+      what: 'Every lay-off in the building is shorter than it would have been.' },
+    { id: 'scout', name: 'Chief scout', ic: 'eye',
+      what: 'More names on the market every week, and the good ones stay available long enough to sign.' },
+    { id: 'youth', name: 'Academy coach', ic: 'academy',
+      what: 'Better players come up from the youth team, and the young ones you already have improve faster.' },
+    { id: 'setpiece', name: 'Set-piece coach', ic: 'corner',
+      what: 'Corners and free kicks stop being ninety seconds of nothing.' }
+  ];
+
+  function staffRole(id) { return STAFF_ROLES.find(r => r.id === id) || STAFF_ROLES[0]; }
+
+  function staffWage(rating) {
+    return Math.max(400, Math.round(Math.pow(Math.max(rating - 38, 2), 1.95) * 2.1 / 100) * 100);
+  }
+
+  /* Nought to one. Everything the backroom does is scaled by this. */
+  function staffLevel(g, id) {
+    const st = g.mgr && g.mgr.staff && g.mgr.staff[id];
+    return st ? global.U.clamp((st.rating - 45) / 45, 0, 1) : 0;
+  }
+
+  function staffWages(g) {
+    const st = (g.mgr && g.mgr.staff) || {};
+    return Object.keys(st).reduce((a, k) => a + (st[k] ? st[k].wage || 0 : 0), 0);
+  }
+
+  /* What is left of the weekly bill once the squad and the backroom are paid. */
+  function wageRoom(g) {
+    return g.mgr.wageBudget - squadWages(g) - staffWages(g);
+  }
+
+  function staffBand(r) {
+    return r >= 84 ? 'Among the best there is' : r >= 74 ? 'Very highly rated'
+      : r >= 64 ? 'Good at the job' : r >= 54 ? 'Solid enough'
+      : 'Cheap, and it shows';
+  }
+
+  /* Who will work for you. A famous coach does not join a club nobody has
+     heard of, so the ceiling follows your club and your own name — and a
+     manager with a record can bring better people than his club deserves. */
+  function staffMarket(g, roleId) {
+    const U = global.U, State = global.State;
+    const me = State.club(g.mgr.club);
+    const cap = U.clamp(Math.round(Math.max(me.rating, reputation(g) - 8)) + 4, 50, 92);
+    const out = [];
+    for (let i = 0; i < 5; i++) {
+      const who = global.Names.person(U.chance(0.55) ? me.country : null);
+      const rating = U.clamp(Math.round(cap - Math.pow(U.rnd(0, 1), 0.75) * 36), 42, 92);
+      out.push({ id: U.id(), role: roleId, name: who.name, nation: who.nation,
+                 rating, wage: staffWage(rating) });
+    }
+    return out.sort((a, b) => b.rating - a.rating);
+  }
+
+  function hireStaff(g, cand) {
+    const U = global.U, State = global.State;
+    g.mgr.staff = g.mgr.staff || {};
+    const before = g.mgr.staff[cand.role] || null;
+    const room = wageRoom(g) + (before ? before.wage : 0);
+    if (cand.wage > room) {
+      return { ok: false, why: `Not enough room in the wage bill — ${U.cash(Math.max(room, 0))} a week is all there is.` };
+    }
+    const role = staffRole(cand.role);
+    g.mgr.staff[cand.role] = { name: cand.name, nation: cand.nation, rating: cand.rating,
+                               wage: cand.wage, since: g.world.year };
+    State.news(`${State.club(g.mgr.club).name} appoint ${cand.name} as ${role.name.toLowerCase()}`,
+      'good', null, 'manager');
+    logAdd(g, `${cand.name} in as ${role.name.toLowerCase()}${before ? `, replacing ${before.name}` : ''}`, 'in');
+    if (global.MSocial) { try { global.MSocial.staffIn(g, cand.name, role.name); } catch (e) {} }
+    return { ok: true, replaced: before };
+  }
+
+  function sackStaff(g, roleId) {
+    const st = (g.mgr && g.mgr.staff) || {};
+    const p = st[roleId];
+    if (!p) return { ok: false };
+    delete st[roleId];
+    logAdd(g, `${p.name} left his job as ${staffRole(roleId).name.toLowerCase()}`, 'out');
+    return { ok: true, name: p.name };
+  }
+
+  /* Good coaches are offered jobs too, and a small club cannot keep one of the
+     best physios in the country forever. */
+  function staffPoaching(g) {
+    const U = global.U, State = global.State;
+    const st = g.mgr.staff || {};
+    const me = State.club(g.mgr.club);
+    const lost = [];
+    STAFF_ROLES.forEach(r => {
+      const p = st[r.id];
+      if (!p) return;
+      const odds = U.clamp((p.rating - me.rating) * 0.02 + 0.06, 0.02, 0.4);
+      if (!U.chance(odds)) return;
+      const to = U.pick(Object.values(g.world.clubs)
+        .filter(c => c.id !== me.id && c.rating >= p.rating - 6));
+      delete st[r.id];
+      lost.push({ role: r.id, roleName: r.name, name: p.name,
+                  to: to ? to.name : 'a club abroad' });
+      State.news(`${p.name} leaves ${me.name} for ${to ? to.name : 'a club abroad'}`,
+        'bad', null, 'manager');
+      logAdd(g, `${p.name} (${r.name.toLowerCase()}) poached by ${to ? to.name : 'a club abroad'}`, 'out');
+    });
+    g.mgr.staffLost = lost;
+    return lost;
+  }
+
+  /* ================= THE DERBY =================
+     Some fixtures are not three points. Where there is a real one it is the
+     real one; everywhere else it is whoever is closest to you in size and
+     geography, which is how most rivalries start anyway. */
+
+  const DERBY_PAIRS = [
+    ['Manchester City', 'Manchester United'], ['Arsenal', 'Tottenham'],
+    ['Liverpool', 'Everton'], ['Chelsea', 'West Ham'],
+    ['Real Madrid', 'Barcelona'], ['Sevilla', 'Real Betis'],
+    ['Athletic Club', 'Real Sociedad'],
+    ['Inter', 'AC Milan'], ['Roma', 'Lazio'],
+    ['Borussia Dortmund', 'Bayern München'], ['Mainz', 'Eintracht Frankfurt'],
+    ['Paris SG', 'Marseille'], ['Lens', 'Lille'], ['Nice', 'Monaco'],
+    ['Ajax', 'Feyenoord'], ['Benfica', 'Porto'],
+    ['Boca Juniors', 'River Plate'], ['Independiente', 'Racing Club'],
+    ['Flamengo', 'Fluminense'], ['Corinthians', 'Palmeiras'],
+    ['Grêmio', 'Internacional'],
+    ['LA Galaxy', 'LAFC'], ['Portland Timbers', 'Seattle Sounders'],
+    ['Galatasaray', 'Fenerbahçe'],
+    ['Celtic', 'Rangers'], ['Hearts', 'Hibernian'], ['Dundee', 'Dundee United'],
+    ['Anderlecht', 'Standard Liège'], ['Club Brugge', 'Cercle Brugge'],
+    ['América', 'Guadalajara'], ['Tigres UANL', 'Monterrey'],
+    ['Al Hilal', 'Al Nassr'], ['Al Ittihad', 'Al Ahli'],
+    ['Urawa Reds', 'Kashima Antlers'], ['Gamba Osaka', 'Cerezo Osaka']
+  ];
+  /* One-way: their biggest game is not necessarily your biggest game. */
+  const DERBY_ONE_WAY = {
+    'Atlético Madrid': 'Real Madrid', 'Juventus': 'Inter', 'Napoli': 'Juventus',
+    'Torino': 'Juventus', 'Fiorentina': 'Juventus', 'Lyon': 'Marseille',
+    'PSV': 'Ajax', 'Sporting CP': 'Benfica', 'Beşiktaş': 'Galatasaray',
+    'São Paulo': 'Corinthians', 'Atlético Mineiro': 'Cruzeiro',
+    'Gent': 'Club Brugge', 'Pumas UNAM': 'Cruz Azul',
+    'Yokohama F. Marinos': 'Kawasaki Frontale', 'Bayer Leverkusen': 'Bayern München'
+  };
+  const DERBY_OF = (function () {
+    const m = {};
+    DERBY_PAIRS.forEach(p => { m[p[0]] = p[1]; m[p[1]] = p[0]; });
+    Object.keys(DERBY_ONE_WAY).forEach(k => { if (!m[k]) m[k] = DERBY_ONE_WAY[k]; });
+    return m;
+  })();
+
+  function rivalOf(g, club) {
+    const named = DERBY_OF[club.name];
+    const all = Object.values(g.world.clubs);
+    if (named) {
+      const found = all.find(c => c.name === named && c.id !== club.id);
+      if (found) return found;
+    }
+    // nobody famous: the nearest club of your own size in your own division
+    const same = all.filter(c => c.league === club.league && c.id !== club.id)
+      .sort((a, b) => Math.abs(a.rating - club.rating) - Math.abs(b.rating - club.rating)
+        || (a.name < b.name ? -1 : 1));
+    return same[0] || null;
+  }
+
+  function setRival(g) {
+    const club = global.State.club(g.mgr.club);
+    const r = rivalOf(g, club);
+    g.mgr.rival = r ? r.id : null;
+    g.mgr.rivalName = r ? r.name : null;
+    g.mgr.derbies = [];
+    return r;
+  }
+
+  function isDerby(g, oppId) {
+    return !!(g.mgr && g.mgr.rival && oppId === g.mgr.rival);
+  }
+
+  /* Every derby you have ever played, for the office wall. */
+  function derbyRecord(g) {
+    const rows = (g.mgr.derbyLog || []);
+    const w = rows.filter(r => r.result === 'W').length;
+    const d = rows.filter(r => r.result === 'D').length;
+    const l = rows.filter(r => r.result === 'L').length;
+    return { rows, w, d, l, played: rows.length };
+  }
+
+  /* ================= AWARDS =================
+     Somebody hands out a small trophy every month and a bigger one in May, and
+     it is worth having your name read out. */
+
+  const AWARD_EVERY = 5;   // league games between one manager-of-the-month and the next
+
+  function awardAdd(g, a) {
+    g.mgr.awards = (g.mgr.awards || []).concat(a);
+    return a;
+  }
+
+  /* Manager of the month, decided on your last five league games. */
+  function monthAward(g) {
+    const U = global.U, State = global.State;
+    const league = (g.mgr.results || []).filter(r => r.comp !== 'cup');
+    const last = league.slice(-AWARD_EVERY);
+    if (last.length < AWARD_EVERY) return null;
+    if (g.mgr.lastMonthAt != null && league.length - g.mgr.lastMonthAt < AWARD_EVERY) return null;
+    const pts = last.reduce((a, r) => a + (r.result === 'W' ? 3 : r.result === 'D' ? 1 : 0), 0);
+    const max = last.length * 3;
+    if (pts < max - 6) return null;
+    // every other manager in the division is playing for it too
+    const odds = U.clamp((pts - (max - 7)) / 7 * 0.7, 0.05, 0.7);
+    if (!U.chance(odds)) return null;
+    g.mgr.lastMonthAt = league.length;
+    const me = State.club(g.mgr.club);
+    const a = { kind: 'motm', name: 'Manager of the Month', who: null,
+                year: g.world.year, club: me.name, note: `${pts} points from five` };
+    awardAdd(g, a);
+    g.mgr.board.confidence = U.clamp(g.mgr.board.confidence + 2.5, 0, 100);
+    State.news(`${me.name} manager wins Manager of the Month`, 'good', null, 'medal');
+    if (global.MSocial) { try { global.MSocial.award(g, a); } catch (e) {} }
+    return a;
+  }
+
+  /* And the ones handed out in May. */
+  function seasonAwards(g, pos, target, champion) {
+    const U = global.U, State = global.State;
+    const me = State.club(g.mgr.club);
+    const year = g.world.year;
+    const out = [];
+    const played = g.squad.filter(s => s.apps >= 14);
+
+    const best = played.slice().sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
+    if (best) {
+      out.push({ kind: 'pots', name: 'Player of the Season', who: best.name,
+                 year, club: me.name, note: `rated ${U.round(best.rating, 2)} across ${best.apps} games` });
+    }
+    // one man does not take both; if the best player is also the young one,
+    // the young award goes to whoever was next
+    const kid = played.filter(s => s.age <= 22 && (!best || s.id !== best.id))
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
+    if (kid && (kid.rating || 0) >= 6.6 && kid.apps >= 15) {
+      out.push({ kind: 'young', name: 'Young Player of the Season', who: kid.name,
+                 year, club: me.name, note: `${kid.age} years old, ${kid.apps} games` });
+    }
+    /* The golden boot is the division's, not yours — your man has to beat what
+       everybody else's best striker managed. */
+    const mine = g.squad.slice().sort((a, b) => b.goals - a.goals)[0];
+    if (mine && mine.goals >= 8) {
+      /* The division's leading scorer plays for one of the good sides, so it is
+         one number to beat rather than eleven separate rolls — taking the best
+         of eleven made the boot mathematically unwinnable. */
+      const top = Object.values(g.world.clubs)
+        .filter(c => c.league === me.league && c.id !== me.id)
+        .sort((a, b) => b.rating - a.rating)[0];
+      const bestElse = Math.max(6, Math.round(6 + ((top ? top.rating : 78) - 70) * 0.3 + U.gauss(0, 3)));
+      if (mine.goals > bestElse) {
+        out.push({ kind: 'boot', name: 'Golden Boot', who: mine.name,
+                   year, club: me.name, note: `${mine.goals} league goals` });
+      }
+    }
+    const over = target.pos - pos;
+    if (champion || over >= 4) {
+      out.push({ kind: 'mots', name: 'Manager of the Season', who: null,
+                 year, club: me.name,
+                 note: champion ? 'Champions' : `${U.ordinal(pos)}, ${over} places above what was asked` });
+    }
+    out.forEach(a => {
+      awardAdd(g, a);
+      State.news(a.who ? `${a.who} wins ${a.name}` : `${me.name} manager wins ${a.name}`,
+        'good', null, 'medal');
+      if (global.MSocial) { try { global.MSocial.award(g, a); } catch (e) {} }
+    });
+    return out;
+  }
+
+  /* Everything you have ever been given, this job and the ones before it. */
+  function honoursList(g) {
+    const past = ((g.career && g.career.awards) || []);
+    return past.concat(g.mgr && g.mgr.awards ? g.mgr.awards : []);
+  }
+
+  /* A save made before contracts, staff, derbies or awards existed is still a
+     save. Fill in what is missing rather than refusing to open it. */
+  function migrate(g) {
+    if (!g || !g.mgr) return g;
+    if (!g.mgr.staff) g.mgr.staff = {};
+    if (!g.mgr.awards) g.mgr.awards = [];
+    if (!g.mgr.derbyLog) g.mgr.derbyLog = [];
+    if (g.mgr.rival === undefined) setRival(g);
+    if (g.squad) giveDeals(g);
+    return g;
+  }
+
   global.Manager = {
     FORMATIONS, STYLES, TALKS, SLOTS,
     slots(f) { return SLOTS[f] || SLOTS['4-3-3']; },
@@ -2590,6 +3140,13 @@
     INJURIES, BOOKINGS_BAN,
     traitOf, traitBonus, TRAIT_GOALS, worth,
     eraPrice, eraWage, eraOwned, eraActive, buyEra, restoreEra,
+    DEAL_LONG, dealOf, dealPriceMul, expiringSoon, renewalAsk, renewOdds, renew,
+    contractsRoll, giveDeals,
+    STAFF_ROLES, staffRole, staffLevel, staffWages, staffWage, staffBand, staffMarket,
+    hireStaff, sackStaff, staffPoaching, wageRoom,
+    rivalOf, setRival, isDerby, derbyRecord, DERBY_OF,
+    monthAward, seasonAwards, honoursList, AWARD_EVERY,
+    migrate,
     seasonReview, nextSeason, squadFor
   };
 })(window);
