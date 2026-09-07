@@ -23,6 +23,45 @@
     return ['hsl(' + hue + ',62%,45%)', 'hsl(' + ((hue + 40) % 360) + ',55%,88%)', 'plain'];
   }
 
+  /* ---------------- a shield for a club we have no badge for ---------------- */
+  const SHIELD = 'M2 2 h28 v17 c0 7-8 11-14 13 C10 30 2 26 2 19 Z';
+  let seq = 0;
+
+  // "Riverside Rovers" -> RR, "Ajax" -> AJA
+  function initials(name) {
+    const words = String(name).replace(/[^A-Za-z\u00C0-\u00FF ]/g, '').split(/\s+/).filter(Boolean);
+    const skip = { de: 1, do: 1, of: 1, the: 1, fc: 1, cf: 1, sc: 1, ac: 1, united: 0 };
+    const useful = words.filter(w => !skip[w.toLowerCase()]);
+    if (useful.length >= 2) return (useful[0][0] + useful[1][0]).toUpperCase();
+    const w = useful[0] || words[0] || '?';
+    return w.slice(0, 3).toUpperCase();
+  }
+  function readable(hex) {
+    const c = String(hex).replace('#', '');
+    if (c.length < 6) return '#0b1220';
+    const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#10192b' : '#ffffff';
+  }
+  function drawn(clubName, cls) {
+    const kit = Crest.kitFor(clubName);
+    const a = kit[0], b = kit[1];
+    const uid = 'cr' + (++seq);
+    const text = initials(clubName);
+    const ink = readable(a);
+    const label = String(clubName == null ? '' : clubName).replace(/[<>&"]/g, '') + ' crest';
+    return `<svg class="crest ${cls || ''}" viewBox="0 0 32 32" role="img" aria-label="${label}">
+      <defs><clipPath id="${uid}"><path d="${SHIELD}"/></clipPath></defs>
+      <g clip-path="url(#${uid})"><rect width="32" height="32" fill="${a}"/>
+        <rect x="0" y="0" width="5" height="32" fill="${b}"/>
+        <rect x="27" y="0" width="5" height="32" fill="${b}"/></g>
+      <path d="${SHIELD}" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="1.6"/>
+      <path d="${SHIELD}" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".7"/>
+      <text x="16" y="19" text-anchor="middle" font-size="${text.length > 2 ? 11 : 13}"
+        font-weight="800" font-family="Inter,Helvetica,Arial,sans-serif" fill="${ink}"
+        stroke="rgba(0,0,0,.35)" stroke-width=".4" paint-order="stroke">${text}</text>
+    </svg>`;
+  }
+
   const Crest = {
     kitFor(clubName) {
       const D = global.DATA;
@@ -34,10 +73,11 @@
       const badge = (global.BADGE_IMGS || {})[clubName];
       const label = String(clubName == null ? '' : clubName).replace(/[<>&"]/g, '');
       if (!badge) {
-        // Nothing in the game reaches this: the build fails if a club has no
-        // badge. It is here so an unknown name leaves a gap of the right size
-        // rather than collapsing the row it sits in.
-        return `<span class="crest ${cls || ''}" role="img" aria-label="${label}"></span>`;
+        /* No club shipped with the game reaches this — the build fails if one
+           has no badge. A club *you* invent does, so it gets a drawn shield in
+           its own colours with its initials on it, the way every club here
+           looked before the real badges arrived. */
+        return drawn(clubName, cls);
       }
       // no loading="lazy": a data URI has nothing to fetch, and deferring it
       // only stops the browser decoding a badge that is about to be on screen

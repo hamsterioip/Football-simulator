@@ -112,6 +112,16 @@
     const rivals = league.clubs.map(id => global.State.club(id)).sort((a, b) => b.rating - a.rating);
     const rank = rivals.findIndex(c => c.id === club.id) + 1;
     const n = rivals.length;
+    /* A club you founded yourself has a board that is you. Nobody is going to
+       sack you in year one for finishing bottom of a division you had no
+       business being in — the job is to survive and build. */
+    if (club.founded) {
+      // the bar moves up as the club does, but never further than a rung
+      const soft = Math.min(n, rank + 2);
+      return { pos: soft, text: rank >= n - 2
+        ? 'This is your club. Survive the first few years and build something.'
+        : `Your club, your project. Finish ${global.U.ordinal(soft)} or better.` };
+    }
     if (rank <= 2) return { pos: 1, text: 'Win the league. Nothing else will do.' };
     if (rank <= 4) return { pos: 4, text: 'Finish in the top four.' };
     if (rank <= 8) return { pos: Math.max(6, rank - 1), text: 'Finish in the top half and be interesting.' };
@@ -132,7 +142,7 @@
       xi: [],
       budget: Math.round(Math.pow(Math.max(club.rating - 50, 3), 2.6) * 9000 / 500000) * 500000,
       wageBudget: Math.round(Math.pow(Math.max(club.rating - 45, 4), 2.2) * 62 / 1000) * 1000,
-      board: { target, confidence: 62, seasons: 0 },
+      board: { target, confidence: club.founded ? 78 : 62, seasons: 0 },
       window: 'summer',
       shortlist: [],
       log: [],
@@ -345,6 +355,109 @@
     logAdd(g, `Left ${from.name} for ${to.name}`, 'in');
     if (global.MSocial) global.MSocial.arrived(g);
     return g;
+  }
+
+  /* ---------------- the job market ----------------
+     You do not walk into a job any more. Manager positions come open when they
+     come open, and the bigger the club the longer that takes — an unproven name
+     will not be handed a title contender however long he waits. So you start
+     somewhere small, or you start a club of your own, and you climb.
+
+     This is the market *before* you are employed. Once you have a job the
+     offers system (jobOffers) takes over, because then clubs come to you. */
+
+  const JOB_START_CEIL = 63;    // the best club that will look at a nobody
+  const JOB_CLIMB = 0.72;       // how much a week of waiting is worth
+  const JOB_WAIT_CAP = 26;      // waiting stops helping after half a year
+  const JOB_UNPROVEN_CEIL = 80; // and never opens the very top to a nobody
+
+  /* What rating of club will consider you, having waited this long. */
+  function jobCeiling(weeks, rep) {
+    const U = global.U;
+    const waited = JOB_START_CEIL + Math.min(weeks, JOB_WAIT_CAP) * JOB_CLIMB;
+    // a manager with a record does not have to queue; his reputation carries him
+    const earned = rep ? rep : 0;
+    return Math.round(U.clamp(Math.max(Math.min(waited, JOB_UNPROVEN_CEIL), earned), 55, 94));
+  }
+
+  const JOB_REASONS = [
+    'Sacked after a poor run.',
+    'Resigned for personal reasons.',
+    'Left for a job abroad.',
+    'Mutual consent after eighteen months.',
+    'Retired at the end of the season.',
+    'Gone upstairs to a director role.',
+    'Sacked after a boardroom row.',
+    'Poached by a bigger club.',
+    'Contract expired and not renewed.',
+    'Walked out on Tuesday morning.',
+    'Stepped down after relegation.',
+    'Dismissed after a cup humiliation.'
+  ];
+
+  /* Start a fresh job hunt in a world. */
+  function jobMarket(world, rep) {
+    return { week: 0, rep: rep || 0, open: [], filled: [], news: [],
+             seen: {}, world: world.year };
+  }
+
+  /* Move the hunt on by a week: some jobs get taken, some open up. */
+  function jobTick(market, world, first) {
+    const U = global.U;
+    if (!first) market.week++;
+    market.news = [];
+
+    // somebody else takes the ones you sat on
+    market.open = market.open.filter(v => {
+      if (first) return true;
+      const age = market.week - v.since;
+      if (age >= 1 && U.chance(0.22 + age * 0.10)) {
+        market.news.push(`${v.name} have appointed someone else.`);
+        market.filled.push(v.id);
+        return false;
+      }
+      return true;
+    });
+
+    const ceil = jobCeiling(market.week, market.rep);
+    const taken = {};
+    market.open.forEach(v => { taken[v.id] = true; });
+    market.filled.forEach(id => { taken[id] = true; });
+
+    const eligible = Object.values(world.clubs)
+      .filter(c => !taken[c.id] && c.rating <= ceil);
+    const want = first ? U.int(3, 5) : U.int(1, 3);
+    U.shuffle(eligible).slice(0, want).forEach(c => {
+      const L = global.State.league(c.league);
+      market.open.push({
+        id: c.id, name: c.name, rating: c.rating,
+        league: L ? L.name : '', country: L ? L.country : '',
+        reason: U.pick(JOB_REASONS), since: market.week
+      });
+      if (!first) market.news.push(`${c.name} are looking for a manager.`);
+    });
+    market.open.sort((a, b) => b.rating - a.rating);
+    market.ceiling = ceil;
+    return market;
+  }
+
+  /* ---------------- a club of your own ----------------
+     Rather than inventing a thirteenth team and breaking every fixture list,
+     this takes over the smallest club in a division you pick and renames it.
+     Everything that referenced it by id — the calendar, the table, the cups —
+     keeps working, because it is still the same club underneath. */
+  function foundClub(g, world, leagueId, name) {
+    const U = global.U, State = global.State;
+    const league = world.leagues.find(l => l.id === leagueId) || State.league(leagueId);
+    const clubs = league.clubs.map(id => world.clubs[id]);
+    const victim = clubs.slice().sort((a, b) => a.rating - b.rating)[0];
+    victim.name = name;
+    victim.rating = Math.min(victim.rating, 58);
+    victim.baseRating = victim.rating;
+    victim.drift = 0;
+    victim.form = [];
+    victim.founded = true;
+    return victim;
   }
 
   function buildSeason(g) {
@@ -1002,7 +1115,11 @@
     // a small nudge for the result so a win still feels like something. A bad
     // month costs you; it does not end you.
     const where = position(g);
-    const deserved = U.clamp(80 - (where - g.mgr.board.target.pos) * 6.5, 14, 96);
+    // a founded club is judged against where a club that size should finish,
+    // not against a target it was never going to hit
+    const par = State.club(g.mgr.club).founded ? Math.max(g.mgr.board.target.pos - 2, 1)
+      : g.mgr.board.target.pos;
+    const deserved = U.clamp(80 - (where - par) * 6.5, 14, 96);
     const kick = result === 'W' ? U.rnd(1.5, 3) : result === 'D' ? U.rnd(-0.5, 0.8) : -U.rnd(1.5, 3);
     g.mgr.board.confidence = U.clamp(
       g.mgr.board.confidence + (deserved - g.mgr.board.confidence) * 0.17 + kick, 0, 100);
@@ -1806,34 +1923,94 @@
   }
 
   /* Offer a fee. Selling clubs say no to lowballs and yes to silly money. */
-  function bid(g, player, fee) {
-    const U = global.U, State = global.State;
-    if (fee > g.mgr.budget) return { ok: false, why: 'You do not have that kind of money.' };
-    const wageRoom = g.mgr.wageBudget - squadWages(g);
-    if (player.wage > wageRoom) return { ok: false, why: `You cannot fit ${U.cash(player.wage)}/week into the wage bill.` };
+  /* ---------------- making an offer ----------------
+     A transfer used to be three buttons: under, at, or over the asking price.
+     It is a negotiation now. You name a fee and a wage, the selling club
+     answers, and if you are close but not there they come back with a number
+     rather than a flat no. The player has his own opinion, and for the best
+     ones it is the wage and the size of the badge that decides it, not the fee.
 
-    const ratio = player.free ? 2 : fee / Math.max(player.ask, 1);
-    let chance = player.free ? 0.9 : U.clamp((ratio - 0.72) * 1.9, 0.02, 0.96);
+     offerOutcome() only judges; it changes nothing. completeSigning() does the
+     transfer. Keeping them apart is what makes a counter-offer possible. */
+
+  /* What the selling club thinks of the money. */
+  function clubView(player, fee) {
+    if (player.free) return { ratio: 2, mood: 'free' };
+    const ratio = fee / Math.max(player.ask, 1);
+    return { ratio,
+      mood: ratio >= 1.15 ? 'keen' : ratio >= 0.98 ? 'fair'
+        : ratio >= 0.82 ? 'close' : ratio >= 0.62 ? 'low' : 'insulting' };
+  }
+
+  /* What the player thinks of the wage and the club. 1 is his current money. */
+  function wagePull(g, player, wage) {
+    const U = global.U, State = global.State;
+    const asked = Math.max(player.wage, 1);
+    const r = wage / asked;
+    // below his current money is a hard sell; a real rise turns most heads
+    let pull = U.clamp(0.35 + (r - 0.9) * 1.9, 0.02, 0.97);
     if (player.elite) {
       // the badge has to mean something to him, and money alone will not do it
-      const pull = U.clamp(0.32 + (State.club(g.mgr.club).rating - 76) * 0.045
-        + (g.mgr.board.confidence - 50) * 0.002 + (g.mgr.trophies || []).length * 0.05, 0.06, 0.9);
-      chance = U.clamp(chance * pull, 0.01, 0.72);
+      const badge = U.clamp(0.34 + (State.club(g.mgr.club).rating - 76) * 0.045
+        + (g.mgr.board.confidence - 50) * 0.002 + (g.mgr.trophies || []).length * 0.05, 0.08, 0.95);
+      pull = U.clamp(pull * badge * 1.25, 0.01, 0.8);
     }
-    if (!U.chance(chance)) {
-      if (player.elite) {
-        return { ok: false, why: ratio < 0.95
-          ? `${player.fromClub} did not even take the call. He is not for sale at that.`
-          : `${player.name} has turned you down. He is not leaving ${player.fromClub} for this.` };
+    return pull;
+  }
+
+  /* The whole answer to one offer, without committing to anything. */
+  function offerOutcome(g, player, fee, wage, agreed) {
+    const U = global.U;
+    const wageRoom = g.mgr.wageBudget - squadWages(g);
+    if (fee > g.mgr.budget) return { verdict: 'cash', why: 'You do not have that kind of money.' };
+    if (wage > wageRoom) {
+      return { verdict: 'wages',
+        why: `${U.cash(wage)}/week does not fit. You have ${U.cash(Math.max(wageRoom, 0))} of room.` };
+    }
+
+    /* Meeting the asking price is what an asking price is for: at the number
+       they named the club almost always sells. `agreed` is set when you have
+       accepted a figure they themselves put on the table — the selling club is
+       settled at that point and only the player is left to convince. */
+    const view = clubView(player, fee);
+    const clubYes = player.free || agreed
+      || U.chance(U.clamp((view.ratio - 0.65) * 2.5, 0.02, 0.97));
+
+    if (!clubYes) {
+      /* Close enough to be worth a phone call back. They name their number,
+         and it is a real one you can accept. */
+      if (view.mood === 'close' || view.mood === 'low') {
+        const want = Math.round(player.ask * U.rnd(1.0, 1.14) / 50000) * 50000;
+        return { verdict: 'counter', counter: want, fee, wage,
+          why: `${player.fromClub} will not take ${U.cash(fee)}. They will take ${U.cash(want)}.` };
       }
-      return { ok: false, why: ratio < 0.85
-        ? `${player.fromClub} laughed at it. Nowhere near.`
-        : `${player.fromClub} have said no. Close, but no.` };
+      return { verdict: 'reject',
+        why: view.mood === 'insulting'
+          ? `${player.fromClub} laughed at it. Nowhere near.`
+          : `${player.fromClub} have said no, and they were not close to saying yes.` };
     }
+
+    // the club will sell. Now the player has to want to come.
+    if (!U.chance(wagePull(g, player, wage))) {
+      const short = wage < player.wage;
+      return { verdict: 'player',
+        why: short
+          ? `${player.name} will not take a pay cut to join you. He is on ${U.cash(player.wage)} now.`
+          : player.elite
+            ? `${player.name} has turned you down. He is not leaving ${player.fromClub} for this.`
+            : `${player.name} would rather stay at ${player.fromClub}. The money was not the problem.` };
+    }
+    return { verdict: 'accept', fee, wage };
+  }
+
+  /* Do it. Assumes offerOutcome() has already said yes. */
+  function completeSigning(g, player, fee, wage) {
+    const U = global.U, State = global.State;
     g.mgr.budget -= fee;
     player.signed = true;
     const joined = Object.assign({}, player, { apps: 0, goals: 0, assists: 0, ratingSum: 0,
       rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g),
+      wage: wage != null ? wage : player.wage,
       joined: g.world.year });
     if (global.Timeline) {
       const line = global.Timeline.for(joined);
@@ -1851,6 +2028,14 @@
       try { global.MSocial.signing(g, joined, fee, !!player.elite); } catch (e) {}
     }
     return { ok: true, player: joined };
+  }
+
+  /* The old one-shot call, kept because the era cards and the tests use it. */
+  function bid(g, player, fee, wage) {
+    const w = wage != null ? wage : player.wage;
+    const out = offerOutcome(g, player, fee, w);
+    if (out.verdict !== 'accept') return { ok: false, why: out.why, outcome: out };
+    return completeSigning(g, player, fee, w);
   }
 
   function freeShirt(g) {
@@ -1987,6 +2172,14 @@
     // players start answering the phone, and the board start expecting more
     const over = target.pos - pos;
     club.drift = U.clamp((club.drift || 0) + U.clamp(over * 0.45, -2, 2), -6, 8);
+    /* A club that keeps finishing above its size eventually *is* a bigger club.
+       Once the drift has maxed out it starts turning permanent, so a side you
+       founded in the bottom division can genuinely grow rather than bouncing
+       off a ceiling forever. */
+    if (club.drift >= 5 && pos <= Math.max(target.pos - 2, 1)) {
+      club.baseRating = Math.min((club.baseRating || club.rating) + 1, 84);
+      club.drift -= 2.5;
+    }
     if (champion) g.mgr.trophies.push({ name: State.league(club.league).name + ' Title', year: g.world.year + 1, kind: 'league' });
 
     /* What you did in the cups decides which ones you are in next year, so it
@@ -2003,11 +2196,17 @@
     // going down in the bottom two ends it well before it reaches zero.
     const relegated = pos >= table.length - 1;
     const conf = g.mgr.board.confidence;
-    const sacked = g.mgr.board.seasons <= 1
-      ? relegated && conf < 45
-      : conf <= 12 || (relegated && conf < 60);
+    /* Nobody sacks the founder. Not for three years, anyway — after that even
+       your own board start asking where this is going. */
+    const founded = !!club.founded;
+    const sacked = founded
+      ? (g.mgr.board.seasons > 3 && conf <= 8)
+      : g.mgr.board.seasons <= 1
+        ? relegated && conf < 45
+        : conf <= 12 || (relegated && conf < 60);
     if (sacked) g.mgr.sacked = true;
-    const warned = !sacked && (conf <= 22 || relegated);
+    // finishing last is where a club you founded starts. It is not a warning.
+    const warned = !sacked && (conf <= 22 || (relegated && !founded));
     if (warned) verdict += ' You keep the job. You will not get another year like it.';
 
     // next year's money follows where you finished
@@ -2193,10 +2392,13 @@
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, TITLE_FLOOR, TOP_TARGET, bid, sell, squadWages, valueFor, wageFor,
+    offerOutcome, completeSigning, clubView, wagePull,
     CUP_STAGES, cupById, cupsForSeason,
     matchMoments, GOAL_WAYS, ODD_MOMENTS, SHAPE_LINES, RED_LINES, HURT_LINES,
     WONDERS, wonderTier, career, cabinet, wonders,
     reputation, ceilingFor, jobOffers, moveTo, PITCHES,
+    jobMarket, jobTick, jobCeiling, foundClub, JOB_REASONS,
+    JOB_START_CEIL, JOB_UNPROVEN_CEIL,
     available, unavailablePlayers, unavailableWhy, availablePlayers, repairXI,
     INJURIES, BOOKINGS_BAN,
     traitOf, traitBonus, TRAIT_GOALS, worth,

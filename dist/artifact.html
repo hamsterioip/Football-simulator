@@ -1401,6 +1401,54 @@ em.unav.ban{color:var(--gold)}
 .offer-pitch{display:block;margin-top:3px;font-size:11.5px;line-height:1.35;
   color:var(--dim);white-space:normal}
 
+/* ---------------- the negotiating table ----------------
+   A transfer is a fee and a wage you choose, not three buttons. */
+.offer-row{margin:12px 0;padding:10px 12px;border-radius:var(--radius-s);
+  background:var(--card2);border:1px solid var(--line)}
+.offer-row.over{border-color:rgba(255,90,106,.5);background:rgba(255,90,106,.07)}
+.offer-lab{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--dim)}
+.offer-ctl{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 4px}
+.offer-ctl b{font:900 22px var(--font-d),system-ui,sans-serif;letter-spacing:.5px}
+.offer-ctl b .per{font-size:12px;font-weight:700;color:var(--dim);margin-left:1px}
+.offer-btn{width:38px;height:38px;flex:0 0 38px;border-radius:10px;border:1px solid var(--line);
+  background:var(--card);color:var(--txt);font-size:20px;font-weight:800;line-height:1;
+  cursor:pointer;-webkit-tap-highlight-color:transparent}
+.offer-btn:active{background:var(--line)}
+.offer-btn[disabled]{opacity:.3;cursor:default}
+.offer-read{font-size:11.5px;color:var(--muted);line-height:1.35}
+.offer-read .bad{color:var(--red);font-weight:700}
+.offer-sum{display:grid;grid-template-columns:1fr auto;gap:4px 10px;margin-top:12px;
+  padding-top:10px;border-top:1px solid var(--line);font-size:12px}
+.offer-sum span{color:var(--dim)}
+.offer-sum b{text-align:right;font-weight:800}
+.offer-note{margin:0 0 10px;padding:8px 10px;border-radius:var(--radius-s);
+  background:rgba(255,201,77,.1);border-left:2px solid var(--gold);
+  font-size:12.5px;line-height:1.4;color:var(--txt)}
+
+/* ---------------- the job centre ----------------
+   Vacancies, and the weeks you spend waiting for a better one. */
+.jm-news{margin:0 0 12px;padding:9px 11px;border-radius:var(--radius-s);
+  background:rgba(90,168,255,.09);border-left:2px solid var(--blue);
+  font-size:12px;line-height:1.5;color:var(--muted)}
+.jm-news div+div{margin-top:3px}
+.jm-since{display:block;font-size:10px;font-weight:800;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--dim);margin-top:2px}
+/* the rating sits beside the name, not across the whole row */
+.jm-list .item .tx b{display:flex;align-items:center;gap:7px}
+.jm-list .item .tx b .pill{flex:0 0 auto;width:auto;display:inline-block;
+  font-size:10px;padding:1px 7px}
+.jm-wait{margin:0 0 12px}
+.jm-wait .btn{font-size:13px;padding:9px 10px}
+.jm-wait .ic{width:13px;height:13px;vertical-align:-2px;margin-right:5px}
+
+.found-name{width:100%;box-sizing:border-box;margin:0 0 12px;padding:12px 13px;
+  border-radius:var(--radius-s);border:1px solid var(--line);background:var(--card2);
+  color:var(--txt);font:700 16px var(--font);-webkit-appearance:none}
+.found-name::placeholder{color:var(--dim);font-weight:500}
+.found-name:focus{outline:none;border-color:var(--green);background:var(--card)}
+.found-name.bad{border-color:var(--red);background:rgba(255,90,106,.07)}
+
 </style>
 <!-- ===================== START SCREEN ===================== -->
 <div id="screen-start" class="screen active">
@@ -2983,9 +3031,17 @@ em.unav.ban{color:var(--gold)}
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.6';
+  const VERSION = '3.7';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.7', when: '7 Sep', items: [
+      'Transfers are a negotiation now. You name the fee and you name the wage, and the selling club answers. Meet their asking price and they will almost always sell; go under and they come back with a number of their own rather than a flat no',
+      'The player has his own opinion. Offer him a pay cut and he will not come whatever you pay his club, and for the very best players it is the size of your badge as much as the size of the wage',
+      'You do not walk into a job any more. Manager positions come open when they come open, and an unknown name is only offered the smaller ones \u2014 clubs rated up to 63 on day one, rising as you wait, and never the giants',
+      'Wait a week or a month at a time. Better jobs appear, but the ones you sit on get taken by somebody else \u2014 fifty-odd of them go in half a year',
+      'Or start a club of your own. Name it, pick a division, take the place of the smallest club in it, and build from a squad rated 58 with two million in the bank. Nobody sacks the founder, and a club that keeps finishing above its size genuinely becomes a bigger one',
+      'A club you invent gets a drawn shield in its own colours, since there is no real badge for it'
+    ] },
     { v: '3.6', when: '2 Sep', items: [
       'Another thousand and eight. Buzz now holds 2,646 different messages \u2014 2,308 posts across 92 situations, 238 replies and 100 things you can say yourself',
       'Twenty-five new situations, and most of them are about people rather than results: the captain, the veteran nobody wanted to keep, the lad who never gets on, the crowd favourite, the player coming back from a long injury, the one who wants to leave, the ones out on loan, and the ex-pros with opinions',
@@ -3441,6 +3497,45 @@ em.unav.ban{color:var(--gold)}
     return ['hsl(' + hue + ',62%,45%)', 'hsl(' + ((hue + 40) % 360) + ',55%,88%)', 'plain'];
   }
 
+  /* ---------------- a shield for a club we have no badge for ---------------- */
+  const SHIELD = 'M2 2 h28 v17 c0 7-8 11-14 13 C10 30 2 26 2 19 Z';
+  let seq = 0;
+
+  // "Riverside Rovers" -> RR, "Ajax" -> AJA
+  function initials(name) {
+    const words = String(name).replace(/[^A-Za-z\u00C0-\u00FF ]/g, '').split(/\s+/).filter(Boolean);
+    const skip = { de: 1, do: 1, of: 1, the: 1, fc: 1, cf: 1, sc: 1, ac: 1, united: 0 };
+    const useful = words.filter(w => !skip[w.toLowerCase()]);
+    if (useful.length >= 2) return (useful[0][0] + useful[1][0]).toUpperCase();
+    const w = useful[0] || words[0] || '?';
+    return w.slice(0, 3).toUpperCase();
+  }
+  function readable(hex) {
+    const c = String(hex).replace('#', '');
+    if (c.length < 6) return '#0b1220';
+    const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#10192b' : '#ffffff';
+  }
+  function drawn(clubName, cls) {
+    const kit = Crest.kitFor(clubName);
+    const a = kit[0], b = kit[1];
+    const uid = 'cr' + (++seq);
+    const text = initials(clubName);
+    const ink = readable(a);
+    const label = String(clubName == null ? '' : clubName).replace(/[<>&"]/g, '') + ' crest';
+    return `<svg class="crest ${cls || ''}" viewBox="0 0 32 32" role="img" aria-label="${label}">
+      <defs><clipPath id="${uid}"><path d="${SHIELD}"/></clipPath></defs>
+      <g clip-path="url(#${uid})"><rect width="32" height="32" fill="${a}"/>
+        <rect x="0" y="0" width="5" height="32" fill="${b}"/>
+        <rect x="27" y="0" width="5" height="32" fill="${b}"/></g>
+      <path d="${SHIELD}" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="1.6"/>
+      <path d="${SHIELD}" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".7"/>
+      <text x="16" y="19" text-anchor="middle" font-size="${text.length > 2 ? 11 : 13}"
+        font-weight="800" font-family="Inter,Helvetica,Arial,sans-serif" fill="${ink}"
+        stroke="rgba(0,0,0,.35)" stroke-width=".4" paint-order="stroke">${text}</text>
+    </svg>`;
+  }
+
   const Crest = {
     kitFor(clubName) {
       const D = global.DATA;
@@ -3452,10 +3547,11 @@ em.unav.ban{color:var(--gold)}
       const badge = (global.BADGE_IMGS || {})[clubName];
       const label = String(clubName == null ? '' : clubName).replace(/[<>&"]/g, '');
       if (!badge) {
-        // Nothing in the game reaches this: the build fails if a club has no
-        // badge. It is here so an unknown name leaves a gap of the right size
-        // rather than collapsing the row it sits in.
-        return `<span class="crest ${cls || ''}" role="img" aria-label="${label}"></span>`;
+        /* No club shipped with the game reaches this — the build fails if one
+           has no badge. A club *you* invent does, so it gets a drawn shield in
+           its own colours with its initials on it, the way every club here
+           looked before the real badges arrived. */
+        return drawn(clubName, cls);
       }
       // no loading="lazy": a data URI has nothing to fetch, and deferring it
       // only stops the browser decoding a badge that is about to be on screen
@@ -11234,6 +11330,16 @@ em.unav.ban{color:var(--gold)}
     const rivals = league.clubs.map(id => global.State.club(id)).sort((a, b) => b.rating - a.rating);
     const rank = rivals.findIndex(c => c.id === club.id) + 1;
     const n = rivals.length;
+    /* A club you founded yourself has a board that is you. Nobody is going to
+       sack you in year one for finishing bottom of a division you had no
+       business being in — the job is to survive and build. */
+    if (club.founded) {
+      // the bar moves up as the club does, but never further than a rung
+      const soft = Math.min(n, rank + 2);
+      return { pos: soft, text: rank >= n - 2
+        ? 'This is your club. Survive the first few years and build something.'
+        : `Your club, your project. Finish ${global.U.ordinal(soft)} or better.` };
+    }
     if (rank <= 2) return { pos: 1, text: 'Win the league. Nothing else will do.' };
     if (rank <= 4) return { pos: 4, text: 'Finish in the top four.' };
     if (rank <= 8) return { pos: Math.max(6, rank - 1), text: 'Finish in the top half and be interesting.' };
@@ -11254,7 +11360,7 @@ em.unav.ban{color:var(--gold)}
       xi: [],
       budget: Math.round(Math.pow(Math.max(club.rating - 50, 3), 2.6) * 9000 / 500000) * 500000,
       wageBudget: Math.round(Math.pow(Math.max(club.rating - 45, 4), 2.2) * 62 / 1000) * 1000,
-      board: { target, confidence: 62, seasons: 0 },
+      board: { target, confidence: club.founded ? 78 : 62, seasons: 0 },
       window: 'summer',
       shortlist: [],
       log: [],
@@ -11467,6 +11573,109 @@ em.unav.ban{color:var(--gold)}
     logAdd(g, `Left ${from.name} for ${to.name}`, 'in');
     if (global.MSocial) global.MSocial.arrived(g);
     return g;
+  }
+
+  /* ---------------- the job market ----------------
+     You do not walk into a job any more. Manager positions come open when they
+     come open, and the bigger the club the longer that takes — an unproven name
+     will not be handed a title contender however long he waits. So you start
+     somewhere small, or you start a club of your own, and you climb.
+
+     This is the market *before* you are employed. Once you have a job the
+     offers system (jobOffers) takes over, because then clubs come to you. */
+
+  const JOB_START_CEIL = 63;    // the best club that will look at a nobody
+  const JOB_CLIMB = 0.72;       // how much a week of waiting is worth
+  const JOB_WAIT_CAP = 26;      // waiting stops helping after half a year
+  const JOB_UNPROVEN_CEIL = 80; // and never opens the very top to a nobody
+
+  /* What rating of club will consider you, having waited this long. */
+  function jobCeiling(weeks, rep) {
+    const U = global.U;
+    const waited = JOB_START_CEIL + Math.min(weeks, JOB_WAIT_CAP) * JOB_CLIMB;
+    // a manager with a record does not have to queue; his reputation carries him
+    const earned = rep ? rep : 0;
+    return Math.round(U.clamp(Math.max(Math.min(waited, JOB_UNPROVEN_CEIL), earned), 55, 94));
+  }
+
+  const JOB_REASONS = [
+    'Sacked after a poor run.',
+    'Resigned for personal reasons.',
+    'Left for a job abroad.',
+    'Mutual consent after eighteen months.',
+    'Retired at the end of the season.',
+    'Gone upstairs to a director role.',
+    'Sacked after a boardroom row.',
+    'Poached by a bigger club.',
+    'Contract expired and not renewed.',
+    'Walked out on Tuesday morning.',
+    'Stepped down after relegation.',
+    'Dismissed after a cup humiliation.'
+  ];
+
+  /* Start a fresh job hunt in a world. */
+  function jobMarket(world, rep) {
+    return { week: 0, rep: rep || 0, open: [], filled: [], news: [],
+             seen: {}, world: world.year };
+  }
+
+  /* Move the hunt on by a week: some jobs get taken, some open up. */
+  function jobTick(market, world, first) {
+    const U = global.U;
+    if (!first) market.week++;
+    market.news = [];
+
+    // somebody else takes the ones you sat on
+    market.open = market.open.filter(v => {
+      if (first) return true;
+      const age = market.week - v.since;
+      if (age >= 1 && U.chance(0.22 + age * 0.10)) {
+        market.news.push(`${v.name} have appointed someone else.`);
+        market.filled.push(v.id);
+        return false;
+      }
+      return true;
+    });
+
+    const ceil = jobCeiling(market.week, market.rep);
+    const taken = {};
+    market.open.forEach(v => { taken[v.id] = true; });
+    market.filled.forEach(id => { taken[id] = true; });
+
+    const eligible = Object.values(world.clubs)
+      .filter(c => !taken[c.id] && c.rating <= ceil);
+    const want = first ? U.int(3, 5) : U.int(1, 3);
+    U.shuffle(eligible).slice(0, want).forEach(c => {
+      const L = global.State.league(c.league);
+      market.open.push({
+        id: c.id, name: c.name, rating: c.rating,
+        league: L ? L.name : '', country: L ? L.country : '',
+        reason: U.pick(JOB_REASONS), since: market.week
+      });
+      if (!first) market.news.push(`${c.name} are looking for a manager.`);
+    });
+    market.open.sort((a, b) => b.rating - a.rating);
+    market.ceiling = ceil;
+    return market;
+  }
+
+  /* ---------------- a club of your own ----------------
+     Rather than inventing a thirteenth team and breaking every fixture list,
+     this takes over the smallest club in a division you pick and renames it.
+     Everything that referenced it by id — the calendar, the table, the cups —
+     keeps working, because it is still the same club underneath. */
+  function foundClub(g, world, leagueId, name) {
+    const U = global.U, State = global.State;
+    const league = world.leagues.find(l => l.id === leagueId) || State.league(leagueId);
+    const clubs = league.clubs.map(id => world.clubs[id]);
+    const victim = clubs.slice().sort((a, b) => a.rating - b.rating)[0];
+    victim.name = name;
+    victim.rating = Math.min(victim.rating, 58);
+    victim.baseRating = victim.rating;
+    victim.drift = 0;
+    victim.form = [];
+    victim.founded = true;
+    return victim;
   }
 
   function buildSeason(g) {
@@ -12124,7 +12333,11 @@ em.unav.ban{color:var(--gold)}
     // a small nudge for the result so a win still feels like something. A bad
     // month costs you; it does not end you.
     const where = position(g);
-    const deserved = U.clamp(80 - (where - g.mgr.board.target.pos) * 6.5, 14, 96);
+    // a founded club is judged against where a club that size should finish,
+    // not against a target it was never going to hit
+    const par = State.club(g.mgr.club).founded ? Math.max(g.mgr.board.target.pos - 2, 1)
+      : g.mgr.board.target.pos;
+    const deserved = U.clamp(80 - (where - par) * 6.5, 14, 96);
     const kick = result === 'W' ? U.rnd(1.5, 3) : result === 'D' ? U.rnd(-0.5, 0.8) : -U.rnd(1.5, 3);
     g.mgr.board.confidence = U.clamp(
       g.mgr.board.confidence + (deserved - g.mgr.board.confidence) * 0.17 + kick, 0, 100);
@@ -12928,34 +13141,94 @@ em.unav.ban{color:var(--gold)}
   }
 
   /* Offer a fee. Selling clubs say no to lowballs and yes to silly money. */
-  function bid(g, player, fee) {
-    const U = global.U, State = global.State;
-    if (fee > g.mgr.budget) return { ok: false, why: 'You do not have that kind of money.' };
-    const wageRoom = g.mgr.wageBudget - squadWages(g);
-    if (player.wage > wageRoom) return { ok: false, why: `You cannot fit ${U.cash(player.wage)}/week into the wage bill.` };
+  /* ---------------- making an offer ----------------
+     A transfer used to be three buttons: under, at, or over the asking price.
+     It is a negotiation now. You name a fee and a wage, the selling club
+     answers, and if you are close but not there they come back with a number
+     rather than a flat no. The player has his own opinion, and for the best
+     ones it is the wage and the size of the badge that decides it, not the fee.
 
-    const ratio = player.free ? 2 : fee / Math.max(player.ask, 1);
-    let chance = player.free ? 0.9 : U.clamp((ratio - 0.72) * 1.9, 0.02, 0.96);
+     offerOutcome() only judges; it changes nothing. completeSigning() does the
+     transfer. Keeping them apart is what makes a counter-offer possible. */
+
+  /* What the selling club thinks of the money. */
+  function clubView(player, fee) {
+    if (player.free) return { ratio: 2, mood: 'free' };
+    const ratio = fee / Math.max(player.ask, 1);
+    return { ratio,
+      mood: ratio >= 1.15 ? 'keen' : ratio >= 0.98 ? 'fair'
+        : ratio >= 0.82 ? 'close' : ratio >= 0.62 ? 'low' : 'insulting' };
+  }
+
+  /* What the player thinks of the wage and the club. 1 is his current money. */
+  function wagePull(g, player, wage) {
+    const U = global.U, State = global.State;
+    const asked = Math.max(player.wage, 1);
+    const r = wage / asked;
+    // below his current money is a hard sell; a real rise turns most heads
+    let pull = U.clamp(0.35 + (r - 0.9) * 1.9, 0.02, 0.97);
     if (player.elite) {
       // the badge has to mean something to him, and money alone will not do it
-      const pull = U.clamp(0.32 + (State.club(g.mgr.club).rating - 76) * 0.045
-        + (g.mgr.board.confidence - 50) * 0.002 + (g.mgr.trophies || []).length * 0.05, 0.06, 0.9);
-      chance = U.clamp(chance * pull, 0.01, 0.72);
+      const badge = U.clamp(0.34 + (State.club(g.mgr.club).rating - 76) * 0.045
+        + (g.mgr.board.confidence - 50) * 0.002 + (g.mgr.trophies || []).length * 0.05, 0.08, 0.95);
+      pull = U.clamp(pull * badge * 1.25, 0.01, 0.8);
     }
-    if (!U.chance(chance)) {
-      if (player.elite) {
-        return { ok: false, why: ratio < 0.95
-          ? `${player.fromClub} did not even take the call. He is not for sale at that.`
-          : `${player.name} has turned you down. He is not leaving ${player.fromClub} for this.` };
+    return pull;
+  }
+
+  /* The whole answer to one offer, without committing to anything. */
+  function offerOutcome(g, player, fee, wage, agreed) {
+    const U = global.U;
+    const wageRoom = g.mgr.wageBudget - squadWages(g);
+    if (fee > g.mgr.budget) return { verdict: 'cash', why: 'You do not have that kind of money.' };
+    if (wage > wageRoom) {
+      return { verdict: 'wages',
+        why: `${U.cash(wage)}/week does not fit. You have ${U.cash(Math.max(wageRoom, 0))} of room.` };
+    }
+
+    /* Meeting the asking price is what an asking price is for: at the number
+       they named the club almost always sells. `agreed` is set when you have
+       accepted a figure they themselves put on the table — the selling club is
+       settled at that point and only the player is left to convince. */
+    const view = clubView(player, fee);
+    const clubYes = player.free || agreed
+      || U.chance(U.clamp((view.ratio - 0.65) * 2.5, 0.02, 0.97));
+
+    if (!clubYes) {
+      /* Close enough to be worth a phone call back. They name their number,
+         and it is a real one you can accept. */
+      if (view.mood === 'close' || view.mood === 'low') {
+        const want = Math.round(player.ask * U.rnd(1.0, 1.14) / 50000) * 50000;
+        return { verdict: 'counter', counter: want, fee, wage,
+          why: `${player.fromClub} will not take ${U.cash(fee)}. They will take ${U.cash(want)}.` };
       }
-      return { ok: false, why: ratio < 0.85
-        ? `${player.fromClub} laughed at it. Nowhere near.`
-        : `${player.fromClub} have said no. Close, but no.` };
+      return { verdict: 'reject',
+        why: view.mood === 'insulting'
+          ? `${player.fromClub} laughed at it. Nowhere near.`
+          : `${player.fromClub} have said no, and they were not close to saying yes.` };
     }
+
+    // the club will sell. Now the player has to want to come.
+    if (!U.chance(wagePull(g, player, wage))) {
+      const short = wage < player.wage;
+      return { verdict: 'player',
+        why: short
+          ? `${player.name} will not take a pay cut to join you. He is on ${U.cash(player.wage)} now.`
+          : player.elite
+            ? `${player.name} has turned you down. He is not leaving ${player.fromClub} for this.`
+            : `${player.name} would rather stay at ${player.fromClub}. The money was not the problem.` };
+    }
+    return { verdict: 'accept', fee, wage };
+  }
+
+  /* Do it. Assumes offerOutcome() has already said yes. */
+  function completeSigning(g, player, fee, wage) {
+    const U = global.U, State = global.State;
     g.mgr.budget -= fee;
     player.signed = true;
     const joined = Object.assign({}, player, { apps: 0, goals: 0, assists: 0, ratingSum: 0,
       rating: 0, form: U.int(50, 70), fit: 92, shirt: freeShirt(g),
+      wage: wage != null ? wage : player.wage,
       joined: g.world.year });
     if (global.Timeline) {
       const line = global.Timeline.for(joined);
@@ -12973,6 +13246,14 @@ em.unav.ban{color:var(--gold)}
       try { global.MSocial.signing(g, joined, fee, !!player.elite); } catch (e) {}
     }
     return { ok: true, player: joined };
+  }
+
+  /* The old one-shot call, kept because the era cards and the tests use it. */
+  function bid(g, player, fee, wage) {
+    const w = wage != null ? wage : player.wage;
+    const out = offerOutcome(g, player, fee, w);
+    if (out.verdict !== 'accept') return { ok: false, why: out.why, outcome: out };
+    return completeSigning(g, player, fee, w);
   }
 
   function freeShirt(g) {
@@ -13109,6 +13390,14 @@ em.unav.ban{color:var(--gold)}
     // players start answering the phone, and the board start expecting more
     const over = target.pos - pos;
     club.drift = U.clamp((club.drift || 0) + U.clamp(over * 0.45, -2, 2), -6, 8);
+    /* A club that keeps finishing above its size eventually *is* a bigger club.
+       Once the drift has maxed out it starts turning permanent, so a side you
+       founded in the bottom division can genuinely grow rather than bouncing
+       off a ceiling forever. */
+    if (club.drift >= 5 && pos <= Math.max(target.pos - 2, 1)) {
+      club.baseRating = Math.min((club.baseRating || club.rating) + 1, 84);
+      club.drift -= 2.5;
+    }
     if (champion) g.mgr.trophies.push({ name: State.league(club.league).name + ' Title', year: g.world.year + 1, kind: 'league' });
 
     /* What you did in the cups decides which ones you are in next year, so it
@@ -13125,11 +13414,17 @@ em.unav.ban{color:var(--gold)}
     // going down in the bottom two ends it well before it reaches zero.
     const relegated = pos >= table.length - 1;
     const conf = g.mgr.board.confidence;
-    const sacked = g.mgr.board.seasons <= 1
-      ? relegated && conf < 45
-      : conf <= 12 || (relegated && conf < 60);
+    /* Nobody sacks the founder. Not for three years, anyway — after that even
+       your own board start asking where this is going. */
+    const founded = !!club.founded;
+    const sacked = founded
+      ? (g.mgr.board.seasons > 3 && conf <= 8)
+      : g.mgr.board.seasons <= 1
+        ? relegated && conf < 45
+        : conf <= 12 || (relegated && conf < 60);
     if (sacked) g.mgr.sacked = true;
-    const warned = !sacked && (conf <= 22 || relegated);
+    // finishing last is where a club you founded starts. It is not a warning.
+    const warned = !sacked && (conf <= 22 || (relegated && !founded));
     if (warned) verdict += ' You keep the job. You will not get another year like it.';
 
     // next year's money follows where you finished
@@ -13315,10 +13610,13 @@ em.unav.ban{color:var(--gold)}
     start, buildSeason, nextFixture, xiPlayers, benchPlayers, autoPick,
     teamRating, lines, playRound, position, seasonOver,
     market, marketTick, topPlayers, ELITE, TITLE_FLOOR, TOP_TARGET, bid, sell, squadWages, valueFor, wageFor,
+    offerOutcome, completeSigning, clubView, wagePull,
     CUP_STAGES, cupById, cupsForSeason,
     matchMoments, GOAL_WAYS, ODD_MOMENTS, SHAPE_LINES, RED_LINES, HURT_LINES,
     WONDERS, wonderTier, career, cabinet, wonders,
     reputation, ceilingFor, jobOffers, moveTo, PITCHES,
+    jobMarket, jobTick, jobCeiling, foundClub, JOB_REASONS,
+    JOB_START_CEIL, JOB_UNPROVEN_CEIL,
     available, unavailablePlayers, unavailableWhy, availablePlayers, repairXI,
     INJURIES, BOOKINGS_BAN,
     traitOf, traitBonus, TRAIT_GOALS, worth,
@@ -20311,8 +20609,103 @@ em.unav.ban{color:var(--gold)}
         onRender(m) {
           m.querySelectorAll('[data-mera]').forEach(el => el.onclick = () => {
             Game._mgrEra = el.dataset.mera;
-            Game.managerLeagues();
+            Game.managerJobs(true);
           });
+        }
+      });
+    },
+
+    /* ---------------- the job centre ----------------
+       Nobody hands an unknown manager a title contender. Jobs come open when
+       they come open, the big ones take months, and the ones you leave sitting
+       get taken by somebody else. So you start small and climb — or you start
+       a club of your own and build one. */
+    managerJobs(fresh) {
+      const M = global.Manager;
+      const eraId = Game._mgrEra || 'modern';
+      const era = D.ERAS.find(e => e.id === eraId) || D.ERAS[0];
+      if (fresh || !Game._mgrWorld) Game._mgrWorld = State.buildWorld(era.startYear, eraId);
+      const world = Game._mgrWorld;
+      // State.club() is used all through the market, so it needs a game to read
+      if (!State.game || State.game.world !== world) State.game = { world, settings: {} };
+      if (fresh || !Game._jobs) {
+        Game._jobs = M.jobMarket(world, Game._mgrCeiling || 0);
+        M.jobTick(Game._jobs, world, true);
+      }
+      const jm = Game._jobs;
+
+      UI.modal({
+        title: jm.week === 0 ? 'Looking for a job' : `Week ${jm.week}`,
+        html: `<p class="muted">${U.esc(era.name)} · ${U.esc(era.years)}. Nobody knows your name yet. Clubs rated up to <b>${jm.ceiling}</b> will talk to you today. Wait and better jobs come open — but the biggest ones never open to a manager who has not done it yet.</p>
+          ${jm.news.length ? `<div class="jm-news">${jm.news.map(n =>
+            `<div>${U.esc(n)}</div>`).join('')}</div>` : ''}
+          <div class="row jm-wait">
+            <button class="btn btn-ghost grow" data-wait="1">${ico('clock')} Wait a week</button>
+            <button class="btn btn-ghost grow" data-wait="4">${ico('clock')} A month</button>
+          </div>
+          ${jm.open.length ? `<div class="list jm-list">${jm.open.map(v => `
+            <div class="item click" data-club="${v.id}">
+              <div class="ic">${global.Crest.svg(v.name, 'crest-sm')}</div>
+              <div class="tx"><b>${U.esc(v.name)}<span class="pill">${v.rating}</span></b>
+                <span>${U.esc(v.league)} · ${U.esc(v.reason)}</span>
+                <span class="jm-since">${jm.week - v.since === 0 ? 'Just come open'
+                  : `Open ${jm.week - v.since} week${jm.week - v.since === 1 ? '' : 's'}`}</span></div>
+            </div>`).join('')}</div>`
+            : '<p class="muted">Nothing at all this week. Sit tight.</p>'}`,
+        actions: [
+          { label: 'Start your own club', cls: 'btn-ghost', onClick: () => Game.managerFound() },
+          { label: 'Back', cls: 'btn-ghost', onClick: () => Game.managerStart() }
+        ],
+        onRender(m) {
+          m.querySelectorAll('[data-wait]').forEach(el => el.onclick = () => {
+            const n = +el.dataset.wait;
+            for (let i = 0; i < n; i++) M.jobTick(jm, world);
+            Game.managerJobs();
+          });
+          m.querySelectorAll('[data-club]').forEach(el => el.onclick = () => {
+            Game._jobs = null;
+            Game.managerBegin(el.dataset.club);
+          });
+          UI.modalScrollHint && UI.modalScrollHint(m);
+        }
+      });
+    },
+
+    /* ---------------- a club of your own ---------------- */
+    managerFound() {
+      const world = Game._mgrWorld;
+      UI.modal({
+        title: 'Start your own club',
+        html: `<p class="muted">Name it, pick a division, and take the place of the smallest
+            club in it. You will start at the bottom with almost no money and a board
+            that is you — nobody is sacking you for finishing last in year one.</p>
+          <input class="found-name" id="found-name" type="text" maxlength="24"
+            placeholder="Your club's name" autocomplete="off">
+          <div class="list" id="found-leagues">${D.LEAGUES.map(l => {
+            const clubs = (world.leagues.find(x => x.id === l.id) || {}).clubs || [];
+            const small = clubs.map(id => world.clubs[id]).sort((a, b) => a.rating - b.rating)[0];
+            return `<div class="item click" data-found="${l.id}">
+              <div class="ic">${global.Icons.flag(l.country)}</div>
+              <div class="tx"><b>${U.esc(l.name)}</b>
+                <span>${U.esc(l.country)} · you would replace ${U.esc(small ? small.name : '—')}
+                  (${small ? small.rating : '—'})</span></div>
+            </div>`;
+          }).join('')}</div>`,
+        actions: [{ label: 'Back', cls: 'btn-ghost', onClick: () => Game.managerJobs() }],
+        onRender(m) {
+          const input = m.querySelector('#found-name');
+          m.querySelectorAll('[data-found]').forEach(el => el.onclick = () => {
+            const name = (input.value || '').trim();
+            if (name.length < 3) {
+              input.classList.add('bad');
+              input.focus();
+              return UI.toast('Give your club a name first.', '');
+            }
+            const club = global.Manager.foundClub(State.game, Game._mgrWorld, el.dataset.found, name);
+            Game._jobs = null;
+            Game.managerBegin(club.id);
+          });
+          UI.modalScrollHint && UI.modalScrollHint(m);
         }
       });
     },
@@ -20975,50 +21368,154 @@ em.unav.ban{color:var(--gold)}
       global.MUI.render();
     },
 
+    /* ---------------- the negotiating table ----------------
+       Name your own fee and your own wage. The selling club answers, and if you
+       are close they come back with a number instead of a flat no. */
     mgrBid(id) {
       const g = State.game;
       const M = global.Manager;
       const player = M.market(g).find(s => s.id === id)
         || M.topPlayers(g).find(s => s.id === id);
       if (!player) return;
-      const asks = player.free ? [0] : [
-        Math.round(player.ask * 0.8 / 50000) * 50000,
-        player.ask,
-        Math.round(player.ask * 1.25 / 50000) * 50000
-      ];
+      Game._offer = {
+        player: player,
+        fee: player.free ? 0 : player.ask,
+        wage: Math.round(player.wage * 1.05 / 1000) * 1000
+      };
+      Game.mgrOfferSheet();
+    },
+
+    /* The sheet itself. Redrawn in place as you move the numbers. */
+    mgrOfferSheet(note) {
+      const g = State.game;
+      const M = global.Manager;
+      const o = Game._offer;
+      if (!o) return;
+      const p = o.player;
+      const feeStep = Math.max(50000, Math.round(p.ask * 0.05 / 50000) * 50000);
+      const wageStep = Math.max(1000, Math.round(p.wage * 0.05 / 1000) * 1000);
+
+      const view = M.clubView(p, o.fee);
+      const clubRead = p.free ? 'Nothing to pay. He is a free agent.'
+        : view.mood === 'keen' ? 'Over the odds. They would bite your hand off.'
+        : view.mood === 'fair' ? 'At or about the asking price. They will listen.'
+        : view.mood === 'close' ? 'Under the asking price. They may come back with a number.'
+        : view.mood === 'low' ? 'Well under. Expect them to name their own price.'
+        : 'They will not take this seriously.';
+
+      const wr = o.wage / Math.max(p.wage, 1);
+      const playerRead = wr < 0.95 ? 'A pay cut. He will need convincing.'
+        : wr < 1.08 ? 'About what he earns now.'
+        : wr < 1.35 ? 'A rise. That will get his attention.'
+        : 'Far more than he is on. Hard to say no to.';
+
+      const overCash = o.fee > g.mgr.budget;
+      const overWage = o.wage > (g.mgr.wageBudget - M.squadWages(g));
+
       UI.modal({
-        title: player.name,
-        html: `<p class="muted">${U.esc(player.pos)} · ${player.age} · rated <b>${player.ovr}</b><br>
-          ${U.esc(player.fromClub)} want ${player.free ? 'nothing — he is a free agent' : U.cash(player.ask)}.
-          Wages ${U.cash(player.wage)}/week${
-            player.wage > g.mgr.wageBudget - global.Manager.squadWages(g)
-              ? ' — <b class="bad">more room than you have. Sell someone first.</b>' : '.'}</p>
-          <div class="list">${asks.map((a, i) => {
-            const tooMuch = a > g.mgr.budget;
-            return `<div class="item ${tooMuch ? 'noafford' : 'click'}" ${tooMuch ? '' : `data-fee="${a}"`}>
-              <div class="ic">${ico('value')}</div>
-              <div class="tx"><b>${a ? U.cash(a) : 'Sign him'}</b><span>${
-                tooMuch ? 'More than you have.'
-                : player.free ? 'Nothing to pay but the wages.'
-                : i === 0 ? 'A cheeky one. They will probably say no.'
-                : i === 1 ? 'Meet the asking price.' : 'Over the odds. Hard to turn down.'}</span></div></div>`;
-          }).join('')}</div>`,
-        actions: [{ label: 'Walk away', cls: 'btn-ghost' }],
+        title: 'Make an offer',
+        html: `<p class="muted">${U.esc(p.name)} · ${U.esc(p.pos)} · ${p.age} · rated <b>${p.ovr}</b><br>
+            ${U.esc(p.fromClub)} want ${p.free ? 'nothing' : U.cash(p.ask)}.
+            He is on ${U.cash(p.wage)}/week.</p>
+          ${note ? `<p class="offer-note">${U.esc(note)}</p>` : ''}
+
+          <div class="offer-row${overCash ? ' over' : ''}">
+            <div class="offer-lab">Transfer fee</div>
+            <div class="offer-ctl">
+              <button class="offer-btn" data-feestep="-1" ${p.free ? 'disabled' : ''}>−</button>
+              <b>${p.free ? 'Free' : U.cash(o.fee)}</b>
+              <button class="offer-btn" data-feestep="1" ${p.free ? 'disabled' : ''}>+</button>
+            </div>
+            <div class="offer-read">${overCash
+              ? `<span class="bad">More than your ${U.cash(g.mgr.budget)} budget.</span>`
+              : U.esc(clubRead)}</div>
+          </div>
+
+          <div class="offer-row${overWage ? ' over' : ''}">
+            <div class="offer-lab">Wages offered</div>
+            <div class="offer-ctl">
+              <button class="offer-btn" data-wagestep="-1">−</button>
+              <b>${U.cash(o.wage)}<span class="per">/w</span></b>
+              <button class="offer-btn" data-wagestep="1">+</button>
+            </div>
+            <div class="offer-read">${overWage
+              ? `<span class="bad">Over your wage room of ${U.cash(Math.max(g.mgr.wageBudget - M.squadWages(g), 0))}.</span>`
+              : U.esc(playerRead)}</div>
+          </div>
+
+          <div class="offer-sum">
+            <span>Budget after</span><b>${U.cash(Math.max(g.mgr.budget - o.fee, 0))}</b>
+            <span>Wage room after</span><b>${U.cash(Math.max(g.mgr.wageBudget - M.squadWages(g) - o.wage, 0))}</b>
+          </div>`,
+        actions: [
+          { label: 'Send the offer', onClick: () => Game.mgrSendOffer() },
+          { label: 'Walk away', cls: 'btn-ghost', onClick: () => { Game._offer = null; } }
+        ],
         onRender(m) {
-          m.querySelectorAll('[data-fee]').forEach(el => el.onclick = () => {
-            const res = global.Manager.bid(g, player, +el.dataset.fee);
-            UI.closeModal();
-            State.save(); global.MUI.render();
-            if (!res.ok) return UI.toast(res.why, 'bad');
-            // signing him does not pick him — that is still your job
-            const xi = global.Manager.xiPlayers(g);
-            const worst = xi.reduce((a, b) => (a && a.ovr <= b.ovr ? a : b), null);
-            UI.toast(worst && res.player.ovr > worst.ovr
-              ? `${player.name} signs. He is better than someone in your eleven.`
-              : `${player.name} signs.`, 'good');
+          m.querySelectorAll('[data-feestep]').forEach(el => el.onclick = () => {
+            const dir = +el.dataset.feestep;
+            o.fee = Math.max(0, o.fee + dir * feeStep);
+            Game.mgrOfferSheet(note);
+          });
+          m.querySelectorAll('[data-wagestep]').forEach(el => el.onclick = () => {
+            const dir = +el.dataset.wagestep;
+            o.wage = Math.max(1000, o.wage + dir * wageStep);
+            Game.mgrOfferSheet(note);
           });
         }
       });
+    },
+
+    mgrSendOffer() {
+      const g = State.game;
+      const M = global.Manager;
+      const o = Game._offer;
+      if (!o) return;
+      const out = M.offerOutcome(g, o.player, o.fee, o.wage);
+
+      if (out.verdict === 'accept') {
+        const res = M.completeSigning(g, o.player, o.fee, o.wage);
+        Game._offer = null;
+        State.save(); global.MUI.render();
+        if (res && res.ok) {
+          UI.toast(`${res.player.name} has signed.`, 'good');
+          Game.mgrPlayerCard(res.player.id);
+        }
+        return;
+      }
+      if (out.verdict === 'counter') {
+        // their number, on the table, one tap away
+        return UI.modal({
+          title: 'They have come back',
+          html: `<p class="muted">${U.esc(out.why)}</p>
+            <p class="muted">Wages would stay at ${U.cash(o.wage)}/week.</p>`,
+          actions: [
+            { label: `Pay ${U.cash(out.counter)}`, onClick: () => {
+              if (out.counter > g.mgr.budget) {
+                return UI.toast('You cannot afford their number.', 'bad');
+              }
+              o.fee = out.counter;
+              // their own number: the club is settled, only the player is left
+              const again = M.offerOutcome(g, o.player, o.fee, o.wage, true);
+              if (again.verdict === 'accept') {
+                const res = M.completeSigning(g, o.player, o.fee, o.wage);
+                Game._offer = null;
+                State.save(); global.MUI.render();
+                if (res && res.ok) {
+                  UI.toast(`${res.player.name} has signed.`, 'good');
+                  Game.mgrPlayerCard(res.player.id);
+                }
+              } else {
+                Game.mgrOfferSheet(again.why);
+              }
+            } },
+            { label: 'Keep talking', cls: 'btn-ghost', onClick: () => Game.mgrOfferSheet(out.why) },
+            { label: 'Walk away', cls: 'btn-ghost', onClick: () => { Game._offer = null; } }
+          ]
+        });
+      }
+      // no, for one reason or another — the sheet stays open so you can move
+      Game.mgrOfferSheet(out.why);
     },
 
     mgrSell(id) {

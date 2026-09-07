@@ -454,8 +454,103 @@
         onRender(m) {
           m.querySelectorAll('[data-mera]').forEach(el => el.onclick = () => {
             Game._mgrEra = el.dataset.mera;
-            Game.managerLeagues();
+            Game.managerJobs(true);
           });
+        }
+      });
+    },
+
+    /* ---------------- the job centre ----------------
+       Nobody hands an unknown manager a title contender. Jobs come open when
+       they come open, the big ones take months, and the ones you leave sitting
+       get taken by somebody else. So you start small and climb — or you start
+       a club of your own and build one. */
+    managerJobs(fresh) {
+      const M = global.Manager;
+      const eraId = Game._mgrEra || 'modern';
+      const era = D.ERAS.find(e => e.id === eraId) || D.ERAS[0];
+      if (fresh || !Game._mgrWorld) Game._mgrWorld = State.buildWorld(era.startYear, eraId);
+      const world = Game._mgrWorld;
+      // State.club() is used all through the market, so it needs a game to read
+      if (!State.game || State.game.world !== world) State.game = { world, settings: {} };
+      if (fresh || !Game._jobs) {
+        Game._jobs = M.jobMarket(world, Game._mgrCeiling || 0);
+        M.jobTick(Game._jobs, world, true);
+      }
+      const jm = Game._jobs;
+
+      UI.modal({
+        title: jm.week === 0 ? 'Looking for a job' : `Week ${jm.week}`,
+        html: `<p class="muted">${U.esc(era.name)} · ${U.esc(era.years)}. Nobody knows your name yet. Clubs rated up to <b>${jm.ceiling}</b> will talk to you today. Wait and better jobs come open — but the biggest ones never open to a manager who has not done it yet.</p>
+          ${jm.news.length ? `<div class="jm-news">${jm.news.map(n =>
+            `<div>${U.esc(n)}</div>`).join('')}</div>` : ''}
+          <div class="row jm-wait">
+            <button class="btn btn-ghost grow" data-wait="1">${ico('clock')} Wait a week</button>
+            <button class="btn btn-ghost grow" data-wait="4">${ico('clock')} A month</button>
+          </div>
+          ${jm.open.length ? `<div class="list jm-list">${jm.open.map(v => `
+            <div class="item click" data-club="${v.id}">
+              <div class="ic">${global.Crest.svg(v.name, 'crest-sm')}</div>
+              <div class="tx"><b>${U.esc(v.name)}<span class="pill">${v.rating}</span></b>
+                <span>${U.esc(v.league)} · ${U.esc(v.reason)}</span>
+                <span class="jm-since">${jm.week - v.since === 0 ? 'Just come open'
+                  : `Open ${jm.week - v.since} week${jm.week - v.since === 1 ? '' : 's'}`}</span></div>
+            </div>`).join('')}</div>`
+            : '<p class="muted">Nothing at all this week. Sit tight.</p>'}`,
+        actions: [
+          { label: 'Start your own club', cls: 'btn-ghost', onClick: () => Game.managerFound() },
+          { label: 'Back', cls: 'btn-ghost', onClick: () => Game.managerStart() }
+        ],
+        onRender(m) {
+          m.querySelectorAll('[data-wait]').forEach(el => el.onclick = () => {
+            const n = +el.dataset.wait;
+            for (let i = 0; i < n; i++) M.jobTick(jm, world);
+            Game.managerJobs();
+          });
+          m.querySelectorAll('[data-club]').forEach(el => el.onclick = () => {
+            Game._jobs = null;
+            Game.managerBegin(el.dataset.club);
+          });
+          UI.modalScrollHint && UI.modalScrollHint(m);
+        }
+      });
+    },
+
+    /* ---------------- a club of your own ---------------- */
+    managerFound() {
+      const world = Game._mgrWorld;
+      UI.modal({
+        title: 'Start your own club',
+        html: `<p class="muted">Name it, pick a division, and take the place of the smallest
+            club in it. You will start at the bottom with almost no money and a board
+            that is you — nobody is sacking you for finishing last in year one.</p>
+          <input class="found-name" id="found-name" type="text" maxlength="24"
+            placeholder="Your club's name" autocomplete="off">
+          <div class="list" id="found-leagues">${D.LEAGUES.map(l => {
+            const clubs = (world.leagues.find(x => x.id === l.id) || {}).clubs || [];
+            const small = clubs.map(id => world.clubs[id]).sort((a, b) => a.rating - b.rating)[0];
+            return `<div class="item click" data-found="${l.id}">
+              <div class="ic">${global.Icons.flag(l.country)}</div>
+              <div class="tx"><b>${U.esc(l.name)}</b>
+                <span>${U.esc(l.country)} · you would replace ${U.esc(small ? small.name : '—')}
+                  (${small ? small.rating : '—'})</span></div>
+            </div>`;
+          }).join('')}</div>`,
+        actions: [{ label: 'Back', cls: 'btn-ghost', onClick: () => Game.managerJobs() }],
+        onRender(m) {
+          const input = m.querySelector('#found-name');
+          m.querySelectorAll('[data-found]').forEach(el => el.onclick = () => {
+            const name = (input.value || '').trim();
+            if (name.length < 3) {
+              input.classList.add('bad');
+              input.focus();
+              return UI.toast('Give your club a name first.', '');
+            }
+            const club = global.Manager.foundClub(State.game, Game._mgrWorld, el.dataset.found, name);
+            Game._jobs = null;
+            Game.managerBegin(club.id);
+          });
+          UI.modalScrollHint && UI.modalScrollHint(m);
         }
       });
     },
@@ -1118,50 +1213,154 @@
       global.MUI.render();
     },
 
+    /* ---------------- the negotiating table ----------------
+       Name your own fee and your own wage. The selling club answers, and if you
+       are close they come back with a number instead of a flat no. */
     mgrBid(id) {
       const g = State.game;
       const M = global.Manager;
       const player = M.market(g).find(s => s.id === id)
         || M.topPlayers(g).find(s => s.id === id);
       if (!player) return;
-      const asks = player.free ? [0] : [
-        Math.round(player.ask * 0.8 / 50000) * 50000,
-        player.ask,
-        Math.round(player.ask * 1.25 / 50000) * 50000
-      ];
+      Game._offer = {
+        player: player,
+        fee: player.free ? 0 : player.ask,
+        wage: Math.round(player.wage * 1.05 / 1000) * 1000
+      };
+      Game.mgrOfferSheet();
+    },
+
+    /* The sheet itself. Redrawn in place as you move the numbers. */
+    mgrOfferSheet(note) {
+      const g = State.game;
+      const M = global.Manager;
+      const o = Game._offer;
+      if (!o) return;
+      const p = o.player;
+      const feeStep = Math.max(50000, Math.round(p.ask * 0.05 / 50000) * 50000);
+      const wageStep = Math.max(1000, Math.round(p.wage * 0.05 / 1000) * 1000);
+
+      const view = M.clubView(p, o.fee);
+      const clubRead = p.free ? 'Nothing to pay. He is a free agent.'
+        : view.mood === 'keen' ? 'Over the odds. They would bite your hand off.'
+        : view.mood === 'fair' ? 'At or about the asking price. They will listen.'
+        : view.mood === 'close' ? 'Under the asking price. They may come back with a number.'
+        : view.mood === 'low' ? 'Well under. Expect them to name their own price.'
+        : 'They will not take this seriously.';
+
+      const wr = o.wage / Math.max(p.wage, 1);
+      const playerRead = wr < 0.95 ? 'A pay cut. He will need convincing.'
+        : wr < 1.08 ? 'About what he earns now.'
+        : wr < 1.35 ? 'A rise. That will get his attention.'
+        : 'Far more than he is on. Hard to say no to.';
+
+      const overCash = o.fee > g.mgr.budget;
+      const overWage = o.wage > (g.mgr.wageBudget - M.squadWages(g));
+
       UI.modal({
-        title: player.name,
-        html: `<p class="muted">${U.esc(player.pos)} · ${player.age} · rated <b>${player.ovr}</b><br>
-          ${U.esc(player.fromClub)} want ${player.free ? 'nothing — he is a free agent' : U.cash(player.ask)}.
-          Wages ${U.cash(player.wage)}/week${
-            player.wage > g.mgr.wageBudget - global.Manager.squadWages(g)
-              ? ' — <b class="bad">more room than you have. Sell someone first.</b>' : '.'}</p>
-          <div class="list">${asks.map((a, i) => {
-            const tooMuch = a > g.mgr.budget;
-            return `<div class="item ${tooMuch ? 'noafford' : 'click'}" ${tooMuch ? '' : `data-fee="${a}"`}>
-              <div class="ic">${ico('value')}</div>
-              <div class="tx"><b>${a ? U.cash(a) : 'Sign him'}</b><span>${
-                tooMuch ? 'More than you have.'
-                : player.free ? 'Nothing to pay but the wages.'
-                : i === 0 ? 'A cheeky one. They will probably say no.'
-                : i === 1 ? 'Meet the asking price.' : 'Over the odds. Hard to turn down.'}</span></div></div>`;
-          }).join('')}</div>`,
-        actions: [{ label: 'Walk away', cls: 'btn-ghost' }],
+        title: 'Make an offer',
+        html: `<p class="muted">${U.esc(p.name)} · ${U.esc(p.pos)} · ${p.age} · rated <b>${p.ovr}</b><br>
+            ${U.esc(p.fromClub)} want ${p.free ? 'nothing' : U.cash(p.ask)}.
+            He is on ${U.cash(p.wage)}/week.</p>
+          ${note ? `<p class="offer-note">${U.esc(note)}</p>` : ''}
+
+          <div class="offer-row${overCash ? ' over' : ''}">
+            <div class="offer-lab">Transfer fee</div>
+            <div class="offer-ctl">
+              <button class="offer-btn" data-feestep="-1" ${p.free ? 'disabled' : ''}>−</button>
+              <b>${p.free ? 'Free' : U.cash(o.fee)}</b>
+              <button class="offer-btn" data-feestep="1" ${p.free ? 'disabled' : ''}>+</button>
+            </div>
+            <div class="offer-read">${overCash
+              ? `<span class="bad">More than your ${U.cash(g.mgr.budget)} budget.</span>`
+              : U.esc(clubRead)}</div>
+          </div>
+
+          <div class="offer-row${overWage ? ' over' : ''}">
+            <div class="offer-lab">Wages offered</div>
+            <div class="offer-ctl">
+              <button class="offer-btn" data-wagestep="-1">−</button>
+              <b>${U.cash(o.wage)}<span class="per">/w</span></b>
+              <button class="offer-btn" data-wagestep="1">+</button>
+            </div>
+            <div class="offer-read">${overWage
+              ? `<span class="bad">Over your wage room of ${U.cash(Math.max(g.mgr.wageBudget - M.squadWages(g), 0))}.</span>`
+              : U.esc(playerRead)}</div>
+          </div>
+
+          <div class="offer-sum">
+            <span>Budget after</span><b>${U.cash(Math.max(g.mgr.budget - o.fee, 0))}</b>
+            <span>Wage room after</span><b>${U.cash(Math.max(g.mgr.wageBudget - M.squadWages(g) - o.wage, 0))}</b>
+          </div>`,
+        actions: [
+          { label: 'Send the offer', onClick: () => Game.mgrSendOffer() },
+          { label: 'Walk away', cls: 'btn-ghost', onClick: () => { Game._offer = null; } }
+        ],
         onRender(m) {
-          m.querySelectorAll('[data-fee]').forEach(el => el.onclick = () => {
-            const res = global.Manager.bid(g, player, +el.dataset.fee);
-            UI.closeModal();
-            State.save(); global.MUI.render();
-            if (!res.ok) return UI.toast(res.why, 'bad');
-            // signing him does not pick him — that is still your job
-            const xi = global.Manager.xiPlayers(g);
-            const worst = xi.reduce((a, b) => (a && a.ovr <= b.ovr ? a : b), null);
-            UI.toast(worst && res.player.ovr > worst.ovr
-              ? `${player.name} signs. He is better than someone in your eleven.`
-              : `${player.name} signs.`, 'good');
+          m.querySelectorAll('[data-feestep]').forEach(el => el.onclick = () => {
+            const dir = +el.dataset.feestep;
+            o.fee = Math.max(0, o.fee + dir * feeStep);
+            Game.mgrOfferSheet(note);
+          });
+          m.querySelectorAll('[data-wagestep]').forEach(el => el.onclick = () => {
+            const dir = +el.dataset.wagestep;
+            o.wage = Math.max(1000, o.wage + dir * wageStep);
+            Game.mgrOfferSheet(note);
           });
         }
       });
+    },
+
+    mgrSendOffer() {
+      const g = State.game;
+      const M = global.Manager;
+      const o = Game._offer;
+      if (!o) return;
+      const out = M.offerOutcome(g, o.player, o.fee, o.wage);
+
+      if (out.verdict === 'accept') {
+        const res = M.completeSigning(g, o.player, o.fee, o.wage);
+        Game._offer = null;
+        State.save(); global.MUI.render();
+        if (res && res.ok) {
+          UI.toast(`${res.player.name} has signed.`, 'good');
+          Game.mgrPlayerCard(res.player.id);
+        }
+        return;
+      }
+      if (out.verdict === 'counter') {
+        // their number, on the table, one tap away
+        return UI.modal({
+          title: 'They have come back',
+          html: `<p class="muted">${U.esc(out.why)}</p>
+            <p class="muted">Wages would stay at ${U.cash(o.wage)}/week.</p>`,
+          actions: [
+            { label: `Pay ${U.cash(out.counter)}`, onClick: () => {
+              if (out.counter > g.mgr.budget) {
+                return UI.toast('You cannot afford their number.', 'bad');
+              }
+              o.fee = out.counter;
+              // their own number: the club is settled, only the player is left
+              const again = M.offerOutcome(g, o.player, o.fee, o.wage, true);
+              if (again.verdict === 'accept') {
+                const res = M.completeSigning(g, o.player, o.fee, o.wage);
+                Game._offer = null;
+                State.save(); global.MUI.render();
+                if (res && res.ok) {
+                  UI.toast(`${res.player.name} has signed.`, 'good');
+                  Game.mgrPlayerCard(res.player.id);
+                }
+              } else {
+                Game.mgrOfferSheet(again.why);
+              }
+            } },
+            { label: 'Keep talking', cls: 'btn-ghost', onClick: () => Game.mgrOfferSheet(out.why) },
+            { label: 'Walk away', cls: 'btn-ghost', onClick: () => { Game._offer = null; } }
+          ]
+        });
+      }
+      // no, for one reason or another — the sheet stays open so you can move
+      Game.mgrOfferSheet(out.why);
     },
 
     mgrSell(id) {

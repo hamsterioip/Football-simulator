@@ -1451,9 +1451,17 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.6';
+  const VERSION = '3.7';
   const BUILD = '31 August 2026';
   const CHANGELOG = [
+    { v: '3.7', when: '7 Sep', items: [
+      'Transfers are a negotiation now. You name the fee and you name the wage, and the selling club answers. Meet their asking price and they will almost always sell; go under and they come back with a number of their own rather than a flat no',
+      'The player has his own opinion. Offer him a pay cut and he will not come whatever you pay his club, and for the very best players it is the size of your badge as much as the size of the wage',
+      'You do not walk into a job any more. Manager positions come open when they come open, and an unknown name is only offered the smaller ones \u2014 clubs rated up to 63 on day one, rising as you wait, and never the giants',
+      'Wait a week or a month at a time. Better jobs appear, but the ones you sit on get taken by somebody else \u2014 fifty-odd of them go in half a year',
+      'Or start a club of your own. Name it, pick a division, take the place of the smallest club in it, and build from a squad rated 58 with two million in the bank. Nobody sacks the founder, and a club that keeps finishing above its size genuinely becomes a bigger one',
+      'A club you invent gets a drawn shield in its own colours, since there is no real badge for it'
+    ] },
     { v: '3.6', when: '2 Sep', items: [
       'Another thousand and eight. Buzz now holds 2,646 different messages \u2014 2,308 posts across 92 situations, 238 replies and 100 things you can say yourself',
       'Twenty-five new situations, and most of them are about people rather than results: the captain, the veteran nobody wanted to keep, the lad who never gets on, the crowd favourite, the player coming back from a long injury, the one who wants to leave, the ones out on loan, and the ex-pros with opinions',
