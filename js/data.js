@@ -1451,9 +1451,18 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.10';
+  const VERSION = '3.11';
   const BUILD = '8 September 2026';
   const CHANGELOG = [
+    { v: '3.11', when: '8 Sep', items: [
+      'More in Boss Mode. Standing orders that stay on until you turn them off: always win, always draw or always lose, and nobody on the pitch ever getting injured or booked. They work inside the match, so the table, the board and the scorers all follow honestly from a dishonest result',
+      'Sign anyone alive. Pick any club in any division and take whoever you like out of their squad for nothing — or take the best player in the world in one tap',
+      'Or invent a footballer who never existed: choose the position, the overall and the age, and he walks in',
+      'Your name: make yourself a legend, wipe every sacking off the record, fill the trophy cabinet, or hand somebody a goal of the century',
+      'The rest of the division: ruin every rival, arm every rival, or do the same to every club on earth',
+      'Time: simulate a whole season or five of them, board meetings and summers included. It stops early if they sack you',
+      'A hundred and thirteen levers on the screen now, up from eighty-one'
+    ] },
     { v: '3.10', when: '8 Sep', items: [
       'Boss Mode in the dugout. The career game has always hidden one behind five taps on the overall badge — Manager Mode now has its own behind five taps on the team rating, same code, same save',
       'What it opens: the transfer budget and the wage ceiling, board confidence, your club\u2019s rating for good, and the board target',

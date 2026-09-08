@@ -481,6 +481,118 @@
           return Game.mgrOffersModal();
         }
 
+        /* ---- standing orders ---- */
+        case 'mdevRig':
+          g.mgr.cheats = g.mgr.cheats || {};
+          g.mgr.cheats.result = arg === 'off' ? null : arg;
+          UI.toast(arg === 'off' ? 'Results are honest again.'
+            : arg === 'win' ? 'You will not lose another game.'
+            : arg === 'draw' ? 'Every game ends level.'
+            : 'You will not win another game.', arg === 'off' ? '' : 'gold');
+          break;
+        case 'mdevToggle': {
+          g.mgr.cheats = g.mgr.cheats || {};
+          const on = !g.mgr.cheats[arg];
+          g.mgr.cheats[arg] = on;
+          UI.toast(arg === 'noInjury'
+            ? (on ? 'Nobody will get injured again.' : 'The treatment room is open for business.')
+            : (on ? 'Nobody will be booked again.' : 'The referee has his cards back.'), on ? 'gold' : '');
+          break;
+        }
+
+        /* ---- your name ---- */
+        case 'mdevRep':
+          // reputation is worked out from the record, so write the record
+          g.mgr.board.finishes = [1, 1, 1, 1, 1];
+          g.mgr.board.seasons = Math.max(g.mgr.board.seasons || 0, 8);
+          (g.mgrHistory || []).forEach(h => { h.sacked = false; });
+          for (let i = (g.mgr.trophies || []).length; i < 6; i++) {
+            g.mgr.trophies.push({ name: State.league(club.league).name + ' Title',
+                                  year: g.world.year - 6 + i, kind: 'league' });
+          }
+          UI.toast(`They will take your call anywhere. Reputation ${M.reputation(g)}.`, 'gold');
+          break;
+        case 'mdevForget':
+          (g.mgrHistory || []).forEach(h => { h.sacked = false; h.left = true; });
+          UI.toast('Nobody remembers you being sacked.', 'good');
+          break;
+        case 'mdevWonder': {
+          const who = g.squad.slice().sort((a, b) => b.ovr - a.ovr)[0];
+          if (!who) break;
+          const tier = M.WONDERS.century || M.WONDERS[2] || null;
+          g.mgr.wonders = (g.mgr.wonders || []).concat({
+            name: who.name, tier: 'century', label: 'Goal of the Century',
+            score: 99, year: g.world.year, club: club.name,
+            opp: (M.rivalOf(g, club) || { name: 'them' }).name,
+            comp: State.league(club.league).name, stage: null, line: '1-0',
+            text: 'he picked it up inside his own half and beat every man who came near him'
+          });
+          UI.toast(`${who.name} has one for the ages.`, 'gold');
+          break;
+        }
+        case 'mdevCabinet': {
+          const cups = M.cupsForSeason(g) || [];
+          const names = {};
+          (g.mgr.trophies || []).forEach(t => { names[t.name] = true; });
+          cups.forEach(c => {
+            if (names[c.name]) return;
+            g.mgr.trophies.push({ name: c.name, year: g.world.year, kind: 'cup' });
+          });
+          const title = State.league(club.league).name + ' Title';
+          for (let i = 0; i < 3; i++) {
+            g.mgr.trophies.push({ name: title, year: g.world.year - 3 + i, kind: 'league' });
+          }
+          UI.toast('Everything worth winning, won.', 'gold');
+          break;
+        }
+
+        /* ---- everybody else ---- */
+        case 'mdevRivals':
+        case 'mdevWorld': {
+          const delta = num();
+          const all = Object.values(g.world.clubs).filter(c =>
+            act === 'mdevWorld' ? c.id !== club.id : (c.league === club.league && c.id !== club.id));
+          all.forEach(c => {
+            const to = Math.abs(delta) > 20 ? delta : c.rating + delta;
+            c.baseRating = U.clamp(Math.round(to), 55, 93);
+            c.drift = 0;
+            c.rating = c.baseRating;
+          });
+          UI.toast(`${all.length} clubs rewritten.`, 'gold');
+          break;
+        }
+
+        /* ---- time ---- */
+        case 'mdevSkip': {
+          const years = num();
+          let done = 0, last = null;
+          for (let y = 0; y < years; y++) {
+            let guard = 0;
+            while (!M.seasonOver(g) && guard++ < 200) M.playRound(g, 'calm');
+            last = M.seasonReview(g);
+            done++;
+            if (last.sacked) break;
+            M.nextSeason(g);
+          }
+          global.MUI.tab = 'mhome';
+          UI.toast(last && last.sacked
+            ? `Sacked after ${done} more season${done === 1 ? '' : 's'}.`
+            : `${done} season${done === 1 ? '' : 's'} played. ${U.ordinal(last ? last.pos : 1)} last time out.`,
+            last && last.sacked ? 'bad' : 'good');
+          break;
+        }
+
+        /* ---- sign anyone alive ---- */
+        case 'mdevBest': {
+          const top = (M.topPlayers(g) || []).slice().sort((a, b) => b.ovr - a.ovr)[0];
+          if (!top) { UI.toast('Nobody left to sign.', ''); break; }
+          M.completeSigning(g, top, 0, top.wage);
+          UI.toast(`${top.name} (${top.ovr}) is yours. For nothing.`, 'gold');
+          break;
+        }
+        case 'mdevMake': return Game.mgrDevMake();
+        case 'mdevSquadOf': return Game.mgrDevSquadOf(arg);
+
         case 'mdevTakeOver': {
           const to = State.club(arg);
           if (!to || to.id === g.mgr.club) break;
@@ -541,6 +653,86 @@
             el.onclick = () => set(s.ovr + (+el.dataset.mdo)));
           m.querySelectorAll('[data-mdset]').forEach(el =>
             el.onclick = () => set(+el.dataset.mdset));
+        }
+      });
+    },
+
+    /* Any club's squad, and anybody in it, for nothing. */
+    mgrDevSquadOf(clubId) {
+      const g = State.game;
+      const M = global.Manager;
+      const c = State.club(clubId);
+      if (!c) return;
+      const mine = {};
+      g.squad.forEach(s => { mine[s.name] = true; });
+      const squad = Engine.Squad.generate(c).slice().sort((a, b) => b.ovr - a.ovr);
+      Game._devSquad = squad;
+      UI.modal({
+        title: c.name,
+        html: `<p class="muted">Rated ${c.rating} · ${U.esc(State.league(c.league).name)}. Tap a name and he is yours, for nothing.</p>
+          <div class="list">${squad.map((s, i) => `<div class="item click offer${mine[s.name] ? ' cant' : ''}" data-devsign="${i}">
+            <div class="ic"><span class="sq-pos">${U.esc(s.pos)}</span></div>
+            <div class="tx"><b>${U.esc(s.name)}<span class="pill${s.ovr >= 85 ? ' up' : ''}">${s.ovr}</span></b>
+              <span>${s.age} · ${U.esc(s.nation || c.country || '')}${mine[s.name] ? ' · already yours' : ''}</span></div>
+          </div>`).join('')}</div>`,
+        actions: [{ label: 'Back', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-devsign]').forEach(el => el.onclick = () => {
+            const s = Game._devSquad[+el.dataset.devsign];
+            if (!s || mine[s.name]) return;
+            s.value = M.valueFor(s); s.wage = M.wageFor(s);
+            s.fromClub = c.name; s.fromId = c.id;
+            M.completeSigning(g, s, 0, s.wage);
+            State.save(); global.MUI.render(); UI.closeModal();
+            UI.toast(`${s.name} (${s.ovr}) signs for nothing.`, 'gold');
+          });
+          UI.modalScrollHint && UI.modalScrollHint(m);
+        }
+      });
+    },
+
+    /* Or invent one from scratch. */
+    mgrDevMake() {
+      const g = State.game;
+      const M = global.Manager;
+      const club = State.club(g.mgr.club);
+      const positions = Object.keys(D.POSITIONS);
+      Game._make = Game._make || { pos: 'ST', ovr: 99, age: 21 };
+      const mk = Game._make;
+      UI.modal({
+        title: 'Invent a footballer',
+        html: `<div class="dev-attr">
+            <div class="dev-attr-h"><b>Position</b><span class="grow"></span><em>${mk.pos}</em></div>
+            <div class="opt-grid" style="grid-template-columns:repeat(5,1fr);margin-top:6px">
+              ${positions.map(k => `<div class="opt ${mk.pos === k ? 'sel' : ''}" data-mkpos="${k}">${k}</div>`).join('')}
+            </div></div>
+          <div class="dev-attr">
+            <div class="dev-attr-h"><b>Overall</b><span class="grow"></span><em>${mk.ovr}</em></div>
+            <div class="row wrap">${[70, 80, 90, 95, 99].map(v =>
+              `<button class="btn ${mk.ovr === v ? 'btn-gold' : 'btn-ghost'} sm grow" data-mkovr="${v}">${v}</button>`).join('')}</div>
+          </div>
+          <div class="dev-attr">
+            <div class="dev-attr-h"><b>Age</b><span class="grow"></span><em>${mk.age}</em></div>
+            <div class="row wrap">${[16, 18, 21, 25, 30].map(v =>
+              `<button class="btn ${mk.age === v ? 'btn-gold' : 'btn-ghost'} sm grow" data-mkage="${v}">${v}</button>`).join('')}</div>
+          </div>`,
+        actions: [
+          { label: 'Sign him', onClick: () => {
+            const who = global.Names.person(club.country);
+            const s = { id: U.id(), name: who.name, nation: who.nation, pos: mk.pos,
+              age: mk.age, ovr: mk.ovr, shirt: 0, goals: 0, assists: 0, apps: 0, rel: 50 };
+            s.value = M.valueFor(s); s.wage = M.wageFor(s);
+            s.fromClub = club.name; s.fromId = club.id;
+            M.completeSigning(g, s, 0, s.wage);
+            State.save(); global.MUI.render();
+            UI.toast(`${s.name}, ${mk.pos} ${mk.ovr}, out of thin air.`, 'gold');
+          } },
+          { label: 'Cancel', cls: 'btn-ghost' }
+        ],
+        onRender(m) {
+          m.querySelectorAll('[data-mkpos]').forEach(el => el.onclick = () => { mk.pos = el.dataset.mkpos; Game.mgrDevMake(); });
+          m.querySelectorAll('[data-mkovr]').forEach(el => el.onclick = () => { mk.ovr = +el.dataset.mkovr; Game.mgrDevMake(); });
+          m.querySelectorAll('[data-mkage]').forEach(el => el.onclick = () => { mk.age = +el.dataset.mkage; Game.mgrDevMake(); });
         }
       });
     },

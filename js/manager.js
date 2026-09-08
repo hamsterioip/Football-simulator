@@ -151,6 +151,7 @@
       staff: {},
       awards: [],
       derbyLog: [],
+      cheats: {},
       sacked: false
     };
     g.squad = squadFor(club, 22);
@@ -767,7 +768,9 @@
       return U.clamp(0.098 * grp * (1 + style.def * 0.05), 0.01, 0.3);
     };
 
+    const cheat = cheats(g);
     xi.forEach(s => {
+      if (cheat.noBan) return;
       if (U.chance(cardRisk(s))) {
         s.yellows = (s.yellows || 0) + 1;
         ev.yellows.push(s);
@@ -781,7 +784,7 @@
     });
 
     // one match in thirty or so has somebody walking
-    if (U.chance(0.045)) {
+    if (!cheat.noBan && U.chance(0.045)) {
       const pool = xi.filter(s => s.pos !== 'GK');
       const s = U.pick(pool.length ? pool : xi);
       if (s) {
@@ -794,6 +797,7 @@
     }
 
     xi.forEach(s => {
+      if (cheat.noInjury) return;
       // tired legs and old legs break; a fresh twenty-four-year-old rarely does
       const was = preFit && preFit[s.id] != null ? preFit[s.id] : s.fit;
       const tired = 1 + (100 - U.clamp(was, 0, 100)) / 100 * 2.2;
@@ -964,6 +968,9 @@
       + setp * 0.09, 0.2, 4.6);
     const lb = U.clamp(1.35 - diff * 0.052 - style.def * 0.05 - tr.def * 0.06, 0.15, 4.6);
     let gf = U.poisson(la), ga = U.poisson(lb);
+    // Boss Mode can insist on how this one ends
+    const rigged = rigScore(g, gf, ga);
+    gf = rigged[0]; ga = rigged[1];
 
     /* A cup tie has to produce a winner. Level after ninety and you play the
        extra half hour; level after that and it is the spot. */
@@ -3110,6 +3117,28 @@
     return past.concat(g.mgr && g.mgr.awards ? g.mgr.awards : []);
   }
 
+  /* ---------------- the switches Boss Mode can throw ----------------
+     Two of the cheats are not one-off edits, they are standing instructions:
+     how every match ends, and whether anybody is allowed to get hurt. Those
+     have to be read inside the simulation rather than applied afterwards, so
+     they live here and everything else in Boss Mode stays in the UI. */
+  function cheats(g) { return (g && g.mgr && g.mgr.cheats) || {}; }
+
+  /* A rigged scoreline, applied after the odds have done their honest work so
+     the rest of the match — who scored, who got hurt, what the table says —
+     runs exactly as it always does. */
+  function rigScore(g, gf, ga) {
+    const U = global.U, c = cheats(g);
+    if (!c.result) return [gf, ga];
+    if (c.result === 'win' && gf <= ga) return [ga + U.int(1, 3), ga];
+    if (c.result === 'lose' && gf >= ga) return [gf, gf + U.int(1, 3)];
+    if (c.result === 'draw' && gf !== ga) {
+      const n = Math.max(gf, ga);
+      return [n, n];
+    }
+    return [gf, ga];
+  }
+
   /* A save made before contracts, staff, derbies or awards existed is still a
      save. Fill in what is missing rather than refusing to open it. */
   function migrate(g) {
@@ -3117,6 +3146,7 @@
     if (!g.mgr.staff) g.mgr.staff = {};
     if (!g.mgr.awards) g.mgr.awards = [];
     if (!g.mgr.derbyLog) g.mgr.derbyLog = [];
+    if (!g.mgr.cheats) g.mgr.cheats = {};
     if (g.mgr.rival === undefined) setRival(g);
     if (g.squad) giveDeals(g);
     return g;
@@ -3146,7 +3176,8 @@
     hireStaff, sackStaff, staffPoaching, wageRoom,
     rivalOf, setRival, isDerby, derbyRecord, DERBY_OF,
     monthAward, seasonAwards, honoursList, AWARD_EVERY,
-    migrate,
+    migrate, cheats, rigScore,
+    eliteFee, eliteWage, listFrom, freeShirt,
     seasonReview, nextSeason, squadFor
   };
 })(window);

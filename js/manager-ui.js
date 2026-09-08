@@ -986,6 +986,78 @@
           reads it — the board, your finish, the money — follow along.</p>
       </div>`;
 
+      // ---- the switches ----
+      const ch = g.mgr.cheats || {};
+      html += `<div class="card"><h3>${ico('whistle')} Standing orders</h3>
+        <p class="dim tiny" style="margin:0 0 9px">These stay on until you turn them off. They work inside the
+          match, so everything downstream — the table, the board, the scorers — follows honestly from a
+          dishonest result. A drawn cup tie still goes to penalties, because somebody has to go through.</p>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>How every match ends</b><span class="grow"></span>
+            <em>${ch.result ? esc({ win: 'Always win', draw: 'Always draw', lose: 'Always lose' }[ch.result]) : 'Left alone'}</em></div>
+          <div class="row wrap">
+            <button class="btn ${ch.result === 'win' ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="win">Always win</button>
+            <button class="btn ${ch.result === 'draw' ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="draw">Always draw</button>
+            <button class="btn ${ch.result === 'lose' ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="lose">Always lose</button>
+            <button class="btn ${!ch.result ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="off">Off</button>
+          </div></div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn ${ch.noInjury ? 'btn-gold' : 'btn-ghost'} sm grow"
+            data-act="mdevToggle" data-arg="noInjury">${ico('hospital')} Nobody gets injured${ch.noInjury ? ' ✓' : ''}</button>
+          <button class="btn ${ch.noBan ? 'btn-gold' : 'btn-ghost'} sm grow"
+            data-act="mdevToggle" data-arg="noBan">${ico('card')} Nobody gets booked${ch.noBan ? ' ✓' : ''}</button>
+        </div>
+      </div>`;
+
+      // ---- your name ----
+      html += `<div class="card"><h3>${ico('legacy')} Your name</h3>
+        <div class="stat-grid two">
+          <div class="stat"><b>${M().reputation(g)}</b><span>Reputation</span></div>
+          <div class="stat"><b>${M().ceilingFor(g)}</b><span>Job ceiling</span></div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-gold" data-act="mdevRep">${ico('crown')} Make me a legend</button>
+          <button class="btn btn-ghost" data-act="mdevForget">${ico('exit')} Forget every sacking</button>
+          <button class="btn btn-ghost" data-act="mdevWonder">${ico('goal')} Add a goal of the century</button>
+          <button class="btn btn-ghost" data-act="mdevCabinet">${ico('trophy')} Fill the cabinet</button>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">Reputation is worked out from what you have won and where you
+          finished, so this writes the record rather than the number.</p>
+      </div>`;
+
+      // ---- the division ----
+      html += `<div class="card"><h3>${ico('table')} The rest of the division</h3>
+        <p class="dim tiny" style="margin:0 0 9px">Everybody except you. Ruin them or arm them.</p>
+        <div class="row wrap">
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="55">Make them all 55</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="-5">−5 each</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="5">+5 each</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="93">Make them all 93</button>
+        </div>
+        <div class="row wrap" style="margin-top:8px">
+          <button class="btn btn-ghost sm grow" data-act="mdevWorld" data-arg="55">Every club on earth 55</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevWorld" data-arg="93">Every club on earth 93</button>
+        </div>
+      </div>`;
+
+      // ---- time ----
+      html += `<div class="card"><h3>${ico('clock')} Time</h3>
+        <div class="stat-grid two">
+          <div class="stat"><b>${g.world.year}</b><span>Season</span></div>
+          <div class="stat"><b>${g.mgr.board.seasons || 0}</b><span>Years here</span></div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-ghost grow" data-act="mdevSkip" data-arg="1">${ico('next')} Simulate a whole season</button>
+          <button class="btn btn-ghost grow" data-act="mdevSkip" data-arg="5">${ico('next')} Simulate five</button>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">Plays every match, takes the board meeting and rolls the
+          summer for you. It stops early if they sack you.</p>
+      </div>`;
+
       // ---- the market ----
       html += `<div class="card"><h3>${ico('transfer')} The market</h3>
         <div class="row wrap">
@@ -993,6 +1065,19 @@
           <button class="btn btn-ghost" data-act="mdevBids">Somebody bid for one of mine</button>
           <button class="btn btn-ghost" data-act="mdevOffers">Make the big clubs want me</button>
         </div></div>`;
+
+      // ---- sign anyone alive ----
+      html += `<div class="card"><h3>${ico('transfer')} Sign anyone</h3>
+        <p class="dim tiny" style="margin:0 0 9px">Free, instant, and nobody gets a say. Pick a club and take
+          whoever you like out of it.</p>
+        <div class="row wrap" style="margin-bottom:10px">
+          <button class="btn btn-gold sm grow" data-act="mdevBest">Sign the best player in the world</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevMake">Invent a 99 in any position</button>
+        </div>
+        <div class="field"><label>League</label>
+          <select class="input" id="mdev-sleague">${global.DATA.LEAGUES.map(l =>
+            `<option value="${l.id}" ${l.id === club.league ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></div>
+        <div class="club-list" id="mdev-sclubs"></div></div>`;
 
       // ---- take over anybody ----
       html += `<div class="card"><h3>${ico('manager')} Manage anyone</h3>
@@ -1008,16 +1093,21 @@
     },
 
     renderBossClubs() {
-      const g = State().game, sel = $('mdev-league');
+      MUI.bossClubList('mdev-league', 'mdev-clubs', 'mdevTakeOver');
+      MUI.bossClubList('mdev-sleague', 'mdev-sclubs', 'mdevSquadOf');
+    },
+
+    bossClubList(selId, listId, act) {
+      const g = State().game, sel = $(selId);
       if (!sel) return;
-      const list = $('mdev-clubs');
+      const list = $(listId);
       list.innerHTML = Object.values(g.world.clubs)
         .filter(c => c.league === sel.value)
         .sort((a, b) => b.rating - a.rating)
-        .map(c => `<div class="club ${c.id === g.mgr.club ? 'sel' : ''}" data-act="mdevTakeOver" data-arg="${c.id}">
+        .map(c => `<div class="club ${c.id === g.mgr.club ? 'sel' : ''}" data-act="${act}" data-arg="${c.id}">
           <b>${esc(c.name)}</b><span>Rated ${c.rating}</span></div>`).join('');
       global.UI.bindActions(list);
-      sel.onchange = () => MUI.renderBossClubs();
+      sel.onchange = () => MUI.bossClubList(selId, listId, act);
     },
 
     /* ---------------- the backroom ----------------

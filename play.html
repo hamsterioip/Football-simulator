@@ -3166,9 +3166,18 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.10';
+  const VERSION = '3.11';
   const BUILD = '8 September 2026';
   const CHANGELOG = [
+    { v: '3.11', when: '8 Sep', items: [
+      'More in Boss Mode. Standing orders that stay on until you turn them off: always win, always draw or always lose, and nobody on the pitch ever getting injured or booked. They work inside the match, so the table, the board and the scorers all follow honestly from a dishonest result',
+      'Sign anyone alive. Pick any club in any division and take whoever you like out of their squad for nothing — or take the best player in the world in one tap',
+      'Or invent a footballer who never existed: choose the position, the overall and the age, and he walks in',
+      'Your name: make yourself a legend, wipe every sacking off the record, fill the trophy cabinet, or hand somebody a goal of the century',
+      'The rest of the division: ruin every rival, arm every rival, or do the same to every club on earth',
+      'Time: simulate a whole season or five of them, board meetings and summers included. It stops early if they sack you',
+      'A hundred and thirteen levers on the screen now, up from eighty-one'
+    ] },
     { v: '3.10', when: '8 Sep', items: [
       'Boss Mode in the dugout. The career game has always hidden one behind five taps on the overall badge — Manager Mode now has its own behind five taps on the team rating, same code, same save',
       'What it opens: the transfer budget and the wage ceiling, board confidence, your club\u2019s rating for good, and the board target',
@@ -11533,6 +11542,7 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
       staff: {},
       awards: [],
       derbyLog: [],
+      cheats: {},
       sacked: false
     };
     g.squad = squadFor(club, 22);
@@ -12149,7 +12159,9 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
       return U.clamp(0.098 * grp * (1 + style.def * 0.05), 0.01, 0.3);
     };
 
+    const cheat = cheats(g);
     xi.forEach(s => {
+      if (cheat.noBan) return;
       if (U.chance(cardRisk(s))) {
         s.yellows = (s.yellows || 0) + 1;
         ev.yellows.push(s);
@@ -12163,7 +12175,7 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
     });
 
     // one match in thirty or so has somebody walking
-    if (U.chance(0.045)) {
+    if (!cheat.noBan && U.chance(0.045)) {
       const pool = xi.filter(s => s.pos !== 'GK');
       const s = U.pick(pool.length ? pool : xi);
       if (s) {
@@ -12176,6 +12188,7 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
     }
 
     xi.forEach(s => {
+      if (cheat.noInjury) return;
       // tired legs and old legs break; a fresh twenty-four-year-old rarely does
       const was = preFit && preFit[s.id] != null ? preFit[s.id] : s.fit;
       const tired = 1 + (100 - U.clamp(was, 0, 100)) / 100 * 2.2;
@@ -12346,6 +12359,9 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
       + setp * 0.09, 0.2, 4.6);
     const lb = U.clamp(1.35 - diff * 0.052 - style.def * 0.05 - tr.def * 0.06, 0.15, 4.6);
     let gf = U.poisson(la), ga = U.poisson(lb);
+    // Boss Mode can insist on how this one ends
+    const rigged = rigScore(g, gf, ga);
+    gf = rigged[0]; ga = rigged[1];
 
     /* A cup tie has to produce a winner. Level after ninety and you play the
        extra half hour; level after that and it is the spot. */
@@ -14492,6 +14508,28 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
     return past.concat(g.mgr && g.mgr.awards ? g.mgr.awards : []);
   }
 
+  /* ---------------- the switches Boss Mode can throw ----------------
+     Two of the cheats are not one-off edits, they are standing instructions:
+     how every match ends, and whether anybody is allowed to get hurt. Those
+     have to be read inside the simulation rather than applied afterwards, so
+     they live here and everything else in Boss Mode stays in the UI. */
+  function cheats(g) { return (g && g.mgr && g.mgr.cheats) || {}; }
+
+  /* A rigged scoreline, applied after the odds have done their honest work so
+     the rest of the match — who scored, who got hurt, what the table says —
+     runs exactly as it always does. */
+  function rigScore(g, gf, ga) {
+    const U = global.U, c = cheats(g);
+    if (!c.result) return [gf, ga];
+    if (c.result === 'win' && gf <= ga) return [ga + U.int(1, 3), ga];
+    if (c.result === 'lose' && gf >= ga) return [gf, gf + U.int(1, 3)];
+    if (c.result === 'draw' && gf !== ga) {
+      const n = Math.max(gf, ga);
+      return [n, n];
+    }
+    return [gf, ga];
+  }
+
   /* A save made before contracts, staff, derbies or awards existed is still a
      save. Fill in what is missing rather than refusing to open it. */
   function migrate(g) {
@@ -14499,6 +14537,7 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
     if (!g.mgr.staff) g.mgr.staff = {};
     if (!g.mgr.awards) g.mgr.awards = [];
     if (!g.mgr.derbyLog) g.mgr.derbyLog = [];
+    if (!g.mgr.cheats) g.mgr.cheats = {};
     if (g.mgr.rival === undefined) setRival(g);
     if (g.squad) giveDeals(g);
     return g;
@@ -14528,7 +14567,8 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
     hireStaff, sackStaff, staffPoaching, wageRoom,
     rivalOf, setRival, isDerby, derbyRecord, DERBY_OF,
     monthAward, seasonAwards, honoursList, AWARD_EVERY,
-    migrate,
+    migrate, cheats, rigScore,
+    eliteFee, eliteWage, listFrom, freeShirt,
     seasonReview, nextSeason, squadFor
   };
 })(window);
@@ -15524,6 +15564,78 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
           reads it — the board, your finish, the money — follow along.</p>
       </div>`;
 
+      // ---- the switches ----
+      const ch = g.mgr.cheats || {};
+      html += `<div class="card"><h3>${ico('whistle')} Standing orders</h3>
+        <p class="dim tiny" style="margin:0 0 9px">These stay on until you turn them off. They work inside the
+          match, so everything downstream — the table, the board, the scorers — follows honestly from a
+          dishonest result. A drawn cup tie still goes to penalties, because somebody has to go through.</p>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>How every match ends</b><span class="grow"></span>
+            <em>${ch.result ? esc({ win: 'Always win', draw: 'Always draw', lose: 'Always lose' }[ch.result]) : 'Left alone'}</em></div>
+          <div class="row wrap">
+            <button class="btn ${ch.result === 'win' ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="win">Always win</button>
+            <button class="btn ${ch.result === 'draw' ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="draw">Always draw</button>
+            <button class="btn ${ch.result === 'lose' ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="lose">Always lose</button>
+            <button class="btn ${!ch.result ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="off">Off</button>
+          </div></div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn ${ch.noInjury ? 'btn-gold' : 'btn-ghost'} sm grow"
+            data-act="mdevToggle" data-arg="noInjury">${ico('hospital')} Nobody gets injured${ch.noInjury ? ' ✓' : ''}</button>
+          <button class="btn ${ch.noBan ? 'btn-gold' : 'btn-ghost'} sm grow"
+            data-act="mdevToggle" data-arg="noBan">${ico('card')} Nobody gets booked${ch.noBan ? ' ✓' : ''}</button>
+        </div>
+      </div>`;
+
+      // ---- your name ----
+      html += `<div class="card"><h3>${ico('legacy')} Your name</h3>
+        <div class="stat-grid two">
+          <div class="stat"><b>${M().reputation(g)}</b><span>Reputation</span></div>
+          <div class="stat"><b>${M().ceilingFor(g)}</b><span>Job ceiling</span></div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-gold" data-act="mdevRep">${ico('crown')} Make me a legend</button>
+          <button class="btn btn-ghost" data-act="mdevForget">${ico('exit')} Forget every sacking</button>
+          <button class="btn btn-ghost" data-act="mdevWonder">${ico('goal')} Add a goal of the century</button>
+          <button class="btn btn-ghost" data-act="mdevCabinet">${ico('trophy')} Fill the cabinet</button>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">Reputation is worked out from what you have won and where you
+          finished, so this writes the record rather than the number.</p>
+      </div>`;
+
+      // ---- the division ----
+      html += `<div class="card"><h3>${ico('table')} The rest of the division</h3>
+        <p class="dim tiny" style="margin:0 0 9px">Everybody except you. Ruin them or arm them.</p>
+        <div class="row wrap">
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="55">Make them all 55</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="-5">−5 each</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="5">+5 each</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="93">Make them all 93</button>
+        </div>
+        <div class="row wrap" style="margin-top:8px">
+          <button class="btn btn-ghost sm grow" data-act="mdevWorld" data-arg="55">Every club on earth 55</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevWorld" data-arg="93">Every club on earth 93</button>
+        </div>
+      </div>`;
+
+      // ---- time ----
+      html += `<div class="card"><h3>${ico('clock')} Time</h3>
+        <div class="stat-grid two">
+          <div class="stat"><b>${g.world.year}</b><span>Season</span></div>
+          <div class="stat"><b>${g.mgr.board.seasons || 0}</b><span>Years here</span></div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-ghost grow" data-act="mdevSkip" data-arg="1">${ico('next')} Simulate a whole season</button>
+          <button class="btn btn-ghost grow" data-act="mdevSkip" data-arg="5">${ico('next')} Simulate five</button>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">Plays every match, takes the board meeting and rolls the
+          summer for you. It stops early if they sack you.</p>
+      </div>`;
+
       // ---- the market ----
       html += `<div class="card"><h3>${ico('transfer')} The market</h3>
         <div class="row wrap">
@@ -15531,6 +15643,19 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
           <button class="btn btn-ghost" data-act="mdevBids">Somebody bid for one of mine</button>
           <button class="btn btn-ghost" data-act="mdevOffers">Make the big clubs want me</button>
         </div></div>`;
+
+      // ---- sign anyone alive ----
+      html += `<div class="card"><h3>${ico('transfer')} Sign anyone</h3>
+        <p class="dim tiny" style="margin:0 0 9px">Free, instant, and nobody gets a say. Pick a club and take
+          whoever you like out of it.</p>
+        <div class="row wrap" style="margin-bottom:10px">
+          <button class="btn btn-gold sm grow" data-act="mdevBest">Sign the best player in the world</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevMake">Invent a 99 in any position</button>
+        </div>
+        <div class="field"><label>League</label>
+          <select class="input" id="mdev-sleague">${global.DATA.LEAGUES.map(l =>
+            `<option value="${l.id}" ${l.id === club.league ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></div>
+        <div class="club-list" id="mdev-sclubs"></div></div>`;
 
       // ---- take over anybody ----
       html += `<div class="card"><h3>${ico('manager')} Manage anyone</h3>
@@ -15546,16 +15671,21 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
     },
 
     renderBossClubs() {
-      const g = State().game, sel = $('mdev-league');
+      MUI.bossClubList('mdev-league', 'mdev-clubs', 'mdevTakeOver');
+      MUI.bossClubList('mdev-sleague', 'mdev-sclubs', 'mdevSquadOf');
+    },
+
+    bossClubList(selId, listId, act) {
+      const g = State().game, sel = $(selId);
       if (!sel) return;
-      const list = $('mdev-clubs');
+      const list = $(listId);
       list.innerHTML = Object.values(g.world.clubs)
         .filter(c => c.league === sel.value)
         .sort((a, b) => b.rating - a.rating)
-        .map(c => `<div class="club ${c.id === g.mgr.club ? 'sel' : ''}" data-act="mdevTakeOver" data-arg="${c.id}">
+        .map(c => `<div class="club ${c.id === g.mgr.club ? 'sel' : ''}" data-act="${act}" data-arg="${c.id}">
           <b>${esc(c.name)}</b><span>Rated ${c.rating}</span></div>`).join('');
       global.UI.bindActions(list);
-      sel.onchange = () => MUI.renderBossClubs();
+      sel.onchange = () => MUI.bossClubList(selId, listId, act);
     },
 
     /* ---------------- the backroom ----------------
@@ -22000,6 +22130,118 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
           return Game.mgrOffersModal();
         }
 
+        /* ---- standing orders ---- */
+        case 'mdevRig':
+          g.mgr.cheats = g.mgr.cheats || {};
+          g.mgr.cheats.result = arg === 'off' ? null : arg;
+          UI.toast(arg === 'off' ? 'Results are honest again.'
+            : arg === 'win' ? 'You will not lose another game.'
+            : arg === 'draw' ? 'Every game ends level.'
+            : 'You will not win another game.', arg === 'off' ? '' : 'gold');
+          break;
+        case 'mdevToggle': {
+          g.mgr.cheats = g.mgr.cheats || {};
+          const on = !g.mgr.cheats[arg];
+          g.mgr.cheats[arg] = on;
+          UI.toast(arg === 'noInjury'
+            ? (on ? 'Nobody will get injured again.' : 'The treatment room is open for business.')
+            : (on ? 'Nobody will be booked again.' : 'The referee has his cards back.'), on ? 'gold' : '');
+          break;
+        }
+
+        /* ---- your name ---- */
+        case 'mdevRep':
+          // reputation is worked out from the record, so write the record
+          g.mgr.board.finishes = [1, 1, 1, 1, 1];
+          g.mgr.board.seasons = Math.max(g.mgr.board.seasons || 0, 8);
+          (g.mgrHistory || []).forEach(h => { h.sacked = false; });
+          for (let i = (g.mgr.trophies || []).length; i < 6; i++) {
+            g.mgr.trophies.push({ name: State.league(club.league).name + ' Title',
+                                  year: g.world.year - 6 + i, kind: 'league' });
+          }
+          UI.toast(`They will take your call anywhere. Reputation ${M.reputation(g)}.`, 'gold');
+          break;
+        case 'mdevForget':
+          (g.mgrHistory || []).forEach(h => { h.sacked = false; h.left = true; });
+          UI.toast('Nobody remembers you being sacked.', 'good');
+          break;
+        case 'mdevWonder': {
+          const who = g.squad.slice().sort((a, b) => b.ovr - a.ovr)[0];
+          if (!who) break;
+          const tier = M.WONDERS.century || M.WONDERS[2] || null;
+          g.mgr.wonders = (g.mgr.wonders || []).concat({
+            name: who.name, tier: 'century', label: 'Goal of the Century',
+            score: 99, year: g.world.year, club: club.name,
+            opp: (M.rivalOf(g, club) || { name: 'them' }).name,
+            comp: State.league(club.league).name, stage: null, line: '1-0',
+            text: 'he picked it up inside his own half and beat every man who came near him'
+          });
+          UI.toast(`${who.name} has one for the ages.`, 'gold');
+          break;
+        }
+        case 'mdevCabinet': {
+          const cups = M.cupsForSeason(g) || [];
+          const names = {};
+          (g.mgr.trophies || []).forEach(t => { names[t.name] = true; });
+          cups.forEach(c => {
+            if (names[c.name]) return;
+            g.mgr.trophies.push({ name: c.name, year: g.world.year, kind: 'cup' });
+          });
+          const title = State.league(club.league).name + ' Title';
+          for (let i = 0; i < 3; i++) {
+            g.mgr.trophies.push({ name: title, year: g.world.year - 3 + i, kind: 'league' });
+          }
+          UI.toast('Everything worth winning, won.', 'gold');
+          break;
+        }
+
+        /* ---- everybody else ---- */
+        case 'mdevRivals':
+        case 'mdevWorld': {
+          const delta = num();
+          const all = Object.values(g.world.clubs).filter(c =>
+            act === 'mdevWorld' ? c.id !== club.id : (c.league === club.league && c.id !== club.id));
+          all.forEach(c => {
+            const to = Math.abs(delta) > 20 ? delta : c.rating + delta;
+            c.baseRating = U.clamp(Math.round(to), 55, 93);
+            c.drift = 0;
+            c.rating = c.baseRating;
+          });
+          UI.toast(`${all.length} clubs rewritten.`, 'gold');
+          break;
+        }
+
+        /* ---- time ---- */
+        case 'mdevSkip': {
+          const years = num();
+          let done = 0, last = null;
+          for (let y = 0; y < years; y++) {
+            let guard = 0;
+            while (!M.seasonOver(g) && guard++ < 200) M.playRound(g, 'calm');
+            last = M.seasonReview(g);
+            done++;
+            if (last.sacked) break;
+            M.nextSeason(g);
+          }
+          global.MUI.tab = 'mhome';
+          UI.toast(last && last.sacked
+            ? `Sacked after ${done} more season${done === 1 ? '' : 's'}.`
+            : `${done} season${done === 1 ? '' : 's'} played. ${U.ordinal(last ? last.pos : 1)} last time out.`,
+            last && last.sacked ? 'bad' : 'good');
+          break;
+        }
+
+        /* ---- sign anyone alive ---- */
+        case 'mdevBest': {
+          const top = (M.topPlayers(g) || []).slice().sort((a, b) => b.ovr - a.ovr)[0];
+          if (!top) { UI.toast('Nobody left to sign.', ''); break; }
+          M.completeSigning(g, top, 0, top.wage);
+          UI.toast(`${top.name} (${top.ovr}) is yours. For nothing.`, 'gold');
+          break;
+        }
+        case 'mdevMake': return Game.mgrDevMake();
+        case 'mdevSquadOf': return Game.mgrDevSquadOf(arg);
+
         case 'mdevTakeOver': {
           const to = State.club(arg);
           if (!to || to.id === g.mgr.club) break;
@@ -22060,6 +22302,86 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
             el.onclick = () => set(s.ovr + (+el.dataset.mdo)));
           m.querySelectorAll('[data-mdset]').forEach(el =>
             el.onclick = () => set(+el.dataset.mdset));
+        }
+      });
+    },
+
+    /* Any club's squad, and anybody in it, for nothing. */
+    mgrDevSquadOf(clubId) {
+      const g = State.game;
+      const M = global.Manager;
+      const c = State.club(clubId);
+      if (!c) return;
+      const mine = {};
+      g.squad.forEach(s => { mine[s.name] = true; });
+      const squad = Engine.Squad.generate(c).slice().sort((a, b) => b.ovr - a.ovr);
+      Game._devSquad = squad;
+      UI.modal({
+        title: c.name,
+        html: `<p class="muted">Rated ${c.rating} · ${U.esc(State.league(c.league).name)}. Tap a name and he is yours, for nothing.</p>
+          <div class="list">${squad.map((s, i) => `<div class="item click offer${mine[s.name] ? ' cant' : ''}" data-devsign="${i}">
+            <div class="ic"><span class="sq-pos">${U.esc(s.pos)}</span></div>
+            <div class="tx"><b>${U.esc(s.name)}<span class="pill${s.ovr >= 85 ? ' up' : ''}">${s.ovr}</span></b>
+              <span>${s.age} · ${U.esc(s.nation || c.country || '')}${mine[s.name] ? ' · already yours' : ''}</span></div>
+          </div>`).join('')}</div>`,
+        actions: [{ label: 'Back', cls: 'btn-ghost' }],
+        onRender(m) {
+          m.querySelectorAll('[data-devsign]').forEach(el => el.onclick = () => {
+            const s = Game._devSquad[+el.dataset.devsign];
+            if (!s || mine[s.name]) return;
+            s.value = M.valueFor(s); s.wage = M.wageFor(s);
+            s.fromClub = c.name; s.fromId = c.id;
+            M.completeSigning(g, s, 0, s.wage);
+            State.save(); global.MUI.render(); UI.closeModal();
+            UI.toast(`${s.name} (${s.ovr}) signs for nothing.`, 'gold');
+          });
+          UI.modalScrollHint && UI.modalScrollHint(m);
+        }
+      });
+    },
+
+    /* Or invent one from scratch. */
+    mgrDevMake() {
+      const g = State.game;
+      const M = global.Manager;
+      const club = State.club(g.mgr.club);
+      const positions = Object.keys(D.POSITIONS);
+      Game._make = Game._make || { pos: 'ST', ovr: 99, age: 21 };
+      const mk = Game._make;
+      UI.modal({
+        title: 'Invent a footballer',
+        html: `<div class="dev-attr">
+            <div class="dev-attr-h"><b>Position</b><span class="grow"></span><em>${mk.pos}</em></div>
+            <div class="opt-grid" style="grid-template-columns:repeat(5,1fr);margin-top:6px">
+              ${positions.map(k => `<div class="opt ${mk.pos === k ? 'sel' : ''}" data-mkpos="${k}">${k}</div>`).join('')}
+            </div></div>
+          <div class="dev-attr">
+            <div class="dev-attr-h"><b>Overall</b><span class="grow"></span><em>${mk.ovr}</em></div>
+            <div class="row wrap">${[70, 80, 90, 95, 99].map(v =>
+              `<button class="btn ${mk.ovr === v ? 'btn-gold' : 'btn-ghost'} sm grow" data-mkovr="${v}">${v}</button>`).join('')}</div>
+          </div>
+          <div class="dev-attr">
+            <div class="dev-attr-h"><b>Age</b><span class="grow"></span><em>${mk.age}</em></div>
+            <div class="row wrap">${[16, 18, 21, 25, 30].map(v =>
+              `<button class="btn ${mk.age === v ? 'btn-gold' : 'btn-ghost'} sm grow" data-mkage="${v}">${v}</button>`).join('')}</div>
+          </div>`,
+        actions: [
+          { label: 'Sign him', onClick: () => {
+            const who = global.Names.person(club.country);
+            const s = { id: U.id(), name: who.name, nation: who.nation, pos: mk.pos,
+              age: mk.age, ovr: mk.ovr, shirt: 0, goals: 0, assists: 0, apps: 0, rel: 50 };
+            s.value = M.valueFor(s); s.wage = M.wageFor(s);
+            s.fromClub = club.name; s.fromId = club.id;
+            M.completeSigning(g, s, 0, s.wage);
+            State.save(); global.MUI.render();
+            UI.toast(`${s.name}, ${mk.pos} ${mk.ovr}, out of thin air.`, 'gold');
+          } },
+          { label: 'Cancel', cls: 'btn-ghost' }
+        ],
+        onRender(m) {
+          m.querySelectorAll('[data-mkpos]').forEach(el => el.onclick = () => { mk.pos = el.dataset.mkpos; Game.mgrDevMake(); });
+          m.querySelectorAll('[data-mkovr]').forEach(el => el.onclick = () => { mk.ovr = +el.dataset.mkovr; Game.mgrDevMake(); });
+          m.querySelectorAll('[data-mkage]').forEach(el => el.onclick = () => { mk.age = +el.dataset.mkage; Game.mgrDevMake(); });
         }
       });
     },
