@@ -38,6 +38,7 @@
       c.innerHTML = MUI['tab_' + MUI.tab] ? MUI['tab_' + MUI.tab]() : '';
       c.scrollTop = 0;
       global.UI.bindActions(c);
+      if (MUI.tab === 'mboss') MUI.renderBossClubs();
     },
 
     renderHUD() {
@@ -51,13 +52,15 @@
             <div class="hud-name">${esc(club.name)}</div>
             <div class="hud-meta">${ico('manager')} Manager · ${esc(State().league(club.league).name)}</div>
           </div>
-          <div class="hud-ovr"><b>${M().teamRating(g)}</b><span>TEAM</span></div>
+          <div class="hud-ovr" id="hud-ovr"><b>${M().teamRating(g)}</b><span>TEAM</span></div>
         </div>
         <div class="hud-bars">
           ${MUI.bar('Board', conf, conf >= 60 ? 'var(--green)' : conf >= 30 ? 'var(--gold)' : 'var(--red)')}
           ${MUI.bar('Position', Math.max(0, 100 - (pos - 1) * 9), 'var(--blue)', pos ? U().ordinal(pos) : '—')}
           ${MUI.bar('Budget', Math.min(100, g.mgr.budget / 1000000), 'var(--purple)', U().cash(g.mgr.budget))}
         </div>`;
+      const badge = $('hud-ovr');
+      if (badge) badge.onclick = () => global.Game.mgrSecretTap();
     },
 
     bar(label, v, colour, text) {
@@ -66,8 +69,14 @@
         <div class="hb-t"><i style="width:${val}%;background:${colour}"></i></div></div>`;
     },
 
+    tabsFor() {
+      const g = State().game;
+      return (g && g.secret)
+        ? TABS.concat([{ id: 'mboss', icon: 'settings', label: 'Boss' }]) : TABS;
+    },
+
     renderTabs() {
-      $('tabbar').innerHTML = TABS.map(t =>
+      $('tabbar').innerHTML = MUI.tabsFor().map(t =>
         `<button class="${MUI.tab === t.id ? 'on' : ''}" data-mtab="${t.id}">${ico(t.icon)}${t.label}</button>`).join('');
       $('tabbar').querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => {
         MUI.tab = b.dataset.mtab; MUI.render();
@@ -848,6 +857,167 @@
         <button class="btn btn-ghost" data-act="mgrResign">${ico('exit')} Resign</button>
         <button class="btn btn-danger" data-act="mgrQuit">${ico('exit')} Quit to menu</button>
       </div></div>`;
+    },
+
+    /* ---------------- BOSS MODE (secret) ----------------
+       The manager's half of the same code. Everything a season can do to you,
+       you can do to it — the money, the board, the squad, the table. It is all
+       a cheat and it all saves like anything else. */
+    tab_mboss() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const conf = Math.round(g.mgr.board.confidence);
+      const staff = g.mgr.staff || {};
+      const cash = v => U().cash(v);
+      let html = `<div class="card secret-head">
+        <h3 class="gold">${ico('settings')} Boss Mode</h3>
+        <p class="dim" style="margin:0">Unlocked with the code. Change what you like —
+          the money, the board, the squad, the table. It saves like any other career.</p></div>`;
+
+      // ---- the money ----
+      html += `<div class="card"><h3>${ico('value')} The money</h3>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>Transfer budget</b><span class="grow"></span><em>${cash(g.mgr.budget)}</em></div>
+          <div class="row wrap">
+            ${[0, 50, 250, 1000].map(m => `<button class="btn btn-ghost sm grow"
+              data-act="mdevBudget" data-arg="${m * 1000000}">${m ? U().cash(m * 1000000) : '$0'}</button>`).join('')}
+            <button class="btn btn-gold sm" data-act="mdevBudget" data-arg="9999000000">Unlimited</button>
+          </div></div>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>Wage ceiling</b><span class="grow"></span><em>${cash(g.mgr.wageBudget)}/w</em></div>
+          <div class="row wrap">
+            ${[100000, 500000, 2000000].map(m => `<button class="btn btn-ghost sm grow"
+              data-act="mdevWages" data-arg="${m}">${cash(m)}</button>`).join('')}
+            <button class="btn btn-gold sm" data-act="mdevWages" data-arg="50000000">Unlimited</button>
+          </div></div>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>Board confidence</b><span class="grow"></span><em>${conf}</em></div>
+          <div class="row">
+            ${[0, 25, 50, 75].map(v => `<button class="btn btn-ghost sm grow"
+              data-act="mdevConf" data-arg="${v}">${v}</button>`).join('')}
+            <button class="btn btn-gold sm" data-act="mdevConf" data-arg="100">100</button>
+          </div></div>
+        <p class="dim tiny" style="margin:2px 0 0">A board on 100 will not sack you. A board on 0 nearly will.</p>
+      </div>`;
+
+      // ---- the club ----
+      html += `<div class="card"><h3>${ico('club')} ${esc(club.name)}</h3>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>Club rating</b><span class="grow"></span><em>${club.rating}</em></div>
+          <div class="row wrap">
+            <button class="btn btn-ghost sm grow" data-act="mdevClubRating" data-arg="-5">−5</button>
+            <button class="btn btn-ghost sm grow" data-act="mdevClubRating" data-arg="-1">−1</button>
+            <button class="btn btn-ghost sm grow" data-act="mdevClubRating" data-arg="1">+1</button>
+            <button class="btn btn-ghost sm grow" data-act="mdevClubRating" data-arg="5">+5</button>
+            <button class="btn btn-gold sm" data-act="mdevClubRating" data-arg="max">93</button>
+          </div>
+          <div class="offer-read">Changes what the club is worth for good, not just this season.</div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-ghost" data-act="mdevTarget">${ico('manager')} Easiest board target</button>
+          <button class="btn btn-ghost" data-act="mdevTrophy">${ico('trophy')} Add a league title</button>
+          <button class="btn btn-ghost" data-act="mdevAward">${ico('medal')} Add Manager of the Season</button>
+        </div>
+      </div>`;
+
+      // ---- the squad ----
+      const xi = M().xiPlayers(g);
+      html += `<div class="card"><h3>${ico('squad')} The squad
+          <span class="pill">${g.squad.length}</span></h3>
+        <p class="dim tiny" style="margin:0 0 9px">Tap a name to set his overall. Everything below applies to all of them.</p>
+        <div class="row wrap" style="margin-bottom:10px">
+          ${[70, 80, 90, 99].map(v => `<button class="btn btn-ghost sm grow"
+            data-act="mdevSquadOvr" data-arg="${v}">Everyone ${v}</button>`).join('')}
+        </div>
+        <div class="row wrap">
+          <button class="btn btn-ghost sm" data-act="mdevHeal">Heal everything</button>
+          <button class="btn btn-ghost sm" data-act="mdevFresh">Full fitness and form</button>
+          <button class="btn btn-ghost sm" data-act="mdevDeals">Five years on every deal</button>
+          <button class="btn btn-ghost sm" data-act="mdevSettle">Nobody wants to leave</button>
+          <button class="btn btn-ghost sm" data-act="mdevYoung">Make them all 23</button>
+        </div>
+        <div style="margin-top:10px">
+        ${g.squad.slice().sort((a, b) => b.ovr - a.ovr).map(s => {
+          const why = M().unavailableWhy(s);
+          const inXI = xi.some(x => x.id === s.id);
+          return `<div class="ct-row" data-act="mdevPlayer" data-arg="${s.id}">
+            <span class="sq-pos">${esc(s.pos)}</span>
+            <span class="sq-n">${esc(s.name)}<em>${s.age} · ${cash(s.wage)}/w · ${
+              M().dealOf(s)}y${why ? ' · ' + esc(why.label) : ''}</em></span>
+            ${inXI ? '<span class="ct-y">XI</span>' : ''}
+            <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+          </div>`;
+        }).join('')}
+        </div>
+      </div>`;
+
+      // ---- the backroom ----
+      html += `<div class="card"><h3>${ico('manager')} The backroom</h3>
+        <p class="dim tiny" style="margin:0 0 9px">The best in the world, on nothing a week.</p>
+        <div class="row wrap">
+          <button class="btn btn-gold sm grow" data-act="mdevStaff" data-arg="all">Hire the best in every job</button>
+          <button class="btn btn-ghost sm" data-act="mdevStaff" data-arg="none">Sack all of them</button>
+        </div>
+        <div style="margin-top:9px">${M().STAFF_ROLES.map(r => {
+          const p = staff[r.id];
+          return `<div class="st-row" data-act="mdevStaff" data-arg="${r.id}">
+            <span class="st-ic">${ico(r.ic)}</span>
+            <span class="st-n">${esc(r.name)}<em>${p ? esc(p.name) : 'Nobody in the job'}</em></span>
+            <span class="st-r">${p ? `<b>${p.rating}</b><small>${cash(p.wage)}/w</small>`
+              : '<span class="st-hire">Hire 99</span>'}</span>
+          </div>`;
+        }).join('')}</div>
+      </div>`;
+
+      // ---- the season ----
+      const cupsLeft = (g.mgr.cups || []).filter(c => c.alive);
+      html += `<div class="card"><h3>${ico('table')} This season</h3>
+        <div class="stat-grid two">
+          <div class="stat"><b>${U().ordinal(M().position(g))}</b><span>Position</span></div>
+          <div class="stat"><b>${(g.mgr.results || []).length}</b><span>Played</span></div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-gold" data-act="mdevTop">${ico('crown')} Put us top of the table</button>
+          <button class="btn btn-ghost" data-act="mdevBottom">Put us bottom</button>
+          ${cupsLeft.length ? `<button class="btn btn-ghost" data-act="mdevCups">${ico('trophy')} Win the ${
+            cupsLeft.length === 1 ? 'cup we are still in' : cupsLeft.length + ' cups we are still in'}</button>` : ''}
+          <button class="btn btn-ghost" data-act="mdevEndSeason">${ico('next')} End the season now</button>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">Going top sets the points, so the table and everything that
+          reads it — the board, your finish, the money — follow along.</p>
+      </div>`;
+
+      // ---- the market ----
+      html += `<div class="card"><h3>${ico('transfer')} The market</h3>
+        <div class="row wrap">
+          <button class="btn btn-ghost" data-act="mdevFreeMarket">Every player on the market is free</button>
+          <button class="btn btn-ghost" data-act="mdevBids">Somebody bid for one of mine</button>
+          <button class="btn btn-ghost" data-act="mdevOffers">Make the big clubs want me</button>
+        </div></div>`;
+
+      // ---- take over anybody ----
+      html += `<div class="card"><h3>${ico('manager')} Manage anyone</h3>
+        <p class="dim tiny" style="margin:0 0 9px">Walk into any job in the world. The one you are in now goes
+          into your record as a job you left.</p>
+        <div class="field"><label>League</label>
+          <select class="input" id="mdev-league">${global.DATA.LEAGUES.map(l =>
+            `<option value="${l.id}" ${l.id === club.league ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></div>
+        <div class="club-list" id="mdev-clubs"></div></div>`;
+
+      html += `<div class="card"><button class="btn btn-danger btn-block" data-act="mdevLock">Lock Boss Mode again</button></div>`;
+      return html;
+    },
+
+    renderBossClubs() {
+      const g = State().game, sel = $('mdev-league');
+      if (!sel) return;
+      const list = $('mdev-clubs');
+      list.innerHTML = Object.values(g.world.clubs)
+        .filter(c => c.league === sel.value)
+        .sort((a, b) => b.rating - a.rating)
+        .map(c => `<div class="club ${c.id === g.mgr.club ? 'sel' : ''}" data-act="mdevTakeOver" data-arg="${c.id}">
+          <b>${esc(c.name)}</b><span>Rated ${c.rating}</span></div>`).join('');
+      global.UI.bindActions(list);
+      sel.onchange = () => MUI.renderBossClubs();
     },
 
     /* ---------------- the backroom ----------------

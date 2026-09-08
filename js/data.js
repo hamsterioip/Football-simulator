@@ -1451,9 +1451,19 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.9';
-  const BUILD = '7 September 2026';
+  const VERSION = '3.10';
+  const BUILD = '8 September 2026';
   const CHANGELOG = [
+    { v: '3.10', when: '8 Sep', items: [
+      'Boss Mode in the dugout. The career game has always hidden one behind five taps on the overall badge — Manager Mode now has its own behind five taps on the team rating, same code, same save',
+      'What it opens: the transfer budget and the wage ceiling, board confidence, your club\u2019s rating for good, and the board target',
+      'The squad, one dial at a time or all at once — set anybody\u2019s overall, empty the treatment room, full fitness and form, five years on every contract, nobody agitating for a move, or make the whole lot twenty-three',
+      'The best backroom staff in the world in every job, on nothing a week',
+      'The season itself: go top of the table or bottom of it, win every cup you are still in, or end the season on the spot',
+      'The market: make everybody free, make somebody bid for one of yours, or make the five biggest clubs in the world want you as their manager',
+      'And walk into any job in any division, which goes into your record as a job you left',
+      'It locks again from the same screen, and the career game\u2019s version is untouched'
+    ] },
     { v: '3.9', when: '7 Sep', items: [
       'Every player is on a contract now, with a number of years left on it that you can see. A man in his final year is worth less to anybody buying him, easier to unsettle, and gets phone calls — and if you let the year run out he leaves in the summer for nothing at all',
       'So you negotiate. Set the money and the length and put it to him: the wage is most of it, but a player better than the club he is at wants a very good reason to stay, an older one has fewer places to go than he thinks, and a long deal suits the young and frightens the old. Say no to his number and his people come back with a bigger one',

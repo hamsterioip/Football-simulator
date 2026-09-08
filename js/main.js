@@ -287,14 +287,261 @@
         return;
       }
       UI.closeModal();
-      State.game.secret = true;
+      const g = State.game;
+      g.secret = true;
       State.save();
-      UI.tab = 'secret';
-      UI.render();
+      const boss = g.mode === 'manager';
+      if (boss) { global.MUI.tab = 'mboss'; global.MUI.render(); }
+      else { UI.tab = 'secret'; UI.render(); }
       UI.modal({
         title: 'Boss Mode unlocked',
-        text: 'A new tab has appeared. Attributes, ceilings, traits, condition, your club — all of it is yours to change.\n\nIt stays unlocked in this save.',
+        text: boss
+          ? 'A new tab has appeared. The money, the board, the squad, the backroom, the table — all of it is yours to change.\n\nIt stays unlocked in this save.'
+          : 'A new tab has appeared. Attributes, ceilings, traits, condition, your club — all of it is yours to change.\n\nIt stays unlocked in this save.',
         actions: [{ label: 'Let me at it' }]
+      });
+    },
+
+    /* ==================== the code, in the dugout ====================
+       Same five taps, same code — but the badge here is the team rating, and
+       what it unlocks is a manager's set of levers rather than a player's. */
+    mgrSecretTap() {
+      const g = State.game;
+      if (!g || !g.mgr) return;
+      if (g.secret) { global.MUI.tab = 'mboss'; global.MUI.render(); return; }
+      const now = Date.now();
+      if (!Game._taps || now - Game._lastTap > 1500) Game._taps = 0;
+      Game._lastTap = now;
+      Game._taps++;
+      if (Game._taps >= 5) { Game._taps = 0; Game.codePrompt(); }
+      else if (Game._taps >= 3) UI.toast('…', '');
+    },
+
+    /* ==================== Boss Mode, manager side ==================== */
+    mgrDevAction(act, arg) {
+      const g = State.game;
+      const M = global.Manager;
+      const club = State.club(g.mgr.club);
+      const num = () => parseInt(arg, 10);
+      const reprice = s => {
+        s.value = M.valueFor(s);
+        s.wage = M.wageFor(s);
+      };
+      switch (act) {
+        case 'mdevBudget': g.mgr.budget = num(); break;
+        case 'mdevWages': g.mgr.wageBudget = num(); break;
+        case 'mdevConf': g.mgr.board.confidence = U.clamp(num(), 0, 100); break;
+
+        case 'mdevClubRating': {
+          const to = arg === 'max' ? 93 : U.clamp(club.rating + num(), 55, 93);
+          club.baseRating = to;
+          club.drift = 0;
+          club.rating = to;
+          break;
+        }
+        case 'mdevTarget':
+          g.mgr.board.target = { pos: State.league(club.league).clubs.length,
+            text: 'Nobody is asking you for anything. Enjoy yourself.' };
+          UI.toast('The board have stopped asking.', 'gold');
+          break;
+        case 'mdevTrophy':
+          g.mgr.trophies.push({ name: State.league(club.league).name + ' Title',
+                                year: g.world.year + 1, kind: 'league' });
+          UI.toast('Title added to the cabinet.', 'gold');
+          break;
+        case 'mdevAward':
+          g.mgr.awards = (g.mgr.awards || []).concat({ kind: 'mots',
+            name: 'Manager of the Season', who: null, year: g.world.year,
+            club: club.name, note: 'Because you said so' });
+          UI.toast('Award added.', 'gold');
+          break;
+
+        case 'mdevSquadOvr':
+          g.squad.forEach(s => { s.ovr = U.clamp(num(), 40, 99); reprice(s); });
+          UI.toast(`Every player is now ${num()}.`, 'gold');
+          break;
+        case 'mdevHeal':
+          g.squad.forEach(s => { s.out = null; s.ban = 0; s.banWhy = null; s.yellows = 0; });
+          M.repairXI(g);
+          UI.toast('Treatment room empty, nobody suspended.', 'good');
+          break;
+        case 'mdevFresh':
+          g.squad.forEach(s => { s.fit = 100; s.form = 100; });
+          UI.toast('Everybody fresh and flying.', 'good');
+          break;
+        case 'mdevDeals':
+          g.squad.forEach(s => { s.deal = M.DEAL_LONG; s.renewTries = 0; });
+          UI.toast('Five years on every contract.', 'good');
+          break;
+        case 'mdevSettle':
+          g.squad.forEach(s => { s.unsettled = 0; });
+          g.mgr.bids = [];
+          UI.toast('Nobody is agitating for a move.', 'good');
+          break;
+        case 'mdevYoung':
+          g.squad.forEach(s => { s.age = 23; reprice(s); });
+          UI.toast('The whole squad is 23.', 'gold');
+          break;
+        case 'mdevPlayer': return Game.mgrDevPlayer(arg);
+
+        case 'mdevStaff': {
+          if (arg === 'none') {
+            g.mgr.staff = {};
+            UI.toast('The backroom is empty.', '');
+            break;
+          }
+          const roles = arg === 'all' ? M.STAFF_ROLES : [M.staffRole(arg)];
+          roles.forEach(r => {
+            const who = global.Names.person(club.country);
+            g.mgr.staff = g.mgr.staff || {};
+            g.mgr.staff[r.id] = { name: who.name, nation: who.nation, rating: 99,
+                                  wage: 0, since: g.world.year };
+          });
+          UI.toast(roles.length === 1 ? `${roles[0].name} hired.` : 'Best in the world, all six.', 'gold');
+          break;
+        }
+
+        case 'mdevTop':
+        case 'mdevBottom': {
+          const table = g.tables[club.league];
+          if (!table) break;
+          const rows = Object.keys(table).map(id => table[id].pts);
+          const best = Math.max.apply(null, rows), worst = Math.min.apply(null, rows);
+          const me = table[club.id];
+          if (!me) break;
+          // the table is the truth every other screen reads, so move the points
+          me.pts = act === 'mdevTop' ? best + 30 : Math.max(worst - 30, 0);
+          me.w = act === 'mdevTop' ? Math.max(me.w, Math.round(me.pts / 3)) : 0;
+          me.gf = act === 'mdevTop' ? Math.max(me.gf, me.ga + 60) : me.gf;
+          me.ga = act === 'mdevTop' ? me.ga : Math.max(me.ga, me.gf + 60);
+          UI.toast(act === 'mdevTop' ? 'Top of the league.' : 'Bottom of the league.',
+            act === 'mdevTop' ? 'gold' : 'bad');
+          break;
+        }
+        case 'mdevCups': {
+          const alive = (g.mgr.cups || []).filter(c => c.alive);
+          alive.forEach(c => {
+            c.alive = false; c.won = true;
+            g.mgr.trophies.push({ name: c.name, year: g.world.year + 1, kind: 'cup' });
+            State.news(`${club.name} win the ${c.name}`, 'good', null, 'trophy');
+          });
+          UI.toast(alive.length ? `${alive.length} cup${alive.length === 1 ? '' : 's'} won.` : 'No cups left to win.',
+            alive.length ? 'gold' : '');
+          break;
+        }
+        case 'mdevEndSeason':
+          g.mgr.round = (g.mgr.calendar || []).length;
+          global.MUI.tab = 'mhome';
+          UI.toast('Season over. Go and see the board.', '');
+          break;
+
+        case 'mdevFreeMarket':
+          M.market(g).forEach(s => { s.ask = 0; s.free = true; });
+          g.mgr.marketCache = (g.mgr.marketCache || []).map(s => {
+            s.ask = 0; s.free = true; return s;
+          });
+          UI.toast('Everybody on the market is free.', 'gold');
+          break;
+        case 'mdevBids': {
+          let fresh = M.incomingBids(g, 3);
+          /* Cheat your club to the top and your squad to 99 and nobody in the
+             world qualifies to bid any more — which is correct, and useless on
+             a menu whose whole job is to make things happen. So force it. */
+          if (!fresh.length) {
+            const buyers = Object.values(g.world.clubs)
+              .filter(c => c.id !== club.id).sort((a, b) => b.rating - a.rating).slice(0, 8);
+            fresh = g.squad.slice().sort((a, b) => (b.value || 0) - (a.value || 0)).slice(0, 3)
+              .map((p, i) => {
+                const from = buyers[i % buyers.length];
+                const worth = (p.value || 1000000) * M.dealPriceMul(p);
+                const open = Math.round(worth * U.rnd(0.62, 0.92) / 50000) * 50000;
+                return { id: U.id(), playerId: p.id, name: p.name, pos: p.pos, ovr: p.ovr,
+                  age: p.age, fromId: from.id, fromName: from.name, fromRating: from.rating,
+                  fee: open, ceiling: Math.round(worth * 1.25 / 50000) * 50000,
+                  wage: Math.round(p.wage * 1.4 / 1000) * 1000, want: 1.2,
+                  line: U.pick(M.BID_LINES), patience: 2,
+                  year: g.world.year, round: g.mgr.round };
+              });
+          }
+          g.mgr.bids = (g.mgr.bids || []).concat(fresh);
+          UI.toast(fresh.length ? `${fresh.length} offer${fresh.length === 1 ? '' : 's'} on the table.`
+            : 'You have nobody to sell.', fresh.length ? 'good' : '');
+          break;
+        }
+        case 'mdevOffers': {
+          Game._mgrOffers = Object.values(g.world.clubs)
+            .filter(c => c.id !== club.id)
+            .sort((a, b) => b.rating - a.rating).slice(0, 5)
+            .map(c => ({ clubId: c.id, name: c.name, rating: c.rating,
+              league: State.league(c.league).name,
+              budget: Math.round(Math.pow(Math.max(c.rating - 50, 3), 2.6) * 9000 / 500000) * 500000,
+              pitch: 'They will not take no for an answer.' }));
+          g.mgr.offers = Game._mgrOffers;
+          State.save();
+          return Game.mgrOffersModal();
+        }
+
+        case 'mdevTakeOver': {
+          const to = State.club(arg);
+          if (!to || to.id === g.mgr.club) break;
+          M.moveTo(g, to.id, 'left');
+          global.MUI.tab = 'mhome';
+          UI.toast('You are the manager of ' + to.name + '.', 'good');
+          break;
+        }
+        case 'mdevLock':
+          g.secret = false;
+          global.MUI.tab = 'moffice';
+          UI.toast('Boss Mode locked.', '');
+          break;
+      }
+      State.save();
+      global.MUI.render();
+    },
+
+    /* One player, one dial. */
+    mgrDevPlayer(id) {
+      const g = State.game;
+      const M = global.Manager;
+      const s = g.squad.find(x => x.id === id);
+      if (!s) return;
+      const set = v => {
+        s.ovr = U.clamp(v, 40, 99);
+        s.value = M.valueFor(s);
+        s.wage = M.wageFor(s);
+        State.save();
+        global.MUI.render();
+        Game.mgrDevPlayer(id);
+      };
+      UI.modal({
+        title: s.name,
+        html: `<p class="muted">${U.esc(s.pos)} · ${s.age} · ${U.cash(s.wage)}/w · ${M.dealOf(s)} year${M.dealOf(s) === 1 ? '' : 's'} left · worth ${U.cash(s.value || 0)}</p>
+          <div class="offer-row">
+            <div class="offer-lab">Overall</div>
+            <div class="offer-ctl">
+              <button class="offer-btn" data-mdo="-1">−</button>
+              <b>${s.ovr}</b>
+              <button class="offer-btn" data-mdo="1">+</button>
+            </div>
+            <div class="offer-read">His value and his wages follow the number.</div>
+          </div>
+          <div class="row wrap">${[60, 70, 80, 90, 99].map(v =>
+            `<button class="btn btn-ghost sm grow" data-mdset="${v}">${v}</button>`).join('')}</div>`,
+        actions: [
+          { label: 'Fit, available and happy', keepOpen: true, onClick: () => {
+            s.out = null; s.ban = 0; s.banWhy = null; s.yellows = 0;
+            s.fit = 100; s.form = 100; s.unsettled = 0; s.deal = M.DEAL_LONG;
+            M.repairXI(g); State.save(); global.MUI.render();
+            UI.toast(`${s.name} is fit, tied down and content.`, 'good');
+          } },
+          { label: 'Done', cls: 'btn-ghost' }
+        ],
+        onRender(m) {
+          m.querySelectorAll('[data-mdo]').forEach(el =>
+            el.onclick = () => set(s.ovr + (+el.dataset.mdo)));
+          m.querySelectorAll('[data-mdset]').forEach(el =>
+            el.onclick = () => set(+el.dataset.mdset));
+        }
       });
     },
 
@@ -386,6 +633,7 @@
     /* ==================== action dispatcher ==================== */
     action(act, arg) {
       const g = State.game;
+      if (act.indexOf('mdev') === 0) return Game.mgrDevAction(act, arg);
       if (act.indexOf('dev') === 0) return Game.devAction(act, arg);
       switch (act) {
         case 'playMatch': return Game.playMatch(true);
