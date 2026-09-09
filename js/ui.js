@@ -49,6 +49,8 @@
         html += `<button class="btn ${a.cls || 'btn-primary'}" data-mi="${i}">${a.label}</button>`;
       });
       html += '</div>';
+      // a modal that dressed itself up last time must not still be wearing it
+      m.className = 'modal';
       m.innerHTML = html;
       m.querySelectorAll('[data-mi]').forEach(btn => {
         btn.onclick = () => {

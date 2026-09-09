@@ -1451,9 +1451,18 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '3.11';
-  const BUILD = '8 September 2026';
+  const VERSION = '3.12';
+  const BUILD = '9 September 2026';
   const CHANGELOG = [
+    { v: '3.12', when: '9 Sep', items: [
+      'Winning the league is an event now. The game works out the afternoon it becomes mathematically yours and tells you there and then \u2014 you read the result first, the way you would, and then it lands on you',
+      'A championship screen of its own, in your club\u2019s colours, with the crest, the confetti and the word in letters you can see from across the room',
+      'And it says what kind of title it was, rather than just \u201c1st\u201d. Unbeaten. Won with six to play. Eighteen points clear. By a single point on the final day. Your first. Your fifth. The league and the cup',
+      'Then the numbers that made it: points, record, goal difference, the margin, your longest unbeaten run, your top scorer, and an INVINCIBLE stamp if you went the whole way without losing',
+      'It leads the end-of-season review instead of queueing behind an award, and the board meeting is a board meeting again',
+      'Forty-six new things the timeline says about a title \u2014 the reaction, the unbeaten season, the parade',
+      'And it is kept. Every championship you have ever won is on the office wall with the season it took, for as long as your career lasts'
+    ] },
     { v: '3.11', when: '8 Sep', items: [
       'More in Boss Mode. Standing orders that stay on until you turn them off: always win, always draw or always lose, and nobody on the pitch ever getting injured or booked. They work inside the match, so the table, the board and the scorers all follow honestly from a dishonest result',
       'Sign anyone alive. Pick any club in any division and take whoever you like out of their squad for nothing — or take the best player in the world in one tap',

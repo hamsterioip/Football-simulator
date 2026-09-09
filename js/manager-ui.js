@@ -832,6 +832,7 @@
             U().cash(M().wageRoom(g))}<i>/w</i></b><span>Room left</span></div>
         </div>
       </div>
+      ${MUI.titlesCard(g)}
       ${MUI.staffCard(g)}
       ${MUI.contractsCard(g)}
       ${MUI.derbyCard(g)}
@@ -1161,6 +1162,24 @@
             <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
           </div>`;
         }).join('')}
+      </div>`;
+    },
+
+    /* ---------------- the seasons you won it ----------------
+       A title is a year, not a line in a list. This is what each of them
+       actually took, kept for as long as the career lasts. */
+    titlesCard(g) {
+      const runs = M().titleHistory(g).slice().reverse();
+      if (!runs.length) return '';
+      return `<div class="card"><h3>${ico('crown')} Championships
+          <span class="pill">${runs.length}</span></h3>
+        ${runs.slice(0, 8).map(t => `<div class="tr-row">
+          <span class="tr-yr">${t.year}</span>
+          <span class="tr-n">${esc(t.league)}<em>${esc(t.club)}${
+            t.invincible ? ' · unbeaten' : t.toSpare ? ` · ${t.toSpare} to spare` : ' · on the final day'}</em></span>
+          <span class="tr-pts">${t.pts}<small>pts</small></span>
+        </div>`).join('')}
+        ${runs.length > 8 ? `<p class="dim tiny" style="margin:8px 0 0">and ${runs.length - 8} more.</p>` : ''}
       </div>`;
     },
 

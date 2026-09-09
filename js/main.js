@@ -1189,8 +1189,18 @@
             `<div class="mnews mn-${U.esc(m.k)}"><span class="mn-t">${U.esc(m.t)}</span></div>`).join('')}</div>` : ''}
           <p class="dim" style="text-align:center;margin:0">Board confidence ${Math.round(g.mgr.board.confidence)}
             · ${U.ordinal(global.Manager.position(g))} in the table</p>`,
-        actions: [{ label: global.Manager.seasonOver(g) ? 'See the board' : 'Next',
-          onClick: () => { if (global.Manager.seasonOver(g)) Game.mgrReview(); } }]
+        actions: [{
+          /* The league being mathematically won is the biggest thing that
+             happens all season, and it happens on a Tuesday in April. You read
+             the result first, the way you would, and then it lands on you. */
+          cls: r.crowned ? 'btn-gold' : 'btn-primary',
+          label: r.crowned ? 'Wait — is that it?'
+            : global.Manager.seasonOver(g) ? 'See the board' : 'Next',
+          onClick: () => {
+            if (r.crowned) return Game.mgrChampions(r.crowned,
+              () => { if (global.Manager.seasonOver(g)) Game.mgrReview(); });
+            if (global.Manager.seasonOver(g)) Game.mgrReview();
+          } }]
       });
     },
 
@@ -1213,7 +1223,7 @@
       State.save();
 
       const meetTheBoard = () => UI.modal({
-        title: r.champion ? 'CHAMPIONS' : r.met ? 'Target met' : 'Season over',
+        title: r.champion ? 'Meet the board' : r.met ? 'Target met' : 'Season over',
         html: `<div class="stat-grid">
             <div class="stat"><b>${U.ordinal(r.pos)}</b><span>Finish</span></div>
             <div class="stat"><b>${r.confidence}</b><span>Board</span></div>
@@ -1263,24 +1273,132 @@
         } }]
       });
 
-      /* Before any of it: the best thing anybody did all year, and whatever
-         they handed out afterwards. */
-      const lift = () => {
-        if (r.champion) Game.trophyLift(State.league(club.league).name + ' Title', 'Champions', meetTheBoard);
-        else meetTheBoard();
-      };
-      const boardThen = () => Game.mgrAwardsModal(r.awards || [], lift);
-      if (r.goalOfSeason) return Game.mgrGoalOfSeason(r.goalOfSeason, boardThen);
-      if ((r.awards || []).length) return boardThen();
+      /* The order is the order it matters in. A championship first, because
+         nothing else that happened this year competes with it; then the best
+         goal anybody scored, then whatever was handed out, then the board. */
+      const awardsThen = () => Game.mgrAwardsModal(r.awards || [], meetTheBoard);
+      const goalThen = () => r.goalOfSeason
+        ? Game.mgrGoalOfSeason(r.goalOfSeason, awardsThen) : awardsThen();
 
-      // Lift it first, then go and see them. There is only one modal, so the
-      // trophy used to open on top of the review and take the button that
-      // starts your next season with it.
-      if (r.champion) {
-        Game.trophyLift(State.league(club.league).name + ' Title', 'Champions', meetTheBoard);
-      } else {
-        meetTheBoard();
+      /* Most titles are settled by the last kick of the last game, so the
+         celebration has usually just happened on the matchday screen. Doing it
+         again here would be lifting the same trophy twice in thirty seconds. */
+      if (r.champion && r.crowned && g.mgr.titleShown !== r.crowned.year) {
+        return Game.mgrChampions(r.crowned, goalThen);
       }
+      goalThen();
+    },
+
+    /* ==================== CHAMPIONS ====================
+       The one afternoon a season is actually about. It gets a screen of its
+       own, in the club's colours, and it gets to say what kind of title it
+       was — because "1st" in a table does not tell anybody anything. */
+
+    /* What sort of championship was that, in one line. */
+    mgrTitleLine(t) {
+      if (t.invincible) return 'Unbeaten. All season. Nobody laid a glove on them.';
+      if (t.stillUnbeaten && t.toSpare) return `Champions, and nobody has beaten them yet. ${t.toSpare} game${t.toSpare === 1 ? '' : 's'} left to stay that way.`;
+      if (t.toSpare >= 5) return `Won with ${t.toSpare} games still to play. It stopped being a title race in March.`;
+      if (t.margin >= 15) return `${t.margin} points clear. This was not a race, it was a procession.`;
+      if (t.toSpare === 0 && t.margin <= 1) return 'The last day. The last game. By a single point. Nobody in that stadium will ever forget it.';
+      if (t.toSpare === 0) return 'It went to the final day, and the final day went your way.';
+      if (t.margin <= 2) return `By ${t.margin} point${t.margin === 1 ? '' : 's'}. That is how close you came to nothing at all.`;
+      if (t.l === 0) return 'Champions without losing a league game all year.';
+      if (t.seasons === 0) return 'In your first season in the job. Ask for whatever you want.';
+      if (t.unbeaten >= 20) return `A ${t.unbeaten}-game unbeaten run through the middle of it decided the whole thing.`;
+      if (t.cups.length >= 2) return `The league, the ${t.cups[0]} and the ${t.cups[1]}. A season nobody at this club will top.`;
+      if (t.cups.length === 1) return `The league and the ${t.cups[0]}. A double.`;
+      if (t.nth === 1) return 'Your first. There is only ever one first.';
+      if (t.nth >= 5) return `Number ${t.nth}. They are not calling it a surprise any more.`;
+      return `${t.pts} points, and the trophy is staying here.`;
+    },
+
+    /* Beat one: the moment. */
+    mgrChampions(t, then) {
+      const g = State.game;
+      const club = State.club(g.mgr.club);
+      const kit = global.Crest.accent(club.name) || '#2ae67e';
+      const trim = global.Crest.accent2(club.name) || '#ffc94d';
+      g.mgr.titleShown = t.year;
+      UI.modal({
+        html: `<div class="champ-hero" style="--kit:${kit};--trim:${trim}">
+            ${Game.confetti(40)}
+            <div class="champ-crest">${global.Crest.svg(club.name, 'crest-xl')}</div>
+            <div class="champ-word">CHAMPIONS</div>
+            <div class="champ-of">${U.esc(t.league)} · ${t.year}</div>
+            <div class="champ-club">${U.esc(t.club)}</div>
+            <div class="champ-line">${U.esc(Game.mgrTitleLine(t))}</div>
+          </div>`,
+        actions: [{ label: 'Lift it', cls: 'btn-gold', onClick: () => Game.mgrTitleLift(t, then) }],
+        onRender(m) { m.classList.add('champ'); }
+      });
+    },
+
+    /* Beat two: the trophy. */
+    mgrTitleLift(t, then) {
+      const g = State.game;
+      const club = State.club(g.mgr.club);
+      const kit = global.Crest.accent(club.name) || '#2ae67e';
+      const trim = global.Crest.accent2(club.name) || 'rgba(255,255,255,.55)';
+      UI.modal({
+        html: `<div class="lift-title">${U.esc(t.league)} · ${t.year}</div>
+          <div class="lift-wrap">${global.Trophies.liftScene(t.league + ' Title', kit, trim)}</div>
+          <div class="lift-name">${U.esc(t.league)} Title</div>
+          <div class="lift-sub">${U.esc(t.club)} — champions.</div>`,
+        actions: [{ label: 'The season in numbers', cls: 'btn-gold', onClick: () => Game.mgrTitleStats(t, then) }],
+        onRender(mEl) {
+          const root = mEl.querySelector('.lift-view');
+          if (root) global.Trophies.playLift(root, () => {});
+        }
+      });
+    },
+
+    /* Beat three: what it actually took. */
+    mgrTitleStats(t, then) {
+      const g = State.game;
+      const club = State.club(g.mgr.club);
+      const kit = global.Crest.accent(club.name) || '#2ae67e';
+      const rows = [
+        ['Points', t.pts],
+        ['Record', `${t.w}W ${t.d}D ${t.l}L`],
+        ['Goals', `${t.gf} for, ${t.ga} against`],
+        ['Difference', (t.gd >= 0 ? '+' : '') + t.gd],
+        ['Margin', t.margin === 0 ? 'On goal difference' : `${t.margin} point${t.margin === 1 ? '' : 's'}`],
+        ['Longest unbeaten', `${t.unbeaten} game${t.unbeaten === 1 ? '' : 's'}`]
+      ];
+      if (t.scorer) rows.push(['Top scorer', `${t.scorer}, ${t.goals}`]);
+      if (t.cups.length) rows.push(['Also won', t.cups.join(', ')]);
+      UI.modal({
+        title: 'The season',
+        html: `<p class="muted">${U.esc(t.club)}, ${U.esc(t.league)} champions of ${t.year}${
+            t.toSpare ? `, with ${t.toSpare} game${t.toSpare === 1 ? '' : 's'} to spare` : ' on the final day'}.</p>
+          <div class="champ-nums" style="--kit:${kit}">
+            <div class="cn-big"><b>${t.pts}</b><span>Points</span></div>
+            <div class="cn-big"><b>${t.w}</b><span>Wins</span></div>
+            <div class="cn-big"><b>${(t.gd >= 0 ? '+' : '') + t.gd}</b><span>Difference</span></div>
+          </div>
+          <div class="offer-sum champ-sum">${rows.map(r =>
+            `<span>${U.esc(r[0])}</span><b>${U.esc(String(r[1]))}</b>`).join('')}</div>
+          ${t.invincible ? '<p class="champ-stamp">INVINCIBLE</p>' : ''}`,
+        actions: [{ label: 'On we go', cls: 'btn-gold', onClick: then || null }]
+      });
+    },
+
+    /* A handful of paper rectangles, in the club's colours. */
+    confetti(n) {
+      let out = '<div class="confetti">';
+      for (let i = 0; i < n; i++) {
+        const left = Math.round(U.rnd(0, 100));
+        const delay = U.rnd(0, 2.4).toFixed(2);
+        const dur = U.rnd(2.4, 4.6).toFixed(2);
+        const tilt = Math.round(U.rnd(-70, 70));
+        const w = Math.round(U.rnd(4, 8));
+        const h = Math.round(U.rnd(7, 14));
+        const c = i % 3 === 0 ? 'var(--kit)' : i % 3 === 1 ? 'var(--trim)' : '#fff';
+        out += `<i style="left:${left}%;animation-delay:${delay}s;animation-duration:${dur}s;`
+          + `width:${w}px;height:${h}px;background:${c};--tilt:${tilt}deg"></i>`;
+      }
+      return out + '</div>';
     },
 
     /* ---------------- goal of the season ----------------

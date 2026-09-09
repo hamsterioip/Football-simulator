@@ -349,6 +349,7 @@
     car.trophies = car.trophies.concat(g.mgr.trophies || []);
     car.wonders = car.wonders.concat(g.mgr.wonders || []);
     car.awards = car.awards.concat(g.mgr.awards || []);
+    car.titleRuns = (car.titleRuns || []).concat(g.mgr.titleRuns || []);
     car.seasons = (car.seasons || 0) + (g.mgr.board.seasons || 0);
     g.mgrHistory = (g.mgrHistory || []).concat({
       club: from.name, seasons: g.mgr.board.seasons,
@@ -625,6 +626,7 @@
     if (!g.career.wonders) g.career.wonders = [];
     if (!g.career.trophies) g.career.trophies = [];
     if (!g.career.awards) g.career.awards = [];
+    if (!g.career.titleRuns) g.career.titleRuns = [];
     return g.career;
   }
 
@@ -1210,6 +1212,13 @@
     const kick = result === 'W' ? U.rnd(1.5, 3) : result === 'D' ? U.rnd(-0.5, 0.8) : -U.rnd(1.5, 3);
     g.mgr.board.confidence = U.clamp(
       g.mgr.board.confidence + (deserved - g.mgr.board.confidence) * 0.17 + kick, 0, 100);
+
+    /* And the only thing that matters more than any of it: whether that
+       result just made the league mathematically ours. */
+    if (!cup) {
+      const crowned = checkTitle(g);
+      if (crowned) entry.crowned = crowned;
+    }
 
     marketTick(g);
     me.form = (me.form || []).concat(result).slice(-5);
@@ -2540,7 +2549,12 @@
     }));
     const runningMore = Math.max(expiringSoon(g).length - running.length, 0);
 
+    /* If the title was sewn up before the last game the moment has already
+       been had; if it went to the final day, this is where it lands. */
+    const crowned = champion ? checkTitleAtEnd(g) : null;
+
     return { pos, met, champion, verdict, sacked, warned, table, titles,
+             crowned,
              awards, running, runningMore, derby: derbyRecord(g),
              goalOfSeason: best, wonderCount: seasonGoals.length,
              offers: g.mgr.offers, bids: g.mgr.bids, reputation: reputation(g),
@@ -3117,6 +3131,120 @@
     return past.concat(g.mgr && g.mgr.awards ? g.mgr.awards : []);
   }
 
+  /* ================= WINNING THE LEAGUE =================
+     A championship is not a line in an end-of-season review. It is a specific
+     afternoon, usually with games still to play, when the arithmetic stops
+     being able to go against you and a city loses its mind. So the game has to
+     know the moment it happens rather than tidying it up in May, and it has to
+     remember the season well enough to talk about it years later. */
+
+  /* How many league games you have left to play. */
+  function leagueLeft(g) {
+    const cal = g.mgr.calendar || [];
+    let n = 0;
+    for (let i = g.mgr.round; i < cal.length; i++) if (cal[i].type === 'league') n++;
+    return n;
+  }
+
+  /* Is it mathematically ours? Nobody below can catch us even winning out. */
+  function titleSecured(g) {
+    const State = global.State;
+    const club = State.club(g.mgr.club);
+    const table = global.Engine.Season.standings(g, club.league);
+    const me = table.find(r => r.id === club.id);
+    if (!me || table[0].id !== club.id) return false;
+    const left = leagueLeft(g);
+    // everybody else's best possible finish, given the games they have left.
+    // Every club plays the same number of rounds, so what is left for you is
+    // what is left for them.
+    return table.slice(1).every(r => r.pts + left * 3 < me.pts
+      || (r.pts + left * 3 === me.pts && (me.gf - me.ga) > (r.gf - r.ga)));
+  }
+
+  /* The season, in the numbers you would put on a banner. */
+  function titleStats(g) {
+    const State = global.State, U = global.U;
+    const club = State.club(g.mgr.club);
+    const table = global.Engine.Season.standings(g, club.league);
+    const me = table.find(r => r.id === club.id) || { pts: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, p: 0 };
+    const second = table.find(r => r.id !== club.id) || { pts: 0 };
+    const league = (g.mgr.results || []).filter(r => r.comp !== 'cup');
+
+    // the longest they went without losing, and without winning
+    let run = 0, best = 0, since = 0, worstDry = 0;
+    league.forEach(r => {
+      if (r.result === 'L') { run = 0; } else { run++; best = Math.max(best, run); }
+      if (r.result === 'W') { since = 0; } else { since++; worstDry = Math.max(worstDry, since); }
+    });
+    const scorer = g.squad.slice().sort((a, b) => b.goals - a.goals)[0] || null;
+    const keeper = g.squad.filter(s => s.pos === 'GK').sort((a, b) => (b.apps || 0) - (a.apps || 0))[0] || null;
+    return {
+      year: g.world.year,
+      club: club.name,
+      league: State.league(club.league).name,
+      pts: me.pts, w: me.w, d: me.d, l: me.l, gf: me.gf, ga: me.ga,
+      gd: me.gf - me.ga, played: me.p,
+      margin: me.pts - second.pts,
+      unbeaten: best,
+      toSpare: leagueLeft(g),
+      scorer: scorer ? scorer.name : null,
+      goals: scorer ? scorer.goals : 0,
+      keeper: keeper ? keeper.name : null,
+      // you are not invincible until there is nothing left to lose
+      invincible: me.l === 0 && me.p > 0 && leagueLeft(g) === 0,
+      stillUnbeaten: me.l === 0 && me.p > 0,
+      cups: (g.mgr.cups || []).filter(c => c.won).map(c => c.name),
+      seasons: g.mgr.board.seasons || 0,
+      // this one is not in the cabinet yet, and at the end of the season it
+      // already is — count the ones from previous years either way
+      nth: ((g.mgr.trophies || []).filter(t =>
+        t.kind !== 'cup' && t.year <= g.world.year).length) + 1
+    };
+  }
+
+  /* Called after every league match. The first time the table says it cannot
+     be taken away, that is the day, and the game says so there and then. */
+  function checkTitle(g) {
+    const State = global.State;
+    if (g.mgr.titleWon && g.mgr.titleWon.year === g.world.year) return null;
+    if (!titleSecured(g)) return null;
+    const stats = titleStats(g);
+    g.mgr.titleWon = stats;
+    g.mgr.titleRuns = (g.mgr.titleRuns || []).concat(stats).slice(-24);
+    State.news(`${stats.club} are champions of ${stats.league}`, 'good', null, 'trophy');
+    logAdd(g, `${stats.league} champions — ${stats.pts} points${
+      stats.toSpare ? `, with ${stats.toSpare} to play` : ''}`, 'in');
+    g.mgr.board.confidence = 100;
+    if (global.MSocial) { try { global.MSocial.champions(g, stats); } catch (e) {} }
+    return stats;
+  }
+
+  /* A championship settled by the final whistle of the final game never trips
+     the mid-season check, because there were no games left to be safe with. */
+  function checkTitleAtEnd(g) {
+    const had = g.mgr.titleWon && g.mgr.titleWon.year === g.world.year ? g.mgr.titleWon : null;
+    const stats = titleStats(g);
+    if (had) {
+      // it was won in April; the record keeps that, and the numbers catch up
+      stats.toSpare = had.toSpare;
+      stats.nth = had.nth;
+      g.mgr.titleWon = stats;
+      const runs = g.mgr.titleRuns || [];
+      if (runs.length && runs[runs.length - 1].year === stats.year) runs[runs.length - 1] = stats;
+      return stats;
+    }
+    g.mgr.titleWon = stats;
+    g.mgr.titleRuns = (g.mgr.titleRuns || []).concat(stats).slice(-24);
+    if (global.MSocial) { try { global.MSocial.champions(g, stats); } catch (e) {} }
+    return stats;
+  }
+
+  /* Everything you have ever won, with the season attached. */
+  function titleHistory(g) {
+    const past = ((g.career && g.career.titleRuns) || []);
+    return past.concat(g.mgr && g.mgr.titleRuns ? g.mgr.titleRuns : []);
+  }
+
   /* ---------------- the switches Boss Mode can throw ----------------
      Two of the cheats are not one-off edits, they are standing instructions:
      how every match ends, and whether anybody is allowed to get hurt. Those
@@ -3177,6 +3305,7 @@
     rivalOf, setRival, isDerby, derbyRecord, DERBY_OF,
     monthAward, seasonAwards, honoursList, AWARD_EVERY,
     migrate, cheats, rigScore,
+    titleSecured, titleStats, checkTitle, titleHistory, leagueLeft,
     eliteFee, eliteWage, listFrom, freeShirt,
     seasonReview, nextSeason, squadFor
   };

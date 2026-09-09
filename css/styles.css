@@ -1566,3 +1566,80 @@ em.lastyr .ic{width:11px;height:11px;vertical-align:-1px;margin-right:3px}
 .aw-inline .ic{width:16px;height:16px;vertical-align:-3px;color:var(--blue);margin-right:5px}
 .aw-inline b{font-size:13px}
 .aw-inline span{display:block;font-size:11px;color:var(--dim);margin-top:2px}
+
+/* ---------------- CHAMPIONS ----------------
+   The one screen in the game that is allowed to shout. It drops the card
+   entirely and paints the whole modal in the club's colours. */
+.modal.champ{background:#080d14;
+  border-color:rgba(255,201,77,.35);
+  box-shadow:0 0 0 1px rgba(255,201,77,.12), 0 24px 70px rgba(0,0,0,.7)}
+.modal.champ .modal-body{padding:0}
+.modal.champ::after{display:none}
+/* The club's colour is the light in the room, not the wall. Painting the panel
+   in it made a sky-blue side unreadable, so the ground stays dark and the kit
+   shows up as a glow, a rule and the paper in the air. */
+.champ-hero{position:relative;overflow:hidden;text-align:center;
+  padding:30px 20px 26px;
+  background:radial-gradient(120% 85% at 50% -15%,
+      color-mix(in srgb, var(--kit) 30%, transparent), transparent 65%),
+    linear-gradient(180deg, #0d141d, #080d14);
+  border-bottom:2px solid var(--kit)}
+.champ-crest{margin-bottom:12px;position:relative;z-index:2}
+.champ-crest .crest{width:62px;height:62px;
+  filter:drop-shadow(0 6px 20px rgba(0,0,0,.75))}
+.champ-word{position:relative;z-index:2;
+  font:900 clamp(38px,13vw,56px)/0.92 var(--font-d),system-ui,sans-serif;
+  letter-spacing:1px;text-transform:uppercase;color:#ffd977;
+  text-shadow:0 2px 0 rgba(0,0,0,.5), 0 0 34px rgba(255,201,77,.55);
+  animation:champin .5s cubic-bezier(.2,1.4,.4,1) both}
+.champ-of{position:relative;z-index:2;margin-top:8px;
+  font:800 11px var(--font);letter-spacing:2.4px;text-transform:uppercase;
+  color:color-mix(in srgb, var(--kit) 55%, #ffffff)}
+.champ-club{position:relative;z-index:2;margin-top:10px;color:#fff;
+  font:900 23px var(--font-d),system-ui,sans-serif;letter-spacing:.4px;
+  text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.champ-line{position:relative;z-index:2;margin:14px auto 0;max-width:34ch;
+  font-size:14px;line-height:1.5;color:var(--txt)}
+@keyframes champin{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+
+/* paper, falling */
+.confetti{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.confetti i{position:absolute;top:-16px;border-radius:1px;opacity:.95;
+  box-shadow:0 1px 3px rgba(0,0,0,.4);
+  animation-name:cfall;animation-timing-function:linear;animation-iteration-count:infinite}
+@keyframes cfall{
+  0%{transform:translateY(-20px) rotate(0deg);opacity:0}
+  10%{opacity:.95}
+  100%{transform:translateY(320px) rotate(var(--tilt,60deg));opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .confetti{display:none}
+  .champ-word{animation:none}}
+
+/* the numbers that made it */
+.champ-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
+.cn-big{text-align:center;padding:12px 6px;border-radius:var(--radius-s);
+  background:color-mix(in srgb, var(--kit) 14%, transparent);
+  border:1px solid color-mix(in srgb, var(--kit) 32%, transparent)}
+.cn-big b{display:block;font:900 27px var(--font-d),system-ui,sans-serif;line-height:1;
+  font-variant-numeric:tabular-nums}
+.cn-big span{display:block;margin-top:4px;font-size:9.5px;font-weight:800;letter-spacing:1px;
+  text-transform:uppercase;color:var(--dim)}
+.champ-sum{border-top:0;padding-top:0;margin-top:0}
+.modal .champ-stamp{margin:16px 0 4px;text-align:center;
+  font:900 15px var(--font-d),system-ui,sans-serif;letter-spacing:6px;
+  color:#ffd977;padding:9px 10px;border-radius:var(--radius-s);
+  background:linear-gradient(180deg,rgba(255,201,77,.16),rgba(255,201,77,.05));
+  border:1px solid rgba(255,201,77,.45);
+  text-shadow:0 0 18px rgba(255,201,77,.6)}
+/* the seasons you won it */
+.tr-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.tr-row:last-of-type{border-bottom:0}
+.tr-yr{flex:0 0 auto;font:900 15px var(--font-d),system-ui,sans-serif;color:var(--gold);
+  font-variant-numeric:tabular-nums}
+.tr-n{flex:1;min-width:0;font-weight:700;font-size:12.5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-n em{display:block;font-style:normal;font-weight:600;font-size:10.5px;color:var(--dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-pts{flex:0 0 auto;font:800 15px var(--font-d),system-ui,sans-serif;
+  font-variant-numeric:tabular-nums}
+.tr-pts small{font-size:9.5px;font-weight:700;color:var(--dim);margin-left:2px}

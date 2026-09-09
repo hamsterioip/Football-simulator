@@ -3493,7 +3493,7 @@
     { k: 'pundit', tone: 'info', t: 'Every manager who lasts has somebody beside him doing the job he is worst at.' },
     { k: 'fan', tone: 'good', t: 'Backroom staff news. I am not proud of how much I care about this.' }
   ];
-  M9.derbyWin = [
+  M9.bigDerbyWin = [
     { k: 'club', tone: 'good', t: c => `FULL TIME | THE DERBY IS OURS. ${c.us}-${c.them}. 💙` },
     { k: 'fan', tone: 'good', t: c => `Beat ${c.suitor}. Nothing else that happens this season can take today away.` },
     { k: 'fan', tone: 'good', t: 'I have work in the morning and I do not care in the slightest.' },
@@ -3507,7 +3507,7 @@
     { k: 'fan', tone: 'good', t: 'Songs are being written. Some of them are not printable.' },
     { k: 'club', tone: 'good', t: 'The city is ours tonight. 🏙️💙' }
   ];
-  M9.derbyLoss = [
+  M9.bigDerbyLoss = [
     { k: 'fan', tone: 'bad', t: c => `Losing to ${c.suitor}. Of all of them. I need a week.` },
     { k: 'journo', tone: 'bad', t: c => `${c.suitor} take the derby, and ${c.clubName} will hear about it until the return fixture.` },
     { k: 'pundit', tone: 'bad', t: 'They wanted it more for twenty minutes and twenty minutes is all a derby needs.' },
@@ -3519,7 +3519,7 @@
     { k: 'journo', tone: 'info', t: 'The manager took the questions afterwards and did not hide behind any of them.' },
     { k: 'fan', tone: 'bad', t: 'Beat anybody else. Any other week. Not them.' }
   ];
-  M9.derbyDraw = [
+  M9.bigDerbyDraw = [
     { k: 'fan', tone: 'info', t: c => `A draw in the derby satisfies nobody and I am nobody, so here we are.` },
     { k: 'journo', tone: 'info', t: c => `${c.clubName} and ${c.suitor} share the spoils and neither set of supporters is happy about it.` },
     { k: 'pundit', tone: 'info', t: 'Two sides who were more frightened of losing it than interested in winning it.' },
@@ -3552,6 +3552,62 @@
     { k: 'pundit', tone: 'info', t: 'The month award is a nice thing to win and a terrible thing to be judged by.' }
   ];
   Object.keys(M9).forEach(k => { POSTS[k] = (POSTS[k] || []).concat(M9[k]); });
+
+  /* ---- v3.12: the day the league is won ---- */
+  const M10 = {};
+  M10.champions = [
+    { k: 'club', tone: 'hot', t: c => `🏆 CHAMPIONS OF ${String(c.leagueName).toUpperCase()}. ${c.year}. WE ARE CHAMPIONS. 💙` },
+    { k: 'club', tone: 'hot', t: c => `${c.pts} points. ${c.w} wins. One trophy. 🏆 #Champions` },
+    { k: 'fan', tone: 'hot', t: 'I have waited my whole life for this and I do not know what to do with myself.' },
+    { k: 'fan', tone: 'hot', t: 'CHAMPIONS. CHAMPIONS. I am crying in a pub car park and I am not sorry.' },
+    { k: 'fan', tone: 'hot', t: c => `My dad never saw us win it. I am thinking about him tonight.` },
+    { k: 'fan', tone: 'good', t: 'Ringing everyone in my phone. Some of them do not even like football.' },
+    { k: 'journo', tone: 'good', t: c => `${c.clubName} are champions. ${c.pts} points, ${c.margin} clear, and nobody can argue with a word of it.` },
+    { k: 'journo', tone: 'good', t: c => `It is done. ${c.clubName} win the ${c.leagueName}${c.toSpare ? ` with ${c.toSpare} to play` : ' on the final day'}.` },
+    { k: 'journo', tone: 'info', t: c => `The manager was asked what it meant and did not manage an answer. That is probably the answer.` },
+    { k: 'pundit', tone: 'good', t: 'Best team in the division from August to May. Not one person can say otherwise.' },
+    { k: 'pundit', tone: 'good', t: c => `Whatever you think of how they play, ${c.pts} points is ${c.pts} points.` },
+    { k: 'pundit', tone: 'info', t: 'Winning it once is a good side. What they do next is the interesting part.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName}: ${c.w}W ${c.d}D ${c.l}L, ${c.gf} scored, ${c.ga} conceded.` },
+    { k: 'stats', tone: 'info', t: c => `Champions by ${c.margin} point${c.margin === 1 ? '' : 's'}. Longest unbeaten run of the season: ${c.unbeaten}.` },
+    { k: 'stats', tone: 'info', t: c => `${c.topScorer} finishes the campaign on ${c.topGoals}.` },
+    { k: 'fantv', tone: 'hot', t: 'TITLE REACTION VIDEO. I have no voice. I have no dignity. I have a trophy.' },
+    { k: 'fantv', tone: 'good', t: 'Ten years of doing this channel for THIS. Thank you all.' },
+    { k: 'rival', tone: 'bad', t: 'Congratulations. Genuinely. Now shut up about it.' },
+    { k: 'rival', tone: 'bad', t: 'Long season. Best team won. Hate that I have to type that.' },
+    { k: 'fan', tone: 'hot', t: 'The city has not been this loud since I was a child.' },
+    { k: 'fan', tone: 'good', t: c => `Booked next season off work already. ${c.clubName} till I die.` },
+    { k: 'club', tone: 'good', t: 'To every single one of you who travelled, sang and believed — this is yours. 💙🏆' },
+    { k: 'journo', tone: 'info', t: c => `Champagne on the pitch at ${c.clubName}, and a manager being carried by players twice his size.` },
+    { k: 'fan', tone: 'good', t: 'Explaining to my kid that this does not happen every year. She does not believe me.' },
+    { k: 'pundit', tone: 'good', t: c => `The ${c.formation} they have played all year did not change once. That is a manager who knew what he had.` },
+    { k: 'fantv', tone: 'good', t: 'Parade route video going up tomorrow. Bring a flag, bring your nan.' },
+    { k: 'stats', tone: 'info', t: c => `This is title number ${c.nth} for this club under this manager.` },
+    { k: 'fan', tone: 'hot', t: 'I am going to watch the goals back until the sun comes up.' },
+    { k: 'club', tone: 'hot', t: c => `${c.year}. CHAMPIONS. 🏆💙 #${c.tagName}` },
+    { k: 'journo', tone: 'info', t: 'There will be a parade. There will be a hangover. In that order.' }
+  ];
+  M10.invincible = [
+    { k: 'stats', tone: 'hot', t: c => `${c.clubName} finish the season unbeaten. Played ${c.played}, lost none.` },
+    { k: 'journo', tone: 'hot', t: c => `Not one defeat. ${c.clubName} go through an entire ${c.leagueName} season without losing.` },
+    { k: 'pundit', tone: 'hot', t: 'You can win a league. Going a whole season unbeaten is something else entirely.' },
+    { k: 'fan', tone: 'hot', t: 'INVINCIBLE. Say it out loud. INVINCIBLE.' },
+    { k: 'club', tone: 'hot', t: 'Unbeaten. 🏆 Some things you only get to say once.' },
+    { k: 'rival', tone: 'bad', t: 'Not one defeat all year. I have nothing. You win.' },
+    { k: 'fantv', tone: 'hot', t: 'Making a documentary about this season. Somebody has to.' },
+    { k: 'journo', tone: 'info', t: 'They will be talking about this side in thirty years, and they will be right to.' }
+  ];
+  M10.parade = [
+    { k: 'club', tone: 'good', t: 'Open-top bus. Tomorrow. Bring everyone. 💙' },
+    { k: 'fan', tone: 'good', t: 'Parade day. Out of the house at six in the morning for a bus that arrives at two.' },
+    { k: 'journo', tone: 'info', t: c => `Hundreds of thousands expected on the streets for the ${c.clubName} parade.` },
+    { k: 'fantv', tone: 'good', t: 'On the barrier since eight this morning. Worth every second.' },
+    { k: 'fan', tone: 'good', t: 'My voice is gone, my phone is dead and I have lost a shoe. Best day of my life.' },
+    { k: 'stats', tone: 'info', t: c => `${c.clubName} lift the ${c.leagueName} trophy in front of a full stadium.` },
+    { k: 'pundit', tone: 'good', t: 'Look at the faces of the kids on those shoulders. That is what all of it is for.' },
+    { k: 'club', tone: 'good', t: 'Thank you. All of you. See you in August. 🏆' }
+  ];
+  Object.keys(M10).forEach(k => { POSTS[k] = (POSTS[k] || []).concat(M10[k]); });
 
   /* ================= what sets it off =================
      Every call is fed the real event, so nothing in the feed describes
@@ -3812,8 +3868,10 @@
     derby(g, entry, rivalName) {
       if (!g.mgr) return;
       const d = global.Manager.derbyRecord(g);
-      const pool = entry.result === 'W' ? POSTS.derbyWin
-        : entry.result === 'L' ? POSTS.derbyLoss : POSTS.derbyDraw;
+      const pool = entry.result === 'W' ? POSTS.bigDerbyWin
+        : entry.result === 'L' ? POSTS.bigDerbyLoss : POSTS.bigDerbyDraw;
+      // us and them here are our goals and theirs, which is what a derby post
+      // wants to say; the shared match banks use a home-first scoreline instead
       burst(g, [pool], ctx(g, { suitor: rivalName, us: entry.gf, them: entry.ga,
         dw: d.w, dl: d.l, dn: d.played, replyBank: MGR_REPLIES }), { heat: 2.4 }, 3);
     },
@@ -3823,6 +3881,17 @@
         ctx(g, { player: a.who || 'the manager', award: a.name, note: a.note || '',
                  awards: (g.mgr.awards || []).length, replyBank: MGR_REPLIES }),
         { heat: 1.5 }, 2);
+    },
+
+    /* The one day the timeline stops talking about anything else. */
+    champions(g, t) {
+      if (!g.mgr || !t) return;
+      const c = ctx(g, { pts: t.pts, w: t.w, d: t.d, l: t.l, gf: t.gf, ga: t.ga,
+        margin: t.margin, unbeaten: t.unbeaten, toSpare: t.toSpare, played: t.played,
+        nth: t.nth, replyBank: MGR_REPLIES });
+      burst(g, [POSTS.champions], c, { heat: 4 }, 6);
+      if (t.invincible) burst(g, [POSTS.invincible], c, { heat: 4 }, 3);
+      burst(g, [POSTS.parade], c, { heat: 2.6 }, 2);
     },
 
     canPost(g) {
