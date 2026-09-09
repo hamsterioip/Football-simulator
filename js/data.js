@@ -103,6 +103,42 @@
       ['Inter Miami', 76, 3], ['LAFC', 74, 3], ['LA Galaxy', 73, 3], ['Seattle Sounders', 72, 3],
       ['Atlanta United', 71, 2], ['Columbus Crew', 71, 2], ['NY Red Bulls', 70, 2], ['Philadelphia Union', 69, 2],
       ['Portland Timbers', 68, 2], ['Austin FC', 66, 1], ['Nashville SC', 66, 1], ['Chicago Fire', 65, 1]
+    ]},
+    { id: 'TUR', name: 'Süper Lig', country: 'Turkey', tier: 3, cup: 'Türkiye Kupası',
+      cont: 'UCL', clubs: [
+      ['Galatasaray', 80, 5], ['Fenerbahçe', 79, 5], ['Beşiktaş', 76, 4], ['Trabzonspor', 74, 4],
+      ['Başakşehir', 70, 2], ['Samsunspor', 68, 1], ['Konyaspor', 66, 1], ['Alanyaspor', 65, 1],
+      ['Antalyaspor', 65, 1], ['Kayserispor', 64, 1], ['Gaziantep', 63, 1], ['Rizespor', 62, 1]
+    ]},
+    { id: 'SCO', name: 'Scottish Premiership', country: 'Scotland', tier: 2, cup: 'Scottish Cup',
+      cont: 'UCL', clubs: [
+      ['Celtic', 76, 5], ['Rangers', 74, 5], ['Hearts', 68, 3], ['Aberdeen', 67, 3],
+      ['Hibernian', 66, 2], ['Dundee United', 64, 2], ['Motherwell', 63, 2], ['Kilmarnock', 62, 1],
+      ['St Mirren', 62, 1], ['Dundee', 61, 1], ['Ross County', 60, 1], ['St Johnstone', 59, 1]
+    ]},
+    { id: 'BEL', name: 'Belgian Pro League', country: 'Belgium', tier: 2, cup: 'Beker van België',
+      cont: 'UCL', clubs: [
+      ['Club Brugge', 74, 4], ['Anderlecht', 72, 5], ['Union SG', 72, 2], ['Genk', 71, 3],
+      ['Gent', 69, 3], ['Antwerp', 69, 2], ['Standard Liège', 67, 3], ['Cercle Brugge', 65, 1],
+      ['Mechelen', 64, 1], ['Charleroi', 63, 1], ['OH Leuven', 62, 1], ['Westerlo', 61, 1]
+    ]},
+    { id: 'MEX', name: 'Liga MX', country: 'Mexico', tier: 3, cup: 'Copa MX',
+      cont: 'CCL', clubs: [
+      ['América', 75, 5], ['Monterrey', 74, 4], ['Tigres UANL', 74, 4], ['Cruz Azul', 73, 4],
+      ['Guadalajara', 72, 5], ['Toluca', 71, 3], ['Pumas UNAM', 70, 4], ['Pachuca', 70, 3],
+      ['León', 69, 3], ['Santos Laguna', 68, 2], ['Atlas', 67, 2], ['Necaxa', 65, 1]
+    ]},
+    { id: 'SAU', name: 'Saudi Pro League', country: 'Saudi Arabia', tier: 3, cup: 'King\u2019s Cup',
+      cont: 'AFC', clubs: [
+      ['Al Hilal', 79, 5], ['Al Nassr', 78, 4], ['Al Ittihad', 77, 4], ['Al Ahli', 76, 3],
+      ['Al Qadsiah', 71, 2], ['Al Shabab', 70, 2], ['Al Ettifaq', 69, 2], ['Al Taawoun', 67, 1],
+      ['Al Fateh', 66, 1], ['Al Khaleej', 65, 1], ['Damac', 64, 1], ['Al Riyadh', 63, 1]
+    ]},
+    { id: 'JPN', name: 'J1 League', country: 'Japan', tier: 2, cup: 'Emperor\u2019s Cup',
+      cont: 'AFC', clubs: [
+      ['Kawasaki Frontale', 70, 4], ['Vissel Kobe', 70, 3], ['Urawa Reds', 69, 4], ['Yokohama F. Marinos', 69, 4],
+      ['Kashima Antlers', 68, 4], ['Sanfrecce Hiroshima', 68, 3], ['Gamba Osaka', 67, 3], ['FC Tokyo', 66, 2],
+      ['Cerezo Osaka', 66, 2], ['Nagoya Grampus', 65, 2], ['Kashiwa Reysol', 63, 1], ['Avispa Fukuoka', 62, 1]
     ]}
   ];
 
@@ -115,7 +151,10 @@
     { league: 'NED', blurb: 'Technical, fearless with kids — the shop window of Europe.' },
     { league: 'POR', blurb: 'A finishing school for forwards. The giants come shopping here first.' },
     { league: 'ARG', blurb: 'Street football with the studs showing. Survive it and Europe calls.' },
-    { league: 'USA', blurb: 'A growing league, a softer landing, and a spotlight all your own.' }
+    { league: 'USA', blurb: 'A growing league, a softer landing, and a spotlight all your own.' },
+    { league: 'SCO', blurb: 'Cold nights, full houses, and two clubs that expect to win everything.' },
+    { league: 'BEL', blurb: 'Small league, sharp scouts. Half of Europe watches it for a reason.' },
+    { league: 'JPN', blurb: 'Immaculate football, patient crowds, and a long way from the noise.' }
   ];
 
   /* --- Club identity ------------------------------------------------------
@@ -194,13 +233,56 @@
     'Atlanta United': ['#80000A', '#000000', 'stripes'], 'Columbus Crew': ['#FEDD00', '#000000', 'plain'],
     'NY Red Bulls': ['#FFFFFF', '#E4032E', 'plain'], 'Philadelphia Union': ['#071B2C', '#B49759', 'plain'],
     'Portland Timbers': ['#00482B', '#D69A00', 'plain'], 'Austin FC': ['#00B140', '#000000', 'plain'],
-    'Nashville SC': ['#ECE83A', '#1D1D1B', 'plain'], 'Chicago Fire': ['#141B4D', '#EF3E42', 'plain']
+    'Nashville SC': ['#ECE83A', '#1D1D1B', 'plain'], 'Chicago Fire': ['#141B4D', '#EF3E42', 'plain'],
+    // Turkey
+    'Galatasaray': ['#A90432', '#FCB421', 'halves'], 'Fenerbahçe': ['#FFED00', '#00306A', 'stripes'],
+    'Beşiktaş': ['#000000', '#FFFFFF', 'stripes'], 'Trabzonspor': ['#5E1B33', '#89CFF0', 'stripes'],
+    'Başakşehir': ['#F26522', '#0A2240', 'plain'], 'Samsunspor': ['#E30613', '#FFFFFF', 'stripes'],
+    'Konyaspor': ['#00A650', '#FFFFFF', 'stripes'], 'Alanyaspor': ['#F58220', '#00954C', 'stripes'],
+    'Antalyaspor': ['#E4032E', '#FFFFFF', 'stripes'], 'Kayserispor': ['#FFD100', '#E4032E', 'stripes'],
+    'Gaziantep': ['#E4032E', '#000000', 'plain'], 'Rizespor': ['#00954C', '#0057B8', 'stripes'],
+    // Scotland
+    'Celtic': ['#018749', '#FFFFFF', 'hoops'], 'Rangers': ['#1B458F', '#E4032E', 'plain'],
+    'Hearts': ['#8C2633', '#FFFFFF', 'plain'], 'Aberdeen': ['#E4032E', '#FFFFFF', 'plain'],
+    'Hibernian': ['#00854A', '#FFFFFF', 'sleeve'], 'Dundee United': ['#F76900', '#000000', 'plain'],
+    'Motherwell': ['#FFC72C', '#8C2633', 'plain'], 'Kilmarnock': ['#0057B8', '#FFFFFF', 'stripes'],
+    'St Mirren': ['#000000', '#FFFFFF', 'stripes'], 'Dundee': ['#00205B', '#FFFFFF', 'plain'],
+    'Ross County': ['#003DA5', '#FFFFFF', 'plain'], 'St Johnstone': ['#00539B', '#FFFFFF', 'plain'],
+    // Belgium
+    'Club Brugge': ['#005BAA', '#000000', 'stripes'], 'Anderlecht': ['#4D2E86', '#FFFFFF', 'plain'],
+    'Union SG': ['#FFEB00', '#00417B', 'halves'], 'Genk': ['#005BAA', '#FFFFFF', 'stripes'],
+    'Gent': ['#005BAA', '#FFFFFF', 'stripes'], 'Antwerp': ['#E4032E', '#FFFFFF', 'plain'],
+    'Standard Liège': ['#E4032E', '#FFFFFF', 'plain'], 'Cercle Brugge': ['#00854A', '#000000', 'stripes'],
+    'Mechelen': ['#FFD100', '#E4032E', 'stripes'], 'Charleroi': ['#000000', '#FFFFFF', 'stripes'],
+    'OH Leuven': ['#FFFFFF', '#0057B8', 'plain'], 'Westerlo': ['#FFD100', '#00205B', 'plain'],
+    // Mexico
+    'América': ['#FFD100', '#00285E', 'plain'], 'Monterrey': ['#003DA5', '#FFFFFF', 'stripes'],
+    'Tigres UANL': ['#F4A100', '#00285E', 'plain'], 'Cruz Azul': ['#003DA5', '#FFFFFF', 'plain'],
+    'Guadalajara': ['#E4032E', '#FFFFFF', 'stripes'], 'Toluca': ['#E4032E', '#FFFFFF', 'stripes'],
+    'Pumas UNAM': ['#00285E', '#FFB81C', 'halves'], 'Pachuca': ['#0057B8', '#FFFFFF', 'stripes'],
+    'León': ['#00854A', '#FFFFFF', 'plain'], 'Santos Laguna': ['#00A650', '#FFFFFF', 'plain'],
+    'Atlas': ['#E4032E', '#000000', 'sash'], 'Necaxa': ['#E4032E', '#FFFFFF', 'stripes'],
+    // Saudi Arabia
+    'Al Hilal': ['#0B4EA2', '#FFFFFF', 'plain'], 'Al Nassr': ['#FFD100', '#0B4EA2', 'stripes'],
+    'Al Ittihad': ['#000000', '#FFD100', 'stripes'], 'Al Ahli': ['#00854A', '#FFFFFF', 'stripes'],
+    'Al Qadsiah': ['#FFD100', '#0057B8', 'plain'], 'Al Shabab': ['#FFFFFF', '#000000', 'plain'],
+    'Al Ettifaq': ['#00854A', '#FFFFFF', 'halves'], 'Al Taawoun': ['#FFD100', '#0B4EA2', 'plain'],
+    'Al Fateh': ['#0057B8', '#FFFFFF', 'stripes'], 'Al Khaleej': ['#E4032E', '#FFFFFF', 'plain'],
+    'Damac': ['#00A650', '#FFFFFF', 'plain'], 'Al Riyadh': ['#FFFFFF', '#0B4EA2', 'stripes'],
+    // Japan
+    'Kawasaki Frontale': ['#00A6D6', '#000000', 'stripes'], 'Vissel Kobe': ['#8C1D40', '#FFFFFF', 'plain'],
+    'Urawa Reds': ['#E4032E', '#000000', 'plain'], 'Yokohama F. Marinos': ['#003DA5', '#E4032E', 'plain'],
+    'Kashima Antlers': ['#8C1D40', '#000080', 'plain'], 'Sanfrecce Hiroshima': ['#5C2D91', '#FFFFFF', 'plain'],
+    'Gamba Osaka': ['#003DA5', '#000000', 'stripes'], 'FC Tokyo': ['#003DA5', '#E4032E', 'stripes'],
+    'Cerezo Osaka': ['#E4007F', '#000000', 'plain'], 'Nagoya Grampus': ['#E4032E', '#FFD100', 'plain'],
+    'Kashiwa Reysol': ['#FFD100', '#000000', 'plain'], 'Avispa Fukuoka': ['#003DA5', '#FFD100', 'plain']
   };
 
   const CONTINENTAL = {
     UCL: { name: 'Champions League', short: 'UCL', region: 'Europe' },
     LIB: { name: 'Copa Libertadores', short: 'Libertadores', region: 'South America' },
-    CCL: { name: 'CONCACAF Champions Cup', short: 'CONCACAF CC', region: 'North America' }
+    CCL: { name: 'CONCACAF Champions Cup', short: 'CONCACAF CC', region: 'North America' },
+    AFC: { name: 'AFC Champions League Elite', short: 'AFC CL', region: 'Asia' }
   };
 
   // --- Nations (for the player + international tournaments) ----------------
@@ -234,7 +316,8 @@
     { name: 'Canada',      rating: 74 },
     { name: 'Ireland',     rating: 72 },
     { name: 'Scotland',    rating: 73 },
-    { name: 'Ghana',       rating: 75 }
+    { name: 'Ghana',       rating: 75 },
+    { name: 'Saudi Arabia', rating: 71 }
   ];
 
   /* --- Real stars -----------------------------------------------------------
@@ -247,22 +330,22 @@
   const REAL_STARS = {
     // England
     'Manchester City': [
-      ['Erling Haaland', 'Norway', 'ST', 92, 25], ['Rodri', 'Spain', 'CDM', 90, 29],
-      ['Gianluigi Donnarumma', 'Italy', 'GK', 89, 26], ['Rúben Dias', 'Portugal', 'CB', 87, 28],
-      ['Phil Foden', 'England', 'CAM', 86, 25], ['Bernardo Silva', 'Portugal', 'CM', 85, 31]
+      ['Erling Haaland', 'Norway', 'ST', 95, 25], ['Rodri', 'Spain', 'CDM', 92, 29],
+      ['Gianluigi Donnarumma', 'Italy', 'GK', 91, 26], ['Rúben Dias', 'Portugal', 'CB', 89, 28],
+      ['Phil Foden', 'England', 'CAM', 89, 25], ['Bernardo Silva', 'Portugal', 'CM', 85, 31]
     ],
     'Arsenal': [
-      ['Declan Rice', 'England', 'CDM', 88, 26], ['Bukayo Saka', 'England', 'RW', 88, 24],
-      ['William Saliba', 'France', 'CB', 87, 24], ['Martin Ødegaard', 'Norway', 'CAM', 87, 26],
+      ['Declan Rice', 'England', 'CDM', 90, 26], ['Bukayo Saka', 'England', 'RW', 91, 24],
+      ['William Saliba', 'France', 'CB', 90, 24], ['Martin Ødegaard', 'Norway', 'CAM', 89, 26],
       ['Gabriel Magalhães', 'Brazil', 'CB', 86, 27], ['David Raya', 'Spain', 'GK', 85, 30]
     ],
     'Liverpool': [
-      ['Mohamed Salah', 'Egypt', 'RW', 89, 33], ['Virgil van Dijk', 'Netherlands', 'CB', 89, 34],
-      ['Alisson Becker', 'Brazil', 'GK', 89, 32], ['Florian Wirtz', 'Germany', 'CAM', 88, 22],
-      ['Alexander Isak', 'Sweden', 'ST', 88, 26], ['Alexis Mac Allister', 'Argentina', 'CM', 85, 26]
+      ['Mohamed Salah', 'Egypt', 'RW', 92, 33], ['Virgil van Dijk', 'Netherlands', 'CB', 91, 34],
+      ['Alisson Becker', 'Brazil', 'GK', 91, 32], ['Florian Wirtz', 'Germany', 'CAM', 92, 22],
+      ['Alexander Isak', 'Sweden', 'ST', 90, 26], ['Alexis Mac Allister', 'Argentina', 'CM', 85, 26]
     ],
     'Chelsea': [
-      ['Cole Palmer', 'England', 'CAM', 88, 23], ['Moisés Caicedo', 'Ecuador', 'CDM', 85, 23],
+      ['Cole Palmer', 'England', 'CAM', 91, 23], ['Moisés Caicedo', 'Ecuador', 'CDM', 85, 23],
       ['Enzo Fernández', 'Argentina', 'CM', 84, 24], ['Reece James', 'England', 'RB', 83, 25]
     ],
     'Manchester United': [
@@ -300,21 +383,21 @@
     ],
     // Spain
     'Real Madrid': [
-      ['Kylian Mbappé', 'France', 'ST', 91, 26], ['Jude Bellingham', 'England', 'CAM', 89, 22],
-      ['Vinícius Júnior', 'Brazil', 'LW', 89, 25], ['Thibaut Courtois', 'Belgium', 'GK', 89, 33],
-      ['Federico Valverde', 'Uruguay', 'CM', 86, 27], ['Antonio Rüdiger', 'Germany', 'CB', 84, 32]
+      ['Kylian Mbappé', 'France', 'ST', 95, 26], ['Jude Bellingham', 'England', 'CAM', 93, 22],
+      ['Vinícius Júnior', 'Brazil', 'LW', 93, 25], ['Thibaut Courtois', 'Belgium', 'GK', 92, 33],
+      ['Federico Valverde', 'Uruguay', 'CM', 90, 27], ['Antonio Rüdiger', 'Germany', 'CB', 84, 32]
     ],
     'Barcelona': [
-      ['Lamine Yamal', 'Spain', 'RW', 89, 18], ['Pedri', 'Spain', 'CM', 87, 22],
+      ['Lamine Yamal', 'Spain', 'RW', 94, 18], ['Pedri', 'Spain', 'CM', 90, 22],
       ['Raphinha', 'Brazil', 'LW', 87, 28], ['Robert Lewandowski', 'Poland', 'ST', 86, 37],
       ['Marc-André ter Stegen', 'Germany', 'GK', 85, 33], ['Jules Koundé', 'France', 'RB', 84, 26]
     ],
     'Atlético Madrid': [
       ['Jan Oblak', 'Slovenia', 'GK', 87, 32], ['Julián Alvarez', 'Argentina', 'ST', 86, 25],
-      ['Antoine Griezmann', 'France', 'CAM', 85, 34], ['Marcos Llorente', 'Spain', 'CM', 82, 30]
+      ['Antoine Griezmann', 'France', 'CAM', 88, 34], ['Marcos Llorente', 'Spain', 'CM', 82, 30]
     ],
     'Athletic Club': [
-      ['Nico Williams', 'Spain', 'LW', 84, 23], ['Unai Simón', 'Spain', 'GK', 83, 28],
+      ['Nico Williams', 'Spain', 'LW', 89, 23], ['Unai Simón', 'Spain', 'GK', 83, 28],
       ['Oihan Sancet', 'Spain', 'CAM', 82, 25], ['Iñaki Williams', 'Ghana', 'ST', 80, 31]
     ],
     'Real Sociedad': [
@@ -350,7 +433,7 @@
     ],
     // Italy
     'Inter': [
-      ['Lautaro Martínez', 'Argentina', 'ST', 88, 28], ['Nicolò Barella', 'Italy', 'CM', 86, 28],
+      ['Lautaro Martínez', 'Argentina', 'ST', 91, 28], ['Nicolò Barella', 'Italy', 'CM', 86, 28],
       ['Alessandro Bastoni', 'Italy', 'CB', 84, 26], ['Hakan Çalhanoğlu', 'Turkey', 'CDM', 84, 31],
       ['Yann Sommer', 'Switzerland', 'GK', 84, 36]
     ],
@@ -365,7 +448,7 @@
       ['Fikayo Tomori', 'England', 'CB', 82, 27]
     ],
     'Napoli': [
-      ['Kevin De Bruyne', 'Belgium', 'CM', 85, 34], ['Scott McTominay', 'Scotland', 'CM', 83, 28],
+      ['Kevin De Bruyne', 'Belgium', 'CM', 90, 34], ['Scott McTominay', 'Scotland', 'CM', 83, 28],
       ['Romelu Lukaku', 'Belgium', 'ST', 82, 32], ['Alex Meret', 'Italy', 'GK', 82, 28],
       ['Giovanni Di Lorenzo', 'Italy', 'RB', 81, 32]
     ],
@@ -402,7 +485,7 @@
     ],
     // Germany
     'Bayern München': [
-      ['Harry Kane', 'England', 'ST', 90, 32], ['Jamal Musiala', 'Germany', 'CAM', 87, 22],
+      ['Harry Kane', 'England', 'ST', 93, 32], ['Jamal Musiala', 'Germany', 'CAM', 87, 22],
       ['Michael Olise', 'France', 'RW', 85, 23], ['Joshua Kimmich', 'Germany', 'CDM', 85, 30],
       ['Manuel Neuer', 'Germany', 'GK', 84, 39], ['Dayot Upamecano', 'France', 'CB', 83, 26]
     ],
@@ -453,8 +536,8 @@
     ],
     // France
     'Paris SG': [
-      ['Ousmane Dembélé', 'France', 'RW', 88, 28], ['Khvicha Kvaratskhelia', 'Georgia', 'LW', 87, 24],
-      ['Vitinha', 'Portugal', 'CM', 86, 25], ['Achraf Hakimi', 'Morocco', 'RB', 86, 26],
+      ['Ousmane Dembélé', 'France', 'RW', 91, 28], ['Khvicha Kvaratskhelia', 'Georgia', 'LW', 87, 24],
+      ['Vitinha', 'Portugal', 'CM', 86, 25], ['Achraf Hakimi', 'Morocco', 'RB', 90, 26],
       ['Nuno Mendes', 'Portugal', 'LB', 84, 23], ['Willian Pacho', 'Ecuador', 'CB', 83, 23]
     ],
     'Monaco': [
@@ -574,7 +657,7 @@
     ],
     // USA
     'Inter Miami': [
-      ['Lionel Messi', 'Argentina', 'RW', 88, 38], ['Luis Suárez', 'Uruguay', 'ST', 82, 38],
+      ['Lionel Messi', 'Argentina', 'RW', 95, 38], ['Luis Suárez', 'Uruguay', 'ST', 82, 38],
       ['Rodrigo De Paul', 'Argentina', 'CM', 82, 31], ['Sergio Busquets', 'Spain', 'CDM', 81, 37],
       ['Jordi Alba', 'Spain', 'LB', 80, 36]
     ],
@@ -621,6 +704,154 @@
     'Chicago Fire': [
       ['Hugo Cuypers', 'Belgium', 'ST', 77, 28], ['Philip Zinckernagel', 'Denmark', 'LW', 76, 30],
       ['Chris Brady', 'USA', 'GK', 74, 21]
+    ],
+    // Turkey
+    'Galatasaray': [
+      ['Victor Osimhen', 'Nigeria', 'ST', 89, 27], ['Mauro Icardi', 'Argentina', 'ST', 83, 33],
+      ['Lucas Torreira', 'Uruguay', 'CDM', 82, 30], ['Davinson Sánchez', 'Colombia', 'CB', 81, 30],
+      ['Fernando Muslera', 'Uruguay', 'GK', 79, 40]
+    ],
+    'Fenerbahçe': [
+      ['Youssef En-Nesyri', 'Morocco', 'ST', 83, 29], ['Dominik Livaković', 'Croatia', 'GK', 82, 31],
+      ['Sofyan Amrabat', 'Morocco', 'CDM', 81, 30], ['İrfan Can Kahveci', 'Turkey', 'CAM', 79, 31],
+      ['Sebastian Szymański', 'Poland', 'CAM', 80, 27]
+    ],
+    'Beşiktaş': [
+      ['Rafa Silva', 'Portugal', 'LW', 82, 33], ['Gedson Fernandes', 'Portugal', 'CM', 78, 27],
+      ['Ernest Muçi', 'Albania', 'CAM', 76, 25], ['Mert Günok', 'Turkey', 'GK', 77, 37]
+    ],
+    'Trabzonspor': [
+      ['Anthony Nwakaeme', 'Nigeria', 'LW', 76, 37], ['Uğurcan Çakır', 'Turkey', 'GK', 80, 30],
+      ['Edin Višća', 'Bosnia', 'RW', 76, 36]
+    ],
+    'Başakşehir': [
+      ['Deniz Türüç', 'Turkey', 'CAM', 74, 33], ['Amine Harit', 'Morocco', 'CAM', 76, 29]
+    ],
+    // Scotland
+    'Celtic': [
+      ['Callum McGregor', 'Scotland', 'CM', 79, 32], ['Daizen Maeda', 'Japan', 'LW', 78, 28],
+      ['Cameron Carter-Vickers', 'USA', 'CB', 78, 28], ['Reo Hatate', 'Japan', 'CM', 77, 28],
+      ['Kasper Schmeichel', 'Denmark', 'GK', 76, 39]
+    ],
+    'Rangers': [
+      ['James Tavernier', 'England', 'RB', 77, 34], ['Nicolas Raskin', 'Belgium', 'CM', 76, 25],
+      ['Cyriel Dessers', 'Nigeria', 'ST', 76, 31], ['Connor Barron', 'Scotland', 'CM', 73, 23]
+    ],
+    'Hearts': [
+      ['Lawrence Shankland', 'Scotland', 'ST', 76, 30], ['Craig Gordon', 'Scotland', 'GK', 72, 43]
+    ],
+    'Aberdeen': [
+      ['Graeme Shinnie', 'Scotland', 'CM', 72, 34], ['Kevin Nisbet', 'Scotland', 'ST', 72, 29]
+    ],
+    'Hibernian': [
+      ['Martin Boyle', 'Australia', 'RW', 73, 33], ['Rocky Bushiri', 'Belgium', 'CB', 70, 26]
+    ],
+    // Belgium
+    'Club Brugge': [
+      ['Hans Vanaken', 'Belgium', 'CAM', 80, 34], ['Simon Mignolet', 'Belgium', 'GK', 79, 38],
+      ['Brandon Mechele', 'Belgium', 'CB', 76, 33], ['Christos Tzolis', 'Greece', 'LW', 78, 24]
+    ],
+    'Anderlecht': [
+      ['Jan Vertonghen', 'Belgium', 'CB', 76, 39], ['Kasper Dolberg', 'Denmark', 'ST', 77, 28],
+      ['Mario Stroeykens', 'Belgium', 'CAM', 74, 22]
+    ],
+    'Union SG': [
+      ['Promise David', 'Canada', 'ST', 77, 25], ['Kevin Mac Allister', 'Argentina', 'CB', 75, 27]
+    ],
+    'Genk': [
+      ['Bilal El Khannouss', 'Morocco', 'CAM', 78, 22], ['Tolu Arokodare', 'Nigeria', 'ST', 76, 25]
+    ],
+    'Gent': [
+      ['Tarik Tissoudali', 'Morocco', 'ST', 75, 33], ['Sven Kums', 'Belgium', 'CM', 72, 38]
+    ],
+    // Mexico
+    'América': [
+      ['Henry Martín', 'Mexico', 'ST', 79, 33], ['Álvaro Fidalgo', 'Spain', 'CM', 79, 28],
+      ['Luis Malagón', 'Mexico', 'GK', 78, 29], ['Israel Reyes', 'Mexico', 'CB', 75, 25]
+    ],
+    'Monterrey': [
+      ['Sergio Ramos', 'Spain', 'CB', 80, 40], ['Óliver Torres', 'Spain', 'CM', 77, 31],
+      ['Germán Berterame', 'Argentina', 'ST', 77, 27], ['Esteban Andrada', 'Argentina', 'GK', 76, 35]
+    ],
+    'Tigres UANL': [
+      ['André-Pierre Gignac', 'France', 'ST', 78, 40], ['Nahuel Guzmán', 'Argentina', 'GK', 77, 40],
+      ['Juan Brunetta', 'Argentina', 'CAM', 77, 28]
+    ],
+    'Cruz Azul': [
+      ['Ignacio Rivero', 'Uruguay', 'CM', 75, 32], ['Kevin Mier', 'Colombia', 'GK', 75, 25],
+      ['Willer Ditta', 'Colombia', 'CB', 74, 28]
+    ],
+    'Guadalajara': [
+      ['Fernando Beltrán', 'Mexico', 'CM', 76, 27], ['Roberto Alvarado', 'Mexico', 'LW', 77, 27],
+      ['Raúl Rangel', 'Mexico', 'GK', 74, 26]
+    ],
+    'Toluca': [
+      ['Alexis Vega', 'Mexico', 'LW', 78, 28], ['Paulinho', 'Portugal', 'ST', 78, 33]
+    ],
+    'Pumas UNAM': [
+      ['Guillermo Martínez', 'Mexico', 'ST', 73, 30]
+    ],
+    'Pachuca': [
+      ['Salomón Rondón', 'Venezuela', 'ST', 76, 36], ['Elías Montiel', 'Mexico', 'CM', 73, 21]
+    ],
+    // Saudi Arabia
+    'Al Hilal': [
+      ['Aleksandar Mitrović', 'Serbia', 'ST', 86, 31], ['Rúben Neves', 'Portugal', 'CDM', 85, 29],
+      ['Kalidou Koulibaly', 'Senegal', 'CB', 83, 35], ['Sergej Milinković-Savić', 'Serbia', 'CM', 85, 31],
+      ['Yassine Bounou', 'Morocco', 'GK', 83, 35], ['Salem Al-Dawsari', 'Saudi Arabia', 'LW', 81, 34]
+    ],
+    'Al Nassr': [
+      ['Cristiano Ronaldo', 'Portugal', 'ST', 93, 41], ['Sadio Mané', 'Senegal', 'LW', 83, 34],
+      ['Marcelo Brozović', 'Croatia', 'CDM', 84, 33], ['Aymeric Laporte', 'Spain', 'CB', 83, 32],
+      ['Bento', 'Brazil', 'GK', 81, 27]
+    ],
+    'Al Ittihad': [
+      ['Karim Benzema', 'France', 'ST', 88, 38], ['N\u2019Golo Kanté', 'France', 'CDM', 84, 35],
+      ['Fabinho', 'Brazil', 'CDM', 81, 32], ['Moussa Diaby', 'France', 'RW', 83, 26],
+      ['Houssem Aouar', 'Algeria', 'CAM', 79, 27]
+    ],
+    'Al Ahli': [
+      ['Riyad Mahrez', 'Algeria', 'RW', 83, 35], ['Roberto Firmino', 'Brazil', 'ST', 81, 34],
+      ['Édouard Mendy', 'Senegal', 'GK', 82, 34], ['Ivan Toney', 'England', 'ST', 82, 30],
+      ['Franck Kessié', 'Ivory Coast', 'CM', 81, 29]
+    ],
+    'Al Shabab': [
+      ['Yannick Carrasco', 'Belgium', 'LW', 80, 32]
+    ],
+    'Al Ettifaq': [
+      ['Georginio Wijnaldum', 'Netherlands', 'CM', 78, 35], ['Moussa Dembélé', 'France', 'ST', 76, 30]
+    ],
+    'Al Qadsiah': [
+      ['Nacho Fernández', 'Spain', 'CB', 79, 36], ['Gaston Álvarez', 'Uruguay', 'CB', 75, 26]
+    ],
+    // Japan
+    'Kawasaki Frontale': [
+      ['Akihiro Ienaga', 'Japan', 'CAM', 74, 39], ['Yuto Ozeki', 'Japan', 'CM', 72, 23]
+    ],
+    'Vissel Kobe': [
+      ['Yuya Osako', 'Japan', 'ST', 77, 36], ['Daiju Sasaki', 'Japan', 'CM', 73, 31],
+      ['Hotaru Yamaguchi', 'Japan', 'CDM', 74, 35]
+    ],
+    'Urawa Reds': [
+      ['Shusaku Nishikawa', 'Japan', 'GK', 74, 39], ['Sho Sasaki', 'Japan', 'RB', 72, 36]
+    ],
+    'Yokohama F. Marinos': [
+      ['Kota Mizunuma', 'Japan', 'RW', 73, 36], ['Ryuta Koike', 'Japan', 'RB', 73, 30]
+    ],
+    'Kashima Antlers': [
+      ['Yuma Suzuki', 'Japan', 'ST', 75, 29], ['Koki Machida', 'Japan', 'CB', 74, 28]
+    ],
+    'Sanfrecce Hiroshima': [
+      ['Tsukasa Shiotani', 'Japan', 'CB', 73, 37], ['Makoto Mitsuta', 'Japan', 'CAM', 73, 25]
+    ],
+    'Gamba Osaka': [
+      ['Hiroki Fujiharu', 'Japan', 'LB', 71, 37], ['Shinya Nakano', 'Japan', 'CM', 72, 25]
+    ],
+    'FC Tokyo': [
+      ['Kuryu Matsuki', 'Japan', 'CM', 74, 23]
+    ],
+    'Cerezo Osaka': [
+      ['Hiroshi Kiyotake', 'Japan', 'CAM', 73, 36], ['Kim Jin-hyeon', 'South Korea', 'GK', 73, 38]
     ]
   };
 
@@ -1035,42 +1266,44 @@
                    last:  ['Ribeiro','Nascimento','Andrade','Cavalcanti','Bittencourt','Moraes','Siqueira','Vasconcelos','Guimarães','Teles','Correia','Aparecido','Rezende','Bastos','Furtado','Macedo','Prado','Barcellos','Amorim','Queiroz'] },
     USA:         { first: ['Tyler','Brandon','Christian','Weston','Gio','Cade','Jackson','Ethan','Cole','Owen','Malik','Diego','Ryan','Trevor','Kobe','Paxten','Auston','Bryce','Devin','Julian'],
                    last:  ['Hutchinson','Delgado','Whitaker','Sandoval','Bradley','Ferguson','Nakamura','Okonkwo','Vasquez','Sheffield','Aaronson','Reyna','Turner','Zimmerman','Musah','Cardoso','Wolff','Pomykal','Sargent','Ledezma'] },
-    Belgium:     { first: ['Arthur','Lois','Charles','Romeo','Senne','Maarten','Wout','Zeno','Amadou','Jérémy'],
-                   last:  ['Vermeulen','Dendoncker','Verstraete','Lukebakio','Openda','Bakayoko','De Ketelaere','Vranckx','Theate','Castagne'] },
-    Croatia:     { first: ['Luka','Marko','Ivan','Josip','Mateo','Ante','Duje','Petar','Nikola','Borna'],
-                   last:  ['Modrić','Kovačević','Perišić','Vlašić','Sučić','Baturina','Šutalo','Erlić','Juranović','Pašalić'] },
-    Serbia:      { first: ['Nikola','Dušan','Aleksa','Filip','Miloš','Strahinja','Lazar','Veljko','Uroš','Petar'],
-                   last:  ['Jovanović','Milinković','Pavlović','Kostić','Mitrović','Vlahović','Ilić','Gudelj','Stanković','Radonjić'] },
-    Poland:      { first: ['Jakub','Piotr','Kacper','Bartosz','Michał','Sebastian','Nicola','Damian','Krzysztof','Mateusz'],
-                   last:  ['Kowalczyk','Zieliński','Bednarek','Szymański','Frankowski','Kiwior','Zalewski','Cash','Skorupski','Buksa'] },
-    Turkey:      { first: ['Emre','Kerem','Arda','Yusuf','Mert','Baris','Kaan','Orkun','Ferdi','Cengiz'],
-                   last:  ['Yılmaz','Aktürkoğlu','Demiral','Kabak','Ayhan','Kökçü','Çalhanoğlu','Bardakçı','Müldür','Akgün'] },
-    Nigeria:     { first: ['Chidi','Emeka','Kelechi','Ademola','Samuel','Victor','Joe','Alex','Tunde','Ola'],
-                   last:  ['Okafor','Adeyemi','Balogun','Nwankwo','Chukwueze','Osimhen','Aribo','Ndidi','Iheanacho','Bassey'] },
-    Senegal:     { first: ['Ismaïla','Cheikh','Pape','Moussa','Idrissa','Nicolas','Abdou','Iliman','Boulaye','Habib'],
-                   last:  ['Diallo','Ndiaye','Sarr','Gueye','Mendy','Cissé','Diatta','Jakobs','Ciss','Faye'] },
-    Ghana:       { first: ['Kwame','Kofi','Mohammed','Jordan','Elisha','Fatawu','Ernest','Baba','Alidu','Osman'],
-                   last:  ['Mensah','Boateng','Owusu','Partey','Ayew','Kudus','Nuamah','Salisu','Bukari','Semenyo'] },
-    Morocco:     { first: ['Youssef','Achraf','Sofyan','Hakim','Bilal','Amine','Nayef','Azzedine','Ilias','Anass'],
-                   last:  ['El Amrani','Benhaddou','Ouahabi','Chibani','Mazraoui','Zaroury','Amrabat','Aguerd','Saïss','Boufal'] },
-    Japan:       { first: ['Kaoru','Takefusa','Daichi','Ritsu','Ao','Wataru','Hidemasa','Junya','Reo','Koki'],
-                   last:  ['Tanaka','Nakamura','Sugawara','Hashioka','Morita','Kubota','Ito','Endo','Kamada','Machida'] },
-    Norway:      { first: ['Erling','Martin','Sander','Kristian','Ola','Fredrik','Jens','Antonio','Morten','Oscar'],
-                   last:  ['Berge','Nordtveit','Solbakken','Hovland','Ryerson','Aursnes','Strand','Bobb','Thorsby','Sørloth'] },
-    Sweden:      { first: ['Alexander','Viktor','Emil','Dejan','Anthony','Gustav','Hugo','Jesper','Isaac','Linus'],
-                   last:  ['Lindqvist','Bergström','Forsberg','Kulusevski','Elanga','Svensson','Larsson','Karlström','Ekdal','Holm'] },
-    Uruguay:     { first: ['Federico','Manuel','Facundo','Darwin','Nicolás','Rodrigo','Maximiliano','Agustín','Brian','Sebastián'],
-                   last:  ['Valverde','Ugarte','Pellistri','Núñez','De la Cruz','Bentancur','Araújo','Cáceres','Rodríguez','Olivera'] },
-    Colombia:    { first: ['Luis','Jhon','Rafael','Yerry','Daniel','Jorge','Kevin','Johan','Richard','Nelson'],
-                   last:  ['Córdoba','Arias','Lerma','Sinisterra','Muñoz','Borré','Uribe','Mosquera','Ospina','Carrascal'] },
-    Mexico:      { first: ['Santiago','Hirving','Edson','César','Orbelín','Luis','Jorge','Israel','Roberto','Julián'],
-                   last:  ['Giménez','Álvarez','Montes','Sánchez','Pineda','Vásquez','Antuna','Reyes','Alvarado','Araujo'] },
-    Ireland:     { first: ['Evan','Josh','Nathan','Séamus','Finn','Adam','Chiedozie','Dara','Killian','Mikey'],
-                   last:  ["O'Brien","Ferguson","Collins","Doherty","Ogbene","Cullen","Molumby","Idah","Coleman","Egan"] },
-    Scotland:    { first: ['Callum','Scott','Kieran','Lewis','Ryan','Billy','Andy','Aaron','Grant','Ben'],
-                   last:  ['McTominay','Robertson','Gilmour','Ferguson','Christie','Armstrong','McGregor','Hickey','Hanley','Doig'] },
-    Denmark:     { first: ['Rasmus','Mikkel','Christian','Jonas','Andreas','Victor','Pierre','Joakim','Anders','Mads'],
-                   last:  ['Højlund','Damsgaard','Kristensen','Skov','Wind','Nelsson','Dolberg','Bruun','Vestergaard','Poulsen'] }
+    Belgium:     { first: ['Arthur','Lois','Charles','Romeo','Senne','Maarten','Wout','Zeno','Amadou','Jérémy','Thibaut','Youri','Leandro','Dodi','Koen','Aster','Mandela','Bryan','Timothy','Matte'],
+                   last:  ['Vermeulen','Dendoncker','Verstraete','Lukebakio','Openda','Bakayoko','De Ketelaere','Vranckx','Theate','Castagne','Meunier','Trossard','Faes','Debast','Onana','Praet','Doku','Carrasco','Batshuayi','Tielemans'] },
+    Croatia:     { first: ['Luka','Marko','Ivan','Josip','Mateo','Ante','Duje','Petar','Nikola','Borna','Domagoj','Roko','Lovro','Bruno','Toma','Filip','Karlo','Jakov','Fran','Dario'],
+                   last:  ['Modrić','Kovačević','Perišić','Vlašić','Sučić','Baturina','Šutalo','Erlić','Juranović','Pašalić','Gvardiol','Kramarić','Majer','Stanišić','Ivanušec','Moro','Vušković','Brekalo','Livaja','Barišić'] },
+    Serbia:      { first: ['Nikola','Dušan','Aleksa','Filip','Miloš','Strahinja','Lazar','Veljko','Uroš','Petar','Sasa','Bogdan','Andrija','Marko','Ivan','Vanja','Srdjan','Ognjen','Mihailo','Jovan'],
+                   last:  ['Jovanović','Milinković','Pavlović','Kostić','Mitrović','Vlahović','Ilić','Gudelj','Stanković','Radonjić','Tadić','Lukić','Živković','Maksimović','Babić','Samardžić','Terzić','Mladenović','Erakovic','Katai'] },
+    Poland:      { first: ['Jakub','Piotr','Kacper','Bartosz','Michał','Sebastian','Nicola','Damian','Krzysztof','Mateusz','Adam','Robert','Karol','Przemysław','Taras','Paweł','Tomasz','Jan','Dominik','Patryk'],
+                   last:  ['Kowalczyk','Zieliński','Bednarek','Szymański','Frankowski','Kiwior','Zalewski','Cash','Skorupski','Buksa','Lewandowski','Milik','Świderski','Bereszyński','Grosicki','Moder','Wójcik','Salamon','Marchwiński','Urbański'] },
+    Turkey:      { first: ['Emre','Kerem','Arda','Yusuf','Mert','Baris','Kaan','Orkun','Ferdi','Cengiz','Hakan','Zeki','Altay','Salih','Semih','Berat','İsmail','Ozan','Enes','Deniz'],
+                   last:  ['Yılmaz','Aktürkoğlu','Demiral','Kabak','Ayhan','Kökçü','Çalhanoğlu','Bardakçı','Müldür','Akgün','Söyüncü','Tufan','Ünder','Özcan','Kılıçsoy','Yüksek','Yazıcı','Kaplan','Ayaz','Türüç'] },
+    Nigeria:     { first: ['Chidi','Emeka','Kelechi','Ademola','Samuel','Victor','Joe','Alex','Tunde','Ola','Wilfred','Frank','Bright','Terem','Calvin','Sadiq','Umar','Moses','Semi','Raphael'],
+                   last:  ['Okafor','Adeyemi','Balogun','Nwankwo','Chukwueze','Osimhen','Aribo','Ndidi','Iheanacho','Bassey','Awoniyi','Onyeka','Aina','Simon','Ekong','Dessers','Musa','Etebo','Ajayi','Lookman'] },
+    Senegal:     { first: ['Ismaïla','Cheikh','Pape','Moussa','Idrissa','Nicolas','Abdou','Iliman','Boulaye','Habib','Krépin','Formose','Lamine','Seny','Mamadou','Youssouf','Assane','Ibrahima','Alfred','Pathé'],
+                   last:  ['Diallo','Ndiaye','Sarr','Gueye','Mendy','Cissé','Diatta','Jakobs','Ciss','Faye','Koulibaly','Camara','Diédhiou','Baldé','Seck','Niakhaté','Traoré','Jackson','Sabaly','Dieng'] },
+    Ghana:       { first: ['Kwame','Kofi','Mohammed','Jordan','Elisha','Fatawu','Ernest','Baba','Alidu','Osman','Antoine','Daniel','Gideon','Abdul','Joseph','Emmanuel','Isaac','Kamaldeen','Braydon','Forson'],
+                   last:  ['Mensah','Boateng','Owusu','Partey','Ayew','Kudus','Nuamah','Salisu','Bukari','Semenyo','Aidoo','Amartey','Lamptey','Sulemana','Opoku','Djiku','Yeboah','Odoi','Baidoo','Asamoah'] },
+    Morocco:     { first: ['Youssef','Achraf','Sofyan','Hakim','Bilal','Amine','Nayef','Azzedine','Ilias','Anass','Yassine','Romain','Selim','Abde','Zakaria','Walid','Adam','Oussama','Reda','Chadi'],
+                   last:  ['El Amrani','Benhaddou','Ouahabi','Chibani','Mazraoui','Zaroury','Amrabat','Aguerd','Saïss','Boufal','Bounou','Hakimi','Amallah','Ounahi','Ziyech','Cheddira','Masina','Attiat','Regragui','Belhanda'] },
+    Japan:       { first: ['Kaoru','Takefusa','Daichi','Ritsu','Ao','Wataru','Hidemasa','Junya','Reo','Koki','Takumi','Hiroki','Yukinari','Ayase','Shuto','Kyogo','Daizen','Takehiro','Genki','Yuki'],
+                   last:  ['Tanaka','Nakamura','Sugawara','Hashioka','Morita','Kubota','Ito','Endo','Kamada','Machida','Minamino','Sakai','Doan','Furuhashi','Maeda','Tomiyasu','Haraguchi','Suzuki','Asano','Yamane'] },
+    Norway:      { first: ['Erling','Martin','Sander','Kristian','Ola','Fredrik','Jens','Antonio','Morten','Oscar','Julian','Leo','Andreas','Patrick','Marcus','Emil','Håkon','Even','Bård','Sivert'],
+                   last:  ['Berge','Nordtveit','Solbakken','Hovland','Ryerson','Aursnes','Strand','Bobb','Thorsby','Sørloth','Ødegaard','Skjelbred','Ellingsen','Berg','Hauge','Larsen','Evjen','Haaland','Ostigard','Pedersen'] },
+    Sweden:      { first: ['Alexander','Viktor','Emil','Dejan','Anthony','Gustav','Hugo','Jesper','Isaac','Linus','Robin','Filip','Ken','Mattias','Daniel','Yasin','Roony','Jens','Amin','Elias'],
+                   last:  ['Lindqvist','Bergström','Forsberg','Kulusevski','Elanga','Svensson','Larsson','Karlström','Ekdal','Holm','Olsen','Helander','Sema','Bergvall','Gyokeres','Nilsson','Ayari','Cajuste','Danielson','Andersson'] },
+    Uruguay:     { first: ['Federico','Manuel','Facundo','Darwin','Nicolás','Rodrigo','Maximiliano','Agustín','Brian','Sebastián','Ronald','Giorgian','Mathías','Matías','José','Luis','Emiliano','Santiago','Cristian','Diego'],
+                   last:  ['Valverde','Ugarte','Pellistri','Núñez','De la Cruz','Bentancur','Araújo','Cáceres','Rodríguez','Olivera','Cavani','Vecino','Torreira','Viña','Coates','Nández','Bueno','Piquerez','Rossi','Suárez'] },
+    Colombia:    { first: ['Luis','Jhon','Rafael','Yerry','Daniel','Jorge','Kevin','Johan','Richard','Nelson','James','Juan','Santiago','Wilmar','Andrés','Miguel','Cristian','Deiver','Gustavo','Sebastián'],
+                   last:  ['Córdoba','Arias','Lerma','Sinisterra','Muñoz','Borré','Uribe','Mosquera','Ospina','Carrascal','Rodríguez','Cuadrado','Quintero','Machado','Barrios','Ángulo','Zapata','Villa','Ríos','Cassierra'] },
+    Mexico:      { first: ['Santiago','Hirving','Edson','César','Orbelín','Luis','Jorge','Israel','Roberto','Julián','Guillermo','Diego','Erick','Uriel','Carlos','Raúl','Gerardo','Johan','Marcelo','Alexis'],
+                   last:  ['Giménez','Álvarez','Montes','Sánchez','Pineda','Vásquez','Antuna','Reyes','Alvarado','Araujo','Ochoa','Lainez','Gutiérrez','Rodríguez','Jiménez','Beltrán','Arteaga','Malagón','Flores','Chávez'] },
+    Ireland:     { first: ['Evan','Josh','Nathan','Séamus','Finn','Adam','Chiedozie','Dara','Killian','Mikey','Matt','Jason','Shane','Andrew','Will','Jake','Robbie','Callum','Ryan','Troy'],
+                   last:  ["O'Brien","Ferguson","Collins",'Coleman',"Ogbene","Cullen","Molumby","Idah",'Scales',"Egan",'Doherty','Knight','Duffy','Omobamidele','Smallbone','Brady','Kelleher','Bazunu','Manning','Parrott'] },
+    Scotland:    { first: ['Callum','Scott','Kieran','Lewis','Ryan','Billy','Andy','Aaron','Grant','Ben','Che','John','Stuart','Anthony','Greg','Liam','Jack','Nathan','Connor','Tommy'],
+                   last:  ['McTominay','Robertson','Gilmour','Ferguson','Christie','Armstrong','McGregor','Hickey','Hanley','Doig','Adams','Souttar','Findlay','Ralston','McKenna','Cooper','Gordon','Shankland','Barron','Conway'] },
+    'Saudi Arabia': { first: ['Salem','Firas','Abdullah','Saleh','Nasser','Yasser','Mohammed','Hattan','Ali','Turki','Faisal','Sultan','Ziyad','Khalid','Ayman','Marwan','Riyadh','Saud','Anas','Majed'],
+                      last:  ['Al-Dawsari','Al-Shehri','Al-Buraikan','Al-Owais','Al-Ghannam','Al-Malki','Al-Najei','Al-Hassan','Al-Amri','Al-Faraj','Al-Bulaihi','Al-Yami','Al-Khaibari','Al-Juwayr','Al-Tambakti','Al-Sulaiheem','Al-Muwallad','Al-Ghamdi','Al-Otaibi','Al-Harbi'] },
+    Denmark:     { first: ['Rasmus','Mikkel','Christian','Jonas','Andreas','Victor','Pierre','Joakim','Anders','Mads','Simon','Yussuf','Jesper','Thomas','Alexander','Morten','Nicolai','Oliver','Gustav','Emil'],
+                   last:  ['Højlund','Damsgaard','Kristensen','Skov','Wind','Nelsson','Dolberg','Bruun','Vestergaard','Poulsen','Kjaer','Schmeichel','Bah','Jensen','Kristiansen','Andersen','Hjulmand','Maehle','Olsen','Frederiksen'] }
   };
 
   // where a club's players tend to come from: mostly local, some imports
@@ -1084,7 +1317,13 @@
     Portugal: ['Brazil','Spain','Ghana','Senegal','Uruguay','Nigeria'],
     Argentina: ['Uruguay','Colombia','Brazil','Mexico'],
     Brazil:  ['Argentina','Uruguay','Colombia','Portugal'],
-    USA:     ['Mexico','Colombia','England','Japan','Ghana','Brazil']
+    USA:     ['Mexico','Colombia','England','Japan','Ghana','Brazil'],
+    Turkey:  ['Brazil','Nigeria','Senegal','Germany','Morocco','Serbia','Ghana'],
+    Scotland: ['England','Ireland','Japan','Nigeria','Denmark','Australia'],
+    Belgium: ['Netherlands','France','Morocco','Nigeria','Denmark','Japan','Ghana'],
+    Mexico:  ['Argentina','Colombia','Uruguay','Brazil','USA','Spain'],
+    'Saudi Arabia': ['Brazil','Portugal','Senegal','Morocco','Serbia','Croatia','France','Nigeria'],
+    Japan:   ['Brazil','South Korea','Australia','Nigeria','Spain','Denmark']
   };
 
   // fallback pools used when nothing else applies
@@ -1212,9 +1451,215 @@
 
   /* Bump VERSION and add a CHANGELOG entry with every release — the start
      screen shows it, so you can always tell which build you are looking at. */
-  const VERSION = '1.5';
-  const BUILD = '23 August 2026';
+  const VERSION = '3.12';
+  const BUILD = '9 September 2026';
   const CHANGELOG = [
+    { v: '3.12', when: '9 Sep', items: [
+      'Winning the league is an event now. The game works out the afternoon it becomes mathematically yours and tells you there and then \u2014 you read the result first, the way you would, and then it lands on you',
+      'A championship screen of its own, in your club\u2019s colours, with the crest, the confetti and the word in letters you can see from across the room',
+      'And it says what kind of title it was, rather than just \u201c1st\u201d. Unbeaten. Won with six to play. Eighteen points clear. By a single point on the final day. Your first. Your fifth. The league and the cup',
+      'Then the numbers that made it: points, record, goal difference, the margin, your longest unbeaten run, your top scorer, and an INVINCIBLE stamp if you went the whole way without losing',
+      'It leads the end-of-season review instead of queueing behind an award, and the board meeting is a board meeting again',
+      'Forty-six new things the timeline says about a title \u2014 the reaction, the unbeaten season, the parade',
+      'And it is kept. Every championship you have ever won is on the office wall with the season it took, for as long as your career lasts'
+    ] },
+    { v: '3.11', when: '8 Sep', items: [
+      'More in Boss Mode. Standing orders that stay on until you turn them off: always win, always draw or always lose, and nobody on the pitch ever getting injured or booked. They work inside the match, so the table, the board and the scorers all follow honestly from a dishonest result',
+      'Sign anyone alive. Pick any club in any division and take whoever you like out of their squad for nothing — or take the best player in the world in one tap',
+      'Or invent a footballer who never existed: choose the position, the overall and the age, and he walks in',
+      'Your name: make yourself a legend, wipe every sacking off the record, fill the trophy cabinet, or hand somebody a goal of the century',
+      'The rest of the division: ruin every rival, arm every rival, or do the same to every club on earth',
+      'Time: simulate a whole season or five of them, board meetings and summers included. It stops early if they sack you',
+      'A hundred and thirteen levers on the screen now, up from eighty-one'
+    ] },
+    { v: '3.10', when: '8 Sep', items: [
+      'Boss Mode in the dugout. The career game has always hidden one behind five taps on the overall badge — Manager Mode now has its own behind five taps on the team rating, same code, same save',
+      'What it opens: the transfer budget and the wage ceiling, board confidence, your club\u2019s rating for good, and the board target',
+      'The squad, one dial at a time or all at once — set anybody\u2019s overall, empty the treatment room, full fitness and form, five years on every contract, nobody agitating for a move, or make the whole lot twenty-three',
+      'The best backroom staff in the world in every job, on nothing a week',
+      'The season itself: go top of the table or bottom of it, win every cup you are still in, or end the season on the spot',
+      'The market: make everybody free, make somebody bid for one of yours, or make the five biggest clubs in the world want you as their manager',
+      'And walk into any job in any division, which goes into your record as a job you left',
+      'It locks again from the same screen, and the career game\u2019s version is untouched'
+    ] },
+    { v: '3.9', when: '7 Sep', items: [
+      'Every player is on a contract now, with a number of years left on it that you can see. A man in his final year is worth less to anybody buying him, easier to unsettle, and gets phone calls — and if you let the year run out he leaves in the summer for nothing at all',
+      'So you negotiate. Set the money and the length and put it to him: the wage is most of it, but a player better than the club he is at wants a very good reason to stay, an older one has fewer places to go than he thinks, and a long deal suits the young and frightens the old. Say no to his number and his people come back with a bigger one',
+      'Squad players mostly re-sign on their own — you only really lose the men another club has a use for. Let one of those go and the board find a replacement themselves, usually a little worse and never the one you would have picked',
+      'A backroom staff of six, hired out of the same wage bill as the players: an assistant who can talk to a dressing room and a boardroom, a fitness coach, a physio, a chief scout, an academy coach and a set-piece coach',
+      'They do measurable things. A full backroom cuts injuries by about a quarter and lay-offs by a fifth, finds more names on the market every week, brings better players up from the youth team, and puts a few more goals on the board from set pieces. Good ones get poached by bigger clubs, and your assistant follows you when you move',
+      'Derbies. Thirty-five real ones — the two Manchesters, Arsenal and Tottenham, Madrid, Milan, the Old Firm, the Superclásico — and where there is no famous one, the nearest club of your own size becomes it. A derby swings the board twice as hard as any other result, moves the whole squad’s form, and goes on the office wall for as long as you are there',
+      'Awards. Manager of the Month for a good run of five, and in May a Player of the Season, a Young Player, a Golden Boot if your striker beat the division, and Manager of the Season for winning it or finishing well above what was asked',
+      'Eighty-eight more things the timeline can say about all of it. Buzz now holds 2,734 different messages',
+      'Old saves still open: anything this version added is filled in on the way through'
+    ] },
+    { v: '3.8', when: '7 Sep', items: [
+      'You are not the only manager with a shortlist. Other clubs now come in for your players — a couple of offers over the summer, and the odd one mid-season after somebody of yours has scored a hat-trick or a goal people are still talking about',
+      'Every bid is a negotiation you can win. Take the money, or tell them what he is actually worth. Ask inside what they were willing to go to and they pay it; ask past it and they improve their offer instead; push a third time and they walk away and the deal is gone',
+      'Who comes for him depends on who he is. Clubs above you, clubs his level, young players and players in form draw the most interest, and the offers themselves open somewhere between two thirds and nine tenths of what he is worth',
+      'Saying no is not free. Turn down a club well above your own and he may not take it well — he loses form, his agent keeps the phone ringing, and the squad list says plainly that he wants to leave',
+      'The offers arrive as part of the close season, straight after the board meeting and your own job offers, and sit on the Market tab until you answer them',
+      'You still cannot go below fourteen players, however good the money looks'
+    ] },
+    { v: '3.7', when: '7 Sep', items: [
+      'Transfers are a negotiation now. You name the fee and you name the wage, and the selling club answers. Meet their asking price and they will almost always sell; go under and they come back with a number of their own rather than a flat no',
+      'The player has his own opinion. Offer him a pay cut and he will not come whatever you pay his club, and for the very best players it is the size of your badge as much as the size of the wage',
+      'You do not walk into a job any more. Manager positions come open when they come open, and an unknown name is only offered the smaller ones \u2014 clubs rated up to 63 on day one, rising as you wait, and never the giants',
+      'Wait a week or a month at a time. Better jobs appear, but the ones you sit on get taken by somebody else \u2014 fifty-odd of them go in half a year',
+      'Or start a club of your own. Name it, pick a division, take the place of the smallest club in it, and build from a squad rated 58 with two million in the bank. Nobody sacks the founder, and a club that keeps finishing above its size genuinely becomes a bigger one',
+      'A club you invent gets a drawn shield in its own colours, since there is no real badge for it'
+    ] },
+    { v: '3.6', when: '2 Sep', items: [
+      'Another thousand and eight. Buzz now holds 2,646 different messages \u2014 2,308 posts across 92 situations, 238 replies and 100 things you can say yourself',
+      'Twenty-five new situations, and most of them are about people rather than results: the captain, the veteran nobody wanted to keep, the lad who never gets on, the crowd favourite, the player coming back from a long injury, the one who wants to leave, the ones out on loan, and the ex-pros with opinions',
+      'And the club as an institution \u2014 owners and takeover talk, the stadium, sponsors and kits, the coaching staff, the academy, pre-season, the trophy parade, and the managerial merry-go-round at everybody else\u2019s club',
+      'Plus the things supporters actually talk about: the weather, the cost of following a team, fantasy leagues, betting odds, what the television schedulers have done to your Saturday, the tunnel at half time, and the app itself',
+      'Still nothing invented. 8,888 posts across 41 seasons with no line describing something that had not happened'
+    ] },
+    { v: '3.5', when: '2 Sep', items: [
+      'A thousand and seven more things the timeline can say. Buzz now holds 1,638 different messages \u2014 1,395 posts across 67 situations, 168 replies and 75 things you can say yourself',
+      'Twenty-eight new situations: comebacks, debuts, retirements, contract talks, the night before a game, the international break, a cold Tuesday in December, fixture pile-ups, and the referee',
+      'Whole new corners of the timeline: tactics threads with actual arrows, the local media, club history and anniversaries, away days and service stations, fan culture and new songs, and the contrarian who thinks everyone is getting carried away',
+      'The goalkeeper, the back four and the striker now get their own conversations after the games that earn them',
+      'Still nothing invented. Across 43 seasons and 7,485 posts the checker found no line describing something that had not happened \u2014 including a comeback post that had to be reworded because it read too much like a narrow-win one',
+      'Nine hundred posts that never look at the match are stored as plain text rather than as functions, which is nine hundred fewer things for the browser to compile before you can play'
+    ] },
+    { v: '3.4', when: '1 Sep', items: [
+      'Buzz: a social feed for Manager Mode. Six hundred and thirty-one different things the timeline can say, and every one of them tied to something that actually happened in your season',
+      'Five hundred and thirteen posts across thirty-nine situations \u2014 a thrashing, a one-goal grind, a cup exit, a wonder goal, a signing, an injury, a sack watch, a title race \u2014 plus eighty replies underneath and thirty-eight things you can say yourself',
+      'The cast is the same one that follows a player: the club account, the fan channel, the local reporter, the tactics pundit, the stats account, your own supporters and the rival ones. They remember you, and they follow you when you change clubs',
+      'You get one post between games. Fire them up, take it on the chin, praise a player, stand your ground \u2014 and the dressing room hears it too',
+      'Nothing in the feed is invented. A post about a clean sheet cannot appear in a game you conceded in, and a stats account will not claim you are in the bottom half while you are top of the table',
+      'The transfer log is capped now \u2014 it had quietly grown past two hundred rows in a save nobody could see'
+    ] },
+    { v: '3.3', when: '1 Sep', items: [
+      'Goals worth remembering. Most goals are goals; a few are not. Three tiers above the ordinary \u2014 a Worldie every few weeks, a Wonder Goal most seasons, and a Goal of the Century about once a decade, if you have somebody capable of it',
+      'Sixty different ways of scoring one, and quality decides how often: a ninety-nine produces these, an eighty-two mostly does not. Buying the great players finally buys you the moments as well as the goals',
+      'Goal of the Season: the best one you scored all year, given the whole screen before the board get their turn',
+      'Every one of them is kept \u2014 who, against whom, in what competition, in what year \u2014 on a board in your office, for the rest of your career',
+      'You can manage other clubs now. Do well and clubs ring you in the summer: who they are, what they will spend, and why they want you. Nobody makes you go',
+      'Or resign whenever you like and go looking. Your squad and your budget stay behind; your trophies, your goals and your CV come with you',
+      'Reputation is a real number on a real screen: what you have won, where you have finished, and exactly how many clubs in the world would take your call today',
+      'The cabinet is now a career cabinet. Win the league at Newcastle, take the Real Madrid job, and both are still yours'
+    ] },
+    { v: '3.2', when: '31 Aug', items: [
+      'Injuries and suspensions are real. The Talk has always told you a man went off holding his hamstring and he has always played the following week \u2014 that was the one thing in here that was never true. Now he misses games',
+      'Most of it is nothing: a dead leg, a tight calf, back for the weekend. But a torn hamstring is a month, ankle ligaments are a winter, and a cruciate is his season',
+      'A fourth booking bans him for one. A red card costs you two or three. Both are announced, both are served, and neither can be picked around',
+      'Fitness settles instead of draining away: play a man every week and he lives around seventy, rest him and he is fresh again. Tired legs get injured, and \u201cPick the best eleven\u201d now means the best eleven available today, so it rotates for you',
+      'A team news board on matchday and in the squad: who is out, what with, and how many games are left of it',
+      'If the treatment room takes your squad apart, the youth team comes up rather than the game leaving you with nine men',
+      'Nothing The Talk says about a card or an injury is invented any more \u2014 those lines are only ever said about the man it actually happened to'
+    ] },
+    { v: '3.1', when: '31 Aug', items: [
+      'Every club in the game now has its real badge \u2014 all 194 of them. Turkey, Scotland, Belgium, Mexico, Saudi Arabia and Japan had none at all and were showing a drawn shield with two letters on it; they have proper crests now',
+      'The old badges are gone completely: no drawn shield underneath, no hot-linked images that could arrive late or not at all. The badge is the crest, and it is built into the game',
+      'Every badge was rebuilt to one format \u2014 trimmed, centred, sized alike \u2014 so a Japanese crest sits next to an English one without looking like it came from somewhere else',
+      'The game is 1.9MB smaller and loads noticeably faster despite carrying 74 more badges',
+      'The build now refuses to ship a club without a badge, so a new league can never quietly leave holes in the table'
+    ] },
+    { v: '3.0', when: '31 Aug', items: [
+      'The cups. A season is not just a league any more \u2014 there is a domestic cup every year, a continental one you have to qualify for, the Club World Cup, and a Super Cup to open the season',
+      'Every tie is one match. Level after ninety and you play the extra half hour; level after that and it is penalties. Win and you are through, lose and it is over for the year',
+      'Qualifying is earned: finish in the top four or win a cup and you are in Europe. Win Europe and the Club World Cup follows. Win the league or a cup and you open the next season with the Super Cup',
+      'The draw firms up as the rounds go on \u2014 an early round can be anybody, a final rarely is \u2014 and a side you have already knocked out is not in the hat again',
+      'Cup ties are dropped in between league rounds and do not touch the table. The matchday card, the recent results and The Talk all know which competition you are in',
+      'The board notice. A cup in the cabinet lifts their confidence, and two of them count toward the money they will back you with',
+      'You lift a cup rather than read about it \u2014 winning a final opens the trophy the same way winning the league does',
+      'The Talk knows which night it is: nine new lines for a cup tie, extra time and penalties among them, and not a word about three points on one'
+    ] },
+    { v: '2.9', when: '30 Aug', items: [
+      'The Talk now has 224 different things to say — 71 ways of scoring a goal, 123 things that happened around it, and 30 lines about the shape of the match itself',
+      'Seventy-one goals: knuckleballs, rabonas, backheels, headers at the back post, sixty-yard carries, toe-pokes, one off the shin he will take, and one that went in off the crossbar and was eventually given',
+      'And everything else: penalties over the bar, boots lost in tackles, arguments with the referee the crowd sang about, six stitches and wanting to come back on, a keeper going up for a corner at the end',
+      'About one match in seven still says nothing at all'
+    ] },
+    { v: '2.8', when: '30 Aug', items: [
+      'Both Ronaldo peak cards are 99 now — 2008 at United and 2014 at Madrid — and Messi\u2019s 2012 is a 99 as well',
+      'The Talk: a news feed of what actually happened out there. Hat-tricks, one from thirty yards, a header at the back post, a free kick over the wall, a penalty put over the bar, a keeper who kept them out on his own, a red card, a hamstring. Seventy-odd different things and rising',
+      'It is drawn from the real match — who scored, how many, whether you kept a clean sheet — and coloured by the trait the man carries, so a Power Shot signing really does hit them from distance',
+      'Sometimes nothing happens at all, because that is football too. About one match in seven',
+      'The talking points also appear on the result screen straight after the final whistle'
+    ] },
+    { v: '2.7', when: '30 Aug', items: [
+      'Fixed: sign every superstar and wait long enough and the Top Players board used to empty out completely — the whole card just disappeared with no explanation. Eleven seasons was enough to do it',
+      'Football does not run out of great players. When the board thins, the next generation comes through: eighteen to twenty-three year olds who have become the best in the world, at real clubs, with their own trait and their own card, announced when they arrive',
+      'They age, decline and retire in their turn, so the board keeps turning over for as long as you keep managing. Thirty seasons and sixty retirements later it is still fourteen names deep, and the best player alive is somebody who did not exist when you started'
+    ] },
+    { v: '2.6', when: '30 Aug', items: [
+      'Win the league twice and the board back you properly: a transfer budget of at least $450M, whoever you are managing, and $75M more for every title after that',
+      'One title already opens the safe at $200M',
+      'The wage ceiling moves with it, so the money is money you can actually spend — two titles at any club and the whole top-players board comes within reach',
+      'And it sticks: finish seventh the next year and the budget is still there. What you have won does not stop counting'
+    ] },
+    { v: '2.5', when: '30 Aug', items: [
+      'Manager Mode asks which era first: Modern, Classic 2005 or the Golden Era. It decides every squad in the world — take Chelsea in 2005 with \u010cech and Terry, or Inter in the Golden Era with R9 up front',
+      'Ronaldo\u2019s 2008 at United is a 98 as well, so he has two peak cards — both animated, and both worth different money',
+      'Every era carries the trait that version was known for. The 2014 Madrid card is a Knuckleball Power Shot; the 2008 United one is a Dribbler Expert',
+      'Traits are not decoration: the shooting ones put him in front of goal more often, the creative ones lift the whole attack, and the defensive ones tighten the side. Measured over forty seasons, the Madrid Ronaldo scores about a goal a season more than the United one, while the United one is worth slightly more league points'
+    ] },
+    { v: '2.4', when: '30 Aug', items: [
+      'The peak card moves like a real game card now: it floats on a slow 3D tilt, a gold-into-violet border runs around the frame, light rays turn behind him, embers drift up off the bottom edge, glints pop on the frame, and the name and rating shimmer',
+      'Also restored the twinkling stars, which had silently lost their styling in the 2.2 rework — twelve of them, back on their own clocks',
+      'Every bit of it switches off under reduced motion and the card stays marked in gold'
+    ] },
+    { v: '2.3', when: '30 Aug', items: [
+      'Fixed the vanishing superstar properly: a forty-one-year-old Ronaldo had a 41% chance of retiring the very first season after you signed him, and Benzema 56%. Nobody you have just signed retires before he has played a season for you',
+      'Veterans last the way their quality says they should — a ninety-rated forty-two-year-old gives you years, an ordinary thirty-six-year-old still goes',
+      'And when somebody does retire you are told to your face at the season turn, by name, instead of finding out later by counting the bench'
+    ] },
+    { v: '2.2', when: '30 Aug', items: [
+      'The timeline is a shelf of collectible cards now — portrait, gold-framed, one per era, swiping sideways. Rating and position shouting from the top corner, the man drawn in that club\u2019s kit, his name across the bottom and his country and club under that',
+      'The peak card is the one in gold and violet, with the sparkles and the light sweeping across it',
+      'Fixed: a player who retired came back onto the transfer market the following summer as if nothing had happened'
+    ] },
+    { v: '2.1', when: '30 Aug', items: [
+      'Fixed: the superstars you signed were gone again every new season. Anyone over 37 was silently deleted at the rollover — so the forty-one-year-old Ronaldo you paid nine figures for vanished — and the top-players board, which is rebuilt every summer, had no memory of who you already owned and put him straight back up for sale',
+      'Retirement is now about whether he is still any good, not just his birthday, and it is announced when it happens. A world-class veteran plays on for years; an ordinary thirty-six-year-old goes',
+      'Your squad no longer shrinks a man a year with nothing replacing them — the academy promotes youngsters each summer to keep you at twenty',
+      'Era cards are now buyable. Tap one on a player\u2019s timeline and pay from the transfer budget to bring that version of him back: the 2014 Ronaldo really does arrive as a 98-rated twenty-nine-year-old, on the wages that version would want',
+      'Once you have paid for a version you can switch to it for nothing — but only the rating comes back, not the years, so you cannot flip between two eras forever and stay young'
+    ] },
+    { v: '2.0', when: '30 Aug', items: [
+      'Players have a card of their own now — tap any name in your squad, or anyone on the top-players board, and you get his page',
+      'And on it, a Timeline: every era of him there has ever been. Ronaldo from the kid at Sporting to the D\u00e9cima to forty-one at Al Nassr; Messi from seventeen to ninety-one goals in a calendar year. Club, year, age and rating for each one',
+      'The best version of him — Ronaldo\u2019s 98 at Madrid, Messi\u2019s 98 at Barcelona — gets a card that actually moves: gold into purple, a prism turning behind it, sparkles on their own clocks and a hard bar of light crossing the whole thing',
+      'The timeline is locked until he is yours. Sign him and it opens',
+      'Sixteen of the greats have a written history; everybody else gets an arc built from his age and what he is now, and no invented clubs'
+    ] },
+    { v: '1.9', when: '28 Aug', items: [
+      'Top players: a board of its own at the top of the transfer market, with the best footballers alive on it — Messi, Mbapp\u00e9, Haaland, Yamal, Ronaldo, Bellingham, Vin\u00edcius and the rest, with what each of them would actually cost',
+      'The elite are rated like the elite now, into the nineties, so a 95 stands apart from a very good 87 the way he should',
+      'None of them are for sale, and the prices say so: hundreds of millions, wages that swallow your budget, and a club that mostly says no. The bigger you are and the more you have won, the likelier the answer changes',
+      'They are meant to be what you build towards — a title-winning side gets there in a few seasons, and selling to clear the wage bill is how you fit one in',
+      'The bid screen now greys out any fee you cannot afford and warns you up front when the wages will not fit, instead of letting you offer and then telling you no'
+    ] },
+    { v: '1.8', when: '28 Aug', items: [
+      'Six new leagues: the S\u00fcper Lig, the Scottish Premiership, the Belgian Pro League, Liga MX, the Saudi Pro League and the J1 League — 192 clubs across sixteen divisions, all of them manageable',
+      'Asia gets its own continental cup, so Saudi and Japanese clubs have something to play for beyond the league',
+      'Three new ways to start a career: Scotland, Belgium and Japan, on top of the four that were there',
+      'Over a hundred more real players, in the new leagues and the old ones — 432 of them now, every one with the right flag',
+      'Every squad in the game has more names to draw on: eighteen countries had only ten surnames each, which is fewer than a squad needs, so two team-mates called Ferguson turned up more often than they should have. All the pools are twice the size, and the generator now guarantees no two team-mates share a name',
+      'Fixed: winning the league as a manager crashed the game instead of showing you the trophy. Now you lift it, then you go and see the board'
+    ] },
+    { v: '1.7', when: '28 Aug', items: [
+      'The squad is a line-up now, not a list: your eleven drawn on the grass in the club\u2019s colours, shirt numbers on their backs, names and ratings under their feet. Tap a shirt and tap another to swap them — bench or starter, either way',
+      'Anyone out of position wears a red mark, and the shape tells you the rest: no left winger, two number tens, five at the back and nobody in front of them',
+      'The transfer market moves every week now. Rivals sign the men you were thinking about, new names come available, and the asking prices drift — so a market card shows what has moved since last week. Dither on someone and you lose him'
+    ] },
+    { v: '1.6.2', when: '28 Aug', items: [
+      'Fixed the real Manager Mode bug: the two manager files were never added to the page the website is built from, so on the live site picking a club did nothing at all. The single-file build had them, which is why it worked everywhere except where it mattered. The build now refuses to finish if the two lists of scripts ever disagree again'
+    ] },
+    { v: '1.6.1', when: '28 Aug', items: [
+      'Fixed: the bottom of any long list in a pop-up could not be tapped — the button row floated over it, so the last three clubs in every division were unreachable and a tap near them hit Back instead. Pop-ups now scroll properly, with the buttons in a footer underneath and a fade when there is more list below'
+    ] },
+    { v: '1.6', when: '28 Aug', items: [
+      'Manager Mode: take a club in any of ten divisions, pick the shape, pick the eleven, and answer to a board that has never kicked a ball',
+      'A real transfer market — bid low and get laughed at, meet the asking price, or go over the odds. Sell your own to fund it, and watch the wage ceiling',
+      'Team talks before kick-off: keep it calm, light a fire, talk them through it, or say nothing at all',
+      'The board judge you on the table, not the last kick. Miss the target badly enough and you are gone — but you keep the world, and somebody smaller will always take your call',
+      'Overachieve and it costs you: the board raise the target to whatever you just managed'
+    ] },
     { v: '1.5', when: '23 Aug', items: [
       'Heart of the team: play every week, rate well and decide games and the side starts leaning on you — then the weeks you are missing actually cost them, and sometimes they run themselves into the ground for you instead',
       'Titles: twenty-two nicknames the timeline gives you off what you have actually done, from The Iceman to Cheat Code to Cult Hero. Wear whichever one you like under your name'

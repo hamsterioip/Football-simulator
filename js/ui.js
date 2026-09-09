@@ -34,17 +34,23 @@
       setTimeout(() => el.remove(), 2900);
     },
 
+    /* The content scrolls in its own pane and the buttons sit under it in a
+       real footer. They used to be sticky and float over the content, which
+       meant the bottom of any long list — the last three clubs in a division,
+       say — sat underneath a solid Back button and could not be tapped. */
     modal(opts) {
       const m = $('modal');
-      let html = '';
-      if (opts.title) html += `<h2>${opts.title}</h2>`;
-      if (opts.text) html += `<p>${esc(opts.text)}</p>`;
-      if (opts.html) html += opts.html;
-      html += '<div class="modal-actions">';
+      let body = '';
+      if (opts.title) body += `<h2>${opts.title}</h2>`;
+      if (opts.text) body += `<p>${esc(opts.text)}</p>`;
+      if (opts.html) body += opts.html;
+      let html = `<div class="modal-body">${body}</div><div class="modal-actions">`;
       (opts.actions || [{ label: 'Continue' }]).forEach((a, i) => {
         html += `<button class="btn ${a.cls || 'btn-primary'}" data-mi="${i}">${a.label}</button>`;
       });
       html += '</div>';
+      // a modal that dressed itself up last time must not still be wearing it
+      m.className = 'modal';
       m.innerHTML = html;
       m.querySelectorAll('[data-mi]').forEach(btn => {
         btn.onclick = () => {
@@ -55,6 +61,26 @@
       });
       if (opts.onRender) opts.onRender(m);
       $('modal-back').classList.add('on');
+      UI.modalScrollHint();
+    },
+
+    /* A list that runs past the fold gets a fade at the bottom, so it is
+       obvious there is more of it than the screen is showing. */
+    modalScrollHint() {
+      const m = $('modal'), body = m.querySelector('.modal-body');
+      if (!body) return;
+      const acts = m.querySelector('.modal-actions');
+      const mark = () => {
+        // the fade sits directly on top of the button row, whatever height it is
+        if (acts) m.style.setProperty('--fade-b', acts.offsetHeight + 'px');
+        const more = body.scrollHeight - body.clientHeight - body.scrollTop > 8;
+        m.classList.toggle('has-more', more);
+      };
+      body.onscroll = mark;
+      mark();
+      // crests and badges load after the first paint and change the height
+      requestAnimationFrame(mark);
+      setTimeout(mark, 120);
     },
     closeModal() { $('modal-back').classList.remove('on'); },
 
@@ -368,6 +394,8 @@
 
     render() {
       if (!State.game) return;
+      // manager mode borrows this screen and draws its own tabs into it
+      if (State.game.mode === 'manager' && global.MUI) return global.MUI.render();
       UI.renderHUD();
       UI.renderTabs();
       const c = $('content');

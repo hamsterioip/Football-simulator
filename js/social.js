@@ -178,24 +178,25 @@
     hot: ['banter', 'doubt', 'hype', 'tactic', 'joke']
   };
 
-  function replyFor(g, stance, c, used) {
+  function replyFor(g, stance, c, used, pick) {
     const U = global.U;
-    const pool = REPLIES[stance] || REPLIES.joke;
+    const pool = (c && c.replyBank && c.replyBank[stance]) || REPLIES[stance] || REPLIES.joke;
     const kind = stance === 'banter' ? 'rival' : stance === 'stat' ? 'stats'
       : stance === 'tactic' ? 'pundit' : 'fan';
-    let who = pickFolk(g, kind);
+    const get = pick || (k => pickFolk(g, k));
+    let who = get(kind);
     // nobody replies to themselves twice in the same thread
-    for (let i = 0; i < 6 && used && used.indexOf(who.h) >= 0; i++) who = pickFolk(g, i > 2 ? null : kind);
+    for (let i = 0; i < 6 && used && used.indexOf(who.h) >= 0; i++) who = get(i > 2 ? null : kind);
     if (used) used.push(who.h);
     return { who, t: U.pick(pool),
       likes: Math.max(0, Math.round(U.rnd(0, 40) * (c.reach * 0.35 + 0.3))) };
   }
-  function repliesFor(g, tone, c, n) {
+  function repliesFor(g, tone, c, n, pick) {
     const U = global.U;
     const stances = U.shuffle(STANCE_BY_TONE[tone] || STANCE_BY_TONE.info);
     const out = [], used = [];
     const want = n != null ? n : U.weighted([[1, 3], [2, 5], [3, 3]]);
-    for (let i = 0; i < want; i++) out.push(replyFor(g, stances[i % stances.length], c, used));
+    for (let i = 0; i < want; i++) out.push(replyFor(g, stances[i % stances.length], c, used, pick));
     return out;
   }
 
@@ -542,6 +543,10 @@
   const Social = {
     CAP,
     folk, you, initials, hue, reach,
+    // the manager's timeline (social-mgr.js) is built from the same cast and
+    // the same replies, so they are shared rather than written twice
+    makeClub, makeFan, makeRival, makeJourno, makePundit, makeStats, makeFanTV,
+    REPLIES, STANCE_BY_TONE, repliesFor, tag,
 
     /* every match you were involved in */
     afterMatch(g, m, played) {
@@ -696,7 +701,10 @@
 
     /* "3d" style stamps, from the match clock rather than a real one */
     when(g, post) {
-      const now = (g.world.year * 60) + (g.fixtureIndex || 0);
+      // manager mode counts in fixtures played, career mode in its own index
+      const now = g.mode === 'manager'
+        ? (g.world.year * 100) + ((g.mgr && g.mgr.round) || 0)
+        : (g.world.year * 60) + (g.fixtureIndex || 0);
       const d = Math.max(0, now - (post.tick || now));
       if (d === 0) return 'now';
       if (d === 1) return '3d';

@@ -1,0 +1,1281 @@
+/* ==========================================================================
+   manager-ui.js — the screens for Manager Mode.
+
+   Reuses the game screen's header, content and tab bar, so the mode gets the
+   same chrome as the career game without a second set of markup.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+
+  const U = () => global.U;
+  const State = () => global.State;
+  const M = () => global.Manager;
+  const esc = t => global.U.esc(t);
+  const ico = (n, c) => global.Icons.svg(n, c);
+  const crest = (n, c) => global.Crest.svg(n, c);
+
+  const TABS = [
+    { id: 'mhome', icon: 'career', label: 'Match' },
+    { id: 'msquad', icon: 'squad', label: 'Squad' },
+    { id: 'mmarket', icon: 'transfer', label: 'Market' },
+    { id: 'mtable', icon: 'table', label: 'Table' },
+    { id: 'mbuzz', icon: 'feed', label: 'Buzz' },
+    { id: 'moffice', icon: 'contract', label: 'Office' }
+  ];
+
+  const MUI = {
+    tab: 'mhome',
+    TOKEN: 0.86,          // token scale — the slot spacing in manager.js assumes it
+
+    render() {
+      const g = State().game;
+      if (!g || !g.mgr) return;
+      MUI.renderHUD();
+      MUI.renderTabs();
+      const c = $('content');
+      c.innerHTML = MUI['tab_' + MUI.tab] ? MUI['tab_' + MUI.tab]() : '';
+      c.scrollTop = 0;
+      global.UI.bindActions(c);
+      if (MUI.tab === 'mboss') MUI.renderBossClubs();
+    },
+
+    renderHUD() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const conf = Math.round(g.mgr.board.confidence);
+      const pos = M().position(g);
+      $('hud').innerHTML = `
+        <div class="hud-top">
+          <div class="hud-club mgr-badge">${crest(club.name, 'crest-md')}</div>
+          <div class="hud-id">
+            <div class="hud-name">${esc(club.name)}</div>
+            <div class="hud-meta">${ico('manager')} Manager · ${esc(State().league(club.league).name)}</div>
+          </div>
+          <div class="hud-ovr" id="hud-ovr"><b>${M().teamRating(g)}</b><span>TEAM</span></div>
+        </div>
+        <div class="hud-bars">
+          ${MUI.bar('Board', conf, conf >= 60 ? 'var(--green)' : conf >= 30 ? 'var(--gold)' : 'var(--red)')}
+          ${MUI.bar('Position', Math.max(0, 100 - (pos - 1) * 9), 'var(--blue)', pos ? U().ordinal(pos) : '—')}
+          ${MUI.bar('Budget', Math.min(100, g.mgr.budget / 1000000), 'var(--purple)', U().cash(g.mgr.budget))}
+        </div>`;
+      const badge = $('hud-ovr');
+      if (badge) badge.onclick = () => global.Game.mgrSecretTap();
+    },
+
+    bar(label, v, colour, text) {
+      const val = global.U.clamp(v, 0, 100);
+      return `<div class="hb"><div class="hb-l"><span>${label}</span><b>${text != null ? esc(text) : Math.round(val)}</b></div>
+        <div class="hb-t"><i style="width:${val}%;background:${colour}"></i></div></div>`;
+    },
+
+    tabsFor() {
+      const g = State().game;
+      return (g && g.secret)
+        ? TABS.concat([{ id: 'mboss', icon: 'settings', label: 'Boss' }]) : TABS;
+    },
+
+    renderTabs() {
+      $('tabbar').innerHTML = MUI.tabsFor().map(t =>
+        `<button class="${MUI.tab === t.id ? 'on' : ''}" data-mtab="${t.id}">${ico(t.icon)}${t.label}</button>`).join('');
+      $('tabbar').querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => {
+        MUI.tab = b.dataset.mtab; MUI.render();
+      });
+    },
+
+    /* ---------------- matchday ---------------- */
+    tab_mhome() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const fix = M().nextFixture(g);
+      const l = M().lines(g);
+      let html = '';
+
+      if (g.mgr.sacked) {
+        const won = (g.mgr.trophies || []).length;
+        return `<div class="card center"><h3>${ico('exit')} You were sacked</h3>
+          <p class="dim">${esc(club.name)} have relieved you of your duties after
+            ${g.mgr.board.seasons} season${g.mgr.board.seasons === 1 ? '' : 's'}${won ? ` and ${won} trophy${won === 1 ? '' : 's'}` : ''}.
+            It happens to everyone eventually. Somebody else will be in touch.</p>
+          <div class="row" style="margin-top:12px">
+            <button class="btn btn-primary grow" data-act="mgrRehire">${ico('manager')} Take another job</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn btn-ghost grow" data-act="mgrQuit">Back to the menu</button>
+          </div>
+        </div>` + MUI.cvCard(g);
+      }
+
+      if (!fix) {
+        const lifted = (g.mgr.cups || []).filter(c => c.won);
+        html += `<div class="card center"><h3>${ico('trophy')} Season over</h3>
+          <p class="dim" style="margin:0 0 12px">${lifted.length
+            ? `Every game played, and the ${lifted.map(c => esc(c.name)).join(' and the ')} came home with you.`
+            : 'Every game played, the cups are gone, and the table does not lie.'}</p>
+          <button class="btn btn-primary btn-lg" data-act="mgrReview">See the board</button></div>`;
+        return html + MUI.cupsCard(g) + MUI.formCard(g);
+      }
+
+      const opp = State().club(fix.oppId);
+      const played = (g.mgr.results || []).filter(r => r.comp === 'cup').length;
+      const compLine = fix.comp === 'cup'
+        ? `${esc(fix.compName)} · ${esc(fix.stageName)}`
+        : `${esc(State().league(club.league).name)} · Match ${(g.mgr.results || []).length - played + 1} of ${g.mgr.rounds.length}`;
+      html += `<div class="card fixture-card${fix.comp === 'cup' ? ' fx-cup' : ''}${
+          fix.derby ? ' fx-derby' : ''}">
+        <div class="fx-comp">${fix.comp === 'cup' ? ico('trophy') + ' ' : ''}${compLine}</div>
+        ${fix.derby ? `<div class="fx-derbytag">${ico('duel')} The derby</div>` : ''}
+        <div class="fx-teams">
+          <div class="fx-t">${crest(fix.home ? club.name : opp.name, 'crest-lg')}
+            <span>${esc(fix.home ? club.name : opp.name)}</span></div>
+          <div class="fx-v">V</div>
+          <div class="fx-t">${crest(fix.home ? opp.name : club.name, 'crest-lg')}
+            <span>${esc(fix.home ? opp.name : club.name)}</span></div>
+        </div>
+        <div class="fx-meta">${fix.neutral ? ico('trophy') + ' Neutral ground'
+          : fix.home ? ico('home') + ' Home' : ico('away') + ' Away'} ·
+          opposition rated ${opp.rating}${fix.comp === 'cup' ? ' · one match, no replay' : ''}</div>
+        ${fix.derby ? (() => { const d = M().derbyRecord(g);
+          return `<div class="fx-out fx-dr">${d.played
+            ? `Your record against them: ${d.w}W ${d.d}D ${d.l}L`
+            : 'The one they will ask you about afterwards, whatever else happens.'}</div>`; })() : ''}
+        ${(() => { const n = M().unavailablePlayers(g).length;
+          return n ? `<div class="fx-out">${ico('hospital')} ${n} unavailable</div>` : ''; })()}
+      </div>`;
+
+      html += `<div class="card"><h3>${ico('tactics')} Your plan</h3>
+        <div class="mgr-plan">
+          <button class="plan-btn" data-act="mgrFormation">
+            <span class="dim">Formation</span><b>${g.mgr.formation}</b></button>
+          <button class="plan-btn" data-act="mgrStyle">
+            <span class="dim">Approach</span><b>${esc(M().STYLES[g.mgr.style].name)}</b></button>
+        </div>
+        <div class="mgr-lines">
+          ${['gk', 'def', 'mid', 'att'].map(k => `<div class="ml"><span>${k.toUpperCase()}</span><b>${l[k] || '—'}</b></div>`).join('')}
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-primary grow" data-act="mgrPlay">${ico('play')} Team talk & kick off</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn btn-ghost grow" data-act="mgrSim">${ico('sim')} Sim to the end of the season</button>
+        </div>
+      </div>`;
+
+      return html + MUI.newsRoom(g, true) + MUI.cupsCard(g) + MUI.newsCard(g) + MUI.formCard(g);
+    },
+
+    /* ---------------- the cups you are in this year ----------------
+       A league season is a long argument you can always win back. A cup is one
+       night. This is the board that tells you which ones are still alive. */
+    cupsCard(g) {
+      const cups = g.mgr.cups || [];
+      if (!cups.length) return '';
+      const stages = M().CUP_STAGES;
+      return `<div class="card"><h3>${ico('trophy')} The cups</h3>
+        ${cups.map(c => {
+          const list = stages[c.kind] || [];
+          const at = c.won ? 'Won it' : !c.alive ? `Out — ${esc(String(c.outAt || '').toLowerCase())}`
+            : list[c.stage] ? esc(list[c.stage]) : 'To come';
+          const k = c.won ? 'won' : !c.alive ? 'out' : 'alive';
+          const dots = list.map((nm, i) => {
+            const st = c.won || i < c.stage ? 'on' : (!c.alive && i >= c.stage) ? 'gone' : '';
+            return `<i class="cup-dot ${st}" title="${esc(nm)}"></i>`;
+          }).join('');
+          return `<div class="cup-row cup-${k}">
+            <span class="cup-ic">${ico(c.won ? 'trophy' : c.alive ? 'whistle' : 'exit')}</span>
+            <span class="cup-n">${esc(c.name)}</span>
+            <span class="cup-dots">${dots}</span>
+            <span class="cup-st">${at}</span>
+          </div>`;
+        }).join('')}
+        <p class="dim tiny" style="margin:8px 0 0">Win the ${esc((State().league(State().club(g.mgr.club).league).cup) || 'Cup')} or finish in the top four and you are in Europe next year. Win Europe and the Club World Cup follows.</p>
+      </div>`;
+    },
+
+    /* What people are actually talking about — the hat-trick, the one from
+       thirty yards, the penalty he put over the bar. */
+    newsCard(g) {
+      const feed = (g.mgr.news || []).slice(0, g.mgr.newsOpen ? 24 : 6);
+      if (!feed.length) return '';
+      const dot = k => k === 'goal' || k === 'wonder' ? 'goal' : k === 'good' ? 'up'
+        : k === 'bad' ? 'down' : k === 'flat' ? 'clock' : 'quote';
+      return `<div class="card"><h3>${ico('news')} The talk</h3>
+        ${feed.map(n => `<div class="mnews mn-${esc(n.k)}">
+          <span class="mn-ic">${ico(dot(n.k))}</span>
+          <span class="mn-t">${esc(n.t)}</span>
+          <span class="mn-w">${esc(n.score)} ${esc(n.opp)}</span>
+        </div>`).join('')}
+        ${(g.mgr.news || []).length > 6 ? `<button class="btn btn-ghost btn-sm"
+          data-act="mgrNewsMore" style="margin-top:8px;width:100%">${
+            g.mgr.newsOpen ? 'Show less' : 'Everything that has happened'}</button>` : ''}
+      </div>`;
+    },
+
+    /* Every job you have had, which is the only real record a manager keeps. */
+    cvCard(g) {
+      const past = (g.mgrHistory || []);
+      if (!past.length) return '';
+      return `<div class="card"><h3>${ico('legacy')} Your record</h3>
+        ${past.map(j => `<div class="res-row">
+          ${crest(j.club, 'crest-sm')}
+          <span class="res-n">${esc(j.club)}</span>
+          <span class="sq-meta">${j.seasons} yr${j.seasons === 1 ? '' : 's'}${
+            j.trophies ? ' · ' + j.trophies + ' won' : ''}${
+            j.finishes && j.finishes.length ? ' · best ' + U().ordinal(Math.min.apply(null, j.finishes)) : ''}</span>
+          <span class="res-b ${j.sacked ? 'res-L' : 'res-D'}">${j.sacked ? 'sacked' : 'left'}</span>
+        </div>`).join('')}</div>`;
+    },
+
+    formCard(g) {
+      const res = (g.mgr.results || []).slice(-6).reverse();
+      if (!res.length) return '';
+      return `<div class="card"><h3>${ico('table')} Recent results</h3>
+        ${res.map(r => {
+          const opp = State().club(r.oppId);
+          const tag = r.comp === 'cup'
+            ? `<span class="res-cup">${esc(r.stageName || 'Cup')}${r.pens ? ` · ${r.pens[0]}-${r.pens[1]} pens` : r.aet ? ' · aet' : ''}</span>`
+            : '';
+          return `<div class="res-row res-${r.result}${r.comp === 'cup' ? ' res-iscup' : ''}">
+            <span class="res-b">${r.result}</span>
+            ${crest(opp.name, 'crest-sm')}
+            <span class="res-n">${r.neutral ? 'v' : r.home ? 'v' : 'at'} ${esc(opp.name)}${tag}</span>
+            <b>${r.gf}–${r.ga}</b>
+          </div>`;
+        }).join('')}</div>`;
+    },
+
+    /* ---------------- squad ---------------- */
+    /* ---------------- the team, laid out on grass ----------------
+       A team sheet is a list; a line-up is a shape. This draws the eleven
+       where they actually stand, so you can see at a glance that you have
+       nobody on the left wing and two number tens. Tapping a shirt is the
+       same swap as tapping a row was. */
+
+    /* Surname only — a full name never fits under a shirt. */
+    shortName(name) {
+      const parts = String(name || '').trim().split(/\s+/);
+      const last = parts[parts.length - 1];
+      return last.length > 13 ? last.slice(0, 12) + '.' : last;
+    },
+
+    pitchSvg() {
+      // Drawn once, behind the shirts: touchline, halfway, centre circle, both
+      // boxes. Mown stripes give it depth without an image.
+      const L = 'rgba(255,255,255,.30)';
+      let stripes = '';
+      for (let i = 0; i < 10; i++) {
+        stripes += `<rect x="0" y="${i * 44}" width="320" height="44" fill="${
+          i % 2 ? 'rgba(255,255,255,.030)' : 'rgba(0,0,0,.045)'}"/>`;
+      }
+      return `<rect x="0" y="0" width="320" height="440" rx="10" fill="#0f6a3d"/>
+        ${stripes}
+        <g fill="none" stroke="${L}" stroke-width="1.6">
+          <rect x="10" y="10" width="300" height="420" rx="3"/>
+          <line x1="10" y1="220" x2="310" y2="220"/>
+          <circle cx="160" cy="220" r="42"/>
+          <rect x="70" y="10" width="180" height="62"/>
+          <rect x="114" y="10" width="92" height="26"/>
+          <rect x="70" y="368" width="180" height="62"/>
+          <rect x="114" y="404" width="92" height="26"/>
+        </g>
+        <circle cx="160" cy="220" r="2.6" fill="${L}"/>
+        <circle cx="160" cy="58" r="2.2" fill="${L}"/>
+        <circle cx="160" cy="382" r="2.2" fill="${L}"/>`;
+    },
+
+    /* One man: a shirt in the club's colours, his number on it, his name and
+       rating underneath on a plate dark enough to read against grass. */
+    shirtToken(s, slotPos, x, y, kit, picked) {
+      const [c1, c2] = kit;
+      const oop = s.pos !== slotPos;
+      const ink = MUI.readable(c1);
+      const short = MUI.shortName(s.name);
+      // a long surname shrinks to fit rather than getting chopped into an
+      // abbreviation nobody can read
+      const size = short.length > 12 ? 6.8 : short.length > 10 ? 7.3 : short.length > 8 ? 8 : 9;
+      const name = esc(short);
+      const cls = 'lu-man' + (picked ? ' picked' : '') + (oop ? ' oop' : '');
+      // scaled a touch under 1 so a holding midfielder still fits cleanly
+      // between the back four and the men ahead of him
+      return `<g class="${cls}" data-act="mgrSwap" data-arg="${s.id}"
+          transform="translate(${x} ${y}) scale(${MUI.TOKEN})" role="button" tabindex="0"
+          aria-label="${esc(s.name)}, ${esc(slotPos)}, rated ${s.ovr}">
+        <ellipse cx="0" cy="15" rx="14" ry="4" fill="rgba(0,0,0,.28)"/>
+        <g class="lu-kit">
+          <path d="M-11-13 -4-16 0-13 4-16 11-13 14-6 9-3 9 14 -9 14 -9-3 -14-6Z"
+            fill="${c1}" stroke="rgba(0,0,0,.55)" stroke-width="1"/>
+          <path d="M-4-16 0-13 4-16 4-11 0-8 -4-11Z" fill="${c2}"/>
+          <text x="0" y="7" text-anchor="middle" font-size="10" font-weight="800"
+            fill="${ink}" font-family="Inter,Helvetica,Arial,sans-serif">${s.shirt || ''}</text>
+        </g>
+        <g class="lu-plate" transform="translate(0 20)">
+          <rect x="-28" y="0" width="56" height="23" rx="5" fill="rgba(6,12,10,.80)"/>
+          <text x="0" y="9.5" text-anchor="middle" font-size="${size}" font-weight="700"
+            fill="#eef4f2" font-family="Inter,Helvetica,Arial,sans-serif">${name}</text>
+          <text x="0" y="19" text-anchor="middle" font-size="8.5" font-weight="800"
+            fill="${s.ovr >= 82 ? '#ffc94d' : s.ovr >= 72 ? '#eef4f2' : '#93a5ab'}"
+            font-family="Inter,Helvetica,Arial,sans-serif">${esc(slotPos)} · ${s.ovr}</text>
+        </g>
+        ${oop ? '<circle class="lu-warn" cx="13" cy="-14" r="5" fill="#ff5a6a"/>'
+              + '<text x="13" y="-11" text-anchor="middle" font-size="8" font-weight="800"'
+              + ' fill="#0b0f14" font-family="Inter,Helvetica,Arial,sans-serif">!</text>' : ''}
+      </g>`;
+    },
+
+    /* black or white, whichever you can actually read on this colour */
+    readable(hex) {
+      const h = String(hex || '#888').replace('#', '');
+      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(n.slice(0, 2), 16) || 0, gg = parseInt(n.slice(2, 4), 16) || 0,
+            bl = parseInt(n.slice(4, 6), 16) || 0;
+      return (r * 299 + gg * 587 + bl * 114) / 1000 > 145 ? '#101820' : '#ffffff';
+    },
+
+    lineup(g) {
+      const club = State().club(g.mgr.club);
+      const kit = global.Crest.kitFor(club.name);
+      const shape = M().FORMATIONS[g.mgr.formation].line;
+      const slots = M().slots(g.mgr.formation);
+      const xi = M().xiPlayers(g);
+      const picked = global.Game && global.Game._mgrSwapFrom;
+      const men = xi.map((s, i) => {
+        const [px, py] = slots[i] || [50, 50];
+        // 0-100 in, pixels out, with a margin so nobody's name plate is clipped
+        return MUI.shirtToken(s, shape[i], 24 + px * 2.72, 34 + py * 3.5, kit, picked === s.id);
+      }).join('');
+      return `<div class="lineup"><svg viewBox="0 0 320 440" class="lu-svg"
+        role="group" aria-label="Starting eleven on the pitch">
+        ${MUI.pitchSvg()}${men}
+      </svg></div>`;
+    },
+
+    tab_msquad() {
+      const g = State().game;
+      const shape = M().FORMATIONS[g.mgr.formation].line;
+      const xi = M().xiPlayers(g), bench = M().benchPlayers(g);
+      const picked = global.Game && global.Game._mgrSwapFrom;
+      const oop = xi.filter((s, i) => s.pos !== shape[i]).length;
+      const row = (s, i, inXI) => {
+        const why = M().unavailableWhy(s);
+        return `<div class="sq-row${inXI ? ' in' : ''}${why ? ' unfit' : ''}${
+          picked === s.id ? ' picked' : ''}" data-act="mgrRow" data-arg="${s.id}">
+        <span class="sq-pos">${esc(inXI ? shape[i] : s.pos)}</span>
+        <span class="sq-sh">${s.shirt}</span>
+        <span class="sq-n">${esc(s.name)}${inXI && s.pos !== shape[i] ? ' <em class="oop">out of position</em>' : ''}${
+          why ? `<em class="unav ${why.k}">${ico(why.k === 'ban' ? 'card' : 'injury')} ${esc(why.label)}</em>` : ''}${
+          !why && s.unsettled ? `<em class="unrest">${ico('transfer')} wants to leave</em>`
+          : !why && M().dealOf(s) <= 1 ? `<em class="lastyr">${ico('contract')} final year</em>` : ''}</span>
+        <span class="sq-meta">${why
+          ? `${why.games} game${why.games === 1 ? '' : 's'}`
+          : `${s.age} · ${MUI.fitWord(s.fit)}`}</span>
+        <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+      </div>`;
+      };
+
+      return `<div class="card tight"><h3>${ico('squad')} ${esc(g.mgr.formation)}
+          <span class="pill">${M().teamRating(g)}</span></h3>
+        ${MUI.lineup(g)}
+        <p class="dim lu-hint">${picked
+          ? 'Now tap whoever takes his place.'
+          : oop ? `Tap a shirt to swap him. ${oop} ${oop === 1 ? 'man is' : 'men are'} out of position.`
+          : 'Tap a shirt to swap him. Tap a name below to open his card.'}</p>
+        <div class="row">
+          <button class="btn btn-ghost grow" data-act="mgrAuto">${ico('ok')} Pick the best eleven</button>
+          <button class="btn btn-ghost grow" data-act="mgrFormation">${ico('tactics')} ${g.mgr.formation}</button>
+        </div>
+      </div>
+      <div class="card"><h3>The eleven</h3>
+        ${xi.map((s, i) => row(s, i, true)).join('')}
+      </div>
+      <div class="card"><h3>Substitutes and reserves</h3>
+        ${bench.length ? bench.map(s => row(s, 0, false)).join('')
+          : '<p class="dim" style="margin:0">Nobody left on the bench.</p>'}
+      </div>` + MUI.newsRoom(g);
+    },
+
+    /* ---------------- the treatment room ----------------
+       Who cannot play, why, and for how much longer. A manager should never
+       have to work this out by scrolling a squad list looking for red text. */
+    newsRoom(g, compact) {
+      const out = M().unavailablePlayers(g);
+      if (!out.length) return compact ? '' : `<div class="card"><h3>${ico('hospital')} Team news</h3>
+        <p class="dim" style="margin:0">Everybody is fit. Make the most of it.</p></div>`;
+      const order = out.slice().sort((a, b) => {
+        const A = M().unavailableWhy(a), B = M().unavailableWhy(b);
+        return (A.k === 'ban' ? 1 : 0) - (B.k === 'ban' ? 1 : 0) || B.games - A.games;
+      });
+      return `<div class="card"><h3>${ico('hospital')} Team news
+          <span class="pill">${out.length} out</span></h3>
+        ${order.map(s => {
+          const why = M().unavailableWhy(s);
+          return `<div class="tn-row tn-${why.k}">
+            <span class="tn-ic">${ico(why.k === 'ban' ? 'card' : 'injury')}</span>
+            <span class="tn-n">${esc(s.name)}<em>${esc(s.pos)} ${s.ovr} · ${esc(why.label)}</em></span>
+            <span class="tn-g">${why.games}<small>${why.games === 1 ? 'game' : 'games'}</small></span>
+          </div>`;
+        }).join('')}</div>`;
+    },
+
+    /* Fitness as a word, because "63" means nothing on its own. */
+    fitWord(fit) {
+      return fit >= 92 ? 'fresh' : fit >= 78 ? 'sharp' : fit >= 64 ? 'has miles in him'
+        : fit >= 50 ? 'tiring' : 'running on empty';
+    },
+
+    /* ---------------- clubs coming for yours ----------------
+       The other side of the market. An opening bid is always a bit less than
+       he is worth, so the number on the card is a starting point. */
+    bidsCard(g) {
+      const bids = g.mgr.bids || [];
+      if (!bids.length) return '';
+      return `<div class="card"><h3>${ico('transfer')} Offers for your players</h3>
+        ${bids.map(b => {
+          const p = g.squad.find(x => x.id === b.playerId);
+          const worth = p ? (p.value || 0) : 0;
+          const r = worth ? b.fee / worth : 1;
+          const read = !worth ? 'on the table' : r >= 1.05 ? 'over his value'
+            : r >= 0.92 ? 'about his value' : r >= 0.78 ? 'a little short' : 'well under value';
+          return `<div class="bid-row" data-act="mgrBidIn" data-arg="${b.id}">
+            ${crest(b.fromName, 'crest-sm')}
+            <span class="bid-n">${esc(b.name)}<em>${esc(b.pos)} ${b.ovr} · ${esc(b.fromName)} (${b.fromRating})</em></span>
+            <span class="bid-f">${U().cash(b.fee)}<small>${read}</small></span>
+          </div>`;
+        }).join('')}
+        <p class="dim tiny" style="margin:8px 0 0">${bids.length} club${
+          bids.length === 1 ? ' has' : 's have'} come in. Tap one to answer.</p>
+      </div>`;
+    },
+
+    /* ---------------- market ---------------- */
+    tab_mmarket() {
+      const g = State().game;
+      const list = M().market(g, g.mgr.filter).slice(0, 40);
+      const wageRoom = g.mgr.wageBudget - M().squadWages(g);
+      const positions = ['All'].concat(Object.keys(global.DATA.POSITIONS));
+
+      return MUI.bidsCard(g) + `<div class="card tight">
+        <div class="mk-money">
+          <div><span class="dim">Transfer budget</span><b>${U().cash(g.mgr.budget)}</b></div>
+          <div><span class="dim">Wage room</span><b class="${wageRoom < 0 ? 'bad' : ''}">${U().cash(wageRoom)}/w</b></div>
+        </div>
+        <div class="mk-filter">
+          <button class="mk-f${g.mgr.filter && g.mgr.filter.afford ? ' on' : ''}"
+            data-act="mgrFilter" data-arg="Affordable">Can afford</button>
+          ${positions.map(p => `
+          <button class="mk-f${(g.mgr.filter && g.mgr.filter.pos) === (p === 'All' ? undefined : p) ? ' on' : ''}"
+            data-act="mgrFilter" data-arg="${p}">${p}</button>`).join('')}</div>
+      </div>
+      ${MUI.topBoard(g)}
+      ${(g.mgr.marketNews || []).length ? `<div class="card"><h3>${ico('trend')} The market this week</h3>
+        ${g.mgr.marketNews.slice(0, 4).map(n => `<div class="res-row">
+          <span class="res-b ${n.k === 'gone' ? 'res-L' : 'res-W'}">${n.k === 'gone' ? '→' : '+'}</span>
+          <span class="res-n wrap">${esc(n.t)}</span></div>`).join('')}
+        <p class="dim" style="margin:8px 0 0">Names come and go every week. If you want him, go now.</p>
+      </div>` : ''}
+      <div class="card"><h3>${ico('transfer')} Available</h3>
+        ${list.length ? list.map(s => `
+          <div class="mk-row" data-act="mgrBid" data-arg="${s.id}">
+            <span class="sq-pos">${esc(s.pos)}</span>
+            <span class="sq-n">${esc(s.name)}<em>${esc(s.fromClub)} · ${s.age}${
+              s.keyman ? ' · <b class="mk-star">star man</b>' : ''}</em></span>
+            <span class="mk-ask">${s.free ? 'Free' : U().cash(s.ask)}<em>${U().cash(s.wage)}/w</em></span>
+            <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+          </div>`).join('')
+          : '<p class="dim" style="margin:0">Nobody matches that filter.</p>'}
+      </div>
+      <div class="card"><h3>Sell</h3>
+        <p class="dim" style="margin:0 0 9px">Tap one of yours to take the money.</p>
+        ${g.squad.slice().sort((a, b) => b.value - a.value).map(s => `
+          <div class="mk-row" data-act="mgrSell" data-arg="${s.id}">
+            <span class="sq-pos">${esc(s.pos)}</span>
+            <span class="sq-n">${esc(s.name)}<em>${s.age} · ${s.apps} apps, ${s.goals} goals</em></span>
+            <span class="mk-ask">${U().cash(s.value)}</span>
+            <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+          </div>`).join('')}
+      </div>`;
+    },
+
+    /* The best players alive, with what it would take. Almost all of them are
+       out of reach — that is the point of showing them. */
+    topBoard(g) {
+      const budget = g.mgr.budget, room = g.mgr.wageBudget - M().squadWages(g);
+      const f = g.mgr.filter || {};
+      const within = s => s.ask <= budget && s.wage <= room;
+      let all = M().topPlayers(g);
+      let list = all;
+      if (f.pos) list = list.filter(s => s.pos === f.pos);
+      if (f.afford) list = list.filter(within);
+      // a filter with no matches is not the same as an empty world — never let
+      // the whole board disappear without saying why
+      if (!list.length) {
+        return `<div class="card top-card"><h3>${ico('crown')} Top players</h3>
+          <p class="dim" style="margin:0">${all.length
+            ? 'None of the best in the world match that filter.'
+            : 'Every great player has retired. Give it a season — somebody always comes through.'}</p>
+        </div>`;
+      }
+      const shown = (g.mgr.topOpen ? list : list.slice(0, 6));
+      const reach = list.filter(within).length;
+      return `<div class="card top-card"><h3>${ico('crown')} Top players
+          <span class="pill gold">world class</span></h3>
+        <p class="dim" style="margin:0 0 10px">The best in the world. None of them are for
+          sale — these are the numbers it would take.</p>
+        ${shown.map(s => {
+          const canFee = s.ask <= budget, canWage = s.wage <= room;
+          return `<div class="mk-row top-row${canFee && canWage ? '' : ' outofreach'}"
+              data-act="mgrCard" data-arg="${s.id}">
+            <span class="top-ovr">${s.ovr}</span>
+            ${crest(s.fromClub, 'crest-sm')}
+            <span class="sq-n">${esc(s.name)}<em>${esc(s.pos)} · ${s.age} · ${esc(s.fromClub)}</em></span>
+            <span class="mk-ask">${U().cash(s.ask)}<em class="${canWage ? '' : 'bad'}">${U().cash(s.wage)}/w</em></span>
+          </div>`;
+        }).join('')}
+        ${list.length > 6 ? `<button class="btn btn-ghost btn-sm" data-act="mgrTopMore"
+          style="margin-top:8px;width:100%">${g.mgr.topOpen ? 'Show fewer'
+            : 'Show all ' + list.length}</button>` : ''}
+        <p class="dim top-foot">${reach
+          ? `${reach} of them ${reach === 1 ? 'is' : 'are'} within reach right now.`
+          : 'Not one of them is within reach yet. Win things and the money follows — and selling clears the wages to fit him in.'}</p>
+      </div>`;
+    },
+
+    /* ---------------- a player, and every version of him ----------------
+       The peak era gets the treatment: a card that actually moves, because
+       the best version of a great player should not sit still on the page. */
+
+    /* Fixed positions rather than random ones, so the sparkle never lands on
+       the rating and never moves between renders. */
+    STARS: [[9, 26, 1.0, 0], [21, 68, .62, .7], [35, 14, .78, 1.5], [11, 88, .55, .35],
+            [78, 34, .9, 2.1], [69, 62, .68, 1.1], [80, 18, .82, .55], [90, 70, .6, 1.8],
+            [94, 40, .74, 2.6], [13, 48, .5, 2.3], [62, 10, .58, 1.35], [26, 40, .46, 3]],
+
+    eraStars() {
+      return `<div class="era-stars" aria-hidden="true">${MUI.STARS.map(([x, y, sc, d], i) =>
+        `<i class="${i % 3 === 2 ? 'sp' : ''}" style="left:${x}%;top:${y}%;--s:${sc};--d:${d}s"></i>`
+      ).join('')}</div>`;
+    },
+
+    /* ---------------- the portrait card ----------------
+       Laid out the way a collectible card is: the rating shouting from the
+       top-left, the man in the middle, his name across the bottom, and his
+       country and his club under that. Drawn rather than photographed —
+       everything in this game is. */
+
+    /* "Cristiano Ronaldo" -> "C. RONALDO" */
+    cardName(name) {
+      const parts = String(name || '').trim().split(/\s+/);
+      const last = parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
+      const initial = parts.length > 1 ? parts[0][0] + '. ' : '';
+      const full = (initial + last).toUpperCase();
+      return full.length > 15 ? last.toUpperCase() : full;
+    },
+
+    /* The man himself, in his kit, from the thighs up. */
+    cardFigure(kit, trim, ink, num) {
+      // A bust, cropped at the waist by the name plate. Every shape carries a
+      // thin dark edge, because half the kits in this game are white and would
+      // otherwise dissolve into one another and into the background.
+      const edge = 'rgba(0,0,0,.34)';
+      const arm = side => `<path d="M${side * 12.6} -17
+          q${side * 7} 1.6 ${side * 7.8} 8.4 l${side * 1.2} 22
+          q${side * -3.8} 1.8 ${side * -7.4} 0 l${side * -2.4} -18 Z"
+        fill="${kit}" stroke="${edge}" stroke-width=".8" stroke-linejoin="round"/>
+        <path d="M${side * 12.6} -17 q${side * 7} 1.6 ${side * 7.8} 8.4 l${side * .6} 10 q${side * -4} -8 ${side * -8.4} -12 Z" fill="rgba(0,0,0,.11)"/>
+        <circle cx="${side * 21}" cy="19" r="3.5" fill="#e8b892" stroke="${edge}" stroke-width=".45"/>`;
+      return `<g class="fc-man" transform="translate(105 184) scale(3.0)">
+        <ellipse cx="0" cy="30" rx="27" ry="8" fill="rgba(0,0,0,.28)"/>
+        <path d="M-5.6 -24 h11.2 l.4 6.5 h-12 Z" fill="#dda87f"/>
+        <circle cx="-9.5" cy="-29.5" r="2" fill="#e3b088"/>
+        <circle cx="9.5" cy="-29.5" r="2" fill="#e3b088"/>
+        <circle cx="0" cy="-30" r="9.7" fill="#f0c69f"/>
+        <path d="M-9.7 -31.8 q0 -10.6 9.7 -10.6 9.7 0 9.7 10.6 -2.2 -4 -5.5 -5.3
+          -5.5 1.8 -13.9 5.3 Z" fill="#2f2018"/>
+        ${arm(-1)}${arm(1)}
+        <path d="M-12.6 -17 q12.6 -6.4 25.2 0 l3 48 h-31.2 Z"
+          fill="${kit}" stroke="${edge}" stroke-width=".55" stroke-linejoin="round"/>
+        <path d="M-12.6 -17 q12.6 -6.4 25.2 0 l-.6 4 q-12 -4.4 -24 0 Z" fill="${trim}"/>
+        <path d="M-5.8 -17.6 L0 -10 L5.8 -17.6 q-5.8 -1.9 -11.6 0 Z"
+          fill="${trim}" stroke="${edge}" stroke-width=".4"/>
+        <path d="M-12.6 -17 q12.6 -6.4 25.2 0 l.6 8 q-13.2 -5.2 -26.4 0 Z"
+          fill="rgba(0,0,0,.13)"/>
+        <text x="0" y="9" text-anchor="middle" font-size="7" font-weight="800"
+          fill="${ink}" opacity=".7" font-family="Inter,Helvetica,Arial,sans-serif">${num || ''}</text>
+      </g>`;
+    },
+
+    /* Embers for the peak card — fixed lanes, staggered clocks. */
+    fcDust() {
+      const d = [[10, 0, 3.4, 0], [24, 1.2, 4.2, 1], [38, .5, 3.7, 0], [52, 2.1, 4.6, 1],
+                 [64, .9, 3.5, 0], [78, 2.6, 4.9, 1], [88, 1.6, 3.8, 0], [46, 3.1, 5.2, 1]];
+      return `<div class="fc-dust" aria-hidden="true">${d.map(([x, dl, du, v]) =>
+        `<i class="${v ? 'vio' : ''}" style="left:${x}%;--dl:${dl}s;--du:${du}s"></i>`).join('')}</div>`;
+    },
+
+    eraPortrait(e, p, best, buy) {
+      const uid = 'fc' + (MUI._fc = (MUI._fc || 0) + 1);
+      const kit = e.club ? global.Crest.kitFor(e.club) : ['#5a6a76', '#93a5ab'];
+      const ink = MUI.readable(kit[0]);
+      const act = buy ? ` data-act="mgrEra" data-arg="${p.id}:${e.index}"` : '';
+      // big background stars, placed by hand so none of them sit on his face
+      const stars = [[18, 46, 26, -14], [186, 74, 34, 12], [30, 250, 30, 8],
+                     [176, 232, 22, -8], [104, 22, 18, 0], [12, 158, 16, 10],
+                     [196, 160, 18, -12]];
+      const star = (x, y, r, rot, fill, op) =>
+        `<path transform="translate(${x} ${y}) rotate(${rot}) scale(${r / 50})" opacity="${op}" fill="${fill}"
+          d="M0 -50 C6 -18 18 -6 50 0 18 6 6 18 0 50 -6 18 -18 6 -50 0 -18 -6 -6 -18 0 -50 Z"/>`;
+
+      return `<div class="fc-wrap">
+        <div class="fc-card${best ? ' fc-best' : ''}${buy && buy.active ? ' fc-on' : ''}"${act}
+            role="${act ? 'button' : 'img'}" ${act ? 'tabindex="0"' : ''}
+            aria-label="${esc(p.name)}, ${e.year}, rated ${e.ovr}">
+          <svg class="fc-art" viewBox="0 0 210 310" aria-hidden="true">
+            <defs>
+              <linearGradient id="${uid}bg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="${best ? '#2f1656' : '#1a1b34'}"/>
+                <stop offset=".45" stop-color="${best ? '#6d31a6' : '#2b2a53'}"/>
+                <stop offset="1" stop-color="${best ? '#1c0f3c' : '#131228'}"/>
+              </linearGradient>
+              <radialGradient id="${uid}burst" cx=".5" cy=".42" r=".62">
+                <stop offset="0" stop-color="${best ? 'rgba(255,214,150,.46)' : 'rgba(168,150,255,.28)'}"/>
+                <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+              </radialGradient>
+              <linearGradient id="${uid}frame" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#fdf6e2"/><stop offset=".28" stop-color="#c9b47e"/>
+                <stop offset=".5" stop-color="#fffdf6"/><stop offset=".72" stop-color="#b79ad8"/>
+                <stop offset="1" stop-color="#f6ecff"/>
+              </linearGradient>
+              <clipPath id="${uid}clip"><rect x="5" y="5" width="200" height="300" rx="17"/></clipPath>
+              <radialGradient id="${uid}spot" cx=".5" cy=".45" r=".5">
+                <stop offset="0" stop-color="${best ? 'rgba(255,232,180,.36)' : 'rgba(190,178,255,.26)'}"/>
+                <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+              </radialGradient>
+              <linearGradient id="${uid}fade" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="rgba(6,8,16,0)"/>
+                <stop offset=".24" stop-color="rgba(6,8,16,.78)"/>
+                <stop offset="1" stop-color="rgba(6,8,16,.88)"/>
+              </linearGradient>
+            </defs>
+            <g clip-path="url(#${uid}clip)">
+              <rect x="5" y="5" width="200" height="300" fill="url(#${uid}bg)"/>
+              <ellipse cx="105" cy="130" rx="120" ry="120" fill="url(#${uid}burst)"/>
+              ${stars.map(([x, y, r, rot], i) =>
+                star(x, y, r, rot, best ? '#ffd873' : '#c3b4ff', best ? (i % 2 ? .24 : .32) : (i % 2 ? .13 : .18))).join('')}
+              <g class="fc-rays" opacity="${best ? .34 : .16}">
+                ${[0, 1, 2, 3, 4, 5].map(i =>
+                  `<path d="M105 118 L${-40 + i * 60} 310 L${-4 + i * 60} 310 Z" fill="#fff" opacity=".35"/>`).join('')}
+              </g>
+              <ellipse cx="105" cy="150" rx="74" ry="86" fill="url(#${uid}spot)"/>
+              ${MUI.cardFigure(kit[0], kit[1], ink, p.shirt)}
+              <g class="fc-front">
+                ${star(30, 116, 40, -18, best ? '#ffd873' : '#c3b4ff', best ? .30 : .17)}
+                ${star(184, 178, 46, 14, best ? '#ffe6a8' : '#d6cbff', best ? .26 : .14)}
+                ${star(150, 62, 22, 6, '#ffffff', best ? .5 : .3)}
+              </g>
+              <rect x="5" y="206" width="200" height="99" fill="url(#${uid}fade)"/>
+              <rect x="30" y="224" width="150" height="1.3" fill="${best ? 'rgba(255,216,115,.75)' : 'rgba(255,255,255,.35)'}"/>
+            </g>
+            <rect x="5" y="5" width="200" height="300" rx="17" fill="none"
+              stroke="url(#${uid}frame)" stroke-width="3"/>
+            <rect x="8.5" y="8.5" width="193" height="293" rx="14" fill="none"
+              stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+          </svg>
+
+          <div class="fc-rating"><b>${e.ovr}</b><span>${esc(p.pos)}</span></div>
+          <div class="fc-year">${e.year}</div>
+          <div class="fc-name">${esc(MUI.cardName(p.name))}</div>
+          ${e.trait ? `<div class="fc-trait">${esc(e.trait)}</div>` : ''}
+          <div class="fc-foot">
+            ${global.Icons.flag(p.nation, 'sm')}
+            <span class="fc-dot"></span>
+            ${e.club ? crest(e.club, 'crest-sm') : '<span class="fc-dot"></span>'}
+          </div>
+          ${best ? MUI.fcDust() + '<div class="fc-shine"></div>' + MUI.eraStars()
+            + '<div class="fc-ring" aria-hidden="true"><i></i></div>'
+            + '<div class="fc-glint g1" aria-hidden="true"></div>'
+            + '<div class="fc-glint g2" aria-hidden="true"></div>'
+            + '<div class="fc-tag">PEAK</div>' : ''}
+        </div>
+        ${buy ? `<div class="era-buy ${buy.active ? 'on' : buy.owned ? 'owned' : ''}">${
+          buy.active ? ico('ok') + ' In your squad'
+            : buy.owned ? 'Switch back — free'
+            : buy.price ? U().cash(buy.price)
+            : 'Free'}</div>` : ''}
+        <div class="fc-label">${esc(e.label)}</div>
+      </div>`;
+    },
+
+    timelineHtml(p, owned) {
+      const eras = global.Timeline.for(p);
+      if (!eras.length) return '<p class="dim">Nothing on record.</p>';
+      const best = global.Timeline.peakIndex(eras);
+      if (!owned) {
+        return `<div class="tl-locked">
+          <div class="tl-lock">${ico('lock')}</div>
+          <p class="muted">Sign him and his whole career opens up here —
+            every version of him there has ever been, and the best one of the lot.</p>
+          <p class="dim">${eras.length} eras on record.</p>
+        </div>`;
+      }
+      const g = State().game;
+      const budget = g.mgr.budget;
+      const room = g.mgr.wageBudget - M().squadWages(g) + (p.wage || 0);
+      const info = eras.map(e => ({
+        active: M().eraActive(p, e), owned: M().eraOwned(p, e),
+        price: M().eraPrice(p, e), wage: M().eraWage(p, e)
+      }));
+      const canAny = info.some(b => !b.active && (b.owned || b.price <= budget) && b.wage <= room);
+      return `<div class="fc-rail">
+        ${eras.map((e, i) => MUI.eraPortrait(e, p, global.Timeline.isPeak(eras, i), info[i])).join('')}
+      </div>
+      <p class="dim tl-foot">Tap an era to bring that version of him back — it comes out of the
+        transfer budget, and once you have paid for a version you can switch to it for nothing.
+        ${canAny ? '' : 'Nothing here is within your budget yet.'}</p>
+      <p class="dim tl-foot">${global.Timeline.curated(p)
+        ? 'Clubs and years are a matter of record. The ratings are this game’s opinion.'
+        : 'Reconstructed from his age and what he is now — no club history on file for him.'}</p>`;
+    },
+
+    playerTabs: [
+      { id: 'pOverview', label: 'Player', icon: 'player' },
+      { id: 'pTimeline', label: 'Timeline', icon: 'clock' }
+    ],
+
+    overviewHtml(p, owned) {
+      const rows = [
+        ['Position', p.pos], ['Age', p.age], ['Rating', p.ovr],
+        ['Nation', p.nation || '—'],
+        ['Wages', U().cash(p.wage || 0) + '/week'],
+        owned ? ['Shirt', p.shirt || '—'] : ['Club', p.fromClub || '—'],
+        owned ? ['Appearances', p.apps || 0] : ['Asking price', U().cash(p.ask || p.value || 0)],
+        owned ? ['Goals', p.goals || 0] : ['Value', U().cash(p.value || 0)]
+      ];
+      return `<div class="pc-head">
+          ${global.Icons.flag(p.nation, 'lg')}
+          <div><div class="pc-name">${esc(p.name)}</div>
+            <div class="dim">${esc(p.pos)} · ${p.age} · rated <b>${p.ovr}</b></div></div>
+        </div>
+        <div class="pc-rows">${rows.map(([k, v]) =>
+          `<div class="pc-row"><span>${esc(k)}</span><b>${esc(String(v))}</b></div>`).join('')}</div>`;
+    },
+
+    /* ---------------- table ---------------- */
+    tab_mtable() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const table = global.Engine.Season.standings(g, club.league);
+      const target = g.mgr.board.target;
+      return `<div class="card"><h3>${ico('table')} ${esc(State().league(club.league).name)}</h3>
+        <div class="tb-head"><span>#</span><span></span><span class="tb-n">Club</span>
+          <span>P</span><span>GD</span><span>Pts</span></div>
+        ${table.map((r, i) => `<div class="tb-row${r.id === club.id ? ' me' : ''}${i + 1 <= target.pos ? ' tgt' : ''}">
+          <span>${i + 1}</span>
+          ${crest(r.club.name, 'crest-sm')}
+          <span class="tb-n">${esc(r.club.name)}</span>
+          <span>${r.p}</span><span>${r.gf - r.ga > 0 ? '+' : ''}${r.gf - r.ga}</span>
+          <b>${r.pts}</b>
+        </div>`).join('')}
+        <p class="dim" style="margin:10px 0 0">The board asked for ${U().ordinal(target.pos)} or better.</p>
+      </div>`;
+    },
+
+    /* ---------------- the timeline ----------------
+       Football is only half the sport; the other half is everyone arguing
+       about it. Every post here is tied to something that actually happened
+       in your season — 513 of them, plus what you say back. */
+    tab_mbuzz() {
+      const g = State().game;
+      const MS = global.MSocial;
+      if (!MS) return '<div class="card"><p class="dim" style="margin:0">Timeline unavailable.</p></div>';
+      const me = MS.meAccount(g);
+      const posts = g.mgr.feed || [];
+      const trend = MS.trending(g);
+      const can = MS.canPost(g);
+      let html = `<div class="card tight me-card">
+        <div class="post-h">
+          ${global.UI.avatar(me.n, me.h, 'you')}
+          <div class="post-who"><div class="post-n"><b>${esc(me.n)}</b>${me.v ? global.UI.tick() : ''}</div>
+            <div class="post-sub">${esc(me.h)} · ${global.Social.compact(MS.followers(g))} followers</div></div>
+        </div>
+        <button class="btn btn-ghost btn-post${can ? '' : ' spent'}" data-act="mgrPost">
+          ${ico('send')} ${can ? 'Say something' : 'You have posted since the last game'}</button>
+      </div>`;
+      if (trend.length) {
+        html += `<div class="card tight"><div class="trend-h">${ico('trend')} Trending</div>
+          <div class="trend">${trend.map(t => `<span class="hash">${esc(t)}</span>`).join('')}</div></div>`;
+      }
+      if (!posts.length) {
+        return html + `<div class="card center"><p class="dim" style="margin:0">Quiet in here.
+          Play some football and they will find you.</p></div>`;
+      }
+      posts.forEach(post => html += global.UI.post(g, post));
+      return html;
+    },
+
+    /* ---------------- office ---------------- */
+    tab_moffice() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const conf = Math.round(g.mgr.board.confidence);
+      const wages = M().squadWages(g);
+      const scorers = g.squad.slice().filter(s => s.goals > 0).sort((a, b) => b.goals - a.goals).slice(0, 5);
+      return `<div class="card"><h3>${ico('manager')} The board</h3>
+        <div class="board-conf">
+          <div class="bc-num ${conf >= 60 ? 'good' : conf >= 30 ? 'warn' : 'bad'}">${conf}</div>
+          <div class="bc-tx"><b>${conf >= 75 ? 'Delighted' : conf >= 55 ? 'Content' : conf >= 32 ? 'Watching closely'
+            : conf >= 15 ? 'Losing patience' : 'One more bad week'}</b>
+            <span>${esc(g.mgr.board.target.text)}</span></div>
+        </div>
+      </div>
+      <div class="card"><h3>${ico('value')} Finances</h3>
+        <div class="stat-grid two">
+          <div class="stat"><b>${U().cash(g.mgr.budget)}</b><span>Transfer budget</span></div>
+          <div class="stat"><b>${U().cash(wages)}<i>/w</i></b><span>Players</span></div>
+          <div class="stat"><b>${U().cash(M().staffWages(g))}<i>/w</i></b><span>Backroom</span></div>
+          <div class="stat"><b class="${M().wageRoom(g) < 0 ? 'bad' : ''}">${
+            U().cash(M().wageRoom(g))}<i>/w</i></b><span>Room left</span></div>
+        </div>
+      </div>
+      ${MUI.titlesCard(g)}
+      ${MUI.staffCard(g)}
+      ${MUI.contractsCard(g)}
+      ${MUI.derbyCard(g)}
+      ${MUI.awardsCard(g)}
+      ${scorers.length ? `<div class="card"><h3>${ico('goal')} Top scorers</h3>
+        ${scorers.map(s => `<div class="res-row"><span class="sq-pos">${esc(s.pos)}</span>
+          <span class="res-n">${esc(s.name)}</span><b>${s.goals}</b></div>`).join('')}</div>` : ''}
+      ${MUI.repCard(g)}
+      ${(() => { const all = M().cabinet(g); return all.length
+        ? `<div class="card"><h3>${ico('trophy')} Won as manager
+            ${(g.career && g.career.trophies || []).length ? '<span class="pill">whole career</span>' : ''}</h3>
+          ${all.map(t => `<span class="trophy">${global.Trophies.svg(global.Trophies.classify(t.name).art, 'tiny')} ${esc(t.name)} ${t.year}</span>`).join('')}</div>`
+        : ''; })()}
+      ${MUI.wonderCard(g)}
+      ${g.mgr.log.length ? `<div class="card"><h3>${ico('transfer')} Transfer log</h3>
+        ${g.mgr.log.slice(0, 12).map(l => `<div class="res-row"><span class="res-b ${l.k === 'in' ? 'res-W' : 'res-L'}">${l.k === 'in' ? '↓' : '↑'}</span>
+          <span class="res-n">${esc(l.t)}</span></div>`).join('')}</div>` : ''}
+      ${MUI.cvCard(g)}
+      <div class="card"><h3>Options</h3><div class="row wrap">
+        <button class="btn btn-ghost" data-act="save">${ico('disk')} Save now</button>
+        ${(g.mgr.offers || []).length ? `<button class="btn btn-ghost" data-act="mgrOffers">${
+          ico('manager')} ${g.mgr.offers.length} offer${g.mgr.offers.length === 1 ? '' : 's'}</button>` : ''}
+        <button class="btn btn-ghost" data-act="mgrResign">${ico('exit')} Resign</button>
+        <button class="btn btn-danger" data-act="mgrQuit">${ico('exit')} Quit to menu</button>
+      </div></div>`;
+    },
+
+    /* ---------------- BOSS MODE (secret) ----------------
+       The manager's half of the same code. Everything a season can do to you,
+       you can do to it — the money, the board, the squad, the table. It is all
+       a cheat and it all saves like anything else. */
+    tab_mboss() {
+      const g = State().game, club = State().club(g.mgr.club);
+      const conf = Math.round(g.mgr.board.confidence);
+      const staff = g.mgr.staff || {};
+      const cash = v => U().cash(v);
+      let html = `<div class="card secret-head">
+        <h3 class="gold">${ico('settings')} Boss Mode</h3>
+        <p class="dim" style="margin:0">Unlocked with the code. Change what you like —
+          the money, the board, the squad, the table. It saves like any other career.</p></div>`;
+
+      // ---- the money ----
+      html += `<div class="card"><h3>${ico('value')} The money</h3>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>Transfer budget</b><span class="grow"></span><em>${cash(g.mgr.budget)}</em></div>
+          <div class="row wrap">
+            ${[0, 50, 250, 1000].map(m => `<button class="btn btn-ghost sm grow"
+              data-act="mdevBudget" data-arg="${m * 1000000}">${m ? U().cash(m * 1000000) : '$0'}</button>`).join('')}
+            <button class="btn btn-gold sm" data-act="mdevBudget" data-arg="9999000000">Unlimited</button>
+          </div></div>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>Wage ceiling</b><span class="grow"></span><em>${cash(g.mgr.wageBudget)}/w</em></div>
+          <div class="row wrap">
+            ${[100000, 500000, 2000000].map(m => `<button class="btn btn-ghost sm grow"
+              data-act="mdevWages" data-arg="${m}">${cash(m)}</button>`).join('')}
+            <button class="btn btn-gold sm" data-act="mdevWages" data-arg="50000000">Unlimited</button>
+          </div></div>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>Board confidence</b><span class="grow"></span><em>${conf}</em></div>
+          <div class="row">
+            ${[0, 25, 50, 75].map(v => `<button class="btn btn-ghost sm grow"
+              data-act="mdevConf" data-arg="${v}">${v}</button>`).join('')}
+            <button class="btn btn-gold sm" data-act="mdevConf" data-arg="100">100</button>
+          </div></div>
+        <p class="dim tiny" style="margin:2px 0 0">A board on 100 will not sack you. A board on 0 nearly will.</p>
+      </div>`;
+
+      // ---- the club ----
+      html += `<div class="card"><h3>${ico('club')} ${esc(club.name)}</h3>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>Club rating</b><span class="grow"></span><em>${club.rating}</em></div>
+          <div class="row wrap">
+            <button class="btn btn-ghost sm grow" data-act="mdevClubRating" data-arg="-5">−5</button>
+            <button class="btn btn-ghost sm grow" data-act="mdevClubRating" data-arg="-1">−1</button>
+            <button class="btn btn-ghost sm grow" data-act="mdevClubRating" data-arg="1">+1</button>
+            <button class="btn btn-ghost sm grow" data-act="mdevClubRating" data-arg="5">+5</button>
+            <button class="btn btn-gold sm" data-act="mdevClubRating" data-arg="max">93</button>
+          </div>
+          <div class="offer-read">Changes what the club is worth for good, not just this season.</div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-ghost" data-act="mdevTarget">${ico('manager')} Easiest board target</button>
+          <button class="btn btn-ghost" data-act="mdevTrophy">${ico('trophy')} Add a league title</button>
+          <button class="btn btn-ghost" data-act="mdevAward">${ico('medal')} Add Manager of the Season</button>
+        </div>
+      </div>`;
+
+      // ---- the squad ----
+      const xi = M().xiPlayers(g);
+      html += `<div class="card"><h3>${ico('squad')} The squad
+          <span class="pill">${g.squad.length}</span></h3>
+        <p class="dim tiny" style="margin:0 0 9px">Tap a name to set his overall. Everything below applies to all of them.</p>
+        <div class="row wrap" style="margin-bottom:10px">
+          ${[70, 80, 90, 99].map(v => `<button class="btn btn-ghost sm grow"
+            data-act="mdevSquadOvr" data-arg="${v}">Everyone ${v}</button>`).join('')}
+        </div>
+        <div class="row wrap">
+          <button class="btn btn-ghost sm" data-act="mdevHeal">Heal everything</button>
+          <button class="btn btn-ghost sm" data-act="mdevFresh">Full fitness and form</button>
+          <button class="btn btn-ghost sm" data-act="mdevDeals">Five years on every deal</button>
+          <button class="btn btn-ghost sm" data-act="mdevSettle">Nobody wants to leave</button>
+          <button class="btn btn-ghost sm" data-act="mdevYoung">Make them all 23</button>
+        </div>
+        <div style="margin-top:10px">
+        ${g.squad.slice().sort((a, b) => b.ovr - a.ovr).map(s => {
+          const why = M().unavailableWhy(s);
+          const inXI = xi.some(x => x.id === s.id);
+          return `<div class="ct-row" data-act="mdevPlayer" data-arg="${s.id}">
+            <span class="sq-pos">${esc(s.pos)}</span>
+            <span class="sq-n">${esc(s.name)}<em>${s.age} · ${cash(s.wage)}/w · ${
+              M().dealOf(s)}y${why ? ' · ' + esc(why.label) : ''}</em></span>
+            ${inXI ? '<span class="ct-y">XI</span>' : ''}
+            <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+          </div>`;
+        }).join('')}
+        </div>
+      </div>`;
+
+      // ---- the backroom ----
+      html += `<div class="card"><h3>${ico('manager')} The backroom</h3>
+        <p class="dim tiny" style="margin:0 0 9px">The best in the world, on nothing a week.</p>
+        <div class="row wrap">
+          <button class="btn btn-gold sm grow" data-act="mdevStaff" data-arg="all">Hire the best in every job</button>
+          <button class="btn btn-ghost sm" data-act="mdevStaff" data-arg="none">Sack all of them</button>
+        </div>
+        <div style="margin-top:9px">${M().STAFF_ROLES.map(r => {
+          const p = staff[r.id];
+          return `<div class="st-row" data-act="mdevStaff" data-arg="${r.id}">
+            <span class="st-ic">${ico(r.ic)}</span>
+            <span class="st-n">${esc(r.name)}<em>${p ? esc(p.name) : 'Nobody in the job'}</em></span>
+            <span class="st-r">${p ? `<b>${p.rating}</b><small>${cash(p.wage)}/w</small>`
+              : '<span class="st-hire">Hire 99</span>'}</span>
+          </div>`;
+        }).join('')}</div>
+      </div>`;
+
+      // ---- the season ----
+      const cupsLeft = (g.mgr.cups || []).filter(c => c.alive);
+      html += `<div class="card"><h3>${ico('table')} This season</h3>
+        <div class="stat-grid two">
+          <div class="stat"><b>${U().ordinal(M().position(g))}</b><span>Position</span></div>
+          <div class="stat"><b>${(g.mgr.results || []).length}</b><span>Played</span></div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-gold" data-act="mdevTop">${ico('crown')} Put us top of the table</button>
+          <button class="btn btn-ghost" data-act="mdevBottom">Put us bottom</button>
+          ${cupsLeft.length ? `<button class="btn btn-ghost" data-act="mdevCups">${ico('trophy')} Win the ${
+            cupsLeft.length === 1 ? 'cup we are still in' : cupsLeft.length + ' cups we are still in'}</button>` : ''}
+          <button class="btn btn-ghost" data-act="mdevEndSeason">${ico('next')} End the season now</button>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">Going top sets the points, so the table and everything that
+          reads it — the board, your finish, the money — follow along.</p>
+      </div>`;
+
+      // ---- the switches ----
+      const ch = g.mgr.cheats || {};
+      html += `<div class="card"><h3>${ico('whistle')} Standing orders</h3>
+        <p class="dim tiny" style="margin:0 0 9px">These stay on until you turn them off. They work inside the
+          match, so everything downstream — the table, the board, the scorers — follows honestly from a
+          dishonest result. A drawn cup tie still goes to penalties, because somebody has to go through.</p>
+        <div class="dev-attr">
+          <div class="dev-attr-h"><b>How every match ends</b><span class="grow"></span>
+            <em>${ch.result ? esc({ win: 'Always win', draw: 'Always draw', lose: 'Always lose' }[ch.result]) : 'Left alone'}</em></div>
+          <div class="row wrap">
+            <button class="btn ${ch.result === 'win' ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="win">Always win</button>
+            <button class="btn ${ch.result === 'draw' ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="draw">Always draw</button>
+            <button class="btn ${ch.result === 'lose' ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="lose">Always lose</button>
+            <button class="btn ${!ch.result ? 'btn-gold' : 'btn-ghost'} sm grow"
+              data-act="mdevRig" data-arg="off">Off</button>
+          </div></div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn ${ch.noInjury ? 'btn-gold' : 'btn-ghost'} sm grow"
+            data-act="mdevToggle" data-arg="noInjury">${ico('hospital')} Nobody gets injured${ch.noInjury ? ' ✓' : ''}</button>
+          <button class="btn ${ch.noBan ? 'btn-gold' : 'btn-ghost'} sm grow"
+            data-act="mdevToggle" data-arg="noBan">${ico('card')} Nobody gets booked${ch.noBan ? ' ✓' : ''}</button>
+        </div>
+      </div>`;
+
+      // ---- your name ----
+      html += `<div class="card"><h3>${ico('legacy')} Your name</h3>
+        <div class="stat-grid two">
+          <div class="stat"><b>${M().reputation(g)}</b><span>Reputation</span></div>
+          <div class="stat"><b>${M().ceilingFor(g)}</b><span>Job ceiling</span></div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-gold" data-act="mdevRep">${ico('crown')} Make me a legend</button>
+          <button class="btn btn-ghost" data-act="mdevForget">${ico('exit')} Forget every sacking</button>
+          <button class="btn btn-ghost" data-act="mdevWonder">${ico('goal')} Add a goal of the century</button>
+          <button class="btn btn-ghost" data-act="mdevCabinet">${ico('trophy')} Fill the cabinet</button>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">Reputation is worked out from what you have won and where you
+          finished, so this writes the record rather than the number.</p>
+      </div>`;
+
+      // ---- the division ----
+      html += `<div class="card"><h3>${ico('table')} The rest of the division</h3>
+        <p class="dim tiny" style="margin:0 0 9px">Everybody except you. Ruin them or arm them.</p>
+        <div class="row wrap">
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="55">Make them all 55</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="-5">−5 each</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="5">+5 each</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevRivals" data-arg="93">Make them all 93</button>
+        </div>
+        <div class="row wrap" style="margin-top:8px">
+          <button class="btn btn-ghost sm grow" data-act="mdevWorld" data-arg="55">Every club on earth 55</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevWorld" data-arg="93">Every club on earth 93</button>
+        </div>
+      </div>`;
+
+      // ---- time ----
+      html += `<div class="card"><h3>${ico('clock')} Time</h3>
+        <div class="stat-grid two">
+          <div class="stat"><b>${g.world.year}</b><span>Season</span></div>
+          <div class="stat"><b>${g.mgr.board.seasons || 0}</b><span>Years here</span></div>
+        </div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn btn-ghost grow" data-act="mdevSkip" data-arg="1">${ico('next')} Simulate a whole season</button>
+          <button class="btn btn-ghost grow" data-act="mdevSkip" data-arg="5">${ico('next')} Simulate five</button>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">Plays every match, takes the board meeting and rolls the
+          summer for you. It stops early if they sack you.</p>
+      </div>`;
+
+      // ---- the market ----
+      html += `<div class="card"><h3>${ico('transfer')} The market</h3>
+        <div class="row wrap">
+          <button class="btn btn-ghost" data-act="mdevFreeMarket">Every player on the market is free</button>
+          <button class="btn btn-ghost" data-act="mdevBids">Somebody bid for one of mine</button>
+          <button class="btn btn-ghost" data-act="mdevOffers">Make the big clubs want me</button>
+        </div></div>`;
+
+      // ---- sign anyone alive ----
+      html += `<div class="card"><h3>${ico('transfer')} Sign anyone</h3>
+        <p class="dim tiny" style="margin:0 0 9px">Free, instant, and nobody gets a say. Pick a club and take
+          whoever you like out of it.</p>
+        <div class="row wrap" style="margin-bottom:10px">
+          <button class="btn btn-gold sm grow" data-act="mdevBest">Sign the best player in the world</button>
+          <button class="btn btn-ghost sm grow" data-act="mdevMake">Invent a 99 in any position</button>
+        </div>
+        <div class="field"><label>League</label>
+          <select class="input" id="mdev-sleague">${global.DATA.LEAGUES.map(l =>
+            `<option value="${l.id}" ${l.id === club.league ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></div>
+        <div class="club-list" id="mdev-sclubs"></div></div>`;
+
+      // ---- take over anybody ----
+      html += `<div class="card"><h3>${ico('manager')} Manage anyone</h3>
+        <p class="dim tiny" style="margin:0 0 9px">Walk into any job in the world. The one you are in now goes
+          into your record as a job you left.</p>
+        <div class="field"><label>League</label>
+          <select class="input" id="mdev-league">${global.DATA.LEAGUES.map(l =>
+            `<option value="${l.id}" ${l.id === club.league ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></div>
+        <div class="club-list" id="mdev-clubs"></div></div>`;
+
+      html += `<div class="card"><button class="btn btn-danger btn-block" data-act="mdevLock">Lock Boss Mode again</button></div>`;
+      return html;
+    },
+
+    renderBossClubs() {
+      MUI.bossClubList('mdev-league', 'mdev-clubs', 'mdevTakeOver');
+      MUI.bossClubList('mdev-sleague', 'mdev-sclubs', 'mdevSquadOf');
+    },
+
+    bossClubList(selId, listId, act) {
+      const g = State().game, sel = $(selId);
+      if (!sel) return;
+      const list = $(listId);
+      list.innerHTML = Object.values(g.world.clubs)
+        .filter(c => c.league === sel.value)
+        .sort((a, b) => b.rating - a.rating)
+        .map(c => `<div class="club ${c.id === g.mgr.club ? 'sel' : ''}" data-act="${act}" data-arg="${c.id}">
+          <b>${esc(c.name)}</b><span>Rated ${c.rating}</span></div>`).join('');
+      global.UI.bindActions(list);
+      sel.onchange = () => MUI.bossClubList(selId, listId, act);
+    },
+
+    /* ---------------- the backroom ----------------
+       Six jobs, each of them somebody's, each of them paid out of the same
+       weekly bill as the eleven. An empty one is not a bug; it is money you
+       have decided to spend on footballers instead. */
+    staffCard(g) {
+      const roles = M().STAFF_ROLES;
+      const staff = g.mgr.staff || {};
+      const filled = roles.filter(r => staff[r.id]).length;
+      const bill = M().staffWages(g);
+      return `<div class="card"><h3>${ico('manager')} The backroom
+          <span class="pill">${filled}/${roles.length}</span></h3>
+        ${roles.map(r => {
+          const p = staff[r.id];
+          return `<div class="st-row${p ? '' : ' empty'}" data-act="mgrStaff" data-arg="${r.id}">
+            <span class="st-ic">${ico(r.ic)}</span>
+            <span class="st-n">${esc(r.name)}<em>${p
+              ? esc(p.name) + ' · ' + esc(M().staffBand(p.rating))
+              : 'Nobody in the job'}</em></span>
+            ${p ? `<span class="st-r"><b>${p.rating}</b><small>${U().cash(p.wage)}/w</small></span>`
+                : `<span class="st-r st-hire">Hire</span>`}
+          </div>`;
+        }).join('')}
+        <div class="st-foot"><span>Backroom wages</span><b>${U().cash(bill)}/w</b></div>
+        <p class="dim tiny" style="margin:6px 0 0">${filled
+          ? 'They come out of the same wage bill as the players. Tap one to change him.'
+          : 'You are doing all six jobs yourself. Tap one to hire somebody who is better at it.'}</p>
+      </div>`;
+    },
+
+    /* ---------------- contracts ----------------
+       The list nobody looks at until somebody has gone for nothing. */
+    contractsCard(g) {
+      const rows = g.squad.slice().sort((a, b) =>
+        (M().dealOf(a) - M().dealOf(b)) || b.ovr - a.ovr);
+      const last = rows.filter(s => M().dealOf(s) <= 1);
+      return `<div class="card"><h3>${ico('contract')} Contracts
+          ${last.length ? `<span class="pill down">${last.length} running out</span>` : ''}</h3>
+        ${last.length
+          ? `<p class="dim tiny" style="margin:0 0 9px">${last.length === 1
+              ? 'One man is in the last year of his deal. Let it run and he leaves in the summer for nothing.'
+              : `${last.length} men are in the last year of their deals. Let them run and they leave in the summer for nothing.`}</p>`
+          : '<p class="dim tiny" style="margin:0 0 9px">Nobody is close to running out. Tap a name to talk to him anyway.</p>'}
+        ${rows.slice(0, 24).map(s => {
+          const y = M().dealOf(s);
+          return `<div class="ct-row${y <= 1 ? ' out' : ''}" data-act="mgrRenew" data-arg="${s.id}">
+            <span class="sq-pos">${esc(s.pos)}</span>
+            <span class="sq-n">${esc(s.name)}<em>${s.age} · ${U().cash(s.wage)}/w</em></span>
+            <span class="ct-y ${y <= 1 ? 'bad' : y === 2 ? 'warn' : ''}">${y <= 1 ? 'Final year' : y + ' years'}</span>
+            <span class="sq-o ${s.ovr >= 82 ? 'hi' : s.ovr >= 72 ? 'mid' : ''}">${s.ovr}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    },
+
+    /* ---------------- the seasons you won it ----------------
+       A title is a year, not a line in a list. This is what each of them
+       actually took, kept for as long as the career lasts. */
+    titlesCard(g) {
+      const runs = M().titleHistory(g).slice().reverse();
+      if (!runs.length) return '';
+      return `<div class="card"><h3>${ico('crown')} Championships
+          <span class="pill">${runs.length}</span></h3>
+        ${runs.slice(0, 8).map(t => `<div class="tr-row">
+          <span class="tr-yr">${t.year}</span>
+          <span class="tr-n">${esc(t.league)}<em>${esc(t.club)}${
+            t.invincible ? ' · unbeaten' : t.toSpare ? ` · ${t.toSpare} to spare` : ' · on the final day'}</em></span>
+          <span class="tr-pts">${t.pts}<small>pts</small></span>
+        </div>`).join('')}
+        ${runs.length > 8 ? `<p class="dim tiny" style="margin:8px 0 0">and ${runs.length - 8} more.</p>` : ''}
+      </div>`;
+    },
+
+    /* ---------------- the derby ---------------- */
+    derbyCard(g) {
+      if (!g.mgr.rival) return '';
+      const rival = State().club(g.mgr.rival);
+      if (!rival) return '';
+      const d = M().derbyRecord(g);
+      return `<div class="card"><h3>${ico('duel')} The derby</h3>
+        <div class="dby-head">${crest(rival.name, 'crest-md')}
+          <div class="dby-t"><b>${esc(rival.name)}</b>
+            <span>Rated ${rival.rating} · ${esc(State().league(rival.league).name)}</span></div>
+        </div>
+        ${d.played ? `<div class="dby-rec">
+            <div class="stat"><b class="good">${d.w}</b><span>Won</span></div>
+            <div class="stat"><b>${d.d}</b><span>Drawn</span></div>
+            <div class="stat"><b class="bad">${d.l}</b><span>Lost</span></div>
+          </div>
+          ${d.rows.slice(0, 6).map(r => `<div class="res-row">
+            <span class="res-b res-${r.result}">${r.result}</span>
+            <span class="res-n">${r.year} · ${r.home ? 'home' : 'away'} · ${r.gf}-${r.ga}</span>
+          </div>`).join('')}`
+          : '<p class="dim" style="margin:0">You have not played them yet.</p>'}
+      </div>`;
+    },
+
+    /* ---------------- what they gave you ---------------- */
+    awardsCard(g) {
+      const all = M().honoursList(g).slice().reverse();
+      if (!all.length) return '';
+      const here = State().club(g.mgr.club).name;
+      const icOf = k => k === 'boot' ? 'goldenboot' : k === 'young' ? 'star'
+        : k === 'pots' ? 'medal' : k === 'mots' ? 'crown' : 'podium';
+      return `<div class="card"><h3>${ico('medal')} Awards
+          <span class="pill">${all.length}</span></h3>
+        ${all.slice(0, 12).map(a => `<div class="aw-row">
+          <span class="aw-ic aw-${esc(a.kind)}">${ico(icOf(a.kind))}</span>
+          <span class="aw-n">${esc(a.name)}<em>${a.who ? esc(a.who) + ' · ' : ''}${
+            a.club && a.club !== here ? esc(a.club) + ' ' : ''}${a.year}</em></span>
+          ${a.note ? `<span class="aw-note">${esc(a.note)}</span>` : ''}
+        </div>`).join('')}
+        ${all.length > 12 ? `<p class="dim tiny" style="margin:8px 0 0">and ${all.length - 12} more.</p>` : ''}
+      </div>`;
+    },
+
+    /* ---------------- your name in the game ----------------
+       Reputation is not decoration: it is the list of clubs who would take
+       your call, so it belongs on a screen where you can see it move. */
+    repCard(g) {
+      const rep = M().reputation(g);
+      const cap = M().ceilingFor(g);
+      const here = State().club(g.mgr.club);
+      const would = Object.values(g.world.clubs).filter(c => c.id !== here.id && c.rating <= cap);
+      const best = would.slice().sort((a, b) => b.rating - a.rating)[0];
+      const band = rep >= 88 ? 'One of the great managers' : rep >= 74 ? 'A name that opens doors'
+        : rep >= 58 ? 'Well thought of' : rep >= 42 ? 'Known, if not much more'
+        : 'Nobody is talking about you yet';
+      const jobs = (g.mgrHistory || []).length + 1;
+      return `<div class="card"><h3>${ico('manager')} Your name</h3>
+        <div class="rep-bar"><i style="width:${rep}%"></i></div>
+        <div class="rep-top"><b>${rep}</b><span>${esc(band)}</span></div>
+        <div class="stat-grid" style="margin-top:10px">
+          <div class="stat"><b>${jobs}</b><span>${jobs === 1 ? 'Club' : 'Clubs'}</span></div>
+          <div class="stat"><b>${M().cabinet(g).length}</b><span>Trophies</span></div>
+          <div class="stat"><b>${would.length}</b><span>Would have you</span></div>
+        </div>
+        <p class="dim tiny" style="margin:8px 0 0">${best
+          ? `The biggest club that would consider you today is ${esc(best.name)} (${best.rating}).`
+          : 'Nobody would consider you today.'}</p>
+      </div>`;
+    },
+
+    /* ---------------- the goals worth keeping ----------------
+       A season's worth of scorelines is a table. These are the three or four
+       moments you would actually describe to somebody. */
+    wonderCard(g) {
+      const all = M().wonders(g).slice().sort((a, b) => b.year - a.year || b.score - a.score);
+      if (!all.length) return '';
+      const open = g.mgr.wondersOpen;
+      const show = all.slice(0, open ? 24 : 5);
+      return `<div class="card"><h3>${ico('goal')} Goals worth remembering
+          <span class="pill">${all.length}</span></h3>
+        ${show.map(w => `<div class="wg wg-${esc(w.tier)}">
+          <div class="wg-head">
+            <span class="wg-tier">${esc(w.label)}</span>
+            <span class="wg-when">${esc(w.opp)} · ${w.year}</span>
+          </div>
+          <div class="wg-who">${esc(w.name)}</div>
+          <div class="wg-t">${esc(w.text.charAt(0).toUpperCase() + w.text.slice(1))}.</div>
+        </div>`).join('')}
+        ${all.length > 5 ? `<button class="btn btn-ghost grow" style="margin-top:8px" data-act="mgrWondersMore">${
+          open ? 'Show fewer' : `All ${all.length}`}</button>` : ''}
+      </div>`;
+    }
+  };
+
+  global.MUI = MUI;
+})(window);
